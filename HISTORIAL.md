@@ -2,6 +2,7 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`.
 
+- 29/10/2026 · ordenador · Finanzas: marca «Encargo» para compras hechas para otra persona que paga en mano; no cuenta en el gasto del mes ni en las medias (se pone en la ficha del movimiento, en «Sin clasificar» o tocando la etiqueta).
 - 29/10/2026 · ordenador · Privacidad: historial de GitHub empezado de cero (los cambios antiguos tenían datos personales) y los registros públicos de los robots ya solo dicen cuántos avisos o movimientos, sin nombres.
 - 29/10/2026 · ordenador · Mi día: todas las tarjetas se pliegan tocando el título (abiertas por defecto, se recuerda en cada dispositivo). Botón «Personalizar» en las secciones con tarjetas: el asa y las flechas para moverlas solo se ven mientras está activo.
 - 29/10/2026 · ordenador · Mi día en el móvil más corta: Calendario, Facturas, Gasto y Documentos salen plegados (se abren tocando el título) y «Próximos» ya no repite las facturas ni lo de mañana.

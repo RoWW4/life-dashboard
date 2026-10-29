@@ -80,6 +80,7 @@ const A = {
   // «No es duplicado»: quita el aviso a todo el grupo (mismo día, importe y tipo).
   etx: i => { const x = S.tx.find(y => y.id===i); if (x) txEdit(x); },
   txk: i => { const x = S.tx.find(y => y.id===i); if (!x) return; x.keep = true; ch(); toast('Se queda en «Otros»'); },
+  txen: i => { const x = S.tx.find(y => y.id===i); if (!x) return; x.enc = !x.enc; if (!x.enc) delete x.enc; ch(); toast(x.enc ? 'Marcado como encargo: no cuenta como gasto tuyo' : 'Vuelve a contar en el gasto del mes'); },
   txex: i => { const x = S.tx.find(y => y.id===i); if (!x) return; x.ex = !x.ex; if (!x.ex) delete x.ex; ch(); toast(x.ex ? 'Marcado como extraordinario: ya no cuenta en el gasto del mes' : 'Vuelve a contar en el gasto del mes'); },
   nodup: i => { const x = S.tx.find(y => y.id===i); if (!x) return; S.tx.forEach(y => { if (y.date===x.date && y.amt===x.amt && y.t===x.t) y.notDup = true; }); ch(); toast('Aviso quitado: no es un duplicado'); },
   bar: i => { const b = bar().slice(), k = b.indexOf(i);

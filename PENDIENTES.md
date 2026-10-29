@@ -18,8 +18,7 @@ Cosas que quiere cambiar la dueña del panel más adelante. **No hacerlas hasta 
 - [x] Calendario: intercambiar estilos de Salud y festivos (hecho 29/10/2026).
 - Técnico (sin prisa): evitar perder cambios si se edita a la vez en móvil y ordenador; podar datos antiguos.
 
-## Pensar: compras por encargo pagadas en efectivo
-- A veces se compra algo online para otra persona, que luego devuelve el dinero en mano. En el panel queda como gasto propio y el efectivo no aparece, así que el gasto del mes sale inflado.
-- Darle una vuelta a cómo reflejarlo (p. ej. marcar el gasto como «encargo» para que no cuente, o apuntar el reembolso en efectivo). Decidirlo con la dueña del panel antes de hacer nada.
+## Compras por encargo pagadas en efectivo · HECHO 29/10/2026
+- Marca «Encargo» en la ficha del movimiento y en «Sin clasificar»: no cuenta como gasto propio. Sin nombres ni importes parciales (decidido así).
 
 Hay además notas privadas (con datos personales) fuera del repositorio, en `D:\Claude\panel-privado.md`: leerlas desde el ordenador, nunca copiarlas aquí.

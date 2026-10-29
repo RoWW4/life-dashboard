@@ -32,7 +32,7 @@ function txForm(){
 /* Ficha de un movimiento: descripción, categoría, nota y «extraordinario». Los del banco no dejan cambiar importe ni fecha. */
 function txEdit(x){
   const bk = fromBank(x), cats = x.t==='i' ? ['Nómina','Otros','Traspasos'] : CATS.filter(c => c!=='Nómina');
-  const o = modal(`<h3>Editar ${x.t==='i'?'ingreso':'gasto'}</h3><div class="fs"><label>Descripción<input id="ex1" value="${esc(x.desc||'')}"></label><div class="two"><label>Importe (€)<input id="ex2" inputmode="decimal" value="${(+x.amt).toFixed(2).replace('.',',')}" ${bk?'disabled':''}></label><label>Fecha<input id="ex3" type="date" value="${x.date}" ${bk?'disabled':''}></label></div>${bk?`<div class="mu" style="margin-top:-4px">${I('landmark','sm')} Viene del banco: el importe y la fecha no se pueden cambiar.</div>`:''}<label>Categoría<select id="ex4">${opts(cats, x.cat)}</select></label><label>Nota<input id="ex5" value="${esc(x.note||'')}" placeholder="Opcional"></label>${x.t==='g'?`<label class="chk"><input type="checkbox" id="ex6" ${x.ex?'checked':''}> Gasto extraordinario <span class="mu">(se ve, pero no cuenta en el gasto del mes)</span></label>`:''}</div><div class="acts"><button class="btn ghost danger" id="fdel">Eliminar</button><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`);
+  const o = modal(`<h3>Editar ${x.t==='i'?'ingreso':'gasto'}</h3><div class="fs"><label>Descripción<input id="ex1" value="${esc(x.desc||'')}"></label><div class="two"><label>Importe (€)<input id="ex2" inputmode="decimal" value="${(+x.amt).toFixed(2).replace('.',',')}" ${bk?'disabled':''}></label><label>Fecha<input id="ex3" type="date" value="${x.date}" ${bk?'disabled':''}></label></div>${bk?`<div class="mu" style="margin-top:-4px">${I('landmark','sm')} Viene del banco: el importe y la fecha no se pueden cambiar.</div>`:''}<label>Categoría<select id="ex4">${opts(cats, x.cat)}</select></label><label>Nota<input id="ex5" value="${esc(x.note||'')}" placeholder="Opcional"></label>${x.t==='g'?`<label class="chk"><input type="checkbox" id="ex6" ${x.ex?'checked':''}> Gasto extraordinario <span class="mu">(se ve, pero no cuenta en el gasto del mes)</span></label><label class="chk"><input type="checkbox" id="ex7" ${x.enc?'checked':''}> Encargo <span class="mu">(compra para otra persona que me paga en mano: no cuenta como gasto mío)</span></label>`:''}</div><div class="acts"><button class="btn ghost danger" id="fdel">Eliminar</button><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`);
   const v = i => o.querySelector(i).value.trim();
   o.querySelector('#ok').onclick = () => {
     const a = pnum(v('#ex2')), dt = v('#ex3'), cat = v('#ex4');
@@ -40,6 +40,7 @@ function txEdit(x){
     x.desc = v('#ex1'); if (!bk) { x.amt = a; x.date = dt; }
     const nt0 = v('#ex5'); if (nt0) x.note = nt0; else delete x.note;
     const ex = o.querySelector('#ex6'); if (ex && ex.checked) x.ex = true; else delete x.ex;
+    const en = o.querySelector('#ex7'); if (en && en.checked) x.enc = true; else delete x.enc;
     o.remove();
     if (cat !== x.cat) A.txc(x.id, {value:cat}); else ch();
     toast('Guardado');

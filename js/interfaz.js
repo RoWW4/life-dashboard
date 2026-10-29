@@ -63,8 +63,9 @@ const tile = (n, c) => `<span class="ic" style="--c:${c||'var(--mu)'}">${I(n)}</
 const ico = t => (KW.find(([r]) => r.test(t.title)) || [0, AI[t.area]||'pin'])[1];
 const empty = t => `<div class="empty">${t}</div>`;
 const prChip = p => p==='Urgente' ? '<span class="chip er">Urgente</span>' : p==='Alta' ? '<span class="chip wa">Alta</span>' : '';
-/* Gasto que cuenta en totales y comparaciones: fuera traspasos y gastos extraordinarios (x.ex, p. ej. cancelar un préstamo). */
-const cntG = x => x.t==='g' && x.cat!==NOCNT && !x.ex;
+/* Gasto que cuenta en totales y comparaciones: fuera traspasos, gastos extraordinarios (x.ex, p. ej. cancelar un préstamo)
+   y encargos (x.enc: compras para otra persona que devuelve el dinero en mano). */
+const cntG = x => x.t==='g' && x.cat!==NOCNT && !x.ex && !x.enc;
 const spent = m => S.tx.filter(x => cntG(x) && mon(x.date)===m).reduce((a,x) => a+x.amt, 0);
 /* Mes al que cuenta un ingreso: la nómina que llega a partir del día 25 es la del mes siguiente. */
 const incMon = x => x.cat==='Nómina' && +x.date.slice(8) >= 25 ? MN(new Date(+x.date.slice(0,4), +x.date.slice(5,7), 1)) : mon(x.date);
