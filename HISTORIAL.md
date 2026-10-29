@@ -1,0 +1,50 @@
+# Historial de cambios
+
+Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`.
+
+- 29/10/2026 · ordenador · Privacidad: historial de GitHub empezado de cero (los cambios antiguos tenían datos personales) y los registros públicos de los robots ya solo dicen cuántos avisos o movimientos, sin nombres.
+- 29/10/2026 · ordenador · Mi día: todas las tarjetas se pliegan tocando el título (abiertas por defecto, se recuerda en cada dispositivo). Botón «Personalizar» en las secciones con tarjetas: el asa y las flechas para moverlas solo se ven mientras está activo.
+- 29/10/2026 · ordenador · Mi día en el móvil más corta: Calendario, Facturas, Gasto y Documentos salen plegados (se abren tocando el título) y «Próximos» ya no repite las facturas ni lo de mañana.
+- 29/10/2026 · ordenador · Datos: enlaces de Documentos actualizados a los archivos de la cuenta principal de Google (apuntaban a copias antiguas de otra cuenta).
+- 29/10/2026 · ordenador · Mi día: quitada la tarjeta «Hoy y atrasadas» (ya sale en «Lo más importante», que ahora deja marcar las tareas como hechas). Ahorro: «Saldo hoy» con la fecha del último saldo real apuntado.
+- 29/10/2026 · ordenador · Facturas: nuevo tipo «Variable (sin día fijo)» para gastos con varios cargos al mes en días distintos; se enlazan todos los cargos con ese concepto, el gasto cuenta solo lo real y el «Disponible» reserva lo que falte hasta lo previsto.
+- 29/10/2026 · ordenador · Calendario: estilos intercambiados; los días de Salud con borde rojo discontinuo y los festivos otra vez con fondo rojo suave (leyenda igual).
+- 29/10/2026 · ordenador · Banco (Wallet): lo que Wallet deja «No liquidado» con 2 días o más entra como movimiento normal (antes se quedaba siempre en pendientes y no contaba como gasto).
+- 28/10/2026 · ordenador · Avisos por Telegram de documentos con fecha «Vence»: 30 días antes (60 los de Identidad), 7 días antes, el mismo día y semanalmente durante un mes si sigue caducado.
+- 28/10/2026 · ordenador · Añadidos a pendientes: «Ver más» en Festivos y Vacaciones de Ajustes, y paneles tipo masonry en el ordenador.
+- 28/10/2026 · ordenador · Calendario: los días de Salud (apuntados y 3 próximos previstos) se marcan en rojo; los festivos pasan a borde rojo discontinuo para distinguirlos. En Salud se elige cuántos días marcar.
+- 28/10/2026 · ordenador · Salud: anillo en rojo, más espacio en los datos de Seguimiento y botón «Ver histórico» que abre la lista de fechas en una ventana.
+- 28/10/2026 · ordenador · Salud: quitado el bloque Historial; Seguimiento a todo el ancho con un anillo que muestra los días que faltan para el próximo inicio (y opción de quitar la última fecha).
+- 28/10/2026 · ordenador · Nueva sección «Salud»: seguimiento por fechas de inicio con previsión del siguiente y aviso por Telegram 3 días antes.
+- 28/10/2026 · ordenador · Privacidad: quitados del código las semillas y ejemplos con datos personales, y limpiados historial y pendientes; regla escrita en `CLAUDE.md`.
+- 28/10/2026 · ordenador · Código: `app.js` repartido en `js/` por temas (base, estado, nube, banco, interfaz, una vista por sección, formularios, voz, acciones…), sin cambiar nada de lo que se ve. Mapa en `CLAUDE.md`.
+- 28/10/2026 · ordenador · Datos: corregida una tarea de cumpleaños repetida.
+- 28/10/2026 · ordenador · Movimientos: al tocar el concepto se abre una ficha para editar descripción, importe, fecha, categoría, nota y «extraordinario» (los del banco, sin cambiar importe ni fecha), y para eliminarlo.
+- 28/10/2026 · ordenador · «Disponible» y «€ al día» (Mi día y Gasto del mes) descuentan lo que falta por cobrarse de Facturas este mes, con la línea «Reservado para facturas…».
+- 28/10/2026 · ordenador · Finanzas: bandeja «Sin clasificar» con los gastos en «Otros» (elegir categoría, con opción de regla, o «Dejar en Otros»); se oculta cuando no queda ninguno.
+- 28/10/2026 · ordenador · Revisión de «Otros»: 206 gastos reclasificados a otras categorías, con visto bueno; quedan unos pocos en «Otros».
+- 28/10/2026 · ordenador · Gastos «extraordinarios»: se ven en movimientos pero no cuentan en el gasto del mes, disponible ni comparaciones (marca en gastos ≥ 300 €). Marcado uno antiguo.
+- 28/10/2026 · ordenador · Datos: algunos movimientos antiguos pasados de «Otros» a «Préstamos».
+- 28/10/2026 · ordenador · Avisos de Telegram: las tareas sin hora también avisan 1 día antes, como si fueran a las 9:00 (cumpleaños con 🎂).
+- 28/10/2026 · ordenador · Avisos de tareas por Telegram: 1 día antes de las que tienen hora y resumen a las 7:00 con lo de hoy, lo atrasado y los cumpleaños (lo lanza Supabase cada 15 min).
+- 28/10/2026 · ordenador · Facturas: quitado el marcar/desmarcar pagado a mano (✓); los pagos solo se marcan cuando llega el cargo del banco.
+- 28/10/2026 · ordenador · Facturas: un pago de este mes aún no cobrado sale «pendiente · fecha» (no el pagado del mes anterior); el cargo del banco se enlaza aunque traiga otra categoría si el importe es exacto (±3 días).
+- 28/10/2026 · ordenador · Facturas: sin media mensual; el bloque Pagos y «quedan libres» usan solo lo real de este mes..
+- 28/10/2026 · ordenador · Facturas: Pagos y Previstos en un solo bloque «Pagos» (apartados «Este mes» y «Próximos») con total del mes, pagado/falta y media mensual con anuales; «Quedan libres» pasa al bloque Ingresos y se quita la tarjeta de resumen.
+- 28/10/2026 · ordenador · Facturas: el ✓ de un pago marcado a mano sale en verde y pide confirmación antes de desmarcarlo.
+- 28/10/2026 · ordenador · Facturas: bloques en orden Ingresos → Pagos → Previstos y se pueden mover arrastrando (como en las demás secciones).
+- 28/10/2026 · ordenador · Facturas: los cargos repetidos que ya son un pago de la lista (mismo importe y días) se enlazan con él y se aprende su nombre del banco, en vez de salir en «Detectados».
+- 28/10/2026 · ordenador · Fijos y Facturas unificados en la sección «Facturas»: la app ya no apunta gastos sola; cada pago se marca pagado cuando llega su cargo del banco (o a mano), con previstos (fecha de inicio), ingresos y «Detectados en el banco» (sugerencias para añadir o ignorar). Quitada la tarjeta Fijos de Dinero.
+- 28/10/2026 · ordenador · Dinero en el móvil: gasto del mes centrado y movimientos de 10 en 10 con «Ver más» (en el ordenador, de 40 en 40).
+- 28/10/2026 · ordenador · Móvil: los botones largos (p. ej. «Importar movimientos…») se parten en dos líneas en vez de ensanchar la página; `index.html` carga los archivos con `?v=N` para que el móvil coja siempre la versión nueva (subir N en cada cambio de CSS/JS).
+- 28/10/2026 · móvil · La sincronización de Wallet la lanza ahora Supabase (pg_cron + token de GitHub en Vault) 5 veces al día a su hora; quitado el «schedule» de GitHub.
+- 28/10/2026 · móvil · Sincronización Wallet: opción «auto» para lanzarla desde Supabase sin aviso de «no hay movimientos» (programador de Supabase en preparación).
+- 28/10/2026 · móvil · Añadido a pendientes: revisar avisos de tareas (sincronizar con Google Calendar).
+- 27/10/2026 · móvil · Creado `PENDIENTES.md` (gasto del mes centrado y movimientos de 10 en 10 en el móvil; unificar fijos y facturas).
+- 27/10/2026 · móvil · En el móvil, la tarjeta del banco ya no sale en Finanzas (solo en Ajustes).
+- 27/10/2026 · móvil · Fijos con «Empieza en» (no cuentan como gasto hasta ese mes). Compras con Google Pay ya no caen en Suscripciones (reclasificadas).
+- 27/10/2026 · móvil · Creados `CLAUDE.md` (leer este historial antes de empezar y apuntar cada cambio) y este `HISTORIAL.md`. Se descarta `PENDIENTES.md` (estaba en Drive).
+- 27/10/2026 · ordenador · Banco: movimientos a través de la API de Wallet (BudgetBakers), con avisos por Telegram; se pausa la sincronización directa con el banco (cortaba el permiso a las pocas horas).
+- 27/10/2026 · ordenador · Vacaciones desde el «+» o por voz, marcadas en verde; texto de ayuda del micrófono.
+- 26/10/2026 · ordenador · Ahorros: intereses el día 1 y gráfica con cobrado/generado/previsto; menú lateral ordenable arrastrando; aviso de posible duplicado mejorado.
+- 25-26/10/2026 · móvil · Revisión completa del panel y lista de sugerencias (en `PENDIENTES.md` de Drive, ya descartado).

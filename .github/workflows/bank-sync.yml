@@ -1,0 +1,45 @@
+name: Sincronizar banco
+
+on:
+  # PAUSADA desde el 27/10/2026: Openbank (vía Redsys) corta el permiso a las ~2 h de conectar y solo llegaban
+  # correos de fallo. Para reactivarla, quita los # de las líneas de schedule y cron.
+  # schedule:
+    # 4 al día: el máximo que permite PSD2 sin que estés delante. Horas de invierno (en verano, una más).
+    # Minutos "raros" a propósito: GitHub retrasa o descarta más las tareas en horas en punto y cuartos.
+    # - cron: '43 5 * * *'   # ~06:43
+    # - cron: '43 10 * * *'  # ~11:43
+    # - cron: '43 14 * * *'  # ~15:43
+    # - cron: '43 19 * * *'  # ~20:43
+  workflow_dispatch:
+
+# Nunca dos sincronizaciones a la vez (p. ej. una manual y una programada).
+concurrency:
+  group: bank-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Traer movimientos
+        run: node scripts/bank-sync.mjs
+        env:
+          EB_APP_ID: ${{ secrets.EB_APP_ID }}
+          EB_PRIVATE_KEY: ${{ secrets.EB_PRIVATE_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          LDB_USER_ID: ${{ secrets.LDB_USER_ID }}
+      # GitHub pausa las tareas programadas tras 60 días sin actividad en el repositorio; esto la mantiene activa.
+      - name: Mantener activa la tarea programada
+        if: always()
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/bank-sync.yml/enable" || true
+        env:
+          GH_TOKEN: ${{ github.token }}

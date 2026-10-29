@@ -1,0 +1,47 @@
+name: Sincronizar banco (Wallet)
+
+# Lee los movimientos que Wallet (BudgetBakers) ya ha traído del banco. Wallet se conecta con Openbank por su
+# cuenta, así que aquí no hay límite de consultas al banco: se mira cada pocas horas.
+# La lanza Supabase a su hora (pg_cron, tarea «sync-wallet»: 17 5,9,13,17,21 * * * UTC ≈ 06:17, 10:17, 14:17,
+# 18:17 y 22:17 en invierno) llamando a la API de GitHub con auto=true. El «schedule» de GitHub se quitó porque
+# se retrasaba horas o se saltaba ejecuciones. También se puede lanzar a mano (Run workflow).
+on:
+  workflow_dispatch:
+    inputs:
+      auto:
+        description: 'Lanzada por el programador de Supabase (sin aviso de «no hay movimientos nuevos»)'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: bank-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Traer movimientos de Wallet
+        run: node scripts/wallet-sync.mjs
+        env:
+          WALLET_TOKEN: ${{ secrets.WALLET_TOKEN }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MANUAL: ${{ github.event_name == 'workflow_dispatch' && inputs.auto != 'true' }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          LDB_USER_ID: ${{ secrets.LDB_USER_ID }}
+      # GitHub pausa las tareas programadas tras 60 días sin actividad en el repositorio; esto la mantiene activa.
+      - name: Mantener activa la tarea programada
+        if: always()
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/wallet-sync.yml/enable" || true
+        env:
+          GH_TOKEN: ${{ github.token }}

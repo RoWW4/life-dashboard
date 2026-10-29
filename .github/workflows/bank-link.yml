@@ -1,0 +1,36 @@
+name: Conectar banco
+
+on:
+  workflow_dispatch:
+    inputs:
+      code:
+        description: 'Déjalo VACÍO la primera vez. Después pega aquí el código que te muestra el panel.'
+        required: false
+        default: ''
+      bank:
+        description: 'Nombre del banco en Enable Banking'
+        required: false
+        default: 'Openbank'
+
+permissions:
+  contents: read
+
+jobs:
+  link:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Conectar
+        run: node scripts/bank-link.mjs
+        env:
+          EB_CODE: ${{ inputs.code }}
+          EB_BANK: ${{ inputs.bank }}
+          EB_APP_ID: ${{ secrets.EB_APP_ID }}
+          EB_PRIVATE_KEY: ${{ secrets.EB_PRIVATE_KEY }}
+          APP_URL: ${{ secrets.APP_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          LDB_USER_ID: ${{ secrets.LDB_USER_ID }}

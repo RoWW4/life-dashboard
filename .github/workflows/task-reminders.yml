@@ -1,0 +1,32 @@
+name: Avisos de tareas (Telegram)
+
+# Manda por Telegram los avisos de las tareas del panel (1 día antes, a las 9:00 si no tienen hora, y un resumen a las 7:00).
+# La lanza Supabase cada 15 minutos (pg_cron, tarea «task-reminders»: 7,22,37,52 * * * *) llamando a la API de
+# GitHub. También se puede lanzar a mano (Run workflow).
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: task-reminders
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Mandar avisos
+        run: node scripts/task-reminders.mjs
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          LDB_USER_ID: ${{ secrets.LDB_USER_ID }}
