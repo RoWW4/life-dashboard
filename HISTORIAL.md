@@ -2,6 +2,7 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`.
 
+- 30/10/2026 · móvil · Gasto del mes: quitado el «≈ € al día». Versión v33.
 - 30/10/2026 · móvil · Mi día: quitados los indicadores «Para hoy» y «Disponible» (ya salen en «Lo más importante» y en Gasto del mes). Gasto del mes rediseñado igual en Mi día y Finanzas: anillo, total con una sola línea (% del tope y €/día) y categorías en filas (5 y «Ver más»; dos columnas en el ordenador); fuera el gráfico de ritmo de gasto. Versión v32.
 - 30/10/2026 · móvil · Móvil: los botones + y micrófono se esconden al bajar; textos de ayuda de las cabeceras solo en el ordenador; «Personalizar» pasa a icono junto al título. Gasto del mes: quitada la barra de colores y, en Finanzas, gráfico de ritmo de gasto (acumulado frente a lo previsto hasta el tope). Facturas: las filas ya no muestran día ni categoría. Versión v31.
 - 30/10/2026 · móvil · Sincronización Wallet: registra también los campos de fecha de las cuentas (sin saldos ni números) para saber si Wallet consulta al banco aunque no haya movimientos.

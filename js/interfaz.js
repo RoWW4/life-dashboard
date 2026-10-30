@@ -109,7 +109,7 @@ function donut(cats, budget, sp, rem){
 function gastoHTML(m, compact){
   const now = new Date(), cur = m===MN(now), sp = spent(m), cats = byCat(m), B = S.budget||0, fl = cur ? fxLeft() : 0, rem = B - sp - fl, pc = B ? sp/B*100 : 0;
   const left = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate() - now.getDate() + 1;
-  const info = B ? `<b class="${pc>=100?'er':pc>=80?'wa':'ok'}">${Math.round(pc)} %</b> de tu tope${cur?` · ≈ ${eur(Math.max(0,rem)/left)}/día`:''}` : 'Define un tope en Ajustes';
+  const info = B ? `<b class="${pc>=100?'er':pc>=80?'wa':'ok'}">${Math.round(pc)} %</b> de tu tope` : 'Define un tope en Ajustes';
   const rows = cats.map(([c,v]) => `<button class="gl" data-a="cd" data-i="${esc(c)}" title="Ver el detalle de ${esc(c)}"><b style="background:${col(c)}"></b><span>${c}</span><em>${eur(v)}</em></button>`);
   return `<div class="gx">${B?donut(cats,B,sp,rem):''}<div class="gxi"><div class="mu">Gastado ${cur?'este mes':'en '+MS[+m.slice(5)]}</div><div class="big">${eur(sp)}</div><div class="mu">${info}</div>${fl?`<div class="mu">Reservado para facturas: ${eur(fl)}</div>`:''}</div></div>
   <div class="gls">${rows.length ? fold('g-'+(compact?'d':'f'), rows, 5) : '<div class="mu">Aún sin gastos este mes.</div>'}</div>`;
