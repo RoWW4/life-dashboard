@@ -300,7 +300,9 @@ input[type=checkbox].ck:checked::after{content:'';width:6px;height:11px;border:s
   .nv.sec2{display:none}.nv.more{display:flex}
   .nv{flex:1;flex-direction:column;gap:0;padding:5px 0;align-items:center;font-size:10.5px;border-radius:10px;position:relative;min-width:0}
   .nv .e{width:auto}.nv .e .i{width:22px;height:22px}.nv .l{display:none}.nv .s{display:block;margin-top:2px}
-  .nv.on .e{background:var(--acs);border-radius:12px;padding:2px 14px}
+  /* Todos los iconos con el mismo hueco (el seleccionado solo cambia el fondo) para que no bailen al cambiar de sección */
+  .nv .e{padding:2px 14px;border-radius:12px}.nv.on .e{background:var(--acs)}
+  .nv.more{margin-top:0}
   .nv.on{background:none}.nv:hover{background:none}
   .badge{position:absolute;top:0;left:calc(50% + 6px);min-width:16px;height:16px;font-size:9.5px;padding:0 4px}
   main{padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(160px + env(safe-area-inset-bottom,0px))}
