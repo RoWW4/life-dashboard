@@ -92,20 +92,22 @@ function txMore(rows){
 }
 
 /* Desglose de una categoría: por concepto, evolución de 6 meses y gastos recurrentes (para revisar bajas). */
-function catDetail(c){
-  const m = finMonth(), L = S.tx.filter(x => x.t==='g' && x.cat===c && mon(x.date)===m), tot = L.reduce((a,x) => a+x.amt, 0), all = spent(m);
+/* sel: mes elegido tocando una barra (las 6 barras se mantienen; cambia el mes seleccionado y sus datos). */
+function catDetail(c, sel){
+  const base = finMonth(), m = sel || base, L = S.tx.filter(x => x.t==='g' && x.cat===c && mon(x.date)===m), tot = L.reduce((a,x) => a+x.amt, 0), all = spent(m);
   const g = {}; L.forEach(x => { const k = nt(concept(x)); const e = g[k] = g[k] || {n:concept(x), s:0, c:0, last:'', fx:false, bank:false}; e.s += x.amt; e.c++; if (x.date > e.last) e.last = x.date; if (x.fid) e.fx = true; if (fromBank(x)) e.bank = true; });
   const rows = Object.values(g).sort((a,b) => b.s-a.s);
-  const ms = [-5,-4,-3,-2,-1,0].map(i => mAdd(m,i)), hv = ms.map(k => S.tx.filter(x => cntG(x) && x.cat===c && mon(x.date)===k).reduce((a,x) => a+x.amt, 0)), hmax = Math.max(1, ...hv);
+  const ms = [-5,-4,-3,-2,-1,0].map(i => mAdd(base,i)), hv = ms.map(k => S.tx.filter(x => cntG(x) && x.cat===c && mon(x.date)===k).reduce((a,x) => a+x.amt, 0)), hmax = Math.max(1, ...hv);
   const rec = S.fixed.filter(f => f.t==='g' && f.cat===c && fxLive(f) && !f.once).map(f => ({n:f.name, y:yearly(f), d:fxWhen(f)})).sort((a,b) => b.y-a.y);
   const ry = rec.reduce((a,r) => a+r.y, 0);
   const o = modal(`<h3 class="cdh">${tile(CI[c]||'package', col(c))}<span>${esc(c)}<span class="mu">${mLabel(m)}</span></span></h3>
-    <div class="cdk"><div><b>${eur(tot)}</b><span>este mes</span></div><div><b>${all ? Math.round(tot/all*100) : 0}%</b><span>de tu gasto</span></div><div><b>${L.length}</b><span>movimientos</span></div></div>
-    <div class="hist">${ms.map((k,i) => `<div title="${mLabel(k)}: ${eur(hv[i])}"><i style="height:${Math.max(3, hv[i]/hmax*100)}%;background:${k===m ? col(c) : 'var(--bd2)'}"></i><span>${MS[+k.slice(5)]}</span></div>`).join('')}</div>
+    <div class="cdk"><div><b>${eur(tot)}</b><span>${m===MN(new Date())?'este mes':'en '+MS[+m.slice(5)]}</span></div><div><b>${all ? Math.round(tot/all*100) : 0}%</b><span>de tu gasto</span></div><div><b>${L.length}</b><span>movimientos</span></div></div>
+    <div class="hist">${ms.map((k,i) => `<button class="hb ${k===m?'on':''}" data-m="${k}" title="${mLabel(k)}: ${eur(hv[i])}" aria-label="Ver ${mLabel(k)}"><i style="height:${Math.max(3, hv[i]/hmax*100)}%;background:${k===m ? col(c) : 'var(--bd2)'}"></i><span>${MS[+k.slice(5)]}</span></button>`).join('')}</div>
     <h4>Por concepto</h4>${rows.length ? rows.map(r => `<div class="row"><span class="g">${esc(r.n)}<span class="meta">${r.c>1 ? `<span class="mu">${r.c} veces</span>` : ''}<span class="mu">${fd(r.last)}</span>${r.fx ? `<span class="chip">${I('repeat','sm')} fijo</span>` : ''}${r.bank ? `<span class="chip">${I('landmark','sm')} banco</span>` : ''}</span></span><b class="amt">${eur(r.s)}</b></div>`).join('') : empty('Sin gastos este mes.')}
     ${rec.length ? `<h4>Recurrentes · ${eur(ry)}/año <span class="mu">(≈ ${eur(ry/12)}/mes)</span></h4><div class="mu" style="margin-bottom:4px">¿Sigues usando todas? Dar de baja una te ahorra su coste anual.</div>${rec.map(r => `<div class="row"><span class="g">${esc(r.n)}<span class="meta"><span class="mu">${r.d}</span></span></span><span class="amt">${eur(r.y)}<span class="mu">/año</span></span></div>`).join('')}` : ''}
     <div class="acts" style="margin-top:14px"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button><button class="btn" id="ok">${I('list-checks')} Ver movimientos</button></div>`);
-  o.querySelector('#ok').onclick = () => { txf = {...txf, cat:c, t:'g', q:''}; o.remove(); render(); const e = $('#txcard'); if (e) e.scrollIntoView({behavior:'smooth'}); };
+  o.querySelectorAll('.hb').forEach(b => b.onclick = () => { if (b.dataset.m !== m) catDetail(c, b.dataset.m); });
+  o.querySelector('#ok').onclick = () => { const n = new Date(); finOff = (+m.slice(0,4)*12 + +m.slice(5,7)) - (n.getFullYear()*12 + n.getMonth()+1); txf = {...txf, cat:c, t:'g', q:''}; o.remove(); render(); const e = $('#txcard'); if (e) e.scrollIntoView({behavior:'smooth'}); };
 }
 
 /* Lista de movimientos con filtros (texto, categoría, periodo y tipo) */

@@ -2,6 +2,7 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`.
 
+- 30/10/2026 · móvil · Detalle de categoría: tocando una barra del gráfico de 6 meses se ven los datos de ese mes; «Ver movimientos» abre ese mes. Versión v39.
 - 30/10/2026 · móvil · Tarjeta Banco: quitado el botón «Recargar» (la app ya recoge lo nuevo al abrirse) y texto actualizado con el horario real (Wallet consulta el banco de madrugada; el panel recoge a las 6:17, 10:17, 14:17, 18:17 y 22:17). Versión v38.
 - 30/10/2026 · móvil · Tareas: al completar una se guarda la fecha; pasados 7 días deja de verse en «Todas» y en el calendario (sigue en «Completadas»). Versión v37.
 - 30/10/2026 · móvil · Movimientos: etiqueta arriba a la derecha y debajo, en una línea, importe, botón de Facturas y X. Versión v36.
