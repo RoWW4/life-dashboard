@@ -23,6 +23,7 @@ Cosas que quiere cambiar la dueña del panel más adelante. **No hacerlas hasta 
 - Desde el 30/10 cada sincronización guarda en la tabla `wallet_log` (Supabase) la hora a la que Wallet creó cada movimiento (`kind='rec'`, `wallet_created_at`, `seen_at`) y, por ejecución, el último cambio de datos de Wallet (`kind='run'`, `wallet_change_at`). Solo fechas y horas.
 - No hubo movimientos en el banco el 29/10, así que la actualización de Wallet del 30/10 (2:00–6:00) no tenía nada nuevo que traer: no cuenta como fallo.
 - Prueba: el 30/10 ~06:39 se hizo un movimiento en el banco. Comprobar a qué hora lo trae Wallet (sale primero en pendientes; entra como movimiento a los 2 días).
+- Desde el 30/10 (noche) también se guardan en `wallet_log` los nombres de los campos de cada cuenta de Wallet (`kind='keys'`) y los campos que son fechas (`kind='acct'`, el nombre del campo va en el `id`), para ver si Wallet indica su última sincronización con el banco aunque no haya movimientos nuevos. Solo se lee la API: no fuerza ninguna actualización.
 - Tras unos días: sacar el patrón de horas de Wallet (`select … from wallet_log where kind='rec' and seen_at > '2026-10-30 05:40+00'`), ajustar las horas de la tarea `sync-wallet` de pg_cron para ir justo detrás y vigilar si Wallet vuelve a quedarse parado (si pasa, valorar el plan B: importar el .xls del banco o leer los avisos de pago por correo).
 
 ## Compras por encargo pagadas en efectivo · HECHO 29/10/2026

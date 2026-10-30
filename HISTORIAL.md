@@ -2,6 +2,7 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`.
 
+- 30/10/2026 · móvil · Sincronización Wallet: registra también los campos de fecha de las cuentas (sin saldos ni números) para saber si Wallet consulta al banco aunque no haya movimientos.
 - 30/10/2026 · móvil · Dinero: movimientos 5 por defecto con «Ver más»; Tareas: cada grupo de filtros en una línea en el móvil; ordenador: paneles tipo mosaico (se encajan por alto, sin huecos). Versión v30.
 - 30/10/2026 · móvil · Prueba: movimiento hecho en el banco a las 06:39 para medir cuándo lo trae Wallet; el análisis queda en `PENDIENTES.md`.
 - 30/10/2026 · móvil · Sincronización Wallet: guarda en la tabla `wallet_log` a qué hora trae Wallet cada movimiento (solo fechas y horas) para conocer su patrón; la tabla se crea a mano con el SQL de `supabase/schema.sql` (apartado 5).

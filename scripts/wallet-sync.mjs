@@ -101,6 +101,16 @@ try {
   try {
     if (seen.length) await sb('wallet_log?on_conflict=id', { method: 'POST', body: seen, prefer: 'resolution=ignore-duplicates,return=minimal' });
     await sb('wallet_log', { method: 'POST', body: { id: 'run' + Date.now(), user_id: uid(), kind: 'run', wallet_change_at: lastChange }, prefer: 'return=minimal' });
+    // Qué datos da Wallet de cada cuenta conectada al banco: solo los nombres de los campos y los que son fechas
+    // (p. ej. una posible «última sincronización con el banco»). Nunca saldos, números ni nombres. Solo lee: no fuerza nada.
+    const t0 = Date.now(), paths = [], dates = [];
+    const walk = (o, pre, depth) => { for (const [k, v] of Object.entries(o || {})) { const pth = pre ? pre + '.' + k : k;
+      if (v && typeof v === 'object' && !Array.isArray(v) && depth < 2) walk(v, pth, depth + 1);
+      else { paths.push(pth); if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(v)) dates.push([pth, v]); } } };
+    accs.forEach((a, i) => walk(a, 'c' + i, 0));
+    const meta = [{ id: `keys|${t0}|${paths.join(',')}`.slice(0, 4000), user_id: uid(), kind: 'keys' },
+      ...dates.map(([pth, v]) => ({ id: `acct|${t0}|${pth}`, user_id: uid(), kind: 'acct', wallet_change_at: v }))];
+    await sb('wallet_log', { method: 'POST', body: meta, prefer: 'return=minimal' });
   } catch (e) { console.log('wallet_log: ' + e.message.slice(0, 120)); }
   if (st && (st.fail_count || 0) >= FAILMAX) await telegram('✅ Banco: la sincronización con Wallet vuelve a funcionar.');
   await setStatus({ last_sync: new Date().toISOString(), last_error: null, fail_count: 0 });
