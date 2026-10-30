@@ -15,8 +15,10 @@ function render(){
   theme(); nav();
   const y = window.scrollY, same = render.last === view;
   if (!same) cust = false;
+  if (!V_[view]) view = 'dia';
   $('#m').innerHTML = V_[view]();
   render.last = view;
+  try { sessionStorage.setItem('ldb-view', view); } catch(e) {}
   // «Personalizar»: las flechas y el asa para mover tarjetas solo se ven mientras está activo.
   document.body.classList.toggle('cust', cust);
   const hd = $('#m .hdr');

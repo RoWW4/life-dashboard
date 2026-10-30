@@ -1,5 +1,5 @@
 // Service worker: permite abrir el panel sin conexión (red primero, caché si falla).
-const C = 'ldb-shell-v39';
+const C = 'ldb-shell-v40';
 const SHELL = ['./', 'index.html', 'styles.css', 'icons.js', 'config.js', 'js/base.js', 'js/estado.js', 'js/facturas-calculo.js', 'js/nube.js', 'js/banco.js', 'js/interfaz.js', 'js/vistas/dia.js', 'js/vistas/tareas.js', 'js/vistas/compra.js', 'js/vistas/finanzas.js', 'js/vistas/facturas.js', 'js/vistas/salud.js', 'js/vistas/ajustes.js', 'js/render.js', 'js/formularios.js', 'js/voz.js', 'js/acciones.js', 'js/eventos.js', 'js/arranque.js', 'manifest.webmanifest', 'icons/icon-192.png'];
 
 self.addEventListener('install', e => {

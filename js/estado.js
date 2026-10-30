@@ -9,7 +9,9 @@ function normalize(o){
   return s;
 }
 let S = normalize((() => { try { return JSON.parse(localStorage.getItem(K)); } catch(e) { return null; } })());
-let view = 'dia', flt = 'pend', grp = 'area', selD = '', cm = new Date(), finOff = 0, VIS = {}, exp = {}, cust = false;
+/* Al recargar (p. ej. tirando hacia abajo en el móvil) se vuelve a la misma sección; al abrir la app de cero, Mi día. */
+const VIEW0 = (() => { try { return sessionStorage.getItem('ldb-view'); } catch(e) { return null; } })();
+let view = VIEW0 || 'dia', flt = 'pend', grp = 'area', selD = '', cm = new Date(), finOff = 0, VIS = {}, exp = {}, cust = false;
 
 /* Migraciones y limpieza. Devuelve true si cambió algo.
    El repositorio es público: aquí no van datos personales (ni semillas con nombres, importes o documentos); sus datos viven en Supabase. */
