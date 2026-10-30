@@ -66,6 +66,9 @@ const addM = (s,n) => { const [y,m,d] = s.split('-').map(Number), r = new Date(y
 const addD = (s,n) => { const [y,m,d] = s.split('-').map(Number); return iso(new Date(y,m-1,d+n)); };
 const dd = (a,b) => Math.round((new Date(a+'T00:00') - new Date(b+'T00:00'))/864e5);
 const dayDiff = s => dd(s, TD());
+/* Tarea completada hace más de 7 días (por la fecha en que se marcó; si no consta, por su fecha): deja de verse en
+   «Todas» y en el calendario, pero sigue en «Completadas». */
+const DONE_DAYS = 7, oldDone = t => t.done && (t.doneAt || t.due) && dayDiff(t.doneAt || t.due) < -DONE_DAYS;
 const nt = s => ' ' + String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim() + ' ';
 const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
 const opts = (arr,sel) => arr.map(x => `<option ${x===sel?'selected':''}>${esc(x)}</option>`).join('');

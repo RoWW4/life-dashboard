@@ -2,6 +2,7 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`.
 
+- 30/10/2026 · móvil · Tareas: al completar una se guarda la fecha; pasados 7 días deja de verse en «Todas» y en el calendario (sigue en «Completadas»). Versión v37.
 - 30/10/2026 · móvil · Movimientos: etiqueta arriba a la derecha y debajo, en una línea, importe, botón de Facturas y X. Versión v36.
 - 30/10/2026 · móvil · Movimientos: las etiquetas (banco, prepago, fijo, factura, encargo, extraordinario, ¿duplicado?) pasan arriba a la derecha, sobre el importe; filas más bajas. Versión v35.
 - 30/10/2026 · móvil · Barra inferior del móvil: todos los iconos y textos alineados a la misma altura («Más» salía más abajo y el seleccionado se desplazaba). Versión v34.

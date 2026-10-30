@@ -22,7 +22,7 @@ const A = {
   txr: () => { txf = {q:'', cat:'', per:'mes', t:''}; render(); },
   add: () => addPicker(), nt: () => taskForm(), nx: () => txForm(),
   et: i => taskForm(S.tasks.find(x => x.id===i)),
-  tt: i => { const t = S.tasks.find(x => x.id===i); t.done = !t.done;
+  tt: i => { const t = S.tasks.find(x => x.id===i); t.done = !t.done; if (t.done) t.doneAt = TD(); else delete t.doneAt;
     if (t.done && t.rep && t.due) { const nd = nextDue(t.due, t.rep); if (!S.tasks.some(x => !x.done && x.title===t.title && x.due===nd)) { S.tasks.push({id:id(), title:t.title, due:nd, pr:t.pr, area:t.area, rep:t.rep, tm:t.tm||'', done:false}); toast('🔁 Próxima: '+fd(nd)); } }
     ch(); },
   dt: i => CF('¿Eliminar esta tarea definitivamente?', () => { S.tasks = S.tasks.filter(x => x.id!==i); ch(); }),

@@ -141,7 +141,7 @@ function calHTML(){
     const tip = [...h.map(x => x.n), ...v.map(x => x.name), sTip(k)].filter(Boolean).join(' · ');
     c += `<button class="${k===TD()?'t':''} ${k===sd?'sel':''} ${h.length?'hol':''} ${v.length?'vac':''} ${sm.has(k)?'sal':''}"data-a="sd" data-i="${k}" aria-label="${fd(k)}${tip?' · '+esc(tip):''}" ${tip?`title="${esc(tip)}"`:''}>${d}<span class="dots">${'<i></i>'.repeat(Math.min(q,3))}${b?'<i class="b"></i>':''}</span></button>`;
   }
-  const dl = S.tasks.filter(t => t.due===sd).sort((a,b) => (a.tm||'').localeCompare(b.tm||'')), bl = fxOn(sd).map(f => ({f, d:sd})), hl = holOn(sd), vl = perOn(sd);
+  const dl = S.tasks.filter(t => t.due===sd && !oldDone(t)).sort((a,b) => (a.tm||'').localeCompare(b.tm||'')), bl = fxOn(sd).map(f => ({f, d:sd})), hl = holOn(sd), vl = perOn(sd);
   const sl = sm.has(sd) ? `<div class="row">${tile('heart-pulse','#ff5d5d')}<span class="g">${sTip(sd)}</span></div>` : '';
   const day = hl.map(holRow).join('') + sl + vl.map(perRow).join('') + dl.map(taskRow).join('') + bl.map(fxRow).join('');
   return `<div class="calh"><button class="ib" data-a="pm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b>${cap(new Intl.DateTimeFormat('es-ES',{month:'long',year:'numeric'}).format(cm))}</b><button class="ib" data-a="pm" data-i="1" aria-label="Mes siguiente">${I('chevron-right')}</button></div><div class="cal">${c}</div><div class="calk"><span><i class="kh"></i>Festivo</span><span><i class="kv"></i>Vacaciones</span>${sm.size?'<span><i class="ks"></i>Salud</span>':''}<span><i class="kt"></i>Tareas</span><span><i class="kb"></i>Facturas</span></div><div class="dh">${sd===TD()?'Hoy':rel(sd)} · ${fd(sd)}</div>${day || empty('Nada este día.')}`;

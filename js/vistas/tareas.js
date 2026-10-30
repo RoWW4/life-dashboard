@@ -1,7 +1,7 @@
 'use strict';
 /* Sección «Tareas». */
 function vTareas(){
-  const l = S.tasks.filter(t => flt==='todas' || (flt==='pend' ? !t.done : flt==='hecha' ? t.done : (!t.done && t.pr===flt)));
+  const l = S.tasks.filter(t => (flt==='todas' && !oldDone(t)) || (flt==='pend' ? !t.done : flt==='hecha' ? t.done : (!t.done && t.pr===flt)));
   const so = a => a.sort((x,y) => ((x.due||'9')+(x.tm||'')).localeCompare((y.due||'9')+(y.tm||'')));
   let body = '';
   if (grp === 'area') {
