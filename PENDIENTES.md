@@ -7,14 +7,14 @@ Cosas que quiere cambiar la dueña del panel más adelante. **No hacerlas hasta 
 - [x] Bandeja «Sin clasificar» (hecho 28/10/2026).
 - [x] «Disponible» descontando facturas pendientes (hecho 28/10/2026).
 - [x] Ficha para editar un movimiento (hecho 28/10/2026).
-- [ ] Movimientos compactos en el móvil y orden de tarjetas: resumen → por categoría → movimientos.
+- [x] Movimientos: 5 por defecto y «Ver más» (hecho 30/10/2026). Lo de compactarlos y reordenar tarjetas, descartado.
 - [x] Mi día más corta en el móvil (hecho 29/10/2026).
 - [x] Botón «Personalizar» para mover tarjetas (hecho 29/10/2026).
-- [ ] «Deshacer» de unos segundos en vez de la papelera/X que se toca sin querer.
-- [ ] Móvil: filtros de Tareas en una línea, Inversiones dentro de Finanzas (lo del calendario como tira de la semana, descartado).
+- [x] Móvil: filtros de Tareas en una línea (hecho 30/10/2026).
+- [ ] Móvil: Inversiones dentro de Finanzas (lo del calendario como tira de la semana, descartado; la X de borrar se queda como está).
 - [x] Tarea de cumpleaños repetida (hecho 28/10/2026).
 - [ ] Ajustes: los paneles de Festivos y Vacaciones son demasiado largos; mostrar solo los 3 primeros y un «Ver más».
-- [ ] Ordenador: paneles colocados tipo «masonry» (se encajan por columnas según su altura) en vez de filas de la misma altura, para que no queden huecos grandes entre paneles largos y cortos.
+- [x] Ordenador: paneles tipo mosaico (hecho 30/10/2026).
 - [x] Calendario: intercambiar estilos de Salud y festivos (hecho 29/10/2026).
 - Técnico (sin prisa): evitar perder cambios si se edita a la vez en móvil y ordenador; podar datos antiguos.
 

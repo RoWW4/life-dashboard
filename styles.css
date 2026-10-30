@@ -58,6 +58,13 @@ h2{margin:0;font-size:27px;letter-spacing:-.025em;line-height:1.2}
 .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}
 .f.inl{flex-wrap:nowrap}.f.inl input{min-width:0!important}
 .card.wide{grid-column:1/-1}
+/* Mosaico (ordenador): filas de 8 px; cada tarjeta ocupa las que mide (ver masonry() en render.js). */
+.grid.maso,.grid2.maso{grid-auto-rows:8px;row-gap:0}
+.grid.maso>*,.grid2.maso>*{margin-bottom:16px}
+/* Tareas: cada grupo de filtros en una sola línea (en el móvil, botones más estrechos para que quepan). */
+.toolbar.one .seg{flex-wrap:nowrap;max-width:100%}
+.toolbar.one .seg button{white-space:nowrap}
+@media(max-width:760px){.toolbar.one .seg button{padding:5px 7px;font-size:12.5px}}
 .card h3{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--mu);display:flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:.05em}
 .card h3 .t{flex:1;min-width:0;display:block;line-height:1.45}
 .card h3 .t>.i,.card h3 .t>span:first-child>.i{margin-right:5px}

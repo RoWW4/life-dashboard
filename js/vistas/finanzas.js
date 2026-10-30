@@ -82,11 +82,11 @@ const mLabel = m => cap(new Intl.DateTimeFormat('es-ES',{month:'long',year:'nume
 const concept = x => String(x.desc||x.cat).split(' · ')[0].trim();
 const yearly = f => f.once ? 0 : f.amt * (f.month ? 1 : f.every ? 12/f.every : 12*(f.days ? f.days.length : 1));
 let txf = {q:'', cat:'', per:'mes', t:''};
-/* Movimientos por tandas: 10 en el móvil y 40 en el ordenador; «Ver más» añade otra tanda. Se vuelve a empezar al cambiar filtros o mes. */
+/* Movimientos: 5 al principio; «Ver más» añade una tanda (10 en el móvil, 40 en el ordenador). Se vuelve a empezar al cambiar filtros o mes. */
 let txN = 0, txK = '';
 function txMore(rows){
   const step = matchMedia('(max-width:760px)').matches ? 10 : 40, k = JSON.stringify(txf) + finMonth();
-  if (k !== txK || !txN) { txK = k; txN = step; }
+  if (k !== txK || !txN) { txK = k; txN = 5; }
   const more = rows.length - txN;
   return rows.slice(0, txN).join('') + (more > 0 ? `<button class="morebtn" data-a="txm">${I('chevron-down')}Ver ${Math.min(step, more)} más${more > step ? ` <span class="mu">· quedan ${more}</span>` : ''}</button>` : '');
 }

@@ -24,7 +24,24 @@ function render(){
     let a = hd.querySelector('.hact'); if (!a) { a = document.createElement('div'); a.className = 'hact'; hd.appendChild(a); }
     a.insertAdjacentHTML('afterbegin', `<button class="btn ${cust?'':'ghost'}" data-a="cust" aria-pressed="${cust}">${I(cust?'check':'grip-vertical')} ${cust?'Listo':'Personalizar'}</button>`);
   }
+  masonry();
   if (!same) window.scrollTo(0,0); else window.scrollTo(0,y);
 }
+/* Ordenador: paneles tipo mosaico. La rejilla tiene filas de 8 px y cada tarjeta ocupa las filas que mide, así las
+   cortas se encajan bajo otras sin dejar huecos. Un ResizeObserver lo recalcula al abrir, plegar o cargar más. */
+const MQD = matchMedia('(min-width:761px)');
+const masoRO = 'ResizeObserver' in window ? new ResizeObserver(es => es.forEach(e => masoFit(e.target))) : null;
+function masoFit(c){
+  if (!MQD.matches || !c.parentElement || !c.parentElement.classList.contains('maso')) { c.style.gridRowEnd = ''; return; }
+  const n = Math.ceil((c.getBoundingClientRect().height + 16) / 8);
+  if (c.style.gridRowEnd !== 'span ' + n) c.style.gridRowEnd = 'span ' + n;
+}
+function masonry(){
+  document.querySelectorAll('#m .grid, #m .grid2').forEach(g => {
+    g.classList.toggle('maso', MQD.matches);
+    [...g.children].forEach(c => { masoFit(c); if (masoRO) masoRO.observe(c); });
+  });
+}
+MQD.addEventListener && MQD.addEventListener('change', masonry);
 const ch = () => { save(); render(); };
 

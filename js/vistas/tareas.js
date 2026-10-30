@@ -17,7 +17,7 @@ function vTareas(){
   }
   const segF = [['pend','Pendientes'],['hecha','Completadas'],['todas','Todas'],['Urgente','Urgentes'],['Alta','Alta']];
   return `<div class="hdr"><div><h2>Tareas</h2><div class="sub">Marca el cuadrado para completar · toca el título para editar · las repetitivas generan la siguiente</div></div><button class="btn" data-a="nt">${I('plus')} Nueva tarea</button></div>
-  <div class="toolbar"><div class="seg">${[['area','Por área'],['fecha','Por fecha']].map(([k,n]) => `<button class="${grp===k?'on':''}" data-a="gp" data-i="${k}">${n}</button>`).join('')}</div><div class="seg">${segF.map(([k,n]) => `<button class="${flt===k?'on':''}" data-a="fl" data-i="${k}">${n}</button>`).join('')}</div></div>
+  <div class="toolbar one"><div class="seg">${[['area','Por área'],['fecha','Por fecha']].map(([k,n]) => `<button class="${grp===k?'on':''}" data-a="gp" data-i="${k}">${n}</button>`).join('')}</div><div class="seg">${segF.map(([k,n]) => `<button class="${flt===k?'on':''}" data-a="fl" data-i="${k}">${n}</button>`).join('')}</div></div>
   ${body || `<div class="card">${empty('No hay tareas aquí.')}</div>`}`;
 }
 
