@@ -2,6 +2,7 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`.
 
+- 30/10/2026 · móvil · Sincronización Wallet: guarda en la tabla `wallet_log` a qué hora trae Wallet cada movimiento (solo fechas y horas) para conocer su patrón; la tabla se crea a mano con el SQL de `supabase/schema.sql` (apartado 5).
 - 30/10/2026 · móvil · Wallet reconectado con el banco el 29/10 sobre las 16:00; desde entonces vuelve a traer movimientos. Se comprueba en los próximos días si aguanta.
 - 29/10/2026 · ordenador · Finanzas: marca «Encargo» para compras hechas para otra persona que paga en mano; no cuenta en el gasto del mes ni en las medias (se pone en la ficha del movimiento, en «Sin clasificar» o tocando la etiqueta).
 - 29/10/2026 · ordenador · Privacidad: historial de GitHub empezado de cero (los cambios antiguos tenían datos personales) y los registros públicos de los robots ya solo dicen cuántos avisos o movimientos, sin nombres.

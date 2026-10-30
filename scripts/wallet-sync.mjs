@@ -9,11 +9,13 @@ const DAYS = +(process.env.DAYS_BACK || 14);
 const FAILMAX = 3; // fallos pasajeros seguidos antes de dar la ejecución por fallida (y que GitHub mande correo)
 const day = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
 
+let lastChange = null; // cabecera X-Last-Data-Change-At de la API: último cambio de datos en Wallet
 async function wallet(path, params = {}) {
   let r, t;
   try {
     r = await fetch(`${API}/${path}?${new URLSearchParams(params)}`, { headers: { Authorization: 'Bearer ' + env('WALLET_TOKEN') } });
     t = await r.text();
+    const ch = r.headers.get('x-last-data-change-at'); if (ch) lastChange = ch;
   } catch (e) { r = { ok: false, status: 0 }; t = 'Fallo de red: ' + e.message; }
   if (!r.ok) {
     const err = new Error(`Wallet GET /${path} → ${r.status}: ${t.slice(0, 300)}`);
@@ -53,13 +55,15 @@ const st = await getStatus().catch(() => null);
 try {
   const accs = (await all('accounts', 'accounts', {})).filter(a => a.isBankSync && !a.archived);
   if (!accs.length) throw Object.assign(new Error('En Wallet no hay ninguna cuenta conectada al banco.'), { status: -1 });
-  const from = day(DAYS), rows = new Map(), pend = new Map();
+  const from = day(DAYS), rows = new Map(), pend = new Map(), seen = [];
   const recs = await all('records', 'records', { accountId: accs.map(a => a.id).join(','), recordDate: 'gte.' + from, sortBy: '+recordDate' });
 
   for (const x of recs) {
     const amount = +(x.amount && x.amount.value);
     if (!amount) continue;
     const date = String(x.recordDate || '').slice(0, 10);
+    // Para saber cuándo trae Wallet los movimientos del banco: solo fechas y horas, sin importes ni conceptos.
+    seen.push({ id: 'r' + crypto.createHash('sha1').update(String(x.id)).digest('hex').slice(0, 24), user_id: uid(), kind: 'rec', booking_date: date || null, wallet_created_at: x.createdAt || null });
     const desc = [x.counterParty, x.note].filter(Boolean).join(' · ').replace(/\s+/g, ' ').trim();
     const acc = String(x.accountId || '').slice(-6);
     // Wallet deja como «uncleared» (No liquidado) casi todo lo de Openbank, aunque el banco ya lo haya cobrado. Solo lo
@@ -93,6 +97,11 @@ try {
   if (rows.size) await sb('bank_tx?on_conflict=id', { method: 'POST', body: [...rows.values()], prefer: 'resolution=ignore-duplicates,return=minimal' });
   await sb(`bank_pending?user_id=eq.${uid()}`, { method: 'DELETE', prefer: 'return=minimal' });
   if (pend.size) await sb('bank_pending', { method: 'POST', body: [...pend.values()], prefer: 'return=minimal' });
+  // Registro de horas (tabla wallet_log). Si la tabla no existe o falla, no afecta a la sincronización.
+  try {
+    if (seen.length) await sb('wallet_log?on_conflict=id', { method: 'POST', body: seen, prefer: 'resolution=ignore-duplicates,return=minimal' });
+    await sb('wallet_log', { method: 'POST', body: { id: 'run' + Date.now(), user_id: uid(), kind: 'run', wallet_change_at: lastChange }, prefer: 'return=minimal' });
+  } catch (e) { console.log('wallet_log: ' + e.message.slice(0, 120)); }
   if (st && (st.fail_count || 0) >= FAILMAX) await telegram('✅ Banco: la sincronización con Wallet vuelve a funcionar.');
   await setStatus({ last_sync: new Date().toISOString(), last_error: null, fail_count: 0 });
   if (rows.size) {

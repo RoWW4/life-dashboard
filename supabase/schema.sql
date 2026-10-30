@@ -74,3 +74,20 @@ create table if not exists public.task_reminders (
   primary key (user_id, key)
 );
 alter table public.task_reminders enable row level security;
+
+-- 5) Registro de cuándo Wallet trae cada movimiento y cuándo lo ve la sincronización (sin importes ni conceptos)
+create table if not exists public.wallet_log (
+  id text primary key,
+  user_id uuid not null references auth.users on delete cascade,
+  kind text not null,                 -- 'rec' (movimiento de Wallet) | 'run' (cada sincronización)
+  booking_date date,
+  wallet_created_at timestamptz,      -- cuándo lo creó Wallet al traerlo del banco
+  wallet_change_at timestamptz,       -- último cambio de datos en Wallet (cabecera de la API)
+  seen_at timestamptz not null default now()
+);
+create index if not exists wallet_log_user_kind on public.wallet_log (user_id, kind, seen_at);
+alter table public.wallet_log enable row level security;
+drop policy if exists "wallet_log leer propio" on public.wallet_log;
+create policy "wallet_log leer propio" on public.wallet_log for select using (auth.uid() = user_id);
+grant select on public.wallet_log to authenticated;
+grant all on public.wallet_log to service_role;
