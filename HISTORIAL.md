@@ -2,6 +2,7 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`.
 
+- 30/10/2026 · móvil · Movimientos: las etiquetas (banco, prepago, fijo, factura, encargo, extraordinario, ¿duplicado?) pasan arriba a la derecha, sobre el importe; filas más bajas. Versión v35.
 - 30/10/2026 · móvil · Barra inferior del móvil: todos los iconos y textos alineados a la misma altura («Más» salía más abajo y el seleccionado se desplazaba). Versión v34.
 - 30/10/2026 · móvil · Gasto del mes: quitado el «≈ € al día». Versión v33.
 - 30/10/2026 · móvil · Mi día: quitados los indicadores «Para hoy» y «Disponible» (ya salen en «Lo más importante» y en Gasto del mes). Gasto del mes rediseñado igual en Mi día y Finanzas: anillo, total con una sola línea (% del tope y €/día) y categorías en filas (5 y «Ver más»; dos columnas en el ordenador); fuera el gráfico de ritmo de gasto. Versión v32.

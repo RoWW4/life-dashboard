@@ -355,3 +355,9 @@ input[type=checkbox].ck:checked::after{content:'';width:6px;height:11px;border:s
 .kpis.two{grid-template-columns:1fr 1fr}
 @media(max-width:760px){.gxi{align-items:center;min-width:100%}}
 @media(min-width:761px){.gls{display:grid;grid-template-columns:1fr 1fr;column-gap:36px}.gls .morebtn,.gls>.mu{grid-column:1/-1}.gl:last-of-type{border-bottom:1px solid var(--bd)}}
+
+/* Movimientos: etiquetas (banco, fijo, encargo…) arriba a la derecha, sobre el importe, para que la fila sea más baja */
+.txr{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none;max-width:46%}
+.txc{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px}
+.txc:empty{display:none}
+.txc .chip{font-size:10.5px;padding:1px 6px}
