@@ -361,3 +361,6 @@ input[type=checkbox].ck:checked::after{content:'';width:6px;height:11px;border:s
 .txc{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px}
 .txc:empty{display:none}
 .txc .chip{font-size:10.5px;padding:1px 6px}
+.txr{max-width:60%}
+.txb{display:flex;align-items:center;gap:2px}
+.txb .amt{margin-right:4px}
