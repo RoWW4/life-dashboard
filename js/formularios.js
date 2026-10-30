@@ -67,9 +67,10 @@ function fixedForm(f, isNew){
     <div class="two"><label>Se repite<select id="ff6">${opts(['Mensual','Trimestral','Semestral','Anual','Única','Variable'], fq)}</select></label><label>Categoría<select id="ff4">${opts(CATS, f.cat)}</select></label></div>
     <div class="two"><label class="r-d">Día del mes<input id="ff3" value="${f.days ? f.days.join(', ') : f.day||1}"></label><label class="r-m">Mes<select id="ff7">${opt(MS.slice(1).map((n,i) => [i+1, n]), f.month||+TD().slice(5,7))}</select></label><label class="r-o">Fecha<input id="ff8" type="date" value="${f.once||''}"></label></div>
     <div class="mu r-v">Variable: varios cargos al mes sin día fijo (p. ej. gasolina). Pon en Importe lo que sueles gastar al mes; se juntan todos los cargos del banco con este nombre.</div>
+    <label class="r-v">También reconoce (palabras separadas por comas)<input id="ff9" value="${esc((f.kx||[]).join(', '))}" placeholder="Ej. gasolina, repsol"></label>
     <label class="r-f">Empieza en<input id="ff5" type="month" value="${f.from||''}"></label>
     <div class="mu">Mientras no llegue el mes de inicio sale como previsto y no cuenta como gasto. Vacío = ya se está cobrando. Cuando llega el cargo del banco se marca como pagado solo.</div></div><div class="acts">${isNew?'':`<button class="btn ghost" data-a="df" data-i="${f.id}">${I('trash-2')} Quitar</button>`}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`);
-  const v = s => o.querySelector(s).value.trim(), sh = () => { const q = v('#ff6'); o.querySelector('.r-d').hidden = q==='Única' || q==='Variable'; o.querySelector('.r-m').hidden = q!=='Anual'; o.querySelector('.r-o').hidden = q!=='Única'; o.querySelector('.r-f').hidden = q==='Única'; o.querySelector('.r-v').hidden = q!=='Variable'; };
+  const v = s => o.querySelector(s).value.trim(), sh = () => { const q = v('#ff6'); o.querySelector('.r-d').hidden = q==='Única' || q==='Variable'; o.querySelector('.r-m').hidden = q!=='Anual'; o.querySelector('.r-o').hidden = q!=='Única'; o.querySelector('.r-f').hidden = q==='Única'; o.querySelectorAll('.r-v').forEach(e => e.hidden = q!=='Variable'); o.querySelector('.r-v').hidden = q!=='Variable'; };
   o.querySelector('#ff6').onchange = sh; sh();
   o.querySelectorAll('[data-a="df"]').forEach(b => b.addEventListener('click', () => o.remove()));
   o.querySelector('#ok').onclick = () => {
@@ -79,11 +80,12 @@ function fixedForm(f, isNew){
     // Movimientos apuntados a mano antes del nuevo inicio (los del banco no se tocan).
     const old = fr && !isNew ? S.tx.filter(x => x.fid===f.id && !fromBank(x) && mon(x.date) < fr) : [];
     const done = () => {
-      ['day','days','month','every','once','from','var'].forEach(k => delete f[k]);
+      ['day','days','month','every','once','from','var','kx'].forEach(k => delete f[k]);
       Object.assign(f, {name:n, amt:a, t:v('#ff0'), cat:v('#ff4')});
       if (q==='Variable') { f.var = true; if (fr) f.from = fr; if (!f.k) f.k = nt(n).trim();
-        // Los cargos del banco de los últimos meses con ese concepto quedan enlazados.
-        S.tx.forEach(x => { if (!x.fid && fromBank(x) && x.t===f.t && x.date >= mAdd(MN(new Date()),-5)+'-01' && nt(concept(x)).includes(' '+f.k+' ')) x.fid = f.id; }); }
+        const kx = v('#ff9').split(',').map(w => nt(w).trim()).filter(w => w && w!==f.k); if (kx.length) f.kx = kx;
+        // Los cargos de los últimos meses con alguna de esas palabras quedan enlazados (del banco o apuntados a mano).
+        S.tx.forEach(x => { if (!x.fid && !x.billId && x.t===f.t && x.date >= mAdd(MN(new Date()),-5)+'-01' && fxHas(f, nt(concept(x)))) x.fid = f.id; }); }
       else if (q==='Única') { f.once = v('#ff8'); f.from = mon(f.once); }
       else { if (ds.length > 1) f.days = ds; else f.day = ds[0];
         if (q==='Anual') f.month = +v('#ff7');

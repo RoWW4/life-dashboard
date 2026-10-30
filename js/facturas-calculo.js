@@ -36,11 +36,14 @@ const fxLive = f => !f.until || f.until >= TD();
 const fxStarted = f => !f.once && !(f.from && f.from > MN(new Date()));
 /* Pagos que piden atención en los próximos n días (o atrasados en el último mes). */
 const fxDue = n => S.fixed.filter(f => f.t==='g' && fxLive(f)).map(f => ({f, d:fxState(f).due})).filter(o => o.d && dayDiff(o.d) <= n).sort((a,b) => a.d.localeCompare(b.d));
+/* Palabras con las que un pago reconoce sus cargos: la principal (f.k) y, en los variables, las extra (f.kx). */
+const fxWords = f => [f.k, ...(f.kx||[])].filter(Boolean);
+const fxHas = (f, c) => fxWords(f).some(w => c.includes(' '+w+' '));
 /* Un movimiento nuevo del banco: si es un pago de la lista, se enlaza con él (y aprende su concepto). */
 function fxMatch(x){
   if (x.fid || x.cat===NOCNT) return;
   const c = nt(concept(x));
-  const f = S.fixed.find(f => f.t===x.t && f.k && c.includes(' '+f.k+' '))
+  const f = S.fixed.find(f => f.t===x.t && f.k && fxHas(f, c))
     || S.fixed.find(f => f.t===x.t && !f.k && f.cat===x.cat && Math.abs(f.amt-x.amt) <= f.amt*0.1 && fxOcc(f, addD(x.date,-6), addD(x.date,6)).length)
     || S.fixed.find(f => f.t===x.t && !f.k && Math.abs(f.amt-x.amt) < 0.01 && fxOcc(f, addD(x.date,-3), addD(x.date,3)).length);  // mismo importe exacto aunque el banco le ponga otra categoría
   if (!f || (!f.var && S.tx.some(y => y!==x && y.fid===f.id && Math.abs(dd(y.date,x.date)) <= 10))) return;
