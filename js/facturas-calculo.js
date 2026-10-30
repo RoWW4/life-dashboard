@@ -7,6 +7,8 @@
    La app no apunta gastos sola: un pago está hecho cuando hay un movimiento con su fid (del banco o marcado a mano). */
 const mIdx = m => +m.slice(0,4)*12 + +m.slice(5,7);
 const fxFq = f => f.var ? 'Variable' : f.once ? 'Única' : f.every===3 ? 'Trimestral' : f.every===6 ? 'Semestral' : f.month ? 'Anual' : 'Mensual';
+/* Solo la frecuencia, sin día ni categoría (para las filas de Facturas). */
+const fxFreq = f => f.var ? 'sin día fijo' : f.once ? 'una vez' : f.month ? 'anual' : f.every ? 'cada '+f.every+' meses' : 'mensual';
 const fxWhen = f => { if (f.var) return 'sin día fijo · cada mes'; const d = f.days ? 'días '+f.days.join(', ') : 'día '+(f.day||1); return f.once ? 'una vez · '+fd(f.once) : f.month ? 'anual · '+(f.day||1)+' de '+MS[f.month] : f.every ? 'cada '+f.every+' meses · '+d : 'mensual · '+d; };
 /* Fechas de cobro previstas entre a y b (AAAA-MM-DD). */
 function fxOcc(f, a, b){

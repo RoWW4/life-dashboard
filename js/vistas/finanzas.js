@@ -148,7 +148,7 @@ function vFin(){
   const txm = S.tx.filter(x => mon(x.date)===m);
   const incL = income(m), inc = incL.reduce((a,x) => a+x.amt, 0), sp = spent(m), ps = spent(pm), cats = byCat(m), mx = Math.max(1, ...cats.map(c => c[1]));
   const ml = mLabel(m);
-  return `<div class="hdr"><div><h2>Finanzas</h2><div class="sub">${user&&BANK&&BANK.session_id?`${I('landmark','sm')} Conectado al banco · ${ago(BANK.last_sync)}`:'Movimientos manuales, fijos e importados'}</div></div><div class="hact"><button class="btn ghost sm ico" data-a="fm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b style="min-width:130px;text-align:center">${ml}</b><button class="btn ghost sm ico" data-a="fm" data-i="1" aria-label="Mes siguiente" ${finOff>=0?'disabled style="opacity:.4"':''}>${I('chevron-right')}</button><button class="btn" data-a="nx">${I('plus')} Movimiento</button></div></div>
+  return `<div class="hdr"><div><h2>Finanzas</h2><div class="sub help">${user&&BANK&&BANK.session_id?`${I('landmark','sm')} Conectado al banco · ${ago(BANK.last_sync)}`:'Movimientos manuales, fijos e importados'}</div></div><div class="hact"><button class="btn ghost sm ico" data-a="fm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b style="min-width:130px;text-align:center">${ml}</b><button class="btn ghost sm ico" data-a="fm" data-i="1" aria-label="Mes siguiente" ${finOff>=0?'disabled style="opacity:.4"':''}>${I('chevron-right')}</button><button class="btn" data-a="nx">${I('plus')} Movimiento</button></div></div>
   <div class="kpis">
     <div class="kpi"><span class="k">${I('arrow-up-right')} Ingresos</span><span class="v ok">${eur(inc)}</span><span class="d">${incL.length} movimientos</span></div>
     <div class="kpi"><span class="k">${I('arrow-down-left')} Gastos</span><span class="v">${eur(sp)}</span><span class="d ${sp>ps?'wa':'ok'}">${I(sp>ps?'trending-up':'trending-down','sm')} ${eur(Math.abs(sp-ps))} vs mes anterior</span></div>
@@ -170,7 +170,7 @@ function vFin(){
 function vInv(){
   const C = {ahorro: savCard()};
   VIS.inv = ord('inv', ['ahorro']);
-  return `<div class="hdr"><div><h2>Inversiones</h2><div class="sub">Tus ahorros y lo que rinden · los importes se muestran con el ojo</div></div></div>
+  return `<div class="hdr"><div><h2>Inversiones</h2><div class="sub help">Tus ahorros y lo que rinden · los importes se muestran con el ojo</div></div></div>
   <div class="grid">${VIS.inv.map(k => C[k]).join('')}</div>`;
 }
 

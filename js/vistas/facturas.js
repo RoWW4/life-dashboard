@@ -8,10 +8,10 @@ const fxItem = f => { if (f.var) return fxVarItem(f); const s0 = fxState(f), lat
     : pm ? `<span class="chip">${f.t==='i'?'por cobrar':'pendiente'} · ${fd(s.next)}</span>`
     : s.paid ? `<span class="chip ok">${f.t==='i'?'cobrado':'pagado'} ${fd(s.paid.date)}</span>`
     : s.next ? `<span class="chip">${f.once?'vence':fxStarted(f)||f.month||f.every?'próximo':'empieza'} ${fd(s.next)}</span>` : '<span class="chip">terminado</span>';
-  return `<div class="row brow">${tile(CI[f.cat]||'receipt', col(f.cat))}<span class="g"><span class="tt">${esc(f.name)}</span><br><span class="mu">${fxWhen(f)}${f.t==='g'?' · '+esc(f.cat):''}${s.paid?(fromBank(s.paid)?' · llegó del banco':' · apuntado en el panel, aún sin cargo del banco')+(s.next && Math.abs(dd(s.paid.date, s.next)) > 10 ? ' · próximo '+fd(s.next) : ''):''}</span></span>${chip}<span class="amt ${f.t==='i'?'ok':''}">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`; };
+  return `<div class="row brow">${tile(CI[f.cat]||'receipt', col(f.cat))}<span class="g"><span class="tt">${esc(f.name)}</span><br><span class="mu">${fxFreq(f)}${s.paid?(fromBank(s.paid)?' · llegó del banco':' · apuntado en el panel, aún sin cargo del banco')+(s.next && Math.abs(dd(s.paid.date, s.next)) > 10 ? ' · próximo '+fd(s.next) : ''):''}</span></span>${chip}<span class="amt ${f.t==='i'?'ok':''}">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`; };
 /* Fila de un pago variable: lo que lleva este mes frente a lo previsto. */
 const fxVarItem = f => { const v = fxVar(f, MN(new Date()));
-  return `<div class="row brow">${tile(CI[f.cat]||'receipt', col(f.cat))}<span class="g"><span class="tt">${esc(f.name)}</span><br><span class="mu">${fxWhen(f)} · ${esc(f.cat)} · ${v.n} cargo${v.n===1?'':'s'} este mes</span></span><span class="chip ${v.s>=f.amt?'ok':''}">llevas ${eur(v.s)}</span><span class="amt">≈ ${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`; };
+  return `<div class="row brow">${tile(CI[f.cat]||'receipt', col(f.cat))}<span class="g"><span class="tt">${esc(f.name)}</span><br><span class="mu">${fxFreq(f)} · ${v.n} cargo${v.n===1?'':'s'} este mes</span></span><span class="chip ${v.s>=f.amt?'ok':''}">llevas ${eur(v.s)}</span><span class="amt">≈ ${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`; };
 /* Pagos de Facturas de este mes: total previsto (lo real si ya llegó), lo pagado y la lista (incluye lo atrasado del mes anterior). */
 function fxMonth(){
   const now = new Date(), m = MN(now), a = m+'-01', b = m+'-'+p2(new Date(now.getFullYear(), now.getMonth()+1, 0).getDate());
@@ -42,7 +42,7 @@ function vFact(){
     ing: ings.length && panel('fact','ing',`${I('wallet')} Ingresos`, by(ings, f => fxState(f).due) + `<div class="mu" style="margin-top:8px">En ${mes} quedan libres <b class="ok">${eur(ingm-tot)}</b> (ingresos ${eur(ingm)} − pagos ${eur(tot)})</div>`, 'wide'),
     pag: panel('fact','pag',`${I('receipt')} Pagos <span class="cnt">· ${mes}: ${eur(tot)}</span>`, pays.length ? pag : empty('Sin pagos todavía.'), 'wide') };
   VIS.fact = ord('fact', ['det','ing','pag'].filter(k => C[k]));
-  return `<div class="hdr"><div><h2>Facturas</h2><div class="sub">Pagos e ingresos que se repiten. Se marcan como pagados solos cuando llega el cargo del banco; la app ya no apunta gastos por su cuenta.</div></div><div class="hact"><button class="btn" data-a="fxn">${I('plus')} Añadir</button></div></div>
+  return `<div class="hdr"><div><h2>Facturas</h2><div class="sub help">Pagos e ingresos que se repiten. Se marcan como pagados solos cuando llega el cargo del banco; la app ya no apunta gastos por su cuenta.</div></div><div class="hact"><button class="btn" data-a="fxn">${I('plus')} Añadir</button></div></div>
   <div class="grid">${VIS.fact.map(k => C[k]).join('')}</div>`;
 }
 

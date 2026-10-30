@@ -20,10 +20,10 @@ function render(){
   // «Personalizar»: las flechas y el asa para mover tarjetas solo se ven mientras está activo.
   document.body.classList.toggle('cust', cust);
   const hd = $('#m .hdr');
-  if (hd && (VIS[view]||[]).length > 1) {
-    let a = hd.querySelector('.hact'); if (!a) { a = document.createElement('div'); a.className = 'hact'; hd.appendChild(a); }
-    a.insertAdjacentHTML('afterbegin', `<button class="btn ${cust?'':'ghost'}" data-a="cust" aria-pressed="${cust}">${I(cust?'check':'grip-vertical')} ${cust?'Listo':'Personalizar'}</button>`);
-  }
+  // Botón pequeño junto al título (icono); activo, muestra «Listo».
+  const h2 = hd && hd.querySelector('h2');
+  if (h2 && (VIS[view]||[]).length > 1)
+    h2.insertAdjacentHTML('beforeend', `<button class="ib custb ${cust?'on':''}" data-a="cust" aria-pressed="${cust}" aria-label="${cust?'Listo':'Personalizar: mover tarjetas'}" title="${cust?'Listo':'Personalizar: mover tarjetas'}">${I(cust?'check':'grip-vertical')}</button>`);
   masonry();
   if (!same) window.scrollTo(0,0); else window.scrollTo(0,y);
 }
@@ -45,3 +45,10 @@ function masonry(){
 MQD.addEventListener && MQD.addEventListener('change', masonry);
 const ch = () => { save(); render(); };
 
+
+/* Móvil: los botones + y micrófono se esconden al bajar (para no tapar contenido) y vuelven al subir o al llegar arriba. */
+(() => { let ly = window.scrollY;
+  window.addEventListener('scroll', () => { const f = document.querySelector('.fabs'); if (!f) return; const y = window.scrollY;
+    if (!matchMedia('(max-width:760px)').matches || y < 80) f.classList.remove('off');
+    else if (Math.abs(y - ly) > 6) f.classList.toggle('off', y > ly);
+    ly = y; }, {passive:true}); })();

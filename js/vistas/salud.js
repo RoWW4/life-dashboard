@@ -41,6 +41,6 @@ function vSalud(){
     conf: panel('salud','conf',`${I('settings')} Duración habitual`, `<div class="fs"><label>Días entre un inicio y el siguiente<input id="sa2" type="number" min="15" max="60" value="${st.len}"></label><div class="mu">Se usa mientras no haya al menos dos fechas apuntadas.</div><label>Días que se marcan en el calendario<input id="sa3" type="number" min="1" max="10" value="${st.dur}"></label></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-a="sal">Guardar</button></div>`)
   };
   VIS.salud = ord('salud', ['seg','conf']);
-  return `<div class="hdr"><div><h2>Salud</h2><div class="sub">Privado: las fechas solo se guardan en tu cuenta.</div></div></div>
+  return `<div class="hdr"><div><h2>Salud</h2><div class="sub help">Privado: las fechas solo se guardan en tu cuenta.</div></div></div>
   <div class="grid2">${VIS.salud.map(k => C[k]).join('')}</div>`;
 }

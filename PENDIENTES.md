@@ -18,6 +18,12 @@ Cosas que quiere cambiar la dueña del panel más adelante. **No hacerlas hasta 
 - [x] Calendario: intercambiar estilos de Salud y festivos (hecho 29/10/2026).
 - Técnico (sin prisa): evitar perder cambios si se edita a la vez en móvil y ordenador; podar datos antiguos.
 
+## Ideas de la revisión del 30/10/2026 (pendientes de decidir)
+- Movimientos en el móvil: fila solo con icono, concepto, fecha e importe (la categoría se cambia desde la ficha).
+- Barra inferior del móvil: cambiar Inversión por Compra (se puede elegir en Ajustes).
+- Gráficos: ingresos y gastos de 6 meses con ahorro mensual; tendencia por categoría (mini línea + % frente a la media); calendario de gasto diario; Facturas como tira del 1 al 31; Ahorros como línea de saldo.
+- Paneles nuevos: metas de ahorro, coche, mascotas, hábitos/ejercicio, viajes y eventos, suscripciones con renovaciones, lista de deseos, resumen semanal por Telegram, notas rápidas.
+
 ## Analizar: cuándo trae Wallet los movimientos (desde 30/10/2026)
 - Contexto: el banco va por Redsys y cortaba el acceso a las pocas horas (Enable Banking pausado desde el 27/10; el soporte no lo resolvió). Wallet también se quedó parado del 27 al 29/10 sin avisar; se reconectó el 29/10 ~16:00 y volvió a traer datos (al reconectar recargó todo de golpe a las 16:05).
 - Desde el 30/10 cada sincronización guarda en la tabla `wallet_log` (Supabase) la hora a la que Wallet creó cada movimiento (`kind='rec'`, `wallet_created_at`, `seen_at`) y, por ejecución, el último cambio de datos de Wallet (`kind='run'`, `wallet_change_at`). Solo fechas y horas.
