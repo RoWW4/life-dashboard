@@ -104,27 +104,15 @@ function donut(cats, budget, sp, rem){
   const segs = cats.map(([c,v]) => { const len = v/den*C, g = len > 4 ? 1.5 : 0; const s = `<circle r="${R}" cx="64" cy="64" fill="none" stroke="${col(c)}" stroke-width="13" stroke-dasharray="${Math.max(len-g,0.5)} ${C}" stroke-dashoffset="${-off}"><title>${c}: ${eur(v)}</title></circle>`; off += len; return s; }).join('');
   return `<div class="donut"><svg viewBox="0 0 128 128" role="img" aria-label="Gasto del mes por categoría"><g transform="rotate(-90 64 64)"><circle r="${R}" cx="64" cy="64" fill="none" stroke="var(--bd)" stroke-width="13"/>${segs}</g></svg><div class="c"><b class="${rem<0?'er':''}">${eur(Math.abs(rem))}</b><span>${rem>=0?'disponible':'por encima'}</span></div></div>`;
 }
+/* Gasto del mes (igual en Mi día y en Finanzas): anillo con lo disponible, total gastado con una sola línea de
+   contexto y la lista de categorías (las 5 primeras; «Ver más» despliega el resto). */
 function gastoHTML(m, compact){
-  const now = new Date(), sp = spent(m), cats = byCat(m), B = S.budget||0, fl = m===MN(now) ? fxLeft() : 0, rem = B - sp - fl, pc = B ? sp/B*100 : 0;
-  const left = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate() - now.getDate() + 1, den = Math.max(B, sp, 1);
-  return `<div class="gx">${B?donut(cats,B,sp,rem):''}<div style="flex:1;min-width:200px"><div class="mu">Gastado ${m===MN(now)?'este mes':'en '+MS[+m.slice(5)]}</div><div class="big">${eur(sp)}</div>${B?`<div class="mu">de un tope de ${eur(B)} · <b class="${pc>=100?'er':pc>=80?'wa':'ok'}">${Math.round(pc)}% usado</b></div>${fl?`<div class="mu">Reservado para facturas que faltan este mes: ${eur(fl)}</div>`:''}${m===MN(now)?`<div class="mu">≈ ${eur(Math.max(0,rem)/left)} al día hasta fin de mes</div>`:''}`:'<div class="mu">Define un tope en Ajustes.</div>'}
-  ${compact ? '' : pace(m, B)}
-  <div class="legend">${cats.slice(0, compact?6:20).map(([c,v]) => `<button class="lg" data-a="cd" data-i="${esc(c)}" title="Ver el detalle de ${esc(c)}"><b style="background:${col(c)}"></b>${c} <em>${eur(v)}</em></button>`).join('') || '<span>Aún sin gastos este mes.</span>'}${B&&rem>0?`<span><b></b>Disponible <em>${eur(rem)}</em></span>`:''}</div></div></div>`;
-}
-/* Ritmo de gasto del mes: lo gastado acumulado día a día frente a la línea «ideal» que llega al tope el último día. */
-function pace(m, B){
-  if (!B) return '';
-  const [y, mo] = m.split('-').map(Number), N = new Date(y, mo, 0).getDate(), now = new Date(), cur = m === MN(now), last = cur ? now.getDate() : N;
-  const day = Array(N+1).fill(0);
-  S.tx.filter(x => cntG(x) && mon(x.date)===m).forEach(x => day[+x.date.slice(8)] += x.amt);
-  const acc = []; let s = 0; for (let d = 1; d <= last; d++) { s += day[d]; acc.push(s); }
-  const W = 300, H = 90, P = 4, top = Math.max(B, s) * 1.05, X = d => P + (d-1)/(N-1)*(W-2*P), Y = v => H - P - v/top*(H-2*P);
-  const line = acc.map((v,i) => `${i?'L':'M'}${X(i+1).toFixed(1)},${Y(v).toFixed(1)}`).join(''), ideal = B/N*last, over = s > ideal;
-  return `<div class="pace"><div class="mu">Ritmo de gasto ${cur ? `· ${over ? '<b class="wa">'+eur(s-ideal)+' por encima</b>' : '<b class="ok">'+eur(ideal-s)+' por debajo</b>'} de lo previsto a día ${last}` : ''}</div>
-  <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Gasto acumulado del mes frente al ritmo previsto">
-  <line x1="${X(1)}" y1="${Y(0)}" x2="${X(N)}" y2="${Y(B)}" class="pi"/><line x1="${P}" y1="${Y(B)}" x2="${W-P}" y2="${Y(B)}" class="pt"/>
-  <path d="${line}" class="pl ${over?'over':''}"/></svg>
-  <div class="pk"><span><i class="a"></i>Gastado</span><span><i class="b"></i>Ritmo previsto</span><span><i class="c"></i>Tope</span></div></div>`;
+  const now = new Date(), cur = m===MN(now), sp = spent(m), cats = byCat(m), B = S.budget||0, fl = cur ? fxLeft() : 0, rem = B - sp - fl, pc = B ? sp/B*100 : 0;
+  const left = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate() - now.getDate() + 1;
+  const info = B ? `<b class="${pc>=100?'er':pc>=80?'wa':'ok'}">${Math.round(pc)} %</b> de tu tope${cur?` · ≈ ${eur(Math.max(0,rem)/left)}/día`:''}` : 'Define un tope en Ajustes';
+  const rows = cats.map(([c,v]) => `<button class="gl" data-a="cd" data-i="${esc(c)}" title="Ver el detalle de ${esc(c)}"><b style="background:${col(c)}"></b><span>${c}</span><em>${eur(v)}</em></button>`);
+  return `<div class="gx">${B?donut(cats,B,sp,rem):''}<div class="gxi"><div class="mu">Gastado ${cur?'este mes':'en '+MS[+m.slice(5)]}</div><div class="big">${eur(sp)}</div><div class="mu">${info}</div>${fl?`<div class="mu">Reservado para facturas: ${eur(fl)}</div>`:''}</div></div>
+  <div class="gls">${rows.length ? fold('g-'+(compact?'d':'f'), rows, 5) : '<div class="mu">Aún sin gastos este mes.</div>'}</div>`;
 }
 /* Festivos: nacionales y autonómicos de date.nager.at (se guardan en este dispositivo por año) + locales a mano. */
 const REGIONS = [['','Solo nacionales'],['ES-AN','Andalucía'],['ES-AR','Aragón'],['ES-AS','Asturias'],['ES-IB','Baleares'],['ES-CN','Canarias'],['ES-CB','Cantabria'],['ES-CL','Castilla y León'],['ES-CM','Castilla-La Mancha'],['ES-CT','Cataluña'],['ES-VC','C. Valenciana'],['ES-EX','Extremadura'],['ES-GA','Galicia'],['ES-MD','Madrid'],['ES-MC','Murcia'],['ES-NC','Navarra'],['ES-PV','País Vasco'],['ES-RI','La Rioja'],['ES-CE','Ceuta'],['ES-ML','Melilla']];

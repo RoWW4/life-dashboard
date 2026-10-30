@@ -25,9 +25,7 @@ function vDia(){
   };
   VIS.dia = ord('dia', DIA);
   return `<div class="hdr"><div><h2>${g}${S.name?', '+esc(S.name):''}</h2><div class="sub">${cap(new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long'}).format(now))}</div></div></div>
-  <div class="kpis">
-    <button class="kpi" data-a="go" data-i="tareas"><span class="k">${I('list-checks')} Para hoy</span><span class="v">${tt.length}</span><span class="d ${late?'er':''}">${late?late+' atrasada'+(late>1?'s':''):'todo en orden'}</span></button>
-    <button class="kpi" data-a="go" data-i="fin"><span class="k">${I('wallet')} Disponible</span><span class="v ${rem<0?'er':''}">${eur(rem)}</span><span class="d">≈ ${eur(Math.max(0,rem)/left)}/día${fl?` · tras ${eur(fl)} de facturas`:''}</span></button>
+  <div class="kpis two">
     <button class="kpi" data-a="go" data-i="fact"><span class="k">${I('receipt')} Facturas 7 días</span><span class="v ${b7.length?'wa':''}">${b7.length}</span><span class="d">${b7.length?eur(b7.reduce((a,o) => a+o.f.amt,0)):'nada a la vista'}</span></button>
     <button class="kpi" data-a="go" data-i="compra"><span class="k">${I('shopping-cart')} Compra</span><span class="v">${P.length}</span><span class="d">${P.length===1?'producto':'productos'} pendientes</span></button>
   </div>
