@@ -2,7 +2,7 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`.
 
-- 31/10/2026 · móvil · Wallet: el movimiento de prueba no llegó (nada nuevo desde el 29/10); preparado mensaje para su soporte.
+- 31/10/2026 · móvil · Wallet: el movimiento de prueba no llegó (nada nuevo desde el 29/10); enviado correo a su soporte.
 - 31/10/2026 · móvil · Datos: una compra devuelta (cargo y devolución) pasada a Traspasos para que no cuente. `CLAUDE.md`: los cambios pedidos seguidos se publican juntos al terminar.
 - 31/10/2026 · móvil · Ficha de movimiento: las explicaciones de «Gasto extraordinario» y «Encargo» se ven tocando un icono «i» junto a cada casilla. Versión v42.
 - 30/10/2026 · móvil · Facturas: los pagos variables pueden reconocer varias palabras («También reconoce» en el formulario). Datos: dos cargos de un pago variable que no se reconocían por llevar otro nombre, enlazados con él (ya no se reservaba de más en «Disponible»). Versión v41.
