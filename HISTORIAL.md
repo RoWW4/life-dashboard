@@ -2,6 +2,8 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`. Aquí se dejan unas 20; las anteriores están en `HISTORIAL-antiguo.md`.
 
+- 31/10/2026 · ordenador · `PENDIENTES.md` reducido a lo importante (fuera las ideas); nuevo `DATOS.md` con cómo cambiar los datos en Supabase (antes solo estaba en el ordenador); `CLAUDE.md`: sin revisiones por iniciativa propia.
+- 31/10/2026 · ordenador · `LEEME.md` puesto al día: Wallet, avisos por Telegram, tareas programadas de Supabase y secretos (Enable Banking queda como «en pausa»).
 - 31/10/2026 · ordenador · `CLAUDE.md`: forma de trabajar aclarada (los cambios se hacen sin subir y se suben todos juntos al decir «súbelo»); historial antiguo pasado a `HISTORIAL-antiguo.md`.
 - 31/10/2026 · móvil · Wallet: el movimiento de prueba no llegó (nada nuevo desde el 29/10); enviado correo a su soporte.
 - 31/10/2026 · móvil · Datos: una compra devuelta (cargo y devolución) pasada a Traspasos para que no cuente. `CLAUDE.md`: los cambios pedidos seguidos se publican juntos al terminar.

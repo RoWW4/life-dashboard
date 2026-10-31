@@ -25,12 +25,14 @@ Rocío trabaja este proyecto desde el ordenador (Claude Code) y desde el móvil 
 - En `HISTORIAL.md` se dejan unas 20 líneas. Al subir, si hay más, pasar las más antiguas al principio de `HISTORIAL-antiguo.md` (también lo más reciente arriba).
 
 ## Pendientes
+- `PENDIENTES.md` guarda solo lo importante que queda por decidir o hacer; nada de listas de ideas.
 - Cuando Rocío diga «apúntalo en pendientes» (o similar), añadirlo a `PENDIENTES.md` sin hacerlo todavía.
 - Cuando se haga uno, quitarlo de `PENDIENTES.md` y apuntarlo en `HISTORIAL.md`.
 
 ## Recordatorios
 - Responder a Rocío en español y de forma breve.
-- Los datos del panel están en Supabase (tabla `ldb_state`, columna `data`). Cualquier cambio de datos lleva `_ts` nuevo para que la app no lo sobrescriba.
+- Los datos del panel están en Supabase (tabla `ldb_state`, columna `data`). Para cambiar datos, seguir `DATOS.md` (formato de cada lista; cada cambio lleva `_ts` nuevo para que la app no lo sobrescriba).
+- No programar revisiones, comprobaciones ni avisos por iniciativa propia. Revisar el panel solo cuando Rocío lo pida, y entonces contarle lo que se vea.
 - El repositorio es público: no meter datos personales ni secretos en el código.
 - **Privacidad (muy importante):** en ningún archivo del repositorio (código, `HISTORIAL.md`, `PENDIENTES.md`, comentarios, ejemplos o datos de prueba) van nombres de personas o mascotas, importes, nómina o empresa, préstamos, documentos, conceptos de movimientos ni temas de salud. En el historial y en pendientes se describe solo el cambio del panel de forma genérica (p. ej. «corregida una tarea repetida», no de quién es). Los datos reales viven solo en Supabase. Las ideas con datos personales van en `D:\Claude\panel-privado.md`, fuera del repositorio. Nada de semillas con datos reales en el código.
 

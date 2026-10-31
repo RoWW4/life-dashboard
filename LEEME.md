@@ -1,108 +1,90 @@
-# Panel de Rocío (Life Dashboard): guía de instalación
+# Panel de Rocío (Life Dashboard)
 
-Resultado final: una app en el móvil y en el ordenador, con los mismos datos en los dos, y los movimientos de Openbank entrando solos dos veces al día. Todo con servicios gratuitos y sin instalar nada en el PC.
+App personal (tareas, compra, dinero, facturas, salud, documentos) que funciona en el móvil y en el ordenador con los mismos datos. Todo con servicios gratuitos, salvo Wallet Premium para traer el banco.
 
 ```
-GitHub Pages  ──►  la app (HTML)  ◄──►  Supabase (tus datos + login)
+GitHub Pages ──► la app (HTML + js/) ◄──► Supabase (datos + login)
                                               ▲
-GitHub Actions (2 veces al día) ──► Enable Banking ──► Openbank
+Wallet (BudgetBakers) ◄── conecta con el banco │
+        ▲                                     │
+GitHub Actions «Sincronizar banco (Wallet)» ──┘   (la lanza Supabase 5 veces al día)
+GitHub Actions «Avisos de tareas» ──► Telegram    (la lanza Supabase cada 15 min)
 ```
 
-Tiempo aproximado: 30–45 min. Puedes hacerlo por fases. Después de la **fase A** ya tienes la app con sincronización. La **fase B** añade el banco automático.
+Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se sube): ver `CLAUDE.md`.
 
 ---
 
-## Fase A · La app y la sincronización
+## Piezas
 
-### 1. Supabase (base de datos + login)
-1. Crea una cuenta en <https://supabase.com> y pulsa **New project**. Elige la región **EU (Frankfurt/Paris)**, ponle nombre `life-dashboard` y guarda la contraseña de la base de datos en tu gestor de contraseñas.
-2. Ve a **SQL Editor → New query**, pega el contenido de `supabase/schema.sql` y pulsa **Run**.
-3. Ve a **Authentication → Users → Add user → Create new user**. Pon tu email y una contraseña, y marca **Auto Confirm User**. Será tu login en la app.
-4. Ve a **Authentication → Sign In / Providers** y desactiva **Allow new users to sign up**. Así nadie más puede crearse una cuenta.
-5. En **Project Settings → API** apunta tres cosas:
-   - **Project URL**.
-   - La clave pública: **anon / publishable**.
-   - La clave secreta: **service_role / secret**. Esta no se comparte nunca. Solo irá a GitHub como secreto.
-6. Abre `config.js` y pega la URL y la clave **pública**.
+### Supabase (datos y login)
+- Tablas en `supabase/schema.sql`:
+  - `ldb_state`: todo el panel en un único JSON (columna `data`). Cada cambio lleva un `_ts` nuevo para que la app no lo sobrescriba.
+  - `bank_tx` y `bank_pending`: movimientos del banco, ya confirmados y aún sin confirmar. Los escribe la sincronización y la app los recoge al abrirse.
+  - `bank_status`: estado de la conexión con el banco.
+  - `task_reminders`: avisos de Telegram ya mandados (para no repetirlos).
+  - `wallet_log`: a qué hora trae Wallet cada movimiento (solo fechas y horas).
+- Login con un único usuario y altas nuevas desactivadas.
+- **Programador (pg_cron):** dos tareas que llaman a la API de GitHub para lanzar los workflows, con un token de GitHub guardado en Vault. Se crearon a mano en Supabase (no están en `schema.sql`):
+  - `sync-wallet`: `17 5,9,13,17,21 * * *` (UTC), unas 06:17, 10:17, 14:17, 18:17 y 22:17 en invierno.
+  - `task-reminders`: `7,22,37,52 * * * *`.
 
-### 2. GitHub (alojar la app gratis)
-1. Crea una cuenta en <https://github.com> y un repositorio **público** llamado `life-dashboard`. GitHub Pages gratis exige que sea público. Es seguro: en el código no hay datos ni secretos, solo la clave pública de Supabase, que está pensada para eso.
-2. Pulsa **Add file → Upload files** y arrastra **todo el contenido** de esta carpeta (no la carpeta en sí). Después pulsa **Commit changes**.
-   - Si la carpeta `.github` no se sube (a veces el navegador ignora las carpetas que empiezan por punto), créala a mano. Pulsa **Add file → Create new file**, escribe el nombre `.github/workflows/bank-sync.yml` y pega su contenido. Repite lo mismo con `bank-link.yml`.
-3. Ve a **Settings → Pages**. En Source elige **Deploy from a branch**, rama `main` y carpeta `/ (root)`, y pulsa **Save**.
-4. En 1–2 minutos la app estará en `https://TU-USUARIO.github.io/life-dashboard/`. Esa es tu **APP_URL**.
+### GitHub (la app y los robots)
+- La app se publica con GitHub Pages desde la rama `main`. El repositorio es público: en el código no hay datos ni secretos, solo la clave pública de Supabase (`config.js`).
+- Workflows (`.github/workflows/`):
+  - **Sincronizar banco (Wallet)** (`wallet-sync.yml`): lee de la API de Wallet los movimientos que Wallet ya ha traído del banco y los deja en `bank_tx`/`bank_pending`. Avisa por Telegram de los nuevos.
+  - **Avisos de tareas (Telegram)** (`task-reminders.yml`): manda estos avisos:
+    - de las tareas, 1 día antes (las que no tienen hora, como si fueran a las 9:00);
+    - un resumen a las 7:00;
+    - de Salud, 3 días antes;
+    - de los documentos que caducan: 30 días antes (60 los de Identidad), 7 días antes, el mismo día y una vez por semana durante un mes si sigue caducado.
+  - **Conectar banco** y **Sincronizar banco** (`bank-link.yml`, `bank-sync.yml`): la conexión directa con el banco por Enable Banking. **En pausa desde el 27/10/2026** porque el banco cortaba el permiso a las pocas horas. Se pueden reactivar quitando los `#` del `schedule` de `bank-sync.yml`.
+- Secretos (Settings → Secrets and variables → Actions):
 
-### 3. Instalarla como app
-- **Android (Chrome):** abre la APP_URL, pulsa ⋮ → **Añadir a pantalla de inicio** (o **Instalar aplicación**).
-- **iPhone (Safari):** abre la APP_URL, pulsa Compartir → **Añadir a pantalla de inicio**.
-- **Ordenador (Chrome/Edge):** pulsa el icono de instalar de la barra de direcciones.
+  | Nombre | Para qué |
+  |---|---|
+  | `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` | escribir en Supabase desde los robots (la service key no se comparte nunca) |
+  | `LDB_USER_ID` | id del usuario del panel en Supabase |
+  | `WALLET_TOKEN` | token de la API de Wallet (requiere Premium) |
+  | `TELEGRAM_TOKEN`, `TELEGRAM_CHAT_ID` | bot y chat de los avisos |
+  | `EB_APP_ID`, `EB_PRIVATE_KEY`, `APP_URL` | solo para Enable Banking (en pausa) |
 
-Inicia sesión con el email y la contraseña del paso 1.3.
-
-### 4. Pasar tus datos del artifact antiguo
-1. En el artifact de Claude, ve a **Ajustes → Exportar copia (JSON)**.
-2. En la app nueva, ve a **Ajustes → Restaurar copia** y elige ese archivo.
-
-Se mantienen las mismas claves y el mismo modelo de datos, así que no se duplica nada. De paso se elimina la cena y el cine del 24/10, que la versión antigua había cargado dos veces.
-
----
-
-## Fase B · Banco automático (Enable Banking, gratis para tus propias cuentas)
-
-Openbank no tiene API para particulares. Enable Banking es un proveedor autorizado de open banking (PSD2) con un modo **gratuito "restricted"**, pensado para conectar solo cuentas propias y para uso personal. GoCardless/Nordigen, la opción gratuita que se usaba antes, ya no acepta altas nuevas.
-
-### 5. Crear la aplicación en Enable Banking
-1. Regístrate en <https://enablebanking.com> y entra en el **Control Panel**.
-2. Ve a **API applications → Register new application**:
-   - Environment: **Production**.
-   - Name: `Life Dashboard`.
-   - Allowed redirect URLs: tu **APP_URL** exacta (por ejemplo `https://tu-usuario.github.io/life-dashboard/`).
-   - Elige que genere la clave privada en el navegador. Se descargará un archivo **.pem**: guárdalo bien y no lo subas a GitHub.
-3. Apunta el **Application ID**.
-4. En la aplicación pulsa **Activate by linking accounts** y vincula tu cuenta de Openbank. Así queda activada en modo restringido, gratis y solo con tus cuentas.
-   - Si Openbank no aparece en la lista de bancos, dímelo y vemos alternativas.
-
-### 6. Secretos en GitHub y conexión
-1. En tu repositorio ve a **Settings → Secrets and variables → Actions → New repository secret** y crea estos secretos:
-
-   | Nombre | Valor |
-   |---|---|
-   | `EB_APP_ID` | Application ID de Enable Banking |
-   | `EB_PRIVATE_KEY` | contenido completo del archivo .pem (ábrelo con el Bloc de notas, cópialo todo y pégalo) |
-   | `APP_URL` | tu APP_URL |
-   | `SUPABASE_URL` | Project URL de Supabase |
-   | `SUPABASE_SERVICE_KEY` | clave **service_role / secret** de Supabase |
-   | `LDB_USER_ID` | Supabase → Authentication → Users → tu usuario → **User UID** |
-
-2. Ve a **Actions → Conectar banco → Run workflow**, deja `code` **vacío** y pulsa Run.
-3. Abre la ejecución terminada. En el resumen hay un enlace **«Abrir la autorización de Openbank»**. Púlsalo y autoriza con tus claves **en la web de Openbank**.
-4. Volverás a tu panel, que te mostrará un **código**. Pulsa *Copiar código*.
-5. Vuelve a **Actions → Conectar banco → Run workflow**, pega el código en `code` y pulsa Run. El resumen debe decir ✅ **Banco conectado**.
-6. Ve a **Actions → Sincronizar banco → Run workflow** para traer ya los primeros movimientos. A partir de ahí se ejecuta solo, hacia las 7:15 y las 19:15.
-
-**Renovación:** por ley (PSD2) el permiso dura como máximo 180 días. Dos semanas antes, el panel te avisará en «⭐ Lo más importante». Para renovarlo, repite los pasos 6.2 a 6.5 (unos 2 minutos).
+### Instalarla como app
+- **Android (Chrome):** abrir la web de la app y pulsar ⋮ → **Añadir a pantalla de inicio**.
+- **iPhone (Safari):** Compartir → **Añadir a pantalla de inicio**.
+- **Ordenador (Chrome/Edge):** pulsar el icono de instalar de la barra de direcciones.
 
 ---
 
-## Cómo funciona el banco dentro del panel
-- Al abrir la app, recoge los movimientos nuevos y los **clasifica** por palabras clave (Mercadona → Alimentación, Repsol → Transporte, Netflix → Suscripciones…).
-- **No cuenta dos veces:** si un movimiento del banco coincide con algo que ya tenías (un fijo, una factura pagada o un gasto apuntado a mano, con el mismo importe y ±4 días), los **enlaza** en vez de duplicarlos. Para los fijos variables, como la gasolina, se aceptan diferencias de hasta un 25 %, y el fijo se corrige con el importe real.
-- Si cambias la categoría de un movimiento del banco, te propone crear una **regla** para que los siguientes con esa palabra se clasifiquen solos. Las reglas se gestionan en Finanzas.
-- Si el banco falla o aún no lo has conectado, puedes **importar el archivo** «Movimientos de Cuenta.xls» de Openbank desde **Finanzas → Banco**. Pasa por el mismo sistema anti-duplicados.
+## Cómo entra el banco en el panel
+- Wallet se conecta con el banco por su cuenta y la sincronización copia sus movimientos a Supabase. Al abrir la app, se recogen y se **clasifican** por palabras clave y por las reglas que se crean al cambiar una categoría.
+- **No cuenta dos veces:** si un movimiento coincide con algo ya apuntado (mismo importe y fecha cercana), se enlaza en vez de duplicarse. También se avisa de un posible duplicado.
+- **Facturas:** cada pago se marca como pagado solo cuando llega su cargo del banco. Los pagos «Variables» (varios cargos al mes sin día fijo) juntan todos los cargos que llevan sus palabras.
+- **No cuentan como gasto:**
+  - la categoría **Traspasos** (dinero entre cuentas propias);
+  - los gastos marcados **extraordinarios**;
+  - los marcados **encargo** (compras para otra persona que paga en mano).
+- **Plan B** si el banco falla: importar el archivo `.xls` de movimientos del banco desde **Finanzas → Banco**. Pasa por el mismo sistema anti-duplicados.
+
+## Actualizar la app en el móvil
+`index.html` carga cada archivo con `?v=N` y `sw.js` guarda una caché `ldb-shell-vN`. En cada cambio de CSS o JS hay que subir los dos números para que el móvil coja la versión nueva.
 
 ## Límites y cosas a saber
-- **Supabase gratis** pausa los proyectos que pasan 7 días sin actividad. La sincronización diaria lo mantiene activo. Si alguna vez se pausa, entra en supabase.com y pulsa *Restore*.
-- **GitHub** desactiva las tareas programadas de un repositorio tras 60 días sin cambios. El workflow incluye un paso que la reactiva sola. Si aun así se parara, GitHub te enviará un email con un botón para reactivarla.
-- Sincronización entre dispositivos: si editas a la vez en el móvil y en el ordenador, gana el último cambio guardado. Con una sola persona no suele notarse.
-- Las notificaciones push no están incluidas, aunque se podrían añadir más adelante.
+- **Supabase gratis** pausa los proyectos que pasan 7 días sin actividad. Las tareas programadas lo mantienen activo. Si alguna vez se pausa: supabase.com → *Restore*.
+- **Wallet** a veces deja de traer movimientos hasta que se reconecta el banco en su app. Seguimiento en `PENDIENTES.md`.
+- Si se edita a la vez en el móvil y en el ordenador, gana el último cambio guardado.
 
 ## Archivos
 | Archivo | Para qué sirve |
 |---|---|
-| `index.html`, `styles.css`, `js/` | la app (repartida por temas, ver `CLAUDE.md`) |
+| `index.html`, `styles.css`, `js/` | la app (repartida por temas; mapa en `CLAUDE.md`) |
 | `icons.js` | iconos Lucide incrustados (no dependen de internet) |
 | `config.js` | URL y clave pública de Supabase |
 | `manifest.webmanifest`, `sw.js`, `icons/` | instalación como app y uso sin conexión |
 | `supabase/schema.sql` | tablas y permisos de la base de datos |
-| `scripts/bank-link.mjs`, `scripts/bank-sync.mjs`, `scripts/eb.mjs` | conexión con Enable Banking (se ejecutan en GitHub) |
-| `.github/workflows/*.yml` | «Conectar banco» (manual) y «Sincronizar banco» (automático) |
+| `scripts/wallet-sync.mjs` | sincronización con Wallet |
+| `scripts/task-reminders.mjs` | avisos por Telegram |
+| `scripts/bank-link.mjs`, `scripts/bank-sync.mjs`, `scripts/eb.mjs` | Enable Banking (en pausa). `eb.mjs` también lo usan los demás scripts para hablar con Supabase |
+| `.github/workflows/*.yml` | los robots de arriba |
+| `CLAUDE.md`, `HISTORIAL.md`, `HISTORIAL-antiguo.md`, `PENDIENTES.md` | cómo trabaja Claude, qué se ha hecho y qué queda |
+| `DATOS.md` | cómo cambiar los datos del panel en Supabase (formato de cada lista) |
