@@ -2,6 +2,7 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`.
 
+- 31/10/2026 · móvil · Ficha de movimiento: las explicaciones de «Gasto extraordinario» y «Encargo» se ven tocando un icono «i» junto a cada casilla. Versión v42.
 - 30/10/2026 · móvil · Facturas: los pagos variables pueden reconocer varias palabras («También reconoce» en el formulario). Datos: dos cargos de un pago variable que no se reconocían por llevar otro nombre, enlazados con él (ya no se reservaba de más en «Disponible»). Versión v41.
 - 30/10/2026 · móvil · Al recargar (tirar hacia abajo en el móvil) se queda en la misma sección; al abrir la app de cero sigue empezando en Mi día. Versión v40.
 - 30/10/2026 · móvil · Detalle de categoría: tocando una barra del gráfico de 6 meses se ven los datos de ese mes; «Ver movimientos» abre ese mes. Versión v39.

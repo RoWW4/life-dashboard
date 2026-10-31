@@ -366,3 +366,8 @@ input[type=checkbox].ck:checked::after{content:'';width:6px;height:11px;border:s
 .txr{max-width:60%}
 .txb{display:flex;align-items:center;gap:2px}
 .txb .amt{margin-right:4px}
+
+/* Casillas con icono «i» que despliega su explicación */
+.chkr{display:flex;align-items:center;gap:2px}.chkr .chk{flex:none;margin:0}
+.chkr .inf{width:28px;height:28px;color:var(--mu)}.chkr .inf[aria-expanded="true"]{color:var(--ac)}
+.infx{font-size:12.5px;margin:-2px 0 6px 28px;line-height:1.4}
