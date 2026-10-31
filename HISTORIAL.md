@@ -2,6 +2,8 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`. Aquí se dejan unas 20; las anteriores están en `HISTORIAL-antiguo.md`.
 
+- 31/10/2026 · móvil · Datos: revisión de movimientos. Bizums recibidos y reembolsos pasados a devolución de su categoría; descargas de la prepago, ingresos en efectivo propios y un Bizum devuelto pasados a Traspasos; varios gastos de «Otros» clasificados; un pago anual enlazado con su fijo (y su palabra de reconocimiento simplificada); borrado un apunte a mano repetido. Las recargas antiguas de la prepago se quedan en «Compras» (no hay detalle de la tarjeta antes de mayo de 2026).
+- 31/10/2026 · móvil · Finanzas: un ingreso puede llevar una categoría de gasto (= devolución, p. ej. un Bizum por una cena): resta del gasto de esa categoría y no cuenta como ingreso; chip «devolución» en la lista. Las reglas no convierten solos los ingresos en devoluciones. Versión v46.
 - 31/10/2026 · móvil · Finanzas: «Reglas de clasificación» muestra solo 3 y el resto con «Ver más». Versión v45.
 - 31/10/2026 · móvil · Facturas: «Empieza en» avisa si la fecha no es válida (antes se guardaba vacía sin decir nada) y entiende fechas escritas como 01/11/27. Datos: un pago fijo pasa a empezar más adelante.
 - 31/10/2026 · móvil · Mi día: «Gasto del mes» muestra las categorías en barras, igual que en Finanzas (misma tarjeta en las dos secciones). Versión v44.
@@ -20,5 +22,3 @@ Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qu
 - 30/10/2026 · móvil · Detalle de categoría: tocando una barra del gráfico de 6 meses se ven los datos de ese mes; «Ver movimientos» abre ese mes. Versión v39.
 - 30/10/2026 · móvil · Tarjeta Banco: quitado el botón «Recargar» (la app ya recoge lo nuevo al abrirse) y texto actualizado con el horario real (Wallet consulta el banco de madrugada; el panel recoge a las 6:17, 10:17, 14:17, 18:17 y 22:17). Versión v38.
 - 30/10/2026 · móvil · Tareas: al completar una se guarda la fecha; pasados 7 días deja de verse en «Todas» y en el calendario (sigue en «Completadas»). Versión v37.
-- 30/10/2026 · móvil · Movimientos: etiqueta arriba a la derecha y debajo, en una línea, importe, botón de Facturas y X. Versión v36.
-- 30/10/2026 · móvil · Movimientos: las etiquetas (banco, prepago, fijo, factura, encargo, extraordinario, ¿duplicado?) pasan arriba a la derecha, sobre el importe; filas más bajas. Versión v35.

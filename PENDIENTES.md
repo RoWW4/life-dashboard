@@ -2,10 +2,6 @@
 
 Solo lo importante que queda por decidir o hacer. **No hacerlo hasta que la dueña del panel lo pida.** Cuando se haga uno, quitarlo de aquí y apuntarlo en `HISTORIAL.md`.
 
-## Datos (preguntar antes de tocar)
-- Recargas de la tarjeta prepago de 2025 que están en «Compras»: deberían ser Traspasos para no contar doble.
-- Dos Bizums de octubre de 2025 que el banco devolvió el mismo día («Devolución Bizum emitido»): ¿pasarlos a Traspasos para que no cuenten?
-
 ## Recuperar los datos del panel
 - El 31/10/2026 los datos del panel en la nube se sobrescribieron por error. Se pidió al soporte de Supabase recuperar la versión anterior (aún existe dentro de la base de datos); sin respuesta de una persona todavía.
 - Ese mismo día se restauró la base del 28/10 (tareas, fijos y documentos de la copia local de la carpeta `copia-historial-panel` de `D:\Claude`, que nunca se sube) junto a los movimientos del banco que quedaban. Falta: volver a importar los movimientos antiguos del banco, revisar tope, festivos, reglas y enlaces de documentos, y añadir lo hecho después del 28/10. Si Supabase devuelve la versión completa, restaurar esa.

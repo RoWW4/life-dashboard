@@ -5,7 +5,8 @@
 const PAYP = /^\s*(?:google|fitbit|apple|samsung|garmin)\s*pay\s*:?\s*(?:(?:compra|pago)\s+)?(?:en\s+)?/i;
 function classify(desc, t){
   const d = nt(String(desc||'').replace(PAYP,''));
-  for (const r of S.rules) { const k = nt(r.k).trim(); if (k && d.includes(k)) return r.cat; }
+  // A un ingreso solo le valen reglas de Nómina, Otros o Traspasos: las devoluciones (ingreso con categoría de gasto) se eligen a mano.
+  for (const r of S.rules) { const k = nt(r.k).trim(); if (k && d.includes(k) && (t !== 'i' || ['Nómina','Otros','Traspasos'].includes(r.cat))) return r.cat; }
   if (t === 'i') return /nomina/.test(d) ? 'Nómina' : 'Otros';
   for (const [c,ks] of KWC) if (ks.some(k => d.includes(k))) return c;
   return 'Otros';

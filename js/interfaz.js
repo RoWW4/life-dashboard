@@ -66,11 +66,15 @@ const prChip = p => p==='Urgente' ? '<span class="chip er">Urgente</span>' : p==
 /* Gasto que cuenta en totales y comparaciones: fuera traspasos, gastos extraordinarios (x.ex, p. ej. cancelar un préstamo)
    y encargos (x.enc: compras para otra persona que devuelve el dinero en mano). */
 const cntG = x => x.t==='g' && x.cat!==NOCNT && !x.ex && !x.enc;
-const spent = m => S.tx.filter(x => cntG(x) && mon(x.date)===m).reduce((a,x) => a+x.amt, 0);
+/* Devolución: ingreso con categoría de gasto (p. ej. Bizum de lo que te deben de una cena): resta del gasto de esa categoría. */
+const isDev = x => x.t==='i' && !['Nómina','Otros',NOCNT].includes(x.cat);
+/* Importe con signo para el gasto: + gasto que cuenta, − devolución, 0 lo demás. */
+const gAmt = x => cntG(x) ? x.amt : isDev(x) ? -x.amt : 0;
+const spent = m => Math.max(0, S.tx.filter(x => mon(x.date)===m).reduce((a,x) => a+gAmt(x), 0));
 /* Mes al que cuenta un ingreso: la nómina que llega a partir del día 25 es la del mes siguiente. */
 const incMon = x => x.cat==='Nómina' && +x.date.slice(8) >= 25 ? MN(new Date(+x.date.slice(0,4), +x.date.slice(5,7), 1)) : mon(x.date);
-const income = m => S.tx.filter(x => x.t==='i' && x.cat!==NOCNT && incMon(x)===m);
-const byCat = m => { const o = {}; S.tx.filter(x => cntG(x) && mon(x.date)===m).forEach(x => o[x.cat] = (o[x.cat]||0) + x.amt); return Object.entries(o).sort((a,b) => b[1]-a[1]); };
+const income = m => S.tx.filter(x => x.t==='i' && x.cat!==NOCNT && !isDev(x) && incMon(x)===m);
+const byCat = m => { const o = {}; S.tx.filter(x => gAmt(x) && mon(x.date)===m).forEach(x => o[x.cat] = (o[x.cat]||0) + gAmt(x)); return Object.entries(o).filter(e => e[1] > 0.005).sort((a,b) => b[1]-a[1]); };
 const col = c => PAL[c] || '#94a3b8';
 const nextDue = (d,r) => r==='Anual' ? addM(d,12) : r==='Mensual' ? addM(d,1) : addD(d, r==='Semanal' ? 7 : 1);
 const ord = (v,keys) => { const o = S.order[v]||[]; return [...keys].sort((a,b) => { const x = o.indexOf(a), y = o.indexOf(b); return (x<0?1e3+keys.indexOf(a):x) - (y<0?1e3+keys.indexOf(b):y); }); };

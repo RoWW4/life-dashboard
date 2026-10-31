@@ -36,7 +36,7 @@ const A = {
   vm: () => listen(voice, 'Por ejemplo: «compra leche y pan», «gasto 12 en farmacia», «recuérdame llamar al taller el viernes a las 10 en la categoría coche» o «vacaciones del 22 al 26 de diciembre».', preview),
   dx: i => { CF('¿Eliminar este movimiento?', () => { S.tx = S.tx.filter(y => y.id!==i); ch(); }); },
   txc: (i,el) => { const x = S.tx.find(y => y.id===i); x.cat = el.value; ch();
-    if (fromBank(x)) { const w = nt(x.desc).trim().split(' ').filter(s => s.length>=3 && !/^(compra|pago|tarjeta|recibo|transferencia|bizum|con|del|las|los)$/.test(s))[0] || '';
+    if (fromBank(x) && x.t==='g') { const w = nt(x.desc).trim().split(' ').filter(s => s.length>=3 && !/^(compra|pago|tarjeta|recibo|transferencia|bizum|con|del|las|los)$/.test(s))[0] || '';
       CF(`¿Clasificar siempre como «${x.cat}» los movimientos que contengan esta palabra?`, k => { k = (k||'').trim(); if (!k) return; S.rules = S.rules.filter(r => nt(r.k)!==nt(k)); S.rules.push({k, cat:x.cat}); let c = 0; S.tx.forEach(y => { if (fromBank(y) && y.cat==='Otros' && y.t===x.t && nt(y.desc).includes(nt(k).trim())) { y.cat = x.cat; c++; } }); ch(); toast('🏷️ Regla guardada' + (c ? ' · '+c+' movimientos reclasificados' : '')); }, w); } },
   ar: () => { const k = V('r1'); if (!k) return toast('Escribe una palabra'); S.rules.push({k, cat:V('r2')}); ch(); },
   dr: i => { S.rules.splice(+i,1); ch(); },
