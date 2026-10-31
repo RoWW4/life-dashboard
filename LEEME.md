@@ -24,6 +24,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
   - `bank_status`: estado de la conexión con el banco.
   - `task_reminders`: avisos de Telegram ya mandados (para no repetirlos).
   - `wallet_log`: a qué hora trae Wallet cada movimiento (solo fechas y horas).
+  - `ldb_state_hist`: copia automática de la versión anterior del panel antes de cada cambio (se guardan 30 días). Para recuperar datos, ver `DATOS.md`.
 - Login con un único usuario y altas nuevas desactivadas.
 - **Programador (pg_cron):** dos tareas que llaman a la API de GitHub para lanzar los workflows, con un token de GitHub guardado en Vault. Se crearon a mano en Supabase (no están en `schema.sql`):
   - `sync-wallet`: `17 5,9,13,17,21 * * *` (UTC), unas 06:17, 10:17, 14:17, 18:17 y 22:17 en invierno.
@@ -64,7 +65,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
   - la categoría **Traspasos** (dinero entre cuentas propias);
   - los gastos marcados **extraordinarios**;
   - los marcados **encargo** (compras para otra persona que paga en mano).
-- **Plan B** si el banco falla: importar el archivo `.xls` de movimientos del banco desde **Finanzas → Banco**. Pasa por el mismo sistema anti-duplicados.
+- **Plan B** si el banco falla: importar el archivo `.xls` de movimientos del banco desde **Ajustes → Banco**. Pasa por el mismo sistema anti-duplicados.
 
 ## Actualizar la app en el móvil
 `index.html` carga cada archivo con `?v=N` y `sw.js` guarda una caché `ldb-shell-vN`. En cada cambio de CSS o JS hay que subir los dos números para que el móvil coja la versión nueva.
@@ -73,6 +74,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
 - **Supabase gratis** pausa los proyectos que pasan 7 días sin actividad. Las tareas programadas lo mantienen activo. Si alguna vez se pausa: supabase.com → *Restore*.
 - **Wallet** a veces deja de traer movimientos hasta que se reconecta el banco en su app. Seguimiento en `PENDIENTES.md`.
 - Si se edita a la vez en el móvil y en el ordenador, gana el último cambio guardado.
+- Protección: si un dispositivo intenta subir muchos menos datos que los de la nube (menos de la mitad), no se suben sin confirmar. Al iniciar sesión siempre manda la nube.
 
 ## Archivos
 | Archivo | Para qué sirve |

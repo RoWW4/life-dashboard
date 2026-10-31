@@ -147,8 +147,7 @@ function sincCard(){
 
 function vFin(){
   const now = new Date(), base = new Date(now.getFullYear(), now.getMonth()+finOff, 1), m = MN(base), pm = MN(new Date(base.getFullYear(), base.getMonth()-1, 1));
-  const txm = S.tx.filter(x => mon(x.date)===m);
-  const incL = income(m), inc = incL.reduce((a,x) => a+x.amt, 0), sp = spent(m), ps = spent(pm), cats = byCat(m), mx = Math.max(1, ...cats.map(c => c[1]));
+  const incL = income(m), inc = incL.reduce((a,x) => a+x.amt, 0), sp = spent(m), ps = spent(pm);
   const ml = mLabel(m);
   return `<div class="hdr"><div><h2>Finanzas</h2><div class="sub help">${user&&BANK&&BANK.session_id?`${I('landmark','sm')} Conectado al banco · ${ago(BANK.last_sync)}`:'Movimientos manuales, fijos e importados'}</div></div><div class="hact"><button class="btn ghost sm ico" data-a="fm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b style="min-width:130px;text-align:center">${ml}</b><button class="btn ghost sm ico" data-a="fm" data-i="1" aria-label="Mes siguiente" ${finOff>=0?'disabled style="opacity:.4"':''}>${I('chevron-right')}</button><button class="btn" data-a="nx">${I('plus')} Movimiento</button></div></div>
   <div class="kpis">
@@ -159,13 +158,12 @@ function vFin(){
   </div>
   ${(() => { const C = {
     gasto: panel('fin','gasto',`${I('wallet')} Gasto del mes`,gastoHTML(m,false),'wide'),
-    cats: panel('fin','cats',`${I('tags')} Por categoría`,cats.map(([c,v]) => { const n = txm.filter(x => x.t==='g' && x.cat===c).length; return `<button class="catrow" data-a="cd" data-i="${esc(c)}">${tile(CI[c]||'package', col(c))}<span>${c}<span class="mu" style="display:block;font-size:12px;line-height:1.2">${n} mov. · ${Math.round(v/sp*100)}% del gasto</span></span><b class="amt">${eur(v)}</b>${I('chevron-right','cr')}<div class="bar"><div style="width:${v/mx*100}%;background:${col(c)}"></div></div></button>`; }).join('') || empty('Sin gastos este mes.')),
     mov: panel('fin','mov',`${I('list-checks')} Movimientos`,`<span id="txcard"></span>
     <div class="txf"><input id="txq" class="in" type="search" placeholder="Buscar concepto…" value="${esc(txf.q)}" aria-label="Buscar en movimientos"><select class="in" data-a="txfc" aria-label="Categoría"><option value="">Todas las categorías</option>${CATS.map(c => `<option ${txf.cat===c?'selected':''}>${c}</option>`).join('')}</select><select class="in" data-a="txfp" aria-label="Periodo">${[['mes',ml],['3m','Últimos 3 meses'],['anio','Año '+m.slice(0,4)],['todo','Todo']].map(([k,n]) => `<option value="${k}" ${txf.per===k?'selected':''}>${n}</option>`).join('')}</select><div class="seg">${[['','Todos'],['g','Gastos'],['i','Ingresos']].map(([k,n]) => `<button class="${txf.t===k?'on':''}" data-a="txft" data-i="${k}">${n}</button>`).join('')}</div></div>
     <div id="txlist">${txListHTML()}</div>`,'wide'),
-    bank: bankCard('fin'), reglas: rulesCard(), sinc: sincCard() };
-    // En el móvil la tarjeta del banco solo está en Ajustes.
-    VIS.fin = ord('fin', FIN.filter(k => C[k] && !(k==='bank' && matchMedia('(max-width:760px)').matches)));
+    reglas: rulesCard(), sinc: sincCard() };
+    // La tarjeta del banco (última sincronización…) solo está en Ajustes.
+    VIS.fin = ord('fin', FIN.filter(k => C[k]));
     return `<div class="grid">${VIS.fin.map(k => C[k]).join('')}</div>`; })()}`;
 }
 

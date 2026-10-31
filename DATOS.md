@@ -13,7 +13,7 @@ Cuando te pida añadir, cambiar o consultar tareas, recordatorios, cumpleaños, 
 ## Dónde están los datos
 - Conector de Supabase, proyecto `lvsjvdpxnuydtwajlvsv` (Life-dashboard).
 - Tabla `ldb_state`: una sola fila. La columna `data` (jsonb) contiene TODO el panel como un único objeto JSON.
-- No toques nunca las tablas `bank_tx`, `bank_pending`, `bank_status`, `task_reminders` ni `wallet_log`, ni nada de `auth`, `cron` o `vault`, ni la estructura de la base de datos. No borres filas ni tablas.
+- No toques nunca las tablas `bank_tx`, `bank_pending`, `bank_status`, `task_reminders` , `wallet_log` ni `ldb_state_hist` (salvo para leerla al recuperar datos), ni nada de `auth`, `cron` o `vault`, ni la estructura de la base de datos. No borres filas ni tablas.
 
 ## Reglas para cambiar datos
 1. Antes de cambiar algo, lee lo que hay (`select data->'tasks' from ldb_state`, etc.) para no duplicar.
@@ -61,3 +61,13 @@ update ldb_state set
 - `salud` (Salud): `{ini, len, dur}` · `ini` lista de fechas de inicio, `len` días habituales entre inicios, `dur` días que se marcan en el calendario.
 
 No cambies el resto de campos de `data` (`rules`, `fixes`, `seeded`, `bankSeen`, `bankLast`, `order`, `sav`, `bills`…) salvo que te lo pida expresamente.
+
+## Recuperar una versión anterior
+Antes de cada cambio, Supabase guarda la versión anterior en la tabla `ldb_state_hist` (30 días). Para ver las últimas:
+```sql
+select id, saved_at, jsonb_array_length(data->'tasks') tareas, jsonb_array_length(data->'tx') movimientos from ldb_state_hist order by saved_at desc limit 20;
+```
+Para restaurar una (preguntar antes a Rocío), copiarla con un `_ts` nuevo:
+```sql
+update ldb_state set data = jsonb_set((select data from ldb_state_hist where id = ID), '{_ts}', to_jsonb((extract(epoch from now())*1000)::bigint)), updated_at = now();
+```

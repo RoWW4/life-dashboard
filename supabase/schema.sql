@@ -91,3 +91,31 @@ drop policy if exists "wallet_log leer propio" on public.wallet_log;
 create policy "wallet_log leer propio" on public.wallet_log for select using (auth.uid() = user_id);
 grant select on public.wallet_log to authenticated;
 grant all on public.wallet_log to service_role;
+
+-- 6) Historial del panel: antes de cada cambio de ldb_state se guarda aquí la versión anterior (30 días).
+--    Sin acceso desde el panel; se consulta y restaura con SQL (ver DATOS.md).
+create table if not exists public.ldb_state_hist (
+  id       bigint generated always as identity primary key,
+  user_id  uuid not null references auth.users on delete cascade,
+  data     jsonb not null,
+  saved_at timestamptz not null default now()
+);
+create index if not exists ldb_state_hist_user_saved on public.ldb_state_hist (user_id, saved_at desc);
+alter table public.ldb_state_hist enable row level security;
+revoke all on public.ldb_state_hist from anon, authenticated;
+grant all on public.ldb_state_hist to service_role;
+
+create or replace function public.ldb_state_keep_old() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if old.data is distinct from new.data then
+    insert into public.ldb_state_hist (user_id, data) values (old.user_id, old.data);
+    delete from public.ldb_state_hist where user_id = old.user_id and saved_at < now() - interval '30 days';
+  end if;
+  return new;
+end $$;
+revoke all on function public.ldb_state_keep_old() from public, anon, authenticated;
+
+drop trigger if exists ldb_state_keep_old on public.ldb_state;
+create trigger ldb_state_keep_old before update on public.ldb_state
+  for each row execute function public.ldb_state_keep_old();
