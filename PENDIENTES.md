@@ -24,12 +24,19 @@ Cosas que quiere cambiar la dueña del panel más adelante. **No hacerlas hasta 
 - Gráficos: ingresos y gastos de 6 meses con ahorro mensual; tendencia por categoría (mini línea + % frente a la media); calendario de gasto diario; Facturas como tira del 1 al 31; Ahorros como línea de saldo.
 - Paneles nuevos: metas de ahorro, coche, mascotas, hábitos/ejercicio, viajes y eventos, suscripciones con renovaciones, lista de deseos, resumen semanal por Telegram, notas rápidas.
 
+## Pendientes de decidir (31/10/2026)
+- Datos: dos Bizums de octubre de 2025 que el banco devolvió el mismo día («Devolución Bizum emitido»): ¿pasarlos a Traspasos para que no cuenten? Preguntar antes de tocar.
+- Datos: revisar las recargas de la tarjeta prepago de 2025 que están en «Compras» (deberían ser Traspasos para no contar doble).
+- Idea: traer pasos, sueño y pulso de Fitbit con la Google Health API (la API antigua de Fitbit se apaga el 02/11/2026). Comprobar antes si el permiso de Google caduca cada 7 días en modo prueba.
+- Idea: importar el histórico de Clue a la sección Salud (Clue exporta un JSON desde Ajustes → «Download my data»).
+
 ## Analizar: cuándo trae Wallet los movimientos (desde 30/10/2026)
 - Contexto: el banco va por Redsys y cortaba el acceso a las pocas horas (Enable Banking pausado desde el 27/10; el soporte no lo resolvió). Wallet también se quedó parado del 27 al 29/10 sin avisar; se reconectó el 29/10 ~16:00 y volvió a traer datos (al reconectar recargó todo de golpe a las 16:05).
 - Desde el 30/10 cada sincronización guarda en la tabla `wallet_log` (Supabase) la hora a la que Wallet creó cada movimiento (`kind='rec'`, `wallet_created_at`, `seen_at`) y, por ejecución, el último cambio de datos de Wallet (`kind='run'`, `wallet_change_at`). Solo fechas y horas.
 - No hubo movimientos en el banco el 29/10, así que la actualización de Wallet del 30/10 (2:00–6:00) no tenía nada nuevo que traer: no cuenta como fallo.
 - Prueba: el 30/10 ~06:39 se hizo un movimiento en el banco. Comprobar a qué hora lo trae Wallet (sale primero en pendientes; entra como movimiento a los 2 días).
 - Desde el 30/10 (noche) también se guardan en `wallet_log` los nombres de los campos de cada cuenta de Wallet (`kind='keys'`) y los campos que son fechas (`kind='acct'`, el nombre del campo va en el `id`), para ver si Wallet indica su última sincronización con el banco aunque no haya movimientos nuevos. Solo se lee la API: no fuerza ninguna actualización.
+- 31/10/2026: hay un aviso programado en la conversación del móvil a las 7:40 con el resultado de la prueba y, si no llegó, un mensaje preparado para el soporte de Wallet. Si se pierde, rehacerlo con los datos de `wallet_log`.
 - Tras unos días: sacar el patrón de horas de Wallet (`select … from wallet_log where kind='rec' and seen_at > '2026-10-30 05:40+00'`), ajustar las horas de la tarea `sync-wallet` de pg_cron para ir justo detrás y vigilar si Wallet vuelve a quedarse parado (si pasa, valorar el plan B: importar el .xls del banco o leer los avisos de pago por correo).
 
 ## Compras por encargo pagadas en efectivo · HECHO 29/10/2026
