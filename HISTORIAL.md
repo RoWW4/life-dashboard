@@ -2,6 +2,7 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`. Aquí se dejan unas 20; las anteriores están en `HISTORIAL-antiguo.md`.
 
+- 31/10/2026 · móvil · Mi día: «Gasto del mes» muestra las categorías en barras, igual que en Finanzas (misma tarjeta en las dos secciones). Versión v44.
 - 31/10/2026 · ordenador · Copia diaria de los datos en Google Drive con un Google Apps Script de la cuenta personal (fuera del repositorio; carpeta «Copias del panel», 60 días).
 - 31/10/2026 · ordenador · Datos restaurados tras la pérdida: base del 28/10, movimientos reimportados del banco, facturas enlazadas, movimientos clasificados y reglas nuevas (solo datos en Supabase).
 - 31/10/2026 · ordenador · Protección de datos: Supabase guarda la versión anterior del panel antes de cada cambio (tabla `ldb_state_hist`, 30 días); la app no sube versiones con muchos menos datos que la nube sin confirmar y, al iniciar sesión, siempre manda la nube (versión 43).
@@ -21,4 +22,3 @@ Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qu
 - 30/10/2026 · móvil · Movimientos: las etiquetas (banco, prepago, fijo, factura, encargo, extraordinario, ¿duplicado?) pasan arriba a la derecha, sobre el importe; filas más bajas. Versión v35.
 - 30/10/2026 · móvil · Barra inferior del móvil: todos los iconos y textos alineados a la misma altura («Más» salía más abajo y el seleccionado se desplazaba). Versión v34.
 - 30/10/2026 · móvil · Gasto del mes: quitado el «≈ € al día». Versión v33.
-- 30/10/2026 · móvil · Mi día: quitados los indicadores «Para hoy» y «Disponible» (ya salen en «Lo más importante» y en Gasto del mes). Gasto del mes rediseñado igual en Mi día y Finanzas: anillo, total con una sola línea (% del tope y €/día) y categorías en filas (5 y «Ver más»; dos columnas en el ordenador); fuera el gráfico de ritmo de gasto. Versión v32.

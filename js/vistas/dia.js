@@ -20,7 +20,7 @@ function vDia(){
     prox: mp('prox',`${I('calendar-clock')} Próximos 14 días`,up.length?fold('d-prox', up.map(x => x[1]), 6):empty('Nada en las próximas dos semanas.')),
     cal: mp('cal',`${I('calendar-days')} Calendario`,calHTML()),
     fact: mp('fact',`${I('receipt')} Facturas próximos 30 días${btot?` <span class="cnt">· ${eur(btot)}</span>`:''}`,(bills.length?bills.slice(0,5).map(fxRow).join(''):empty('Nada en los próximos 30 días.'))+'<div class="more mu"><a href="#" data-a="go" data-i="fact">Gestionar facturas</a></div>'),
-    gasto: mp('gasto',`${I('wallet')} Gasto del mes`,gastoHTML(m,true)+'<div class="more mu"><a href="#" data-a="go" data-i="fin">Ver detalle</a></div>','wide'),
+    gasto: mp('gasto',`${I('wallet')} Gasto del mes`,gastoHTML(m)+'<div class="more mu"><a href="#" data-a="go" data-i="fin">Ver detalle</a></div>','wide'),
     docs: mp('docs',`${I('folder-open')} Documentos a mano`,(pins.length?`<div class="dtiles">${pins.map(docTile).join('')}</div>`:empty('Marca con la estrella los documentos que quieras tener a mano.'))+'<div class="more mu"><a href="#" data-a="go" data-i="docs">Ver todos los documentos</a></div>')
   };
   VIS.dia = ord('dia', DIA);

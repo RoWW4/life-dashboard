@@ -157,7 +157,7 @@ function vFin(){
     <div class="kpi"><span class="k">${I('target')} Tope mensual</span><span class="v">${eur(S.budget)}</span><span class="d"><a href="#" data-a="eb2">cambiar</a></span></div>
   </div>
   ${(() => { const C = {
-    gasto: panel('fin','gasto',`${I('wallet')} Gasto del mes`,gastoHTML(m,false),'wide'),
+    gasto: panel('fin','gasto',`${I('wallet')} Gasto del mes`,gastoHTML(m),'wide'),
     mov: panel('fin','mov',`${I('list-checks')} Movimientos`,`<span id="txcard"></span>
     <div class="txf"><input id="txq" class="in" type="search" placeholder="Buscar concepto…" value="${esc(txf.q)}" aria-label="Buscar en movimientos"><select class="in" data-a="txfc" aria-label="Categoría"><option value="">Todas las categorías</option>${CATS.map(c => `<option ${txf.cat===c?'selected':''}>${c}</option>`).join('')}</select><select class="in" data-a="txfp" aria-label="Periodo">${[['mes',ml],['3m','Últimos 3 meses'],['anio','Año '+m.slice(0,4)],['todo','Todo']].map(([k,n]) => `<option value="${k}" ${txf.per===k?'selected':''}>${n}</option>`).join('')}</select><div class="seg">${[['','Todos'],['g','Gastos'],['i','Ingresos']].map(([k,n]) => `<button class="${txf.t===k?'on':''}" data-a="txft" data-i="${k}">${n}</button>`).join('')}</div></div>
     <div id="txlist">${txListHTML()}</div>`,'wide'),

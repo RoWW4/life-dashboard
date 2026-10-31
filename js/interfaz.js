@@ -104,20 +104,15 @@ function donut(cats, budget, sp, rem){
   const segs = cats.map(([c,v]) => { const len = v/den*C, g = len > 4 ? 1.5 : 0; const s = `<circle r="${R}" cx="64" cy="64" fill="none" stroke="${col(c)}" stroke-width="13" stroke-dasharray="${Math.max(len-g,0.5)} ${C}" stroke-dashoffset="${-off}"><title>${c}: ${eur(v)}</title></circle>`; off += len; return s; }).join('');
   return `<div class="donut"><svg viewBox="0 0 128 128" role="img" aria-label="Gasto del mes por categoría"><g transform="rotate(-90 64 64)"><circle r="${R}" cx="64" cy="64" fill="none" stroke="var(--bd)" stroke-width="13"/>${segs}</g></svg><div class="c"><b class="${rem<0?'er':''}">${eur(Math.abs(rem))}</b><span>${rem>=0?'disponible':'por encima'}</span></div></div>`;
 }
-/* Gasto del mes: anillo con lo disponible y total gastado con una sola línea de contexto.
-   En Mi día (compact) debajo va la lista corta de categorías (las 5 primeras; «Ver más» despliega el resto).
-   En Finanzas van todas las categorías en barras (icono, % del gasto y total): a la derecha en el ordenador, debajo en el móvil. */
-function gastoHTML(m, compact){
+/* Gasto del mes (igual en Mi día y en Finanzas): anillo con lo disponible, total gastado con una sola línea de contexto
+   y todas las categorías en barras (icono, % del gasto y total): a la derecha en el ordenador, debajo en el móvil. */
+function gastoHTML(m){
   const now = new Date(), cur = m===MN(now), sp = spent(m), cats = byCat(m), B = S.budget||0, fl = cur ? fxLeft() : 0, rem = B - sp - fl, pc = B ? sp/B*100 : 0;
   const info = B ? `<b class="${pc>=100?'er':pc>=80?'wa':'ok'}">${Math.round(pc)} %</b> de tu tope` : 'Define un tope en Ajustes';
   const gx = `<div class="gx">${B?donut(cats,B,sp,rem):''}<div class="gxi"><div class="mu">Gastado ${cur?'este mes':'en '+MS[+m.slice(5)]}</div><div class="big">${eur(sp)}</div><div class="mu">${info}</div>${fl?`<div class="mu">Reservado para facturas: ${eur(fl)}</div>`:''}</div></div>`;
-  if (!compact) {
-    const txm = S.tx.filter(x => mon(x.date)===m), mx = Math.max(1, ...cats.map(c => c[1]));
-    const bars = cats.map(([c,v]) => { const n = txm.filter(x => x.t==='g' && x.cat===c).length; return `<button class="catrow" data-a="cd" data-i="${esc(c)}">${tile(CI[c]||'package', col(c))}<span>${c}<span class="mu" style="display:block;font-size:12px;line-height:1.2">${n} mov. · ${Math.round(v/sp*100)}% del gasto</span></span><b class="amt">${eur(v)}</b>${I('chevron-right','cr')}<div class="bar"><div style="width:${v/mx*100}%;background:${col(c)}"></div></div></button>`; }).join('');
-    return `<div class="gxf">${gx}<div class="gxc">${bars || '<div class="mu">Aún sin gastos este mes.</div>'}</div></div>`;
-  }
-  const rows = cats.map(([c,v]) => `<button class="gl" data-a="cd" data-i="${esc(c)}" title="Ver el detalle de ${esc(c)}"><b style="background:${col(c)}"></b><span>${c}</span><em>${eur(v)}</em></button>`);
-  return `${gx}<div class="gls">${rows.length ? fold('g-d', rows, 5) : '<div class="mu">Aún sin gastos este mes.</div>'}</div>`;
+  const txm = S.tx.filter(x => mon(x.date)===m), mx = Math.max(1, ...cats.map(c => c[1]));
+  const bars = cats.map(([c,v]) => { const n = txm.filter(x => x.t==='g' && x.cat===c).length; return `<button class="catrow" data-a="cd" data-i="${esc(c)}">${tile(CI[c]||'package', col(c))}<span>${c}<span class="mu" style="display:block;font-size:12px;line-height:1.2">${n} mov. · ${Math.round(v/sp*100)}% del gasto</span></span><b class="amt">${eur(v)}</b>${I('chevron-right','cr')}<div class="bar"><div style="width:${v/mx*100}%;background:${col(c)}"></div></div></button>`; }).join('');
+  return `<div class="gxf">${gx}<div class="gxc">${bars || '<div class="mu">Aún sin gastos este mes.</div>'}</div></div>`;
 }
 /* Festivos: nacionales y autonómicos de date.nager.at (se guardan en este dispositivo por año) + locales a mano. */
 const REGIONS = [['','Solo nacionales'],['ES-AN','Andalucía'],['ES-AR','Aragón'],['ES-AS','Asturias'],['ES-IB','Baleares'],['ES-CN','Canarias'],['ES-CB','Cantabria'],['ES-CL','Castilla y León'],['ES-CM','Castilla-La Mancha'],['ES-CT','Cataluña'],['ES-VC','C. Valenciana'],['ES-EX','Extremadura'],['ES-GA','Galicia'],['ES-MD','Madrid'],['ES-MC','Murcia'],['ES-NC','Navarra'],['ES-PV','País Vasco'],['ES-RI','La Rioja'],['ES-CE','Ceuta'],['ES-ML','Melilla']];
