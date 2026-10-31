@@ -2,6 +2,7 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`. Aquí se dejan unas 20; las anteriores están en `HISTORIAL-antiguo.md`.
 
+- 31/10/2026 · móvil · Datos: dos cargos del mismo día pasados de Compras a Mascotas (son del veterinario; se dejan los dos).
 - 31/10/2026 · móvil · Datos: revisión de movimientos. Bizums recibidos y reembolsos pasados a devolución de su categoría; descargas de la prepago, ingresos en efectivo propios y un Bizum devuelto pasados a Traspasos; varios gastos de «Otros» clasificados; un pago anual enlazado con su fijo (y su palabra de reconocimiento simplificada); borrado un apunte a mano repetido. Las recargas antiguas de la prepago se quedan en «Compras» (no hay detalle de la tarjeta antes de mayo de 2026).
 - 31/10/2026 · móvil · Finanzas: un ingreso puede llevar una categoría de gasto (= devolución, p. ej. un Bizum por una cena): resta del gasto de esa categoría y no cuenta como ingreso; chip «devolución» en la lista. Las reglas no convierten solos los ingresos en devoluciones. Versión v46.
 - 31/10/2026 · móvil · Finanzas: «Reglas de clasificación» muestra solo 3 y el resto con «Ver más». Versión v45.
