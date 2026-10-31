@@ -2,6 +2,8 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`. Aquí se dejan unas 20; las anteriores están en `HISTORIAL-antiguo.md`.
 
+- 31/10/2026 · móvil · Finanzas: «Reglas de clasificación» muestra solo 3 y el resto con «Ver más». Versión v45.
+- 31/10/2026 · móvil · Facturas: «Empieza en» avisa si la fecha no es válida (antes se guardaba vacía sin decir nada) y entiende fechas escritas como 01/11/27. Datos: un pago fijo pasa a empezar más adelante.
 - 31/10/2026 · móvil · Mi día: «Gasto del mes» muestra las categorías en barras, igual que en Finanzas (misma tarjeta en las dos secciones). Versión v44.
 - 31/10/2026 · ordenador · Copia diaria de los datos en Google Drive con un Google Apps Script de la cuenta personal (fuera del repositorio; carpeta «Copias del panel», 60 días).
 - 31/10/2026 · ordenador · Datos restaurados tras la pérdida: base del 28/10, movimientos reimportados del banco, facturas enlazadas, movimientos clasificados y reglas nuevas (solo datos en Supabase).
@@ -20,5 +22,3 @@ Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qu
 - 30/10/2026 · móvil · Tareas: al completar una se guarda la fecha; pasados 7 días deja de verse en «Todas» y en el calendario (sigue en «Completadas»). Versión v37.
 - 30/10/2026 · móvil · Movimientos: etiqueta arriba a la derecha y debajo, en una línea, importe, botón de Facturas y X. Versión v36.
 - 30/10/2026 · móvil · Movimientos: las etiquetas (banco, prepago, fijo, factura, encargo, extraordinario, ¿duplicado?) pasan arriba a la derecha, sobre el importe; filas más bajas. Versión v35.
-- 30/10/2026 · móvil · Barra inferior del móvil: todos los iconos y textos alineados a la misma altura («Más» salía más abajo y el seleccionado se desplazaba). Versión v34.
-- 30/10/2026 · móvil · Gasto del mes: quitado el «≈ € al día». Versión v33.

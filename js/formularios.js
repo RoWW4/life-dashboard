@@ -62,6 +62,10 @@ function shopEdit(s){
   o.querySelector('#se1').focus();
 }
 /* Alta y edición de un pago o ingreso de Facturas. */
+/* Mes de inicio como AAAA-MM. Acepta AAAA-MM o una fecha escrita (01/11/27, 11/2027…); '' si está vacío, null si no se entiende. */
+const ymOf = s => { s = (s||'').trim(); if (!s) return ''; let m = s.match(/^(\d{4})-(\d{1,2})$/), y, mo;
+  if (m) { y = +m[1]; mo = +m[2]; } else { const p = s.split(/[^\d]+/).filter(Boolean).map(Number); if (p.length < 2) return null; y = p[p.length-1]; mo = p[p.length-2]; if (y < 100) y += 2000; }
+  return mo>=1 && mo<=12 && y>=2000 && y<=2100 ? y+'-'+p2(mo) : null; };
 function fixedForm(f, isNew){
   const fq = fxFq(f), opt = (L, v) => L.map(([k,n]) => `<option value="${k}" ${String(k)===String(v)?'selected':''}>${n}</option>`).join('');
   const o = modal(`<h3>${isNew?'Nueva factura o pago':'Editar'}</h3><div class="fs"><label>Nombre<input id="ff1" value="${esc(f.name)}" placeholder="Ej. Gimnasio, Seguro coche…"></label>
@@ -76,8 +80,10 @@ function fixedForm(f, isNew){
   o.querySelector('#ff6').onchange = sh; sh();
   o.querySelectorAll('[data-a="df"]').forEach(b => b.addEventListener('click', () => o.remove()));
   o.querySelector('#ok').onclick = () => {
-    const q = v('#ff6'), n = v('#ff1'), a = pnum(v('#ff2')), ds = v('#ff3').split(/[^\d]+/).map(Number).filter(d => d>=1 && d<=31), fr = q==='Única' ? '' : v('#ff5');
+    const q = v('#ff6'), n = v('#ff1'), a = pnum(v('#ff2')), ds = v('#ff3').split(/[^\d]+/).map(Number).filter(d => d>=1 && d<=31), fr = q==='Única' ? '' : ymOf(v('#ff5'));
     if (!n || !(a>0)) return toast('Indica nombre e importe');
+    // «Empieza en» no válido (p. ej. una fecha escrita que el móvil no entiende): avisar en vez de guardarlo vacío.
+    if (q!=='Única' && (fr===null || o.querySelector('#ff5').validity.badInput)) return toast('«Empieza en» no es válido: elige el mes y el año (p. ej. noviembre de 2027)');
     if (q!=='Variable' && (q==='Única' ? !v('#ff8') : !ds.length)) return toast(q==='Única' ? 'Indica la fecha' : 'Indica el día del mes');
     // Movimientos apuntados a mano antes del nuevo inicio (los del banco no se tocan).
     const old = fr && !isNew ? S.tx.filter(x => x.fid===f.id && !fromBank(x) && mon(x.date) < fr) : [];
