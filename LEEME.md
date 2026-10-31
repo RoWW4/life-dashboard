@@ -25,6 +25,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
   - `task_reminders`: avisos de Telegram ya mandados (para no repetirlos).
   - `wallet_log`: a qué hora trae Wallet cada movimiento (solo fechas y horas).
   - `ldb_state_hist`: copia automática de la versión anterior del panel antes de cada cambio (se guardan 30 días). Para recuperar datos, ver `DATOS.md`.
+- **Copia diaria fuera de Supabase:** un Google Apps Script de la cuenta personal de Google (código guardado fuera del repositorio) entra cada noche con la cuenta del panel y guarda un `.json` en la carpeta «Copias del panel» de Drive (60 días). Si se cambia la contraseña del panel, hay que cambiarla también en las propiedades del script.
 - Login con un único usuario y altas nuevas desactivadas.
 - **Programador (pg_cron):** dos tareas que llaman a la API de GitHub para lanzar los workflows, con un token de GitHub guardado en Vault. Se crearon a mano en Supabase (no están en `schema.sql`):
   - `sync-wallet`: `17 5,9,13,17,21 * * *` (UTC), unas 06:17, 10:17, 14:17, 18:17 y 22:17 en invierno.

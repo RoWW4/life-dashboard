@@ -2,6 +2,8 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`. Aquí se dejan unas 20; las anteriores están en `HISTORIAL-antiguo.md`.
 
+- 31/10/2026 · ordenador · Copia diaria de los datos en Google Drive con un Google Apps Script de la cuenta personal (fuera del repositorio; carpeta «Copias del panel», 60 días).
+- 31/10/2026 · ordenador · Datos restaurados tras la pérdida: base del 28/10, movimientos reimportados del banco, facturas enlazadas, movimientos clasificados y reglas nuevas (solo datos en Supabase).
 - 31/10/2026 · ordenador · Protección de datos: Supabase guarda la versión anterior del panel antes de cada cambio (tabla `ldb_state_hist`, 30 días); la app no sube versiones con muchos menos datos que la nube sin confirmar y, al iniciar sesión, siempre manda la nube (versión 43).
 - 31/10/2026 · ordenador · Finanzas: «Gasto del mes» muestra las categorías en barras (en el ordenador, a la derecha del anillo con el total debajo de este; en el móvil, debajo) y desaparece el panel «Por categoría»; la tarjeta del banco queda solo en Ajustes; en la barra del móvil la sección se llama «Finanzas».
 - 31/10/2026 · ordenador · `PENDIENTES.md` reducido a lo importante (fuera las ideas); nuevo `DATOS.md` con cómo cambiar los datos en Supabase (antes solo estaba en el ordenador); `CLAUDE.md`: sin revisiones por iniciativa propia.
@@ -20,5 +22,3 @@ Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qu
 - 30/10/2026 · móvil · Barra inferior del móvil: todos los iconos y textos alineados a la misma altura («Más» salía más abajo y el seleccionado se desplazaba). Versión v34.
 - 30/10/2026 · móvil · Gasto del mes: quitado el «≈ € al día». Versión v33.
 - 30/10/2026 · móvil · Mi día: quitados los indicadores «Para hoy» y «Disponible» (ya salen en «Lo más importante» y en Gasto del mes). Gasto del mes rediseñado igual en Mi día y Finanzas: anillo, total con una sola línea (% del tope y €/día) y categorías en filas (5 y «Ver más»; dos columnas en el ordenador); fuera el gráfico de ritmo de gasto. Versión v32.
-- 30/10/2026 · móvil · Móvil: los botones + y micrófono se esconden al bajar; textos de ayuda de las cabeceras solo en el ordenador; «Personalizar» pasa a icono junto al título. Gasto del mes: quitada la barra de colores y, en Finanzas, gráfico de ritmo de gasto (acumulado frente a lo previsto hasta el tope). Facturas: las filas ya no muestran día ni categoría. Versión v31.
-- 30/10/2026 · móvil · Sincronización Wallet: registra también los campos de fecha de las cuentas (sin saldos ni números) para saber si Wallet consulta al banco aunque no haya movimientos.
