@@ -2,24 +2,31 @@
 
 Rocío trabaja este proyecto desde el ordenador (Claude Code) y desde el móvil (Claude en la nube). Para que ninguna sesión pierda lo que hizo la otra:
 
-## Antes de hacer nada
-1. `git pull` para traer lo último de GitHub.
-2. Leer `HISTORIAL.md` (lo más reciente está arriba) y `PENDIENTES.md`.
+## Al empezar la sesión
+1. `git pull` para traer lo último de GitHub. En el ordenador, `D:\Claude\life-dashboard` es la copia de GitHub (desde el 31/10/2026): se trabaja y se sube directamente desde ahí, sin copias en carpetas temporales.
+2. Leer solo el principio de `HISTORIAL.md` (lo más reciente está arriba) y `PENDIENTES.md`. `HISTORIAL-antiguo.md` solo se lee si hace falta buscar algo viejo.
+
+## Mientras Rocío pide cambios (para gastar menos)
+- Hacer cada cambio en local, **sin commit ni push** y sin subir todavía el número de versión.
+- Por cada cambio hecho o decidido, añadir **arriba** de `HISTORIAL.md` una línea:
+  `- DD/MM/AAAA · móvil|ordenador · qué se hizo (una frase)`
+  Una sola línea, breve. No apuntar consultas que no cambian nada.
+- Los cambios de datos en Supabase se ven al momento en la app, pero su línea del historial también espera a la subida.
+- Probar con capturas solo cuando el cambio sea visual y haga falta; preferir comprobaciones cortas.
+- Respuestas breves.
+
+## Cuando diga «súbelo» (o «ya está», «publícalo»…)
+1. Si hubo cambios de CSS o JS, subir la versión **una sola vez** (ver abajo) y apuntarla en la última línea del historial.
+2. Comprobación rápida de todo junto.
+3. **Un solo** commit y `git push` a `main` (GitHub Pages publica desde `main`).
+- Lo que no se ha subido solo existe en esa sesión: si Rocío se despide o va a cambiar de dispositivo con cambios sin subir, recordárselo.
+
+## Historial
+- En `HISTORIAL.md` se dejan unas 20 líneas. Al subir, si hay más, pasar las más antiguas al principio de `HISTORIAL-antiguo.md` (también lo más reciente arriba).
 
 ## Pendientes
 - Cuando Rocío diga «apúntalo en pendientes» (o similar), añadirlo a `PENDIENTES.md` sin hacerlo todavía.
 - Cuando se haga uno, quitarlo de `PENDIENTES.md` y apuntarlo en `HISTORIAL.md`.
-
-## Forma de trabajar (para gastar menos)
-- Si Rocío va pidiendo varios cambios seguidos, **apuntarlos y no publicar** hasta que diga que ha terminado («ya está», «súbelo»…). Entonces hacerlos todos, probarlos juntos y hacer **un solo** commit y push.
-- Probar con capturas solo cuando el cambio sea visual y haga falta; preferir comprobaciones cortas.
-- Respuestas breves.
-
-## Después de cada cambio
-1. Añadir **arriba** de `HISTORIAL.md` una línea:
-   `- DD/MM/AAAA · móvil|ordenador · qué se hizo (una frase)`
-   Una sola línea, breve. Solo lo hecho o decidido; no apuntar consultas que no cambian nada.
-2. Hacer commit y `git push` a `main` (GitHub Pages publica desde `main`).
 
 ## Recordatorios
 - Responder a Rocío en español y de forma breve.
