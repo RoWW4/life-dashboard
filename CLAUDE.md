@@ -10,6 +10,11 @@ Rocío trabaja este proyecto desde el ordenador (Claude Code) y desde el móvil 
 - Cuando Rocío diga «apúntalo en pendientes» (o similar), añadirlo a `PENDIENTES.md` sin hacerlo todavía.
 - Cuando se haga uno, quitarlo de `PENDIENTES.md` y apuntarlo en `HISTORIAL.md`.
 
+## Forma de trabajar (para gastar menos)
+- Si Rocío va pidiendo varios cambios seguidos, **apuntarlos y no publicar** hasta que diga que ha terminado («ya está», «súbelo»…). Entonces hacerlos todos, probarlos juntos y hacer **un solo** commit y push.
+- Probar con capturas solo cuando el cambio sea visual y haga falta; preferir comprobaciones cortas.
+- Respuestas breves.
+
 ## Después de cada cambio
 1. Añadir **arriba** de `HISTORIAL.md` una línea:
    `- DD/MM/AAAA · móvil|ordenador · qué se hizo (una frase)`
