@@ -152,11 +152,11 @@ function sincCard(){
 
 /* Saldo de la cuenta: S.acct = {bal, d}. Se apunta solo al importar el extracto de la cuenta (PDF o .xls) o a mano con el lápiz. */
 function acctHTML(){
-  // Al saldo del extracto se le suman los movimientos de la cuenta que han llegado después (Wallet o importados), sin la prepago ni los apuntes a mano.
-  const a = S.acct, nx = a ? S.tx.filter(x => (x.bank || x.xls) && !x.card && x.date > a.d) : [], now = a ? Math.round((a.bal + nx.reduce((s,x) => s + (x.t==='i' ? x.amt : -x.amt), 0))*100)/100 : 0, eye = `<button class="ib" data-a="acceye" aria-label="${accShow?'Ocultar saldo':'Mostrar saldo'}" title="${accShow?'Ocultar saldo':'Mostrar saldo'}">${I(accShow?'eye-off':'eye')}</button>`;
+  // Al saldo apuntado se le suman los movimientos de la cuenta que han llegado al panel después (Wallet o importados), sin la prepago ni los apuntes a mano.
+  const a = S.acct, later = new Set(a && a.seen != null ? S.bankSeen.slice(a.seen) : []), nx = a ? S.tx.filter(x => (x.bank || x.xls) && !x.card && later.has(x.bank || x.xls)) : [], now = a ? Math.round((a.bal + nx.reduce((s,x) => s + (x.t==='i' ? x.amt : -x.amt), 0))*100)/100 : 0, eye = `<button class="ib" data-a="acceye" aria-label="${accShow?'Ocultar saldo':'Mostrar saldo'}" title="${accShow?'Ocultar saldo':'Mostrar saldo'}">${I(accShow?'eye-off':'eye')}</button>`;
   return `<div class="acct ${accShow?'':'priv'}"><div class="k">${I('landmark')} Saldo de la cuenta <span class="bk">(Openbank)</span>${eye}<button class="ib" data-a="accedit" aria-label="Cambiar saldo" title="Cambiar saldo a mano">${I('pencil')}</button></div>`
     + (a ? `<b>${money(eur(now))}</b><span class="d">Actualizado a ${fd(nx.reduce((m,x) => x.date > m ? x.date : m, a.d))}</span>`
-         : `<span class="d">Importa el PDF de la cuenta en Ajustes (o toca el lápiz) para verlo aquí.</span>`) + `</div>`;
+         : `<b>—</b>`) + `</div>`;
 }
 
 function vFin(){

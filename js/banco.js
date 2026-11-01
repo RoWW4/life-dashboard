@@ -59,8 +59,11 @@ async function pdfRows(buf){
     const its = (await (await doc.getPage(p)).getTextContent()).items.filter(i => i.str.trim() && !i.transform[1] && !i.transform[2] && i.transform[4] >= 40).map(i => ({x:i.transform[4], y:Math.round(i.transform[5]), s:i.str.trim()})), L = new Map();
     its.forEach(i => (L.get(i.y) || L.set(i.y, []).get(i.y)).push(i));
     const lines = [...L].map(([y, a]) => ({y, a:a.sort((u,v) => u.x-v.x)}));
-    if (p === 1) { const tx = lines.map(l => l.a.map(i => i.s).join(' ')).join('\n'),
-      sb = tx.match(/Saldo:\s*(-?[\d.,]+)\s*EUR/), fdm = tx.match(/Fecha descarga:?\s*(\d{2})\/(\d{2})\/(\d{4})/);
+    // Cabecera de la cuenta: el valor va a la derecha de su etiqueta, casi a la misma altura (puede venir como otro trozo de texto).
+    if (p === 1) { const val = re => { const lb = its.find(i => re.test(i.s)); if (!lb) return '';
+        const m = lb.s.replace(re, '').trim(); if (m) return m;
+        const r = its.filter(i => i !== lb && i.x > lb.x && Math.abs(i.y - lb.y) <= 4).sort((a,b) => a.x-b.x)[0]; return r ? r.s : ''; },
+      sb = val(/^Saldo:/).match(/^(-?[\d.,]+)\s*(EUR)?$/), fdm = val(/^Fecha descarga:?/).match(/(\d{2})\/(\d{2})\/(\d{4})/);
       if (sb) acct = {bal: pnum(dot(sb[1])), d: fdm ? `${fdm[3]}-${fdm[2]}-${fdm[1]}` : ''}; }
     if (card === null) { const h = lines.find(l => l.a.some(i => i.s==='Concepto') && l.a.some(i => i.s==='Importe')); if (!h) continue;
       const sit = h.a.find(i => /^Situaci/.test(i.s)); card = !!sit; cx = card ? sit.x - 12 : h.a.find(i => i.s==='Importe').x - 10; }
@@ -120,8 +123,10 @@ async function importFile(file){
     for (const it of items) { const k = it.date+'|'+(it.amt<0?'g':'i')+'|'+Math.abs(it.amt).toFixed(2); if (had[k] > 0) { had[k]--; it.dup = true; } } }
   // La fecha del saldo es la más tardía entre la descarga y el último movimiento del archivo: lo de después se le suma en Finanzas.
   const last = ds.length ? ds.reduce((m,d) => d>m?d:m) : '', ac = acct && !isNaN(acct.bal) ? {bal:acct.bal, d:[acct.d||'', last].sort().pop() || TD()} : nb;
-  if (ac && (!S.acct || ac.d >= S.acct.d)) S.acct = ac;   // saldo de la cuenta para Finanzas (no se pisa con un extracto más antiguo)
   const r = ingest(items.filter(it => !it.dup), card ? 'card' : 'xls');
+  // Saldo de la cuenta para Finanzas (no se pisa con un extracto más antiguo). «seen» marca qué movimientos ya están dentro de ese saldo:
+  // solo los que lleguen después se le suman, aunque el banco les ponga una fecha anterior o posterior.
+  if (ac && (!S.acct || ac.d >= S.acct.d)) S.acct = {...ac, seen: S.bankSeen.length};
   r.skip += items.filter(it => it.dup).length;
   // Con las compras de la prepago ya dentro, sus recargas en la cuenta pasan a ser traspasos (si no, se contaría dos veces).
   let tr = 0;
