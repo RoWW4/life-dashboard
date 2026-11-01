@@ -4,9 +4,9 @@ Rocío trabaja el panel desde el ordenador (`D:\Claude\life-dashboard`, copia de
 
 ## Cómo se trabaja
 1. Al empezar: `git pull`. Si hay cambios locales sin subir, `git pull --rebase --autostash`. No hace falta leer nada más.
-2. Cambios en local, sin commit ni push. `PENDIENTES.md` solo se lee si lo pedido tiene que ver con algo pendiente.
+2. Cambios en local, sin commit ni push. Al terminar cada cambio, preguntar con la ventana de opciones (AskUserQuestion): «Subir ya» u «Otro cambio». Sin repetir la pregunta por texto. `PENDIENTES.md` solo se lee si lo pedido tiene que ver con algo pendiente.
 3. Comprobar con lo mínimo. La vista previa (localhost:8765) solo para cambios visuales que lo necesiten, **sin iniciar sesión** y con `localStorage.clear()` al acabar: probar con datos de mentira y luego iniciar sesión en el mismo navegador borró los datos reales el 31/10/2026.
-4. Cuando diga «súbelo» (o «ya está», «publícalo»): `node scripts/subir.mjs "qué se ha cambiado (una frase)"`. Trae lo de la otra sesión, sube la versión si cambió CSS o JS, pasa `scripts/comprobar.mjs` y hace un commit y push a `main` (GitHub Pages publica desde ahí). Si algo falla, no sube y dice por qué. Antes, mirar `git status` por si hay archivos que no deben subirse.
+4. Cuando elija «Subir ya» o diga «súbelo» (o «ya está», «publícalo»): `node scripts/subir.mjs "qué se ha cambiado (una frase)"`. Trae lo de la otra sesión, sube la versión si cambió CSS o JS, pasa `scripts/comprobar.mjs` y hace un commit y push a `main` (GitHub Pages publica desde ahí). Si algo falla, no sube y dice por qué. Antes, mirar `git status` por si hay archivos que no deben subirse.
 5. Si Rocío se despide o cambia de dispositivo con cambios sin subir, recordárselo.
 
 El historial de cambios es el de git (`git log --oneline`); `HISTORIAL.md` y `HISTORIAL-antiguo.md` son solo archivo hasta el 01/11/2026.

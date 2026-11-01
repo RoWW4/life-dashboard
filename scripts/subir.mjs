@@ -52,12 +52,27 @@ try { git('push', '-q', 'origin', 'HEAD:main'); }
 catch (e) { fin('El commit está hecho pero el push ha fallado (¿la otra sesión acaba de subir?): repetir la orden.\n' + (e.stderr || '')); }
 console.log('\n✔ Subido: ' + git('log', '-1', '--format=%h %s'));
 
-// 5) Si cambió la app, esperar a que GitHub Pages sirva la versión nueva (hasta 5 minutos)
+// 5) Si cambió la app, comprobar que se publica.
+//    Si la web se puede abrir desde aquí (ordenador), se espera a que sirva la versión nueva (hasta 5 minutos).
+//    Si no (sesión en la nube, donde la web está bloqueada), se mira en GitHub cómo acaba la publicación, sin esperas largas.
 if (v) {
-  const url = 'https://roww4.github.io/life-dashboard/sw.js';
-  for (let i = 0; i < 20; i++) {
-    await new Promise(r => setTimeout(r, 15000));
-    try { if ((await (await fetch(url + '?x=' + Date.now(), { cache: 'no-store' })).text()).includes('ldb-shell-v' + v + "'")) { console.log('✔ La web ya sirve la v' + v); process.exit(0); } } catch (e) {}
+  const url = 'https://roww4.github.io/life-dashboard/sw.js', sirve = async () => (await (await fetch(url + '?x=' + Date.now(), { cache: 'no-store', signal: AbortSignal.timeout(8000) })).text()).includes('ldb-shell-v' + v + "'");
+  let web = true; try { if (await sirve()) { console.log('✔ La web ya sirve la v' + v); process.exit(0); } } catch (e) { web = false; }
+  if (web) {
+    for (let i = 0; i < 20; i++) {
+      await new Promise(r => setTimeout(r, 15000));
+      try { if (await sirve()) { console.log('✔ La web ya sirve la v' + v); process.exit(0); } } catch (e) {}
+    }
+    console.log('⚠ Subido a GitHub, pero la web aún no sirve la v' + v + ' tras 5 minutos: mirar la publicación de GitHub Pages (Actions → «pages build and deployment»).');
+  } else {
+    const sha = git('rev-parse', 'HEAD');
+    const run = () => { try { return JSON.parse(execFileSync('gh', ['api', `repos/RoWW4/life-dashboard/actions/runs?head_sha=${sha}&per_page=5`, '--jq', '[.workflow_runs[]|select(.name|test("pages"))][0]'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }) || 'null'); } catch (e) { return undefined; } };
+    for (let i = 0; i < 24; i++) {
+      const r = run();
+      if (r === undefined) { console.log('ℹ Desde aquí no se puede abrir la web ni consultar GitHub: la publicación tarda 1-2 minutos (Actions → «pages build and deployment»).'); process.exit(0); }
+      if (r && r.status === 'completed') { console.log(r.conclusion === 'success' ? '✔ Publicada la v' + v + ' (en 1 minuto la verás al recargar)' : '⚠ La publicación en GitHub Pages ha fallado: mirar Actions → «pages build and deployment».'); process.exit(0); }
+      await new Promise(r => setTimeout(r, 10000));
+    }
+    console.log('⚠ La publicación sigue en marcha tras 4 minutos: mirar Actions → «pages build and deployment».');
   }
-  console.log('⚠ Subido a GitHub, pero la web aún no sirve la v' + v + ' tras 5 minutos: mirar la publicación de GitHub Pages (Actions → «pages build and deployment»).');
 }
