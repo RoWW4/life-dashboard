@@ -33,24 +33,36 @@ const SRE = {
 function listen(cb, hint, pv){
   const o = modal(`<h3>Dictar</h3><p>${hint}</p><div class="vz"><button class="vbtn" id="vb" aria-label="Escuchar">${I('mic')}</button><div id="vs">Preparando el micrófono…</div></div><input id="vt" class="in" style="width:100%;margin-bottom:10px" placeholder="Aquí aparece lo que digas (puedes corregirlo)"><div class="vprev" id="vp" aria-live="polite"></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Añadir</button></div>`);
   const vt = o.querySelector('#vt'), vs = o.querySelector('#vs'), vb = o.querySelector('#vb'), R = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let r = null, on = false;
+  let r = null, on = false, want = false, heard = 0;
   const upd = () => { if (pv) o.querySelector('#vp').innerHTML = pv(vt.value); };
   vt.addEventListener('input', upd);
-  const stop = () => { if (r && on) try { r.stop(); } catch(x) {} };
-  const start = () => {
-    if (!R) { vb.hidden = true; vs.textContent = 'Este navegador no permite dictar aquí: toca la casilla y usa el micrófono del teclado.'; vt.focus(); return; }
-    if (on) return stop();
+  // El móvil corta el dictado tras una pausa corta: mientras no se pare a mano, se vuelve a escuchar solo,
+  // hasta 2 s seguidos sin oír nada (o 2 minutos en total).
+  const QUIET = 2000, MAXT = 120000;
+  let t0 = 0;
+  const stop = () => { want = false; if (r) try { r.stop(); } catch(x) {} };
+  const done = () => { on = false; vb.classList.remove('on'); vs.className = '';
+    vs.textContent = vt.value.trim() ? 'Revisa el texto y pulsa «Añadir» (o toca el micrófono para seguir).' : 'No he oído nada. Toca el micrófono para volver a intentarlo.';
+    if (vt.value.trim()) o.querySelector('#ok').focus(); };
+  const run = () => {
     r = new R(); r.lang = 'es-ES'; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
-    let base = vt.value.trim(), got = false;
-    r.onstart = () => { on = true; vb.classList.add('on'); vs.textContent = 'Escuchando… habla ahora (toca para parar)'; };
-    r.onresult = e => { got = true; vt.value = fixText((base ? base+' ' : '') + [...e.results].map(x => x[0].transcript).join('').trim()); upd(); };
-    r.onerror = e => { if (/network|service-not-allowed|language/.test(e.error)) vt.focus();
+    const base = vt.value.trim();
+    r.onstart = () => { on = true; vb.classList.add('on'); vs.className = ''; vs.textContent = 'Escuchando… habla ahora (toca para parar)'; };
+    r.onresult = e => { heard = Date.now(); vt.value = cap(fixText((base ? base+' ' : '') + [...e.results].map(x => x[0].transcript).join('').trim())); upd(); };
+    r.onerror = e => { if (e.error === 'no-speech' || e.error === 'aborted') return;   // silencio: lo decide onend
+      want = false; if (/network|service-not-allowed|language/.test(e.error)) vt.focus();
       // En el ordenador, el dictado de Windows (Win + H) escribe en la casilla aunque el del navegador no funcione.
       if (/network|service-not-allowed/.test(e.error) && /Windows/.test(navigator.userAgent) && !matchMedia('(hover:none)').matches) { vs.textContent = 'El dictado del navegador no responde aquí. Pulsa Windows + H para dictar con Windows en la casilla y luego «Añadir».'; vs.className = 'er'; return; }
       vs.textContent = SRE[e.error] ||'No se pudo dictar ('+e.error+'). Toca el micrófono para reintentar o escribe.'; vs.className = 'er'; };
-    r.onend = () => { on = false; vb.classList.remove('on'); if (got) { vs.className = ''; vs.textContent = 'Revisa el texto y pulsa «Añadir» (o toca el micrófono para seguir).'; o.querySelector('#ok').focus(); } };
-    vs.className = '';
-    try { r.start(); } catch(x) { vs.textContent = 'No se pudo activar el micrófono. Escribe o usa el del teclado.'; }
+    r.onend = () => { const t = Date.now();
+      if (want && o.isConnected && t - heard < QUIET && t - t0 < MAXT) { try { run(); return; } catch(x) {} }
+      const er = vs.className === 'er'; want = false; if (!er) done(); else { on = false; vb.classList.remove('on'); } };
+    try { r.start(); } catch(x) { want = false; on = false; vb.classList.remove('on'); vs.textContent = 'No se pudo activar el micrófono. Escribe o usa el del teclado.'; }
+  };
+  const start = () => {
+    if (!R) { vb.hidden = true; vs.textContent = 'Este navegador no permite dictar aquí: toca la casilla y usa el micrófono del teclado.'; vt.focus(); return; }
+    if (on || want) return stop();
+    want = true; t0 = heard = Date.now(); vs.className = ''; run();
   };
   vb.onclick = start;
   o.querySelector('#ok').onclick = () => { const t = vt.value.trim(); if (!t) return toast('Di o escribe algo'); stop(); o.remove(); cb(t); };
