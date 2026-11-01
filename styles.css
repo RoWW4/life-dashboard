@@ -77,15 +77,13 @@ h2{margin:0;font-size:27px;letter-spacing:-.025em;line-height:1.2}
 .mtg>.i{opacity:.6;flex:none}
 .card.mc h3{margin:0}
 /* Asa y flechas para mover tarjetas: solo con «Personalizar» activo */
-body.solo .card .hd,body.solo .card .mvb{display:none}
+body.solo .card .hd{display:none}
 .card.hl{border-color:color-mix(in srgb,var(--ac) 40%,var(--bd));background:linear-gradient(180deg,var(--acs),transparent 70%),var(--card)}
-.hd{cursor:grab;opacity:.35;user-select:none;display:grid;place-items:center;margin-left:-6px}.hd:hover{opacity:.9}
+.hd{cursor:grab;opacity:.5;user-select:none;display:grid;place-items:center;margin-left:-6px}.hd:hover{opacity:.9}
 .hact{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .morebtn{all:unset;box-sizing:border-box;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 0 2px;margin-top:2px;border-top:1px solid var(--bd);color:var(--ac);font-size:13px;font-weight:600}
 .morebtn:hover{color:var(--ac2)}.morebtn:focus-visible{outline:2px solid var(--ac);border-radius:6px}
 .morebtn .i{width:15px;height:15px}
-.mvb{display:flex;gap:0;opacity:.4;transition:opacity .15s}.card:hover .mvb,.card:focus-within .mvb{opacity:1}
-@media(hover:none){.mvb{opacity:.6}}
 .card.dragging,.nv.dragging{opacity:.5}
 .card.dropto{outline:2px dashed var(--ac);outline-offset:2px}
 .card .hd{touch-action:none}

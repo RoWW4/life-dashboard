@@ -80,7 +80,7 @@ const nextDue = (d,r) => r==='Anual' ? addM(d,12) : r==='Mensual' ? addM(d,1) : 
 const ord = (v,keys) => { const o = S.order[v]||[]; return [...keys].sort((a,b) => { const x = o.indexOf(a), y = o.indexOf(b); return (x<0?1e3+keys.indexOf(a):x) - (y<0?1e3+keys.indexOf(b):y); }); };
 const pend = () => ({t:S.tasks.filter(t => !t.done && t.due && dayDiff(t.due)<=0).length, s:S.shop.filter(s => !s.done).length, b:fxDue(7).length});
 
-const panel = (v,k,title,inner,cls='') => `<div class="card ${cls}" data-v="${v}" data-k="${esc(k)}"><h3><span class="hd" draggable="true" title="Arrastra para mover">${I('grip-vertical')}</span><span class="t">${title}</span><span class="mvb"><button class="ib" data-a="mv" data-i="${v}|${esc(k)}|-1" aria-label="Mover antes">${I('chevron-up')}</button><button class="ib" data-a="mv" data-i="${v}|${esc(k)}|1" aria-label="Mover después">${I('chevron-down')}</button></span></h3>${inner}</div>`;
+const panel = (v,k,title,inner,cls='') => `<div class="card ${cls}" data-v="${v}" data-k="${esc(k)}"><h3><span class="hd" draggable="true" title="Arrastra para mover">${I('grip-vertical')}</span><span class="t">${title}</span></h3>${inner}</div>`;
 /* Tarjetas plegables: se abren y cierran tocando el título. Lo plegado se recuerda en este dispositivo. */
 const PLG = (() => { try { return JSON.parse(localStorage.getItem('ldb-fold')) || {}; } catch(e) { return {}; } })();
 const foldBtn = (key, title) => `<button class="mtg" data-a="pl" data-i="${esc(key)}" aria-expanded="${!PLG[key]}"><span>${title}</span>${I(PLG[key]?'chevron-down':'chevron-up')}</button>`;
