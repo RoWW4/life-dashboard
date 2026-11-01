@@ -24,7 +24,7 @@ function vDia(){
     cal: mp('cal',`${I('calendar-days')} Calendario`,calHTML()),
     fact: mp('fact',`${I('receipt')} Facturas próximos 30 días${btot?` <span class="cnt">· ${eur(btot)}</span>`:''}`,(bills.length?bills.slice(0,5).map(fxRow).join(''):empty('Nada en los próximos 30 días.'))+'<div class="more mu"><a href="#" data-a="go" data-i="fact">Gestionar facturas</a></div>'),
     gasto: mp('gasto',`${I('wallet')} Gasto del mes`,gastoHTML(MN(new Date(now.getFullYear(), now.getMonth()+gOff, 1)), 'gm')+'<div class="more mu"><a href="#" data-a="go" data-i="fin">Ver detalle</a></div>','wide'),
-    docs: mp('docs',`${I('folder-open')} Documentos a mano`,(pins.length ? (cust ? pinOrd() : `<div class="dtiles">${pins.map(docTile).join('')}</div>`) : empty(`Marca con la estrella hasta ${PINMAX} documentos para tenerlos a mano.`))+'<div class="more mu"><a href="#" data-a="go" data-i="docs">Ver todos los documentos</a></div>')
+    docs: mp('docs',`${I('folder-open')} Documentos a mano`,(pins.length ? (cust ? pinOrd() : `<div class="dtiles">${pins.map(docTile).join('')}</div>`) : empty(`Marca con la estrella hasta ${PINMAX} documentos para tenerlos a mano.`))+`<div class="more mu">${pins.length>1?`<a href="#" data-a="cust">${cust?'Listo':'Ordenar'}</a> · `:''}<a href="#" data-a="go" data-i="docs">Ver todos los documentos</a></div>`)
   };
   VIS.dia = ord('dia', DIA);
   return `<div class="hdr"><div><h2>${g}${S.name?', '+esc(S.name):''}</h2><div class="sub">${cap(new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long'}).format(now))}</div></div></div>

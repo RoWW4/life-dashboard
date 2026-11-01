@@ -19,13 +19,10 @@ function render(){
   $('#m').innerHTML = V_[view]();
   render.last = view;
   try { sessionStorage.setItem('ldb-view', view); } catch(e) {}
-  // «Personalizar»: las flechas y el asa para mover tarjetas solo se ven mientras está activo.
+  // Cada tarjeta lleva siempre su asa (arrastrar) y sus flechas ↑↓; si la sección solo tiene una, no se enseñan.
+  // «cust» queda solo para ordenar los documentos a mano de Mi día.
   document.body.classList.toggle('cust', cust);
-  const hd = $('#m .hdr');
-  // Botón pequeño junto al título (icono); activo, muestra «Listo».
-  const h2 = hd && hd.querySelector('h2');
-  if (h2 && (VIS[view]||[]).length > 1)
-    h2.insertAdjacentHTML('beforeend', `<button class="ib custb ${cust?'on':''}" data-a="cust" aria-pressed="${cust}" aria-label="${cust?'Listo':'Personalizar: mover tarjetas'}" title="${cust?'Listo':'Personalizar: mover tarjetas'}">${I(cust?'check':'grip-vertical')}</button>`);
+  document.body.classList.toggle('solo', (VIS[view]||[]).length < 2);
   masonry();
   if (!same) window.scrollTo(0,0); else window.scrollTo(0,y);
 }

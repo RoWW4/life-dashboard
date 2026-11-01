@@ -42,13 +42,13 @@ const dropOn = c => { if (!drag) return false; if (!c || c.dataset.v!==drag.v ||
 document.addEventListener('drop', e => { if (!drag) return; const c = e.target.closest && e.target.closest('.card[data-k]'); if (dropOn(c)) e.preventDefault(); });
 const dragEnd = () => { drag = null; document.querySelectorAll('.dragging,.dropto').forEach(x => x.classList.remove('dragging','dropto')); };
 document.addEventListener('dragend', dragEnd);
-// Móvil: el arrastre normal no funciona con el dedo; con «Personalizar» activo se arrastra desde el asa (⋮⋮).
+// Móvil: el arrastre normal no funciona con el dedo; se arrastra desde el asa (⋮⋮) de cada tarjeta.
 const cardAt = (x,y) => { const el = document.elementFromPoint(x,y); return el && el.closest && el.closest('.card[data-k]'); };
-document.addEventListener('touchstart', e => { const h = e.target.closest && e.target.closest('.hd'); if (!h || !cust) return; const c = h.closest('.card'); drag = {v:c.dataset.v, k:c.dataset.k}; c.classList.add('dragging'); }, {passive:true});
-document.addEventListener('touchmove', e => { if (!drag || !cust) return; e.preventDefault(); const t = e.touches[0], c = cardAt(t.clientX, t.clientY);
+document.addEventListener('touchstart', e => { const h = e.target.closest && e.target.closest('.hd'); if (!h) return; const c = h.closest('.card'); drag = {v:c.dataset.v, k:c.dataset.k}; c.classList.add('dragging'); }, {passive:true});
+document.addEventListener('touchmove', e => { if (!drag) return; e.preventDefault(); const t = e.touches[0], c = cardAt(t.clientX, t.clientY);
   document.querySelectorAll('.dropto').forEach(x => x !== c && x.classList.remove('dropto')); if (c && c.dataset.v===drag.v && c.dataset.k!==drag.k) c.classList.add('dropto');
   if (t.clientY < 60) window.scrollBy(0,-12); else if (t.clientY > innerHeight-60) window.scrollBy(0,12); }, {passive:false});
-document.addEventListener('touchend', e => { if (!drag || !cust) return; const t = e.changedTouches[0], c = cardAt(t.clientX, t.clientY); document.querySelectorAll('.dragging,.dropto').forEach(x => x.classList.remove('dragging','dropto')); if (!dropOn(c)) drag = null; });
+document.addEventListener('touchend', e => { if (!drag) return; const t = e.changedTouches[0], c = cardAt(t.clientX, t.clientY); document.querySelectorAll('.dragging,.dropto').forEach(x => x.classList.remove('dragging','dropto')); if (!dropOn(c)) drag = null; });
 document.addEventListener('touchcancel', dragEnd);
 document.addEventListener('visibilitychange', async () => { if (document.visibilityState==='visible' && cloudOK && await pull()) render(); });
 window.addEventListener('online', async () => { if (user && await pull()) render(); });
