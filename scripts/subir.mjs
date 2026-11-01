@@ -1,6 +1,7 @@
 // Subir el panel en un solo paso: `node scripts/subir.mjs "qué se ha cambiado"` desde la carpeta del proyecto.
 // 1) trae lo nuevo de GitHub (la otra sesión) · 2) si cambió CSS o JS, sube la versión en index.html y sw.js
-// 3) pasa scripts/comprobar.mjs (si falla, no sube nada) · 4) un commit con el mensaje y push a main.
+// 3) pasa scripts/comprobar.mjs (si falla, no sube nada) · 4) un commit con el mensaje y push a main
+// 5) si cambió la app, espera a que la web publicada sirva la versión nueva y avisa si no llega.
 // Con --prueba hace los pasos 1 a 3 y deshace el cambio de versión, sin commit ni push.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -50,3 +51,13 @@ git('commit', '-q', '-m', msg + (v ? ` (v${v})` : ''), '-m', 'Co-Authored-By: Cl
 try { git('push', '-q', 'origin', 'HEAD:main'); }
 catch (e) { fin('El commit está hecho pero el push ha fallado (¿la otra sesión acaba de subir?): repetir la orden.\n' + (e.stderr || '')); }
 console.log('\n✔ Subido: ' + git('log', '-1', '--format=%h %s'));
+
+// 5) Si cambió la app, esperar a que GitHub Pages sirva la versión nueva (hasta 5 minutos)
+if (v) {
+  const url = 'https://roww4.github.io/life-dashboard/sw.js';
+  for (let i = 0; i < 20; i++) {
+    await new Promise(r => setTimeout(r, 15000));
+    try { if ((await (await fetch(url + '?x=' + Date.now(), { cache: 'no-store' })).text()).includes('ldb-shell-v' + v + "'")) { console.log('✔ La web ya sirve la v' + v); process.exit(0); } } catch (e) {}
+  }
+  console.log('⚠ Subido a GitHub, pero la web aún no sirve la v' + v + ' tras 5 minutos: mirar la publicación de GitHub Pages (Actions → «pages build and deployment»).');
+}
