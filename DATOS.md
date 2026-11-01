@@ -16,6 +16,8 @@ Cuando te pida añadir, cambiar o consultar tareas, recordatorios, cumpleaños, 
 - No toques nunca las tablas `bank_tx`, `bank_pending`, `bank_status`, `task_reminders` , `wallet_log` ni `ldb_state_hist` (salvo para leerla al recuperar datos), ni nada de `auth`, `cron` o `vault`, ni la estructura de la base de datos. No borres filas ni tablas.
 
 ## Reglas para cambiar datos
+0. **Nunca** sustituyas `data` entero ni pegues una copia: cambia solo la clave que toca con `jsonb_set`. Antes y después del cambio, saca el resumen por secciones (abajo) y comprueba que solo ha cambiado lo que querías.
+   La base de datos rechaza (error `ldb_guard`) un cambio que vacíe una sección con datos o pierda más de la mitad de los elementos. Si es a propósito y Rocío lo ha confirmado, se añade `"_force": true` dentro de `data` en ese mismo UPDATE (se quita solo).
 1. Antes de cambiar algo, lee lo que hay (`select data->'tasks' from ldb_state`, etc.) para no duplicar.
 2. Haz cada cambio con UN solo `UPDATE ldb_state SET data = ...` y en el mismo UPDATE pon siempre:
    - `_ts` = milisegundos actuales: `to_jsonb((extract(epoch from now())*1000)::bigint)`
@@ -62,12 +64,22 @@ update ldb_state set
 
 No cambies el resto de campos de `data` (`rules`, `fixes`, `seeded`, `bankSeen`, `bankLast`, `order`, `sav`, `bills`…) salvo que te lo pida expresamente.
 
+## Resumen por secciones (antes y después de cada cambio)
+```sql
+select data->>'_ts' ts, jsonb_array_length(data->'tasks') tareas, jsonb_array_length(data->'tx') movimientos, jsonb_array_length(data->'fixed') facturas,
+  jsonb_array_length(data->'docs') documentos, jsonb_array_length(data->'shop') compra, jsonb_array_length(data->'rules') reglas,
+  jsonb_array_length(data->'periods') vacaciones, jsonb_array_length(data->'localHol') festivos,
+  jsonb_array_length(coalesce(data->'sav'->'snaps','[]')) ahorro, jsonb_array_length(coalesce(data->'salud'->'ini','[]')) salud
+from ldb_state;
+```
+
 ## Recuperar una versión anterior
+También hay una copia diaria de todo el panel en Google Drive, carpeta «Copias del panel» (`panel-AAAA-MM-DD.json`, 60 días).
 Antes de cada cambio, Supabase guarda la versión anterior en la tabla `ldb_state_hist` (30 días). Para ver las últimas:
 ```sql
 select id, saved_at, jsonb_array_length(data->'tasks') tareas, jsonb_array_length(data->'tx') movimientos from ldb_state_hist order by saved_at desc limit 20;
 ```
-Para restaurar una (preguntar antes a Rocío), copiarla con un `_ts` nuevo:
+Para restaurar una (preguntar antes a Rocío), copiarla con un `_ts` nuevo (lleva `_force` porque puede tener menos datos que la actual):
 ```sql
-update ldb_state set data = jsonb_set((select data from ldb_state_hist where id = ID), '{_ts}', to_jsonb((extract(epoch from now())*1000)::bigint)), updated_at = now();
+update ldb_state set data = jsonb_set((select data from ldb_state_hist where id = ID), '{_ts}', to_jsonb((extract(epoch from now())*1000)::bigint)) || '{"_force": true}', updated_at = now();
 ```

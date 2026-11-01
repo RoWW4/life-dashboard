@@ -119,3 +119,40 @@ revoke all on function public.ldb_state_keep_old() from public, anon, authentica
 drop trigger if exists ldb_state_keep_old on public.ldb_state;
 create trigger ldb_state_keep_old before update on public.ldb_state
   for each row execute function public.ldb_state_keep_old();
+
+-- Guardia (01/11/2026): la base de datos rechaza un cambio del panel que vacíe una sección con datos
+-- o que pierda más de la mitad de los elementos (tareas, movimientos, facturas, documentos), venga de la app o de SQL.
+-- Para hacerlo a propósito se manda "_force": true dentro de data (se quita antes de guardar).
+create or replace function public.ldb_len(j jsonb) returns int language sql immutable as
+$$ select case when jsonb_typeof(j) = 'array' then jsonb_array_length(j) else 0 end $$;
+
+create or replace function public.ldb_state_guard() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare k text; lost text[] := '{}'; o int; n int;
+begin
+  if new.data ? '_force' then new.data := new.data - '_force'; return new; end if;
+  foreach k in array array['tasks','tx','fixed','docs','rules','periods','localHol'] loop
+    if ldb_len(old.data->k) > 0 and ldb_len(new.data->k) = 0 then lost := lost || k; end if;
+  end loop;
+  if ldb_len(old.data->'sav'->'snaps') > 0 and ldb_len(new.data->'sav'->'snaps') = 0 then lost := lost || 'sav'::text; end if;
+  if ldb_len(old.data->'salud'->'ini') > 0 and ldb_len(new.data->'salud'->'ini') = 0 then lost := lost || 'salud'::text; end if;
+  o := ldb_len(old.data->'tasks') + ldb_len(old.data->'tx') + ldb_len(old.data->'fixed') + ldb_len(old.data->'docs');
+  n := ldb_len(new.data->'tasks') + ldb_len(new.data->'tx') + ldb_len(new.data->'fixed') + ldb_len(new.data->'docs');
+  if o >= 10 and n < o / 2 then lost := lost || 'muchos'::text; end if;
+  if array_length(lost, 1) > 0 then
+    raise exception 'ldb_guard: %', array_to_string(lost, ',') using errcode = 'P0001';
+  end if;
+  return new;
+end $$;
+revoke all on function public.ldb_state_guard() from public, anon, authenticated;
+-- Se ejecuta antes que ldb_state_keep_old (los triggers BEFORE van por orden alfabético).
+drop trigger if exists ldb_state_guard on public.ldb_state;
+create trigger ldb_state_guard before update on public.ldb_state
+  for each row execute function public.ldb_state_guard();
+
+-- La fila del panel no se puede borrar (ni desde la app ni por error).
+create or replace function public.ldb_state_no_delete() returns trigger
+language plpgsql as $$ begin raise exception 'ldb_guard: no se borra el panel'; end $$;
+drop trigger if exists ldb_state_no_delete on public.ldb_state;
+create trigger ldb_state_no_delete before delete on public.ldb_state
+  for each row execute function public.ldb_state_no_delete();

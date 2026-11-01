@@ -94,7 +94,7 @@ const A = {
     const { data, error } = await sb.auth.signInWithPassword({email, password}); if (error) return toast('Email o contraseña incorrectos');
     user = data.user; $('#m').innerHTML = '<div class="loading">Sincronizando…</div>';
     // Al entrar con la cuenta manda siempre la nube: lo que hubiera en este navegador (p. ej. datos de prueba) no se sube.
-    S._ts = 0; await pull(); afterLoad(); },
+    S._ts = 0; setBase(null); await pull(); afterLoad(); },
   local: () => { try { localStorage.setItem('ldb-local','1'); } catch(e) {} setSync('📱 Solo este dispositivo'); afterLoad(); },
   cloud: () => { try { localStorage.removeItem('ldb-local'); localStorage.removeItem(K); } catch(e) {} location.reload(); },
   logout: () => CF('¿Cerrar sesión? Los datos seguirán guardados en la nube.', async () => { await sb.auth.signOut(); location.reload(); })

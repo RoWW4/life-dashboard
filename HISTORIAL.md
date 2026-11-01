@@ -2,6 +2,7 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`. Aquí se dejan unas 20; las anteriores están en `HISTORIAL-antiguo.md`.
 
+- 01/11/2026 · móvil · Seguridad de datos: la app ya no sustituye la nube a ciegas (si otro dispositivo o Supabase cambió algo, junta los cambios antes de subir); la base de datos rechaza cambios que vacíen una sección o pierdan muchos datos y no deja borrar el panel; nueva comprobación `scripts/comprobar.mjs` obligatoria antes de subir; reglas en `CLAUDE.md` y `DATOS.md`. Versión v50.
 - 01/11/2026 · móvil · Inversiones: los intereses se calculan como la cuenta (interés diario sobre el saldo, abonado el día 1 menos impuestos; el primer mes desde la apertura). Datos: apuntados los saldos reales de los dos últimos abonos. Versión v49.
 - 01/11/2026 · móvil · Protección de datos: la app pide confirmación antes de subir una versión en la que se haya quedado vacía una sección que en la nube tiene datos (Inversiones, festivos, vacaciones, salud, reglas…). Datos: Inversiones rehecha a partir de la aportación inicial (se había perdido el 31/10). Versión v48.
 - 01/11/2026 · móvil · Gasto del mes: «Disponible» es el tope menos lo gastado; debajo, las facturas que faltan por pagar y lo que quedará después (antes se restaban ya del disponible). Versión v47.
@@ -21,4 +22,3 @@ Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qu
 - 31/10/2026 · móvil · Wallet: el movimiento de prueba no llegó (nada nuevo desde el 29/10); enviado correo a su soporte.
 - 31/10/2026 · móvil · Datos: una compra devuelta (cargo y devolución) pasada a Traspasos para que no cuente. `CLAUDE.md`: los cambios pedidos seguidos se publican juntos al terminar.
 - 31/10/2026 · móvil · Ficha de movimiento: las explicaciones de «Gasto extraordinario» y «Encargo» se ven tocando un icono «i» junto a cada casilla. Versión v42.
-- 30/10/2026 · móvil · Facturas: los pagos variables pueden reconocer varias palabras («También reconoce» en el formulario). Datos: dos cargos de un pago variable que no se reconocían por llevar otro nombre, enlazados con él (ya no se reservaba de más en «Disponible»). Versión v41.

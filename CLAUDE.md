@@ -17,9 +17,16 @@ Rocío trabaja este proyecto desde el ordenador (Claude Code) y desde el móvil 
 
 ## Cuando diga «súbelo» (o «ya está», «publícalo»…)
 1. Si hubo cambios de CSS o JS, subir la versión **una sola vez** (ver abajo) y apuntarla en la última línea del historial.
-2. Comprobación rápida de todo junto.
-3. **Un solo** commit y `git push` a `main` (GitHub Pages publica desde `main`).
+2. Ejecutar `node scripts/comprobar.mjs` (sintaxis, versión igual en `index.html` y `sw.js`, archivos en `SHELL`, la app abre sin errores y juntar cambios funciona). **Si falla, no se sube.**
+3. `git fetch` y comprobar que `main` no tiene commits nuevos de la otra sesión; si los tiene, traerlos primero (`git pull --rebase`) y repetir el paso 2.
+4. **Un solo** commit y `git push` a `main` (GitHub Pages publica desde `main`).
 - Lo que no se ha subido solo existe en esa sesión: si Rocío se despide o va a cambiar de dispositivo con cambios sin subir, recordárselo.
+
+## Seguridad de los datos (no saltarse nada de esto)
+- Copias: Supabase guarda la versión anterior antes de cada cambio (`ldb_state_hist`, 30 días) y cada noche se copia todo el panel a Google Drive («Copias del panel», 60 días).
+- La base de datos **rechaza** cualquier cambio que vacíe una sección con datos o pierda más de la mitad de tareas/movimientos/facturas/documentos, y no deja borrar el panel (`ldb_state_guard`, ver `supabase/schema.sql`). No desactivarlo.
+- La app no sustituye la nube a ciegas: antes de subir mira si la nube cambió y, si cambió, junta los cambios (`merge3` en `js/nube.js`). Cualquier cambio en `js/nube.js` o `js/estado.js` (sincronización y migraciones) se prueba antes simulando dos dispositivos.
+- Al cambiar datos por SQL, seguir `DATOS.md`: solo las claves que cambian (`jsonb_set`), nunca pegar una copia entera de `data`, y comparar el resumen por secciones antes y después.
 
 ## Historial
 - En `HISTORIAL.md` se dejan unas 20 líneas. Al subir, si hay más, pasar las más antiguas al principio de `HISTORIAL-antiguo.md` (también lo más reciente arriba).
