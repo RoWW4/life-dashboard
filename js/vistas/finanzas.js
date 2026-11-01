@@ -17,21 +17,25 @@ const SAV_TAX = 19;
 let savShow = false;   // los importes de ahorro salen difuminados hasta pulsar el ojo (no se guarda)
 const pct = n => n.toFixed(2).replace('.',',').replace(/,?0+$/,'') + ' %';
 const money = v => `<span class="money">${v}</span>`;
-/* Estimación: interés compuesto mensual (la cuenta paga cada mes) sobre el último saldo apuntado. */
+/* Estimación como la calcula la cuenta: interés diario (saldo × % anual / 365) que se acumula durante el mes;
+   el día 1 se abona lo del mes anterior menos los impuestos (redondeados al céntimo). Se parte del último saldo real apuntado.
+   El primer mes cuenta desde el día del primer apunte (apertura); los demás, desde el día 1. */
 function savStats(){
   const s = S.sav, L = [...(s.snaps||[])].sort((a,b) => a.d.localeCompare(b.d));
   if (!L.length) return null;
   const last = L[L.length-1], dep = L.reduce((a,x) => a+(x.dep||0), 0), td = TD();
-  // La cuenta abona los intereses del mes anterior el día 1: el saldo solo sube en cada día 1 posterior al último apunte
-  const net = (s.rate||0)/100 * (1-(s.tax??SAV_TAX)/100), m1 = d => d.slice(0,8)+'01',
-    pays = d => { let n = 0; for (let m = addM(m1(last.d),1); m <= d; m = addM(m,1)) n++; return n; },
-    at = d => last.bal * Math.pow(1+net/12, pays(d));
-  const now = at(td), est = pays(td) > 0, days = dd(td, L[0].d), next = addM(m1(td),1);
-  // Interés que se va generando este mes y se cobrará el día 1 del siguiente
-  const acc = now * net/12 * (dd(td, m1(td)) + 1) / dd(next, m1(td));
-  // Proyección: abono de cada uno de los próximos 12 días 1
-  const proj = []; let prev = now;
-  for (let k = 1; k <= 12; k++) { const d = addM(m1(td),k), b = at(d); proj.push({d, bal:b, int:b-prev}); prev = b; }
+  const rate = (s.rate||0)/100, tx = (s.tax??SAV_TAX)/100, net = rate*(1-tx), m1 = d => d.slice(0,8)+'01',
+    r2 = v => Math.round(v*100)/100, dim = d => new Date(+d.slice(0,4), +d.slice(5,7), 0).getDate(),
+    st0 = last.d===L[0].d ? last.d : m1(last.d),
+    // abonos de los días 1 desde el último apunte: [{d, bal, int (neto)}]
+    pay = []; { let bal = last.bal, from = st0;
+      for (let k = 0; k < 400 && pay.length < 30; k++) { const nd = addM(m1(from),1), days = dim(from) - +from.slice(8) + 1, g = r2(bal*rate/365*days), n = r2(g - r2(g*tx));
+        bal = r2(bal + n); pay.push({d:nd, bal, int:n}); from = nd; } }
+  const at = d => { let b = last.bal; for (const p of pay) if (p.d <= d) b = p.bal; return b; };
+  const now = at(td), est = pay.some(p => p.d <= td), next = addM(m1(td),1), days = dd(td, L[0].d);
+  // Interés neto que se va generando este mes (se cobrará el día 1 del siguiente)
+  const from = td.slice(0,7)===st0.slice(0,7) ? st0 : m1(td), acc = now*rate/365*(dd(td, from)+1)*(1-tx);
+  const proj = pay.filter(p => p.d > td).slice(0,12);
   const y1 = at(addM(td,12));
   return {L, last, dep, now, est, acc, next, gain: now-dep, net, proj, y1, real: days>=28 && dep>0 ? (now-dep)/dep*365/days*100 : null};
 }
