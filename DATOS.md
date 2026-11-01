@@ -57,7 +57,7 @@ update ldb_state set
   - `id` empieza por `fx-` · `t` "g" o "i" · `day` día del mes · `from` mes de inicio `AAAA-MM` (o sin poner si ya se cobra)
   - Anual: añade `month` (1–12) · Trimestral/Semestral: `every` 3 o 6 · Una sola vez: `once` (fecha) en vez de `day` · Variable (varios cargos al mes): `var: true`, sin `day`
   - Se marcan pagados solos cuando llega el cargo del banco: no apuntes el pago como movimiento.
-- `docs` (documentos): `{id, name, cat, url, notes, exp, pin}` · `cat`: Identidad, Coche, Hogar, Salud, Finanzas, Mascotas, Trabajo, Otros · `exp` fecha de caducidad o "" (avisa por Telegram antes de que caduque).
+- `docs` (documentos): `{id, name, cat, url, notes, exp, pin}` · `cat`: Personal, Coche, Hogar, Salud, Finanzas, Mascotas, Trabajo, Otros · `exp` fecha de caducidad o "" (avisa por Telegram antes de que caduque).
 - `periods` (vacaciones): `{id, name, from, to}`
 - `localHol` (festivos locales): `{d, n}` (fecha y nombre)
 - `salud` (Salud): `{ini, len, dur}` · `ini` lista de fechas de inicio, `len` días habituales entre inicios, `dur` días que se marcan en el calendario.

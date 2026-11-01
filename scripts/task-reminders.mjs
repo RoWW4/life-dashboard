@@ -68,13 +68,13 @@ if (sal && Array.isArray(sal.ini) && sal.ini.length && +P.hour >= 9) {
   }
 }
 
-// 4) Documentos con fecha «Vence»: aviso 30 días antes (60 los de Identidad, que suelen pedir cita), 7 días antes,
+// 4) Documentos con fecha «Vence»: aviso 30 días antes (60 los de Personal, p. ej. el DNI, que suelen pedir cita), 7 días antes,
 //    el mismo día y, si sigue caducado, una vez por semana durante un mes (desde las 9:00). Una sola vez por aviso.
 const docs = ((row && row.data && row.data.docs) || []).filter(d => d.exp && /^\d{4}-\d{2}-\d{2}$/.test(d.exp) && d.name);
 if (+P.hour >= 9) for (const d of docs) {
   const left = Math.round((Date.parse(d.exp) - Date.parse(today)) / DAY);
   if (left < -34) continue;
-  const st = [d.cat === 'Identidad' ? 60 : 30, 7, 0, -7, -14, -21, -28].filter(t => left <= t).pop();
+  const st = [(d.cat === 'Personal' || d.cat === 'Identidad') ? 60 : 30, 7, 0, -7, -14, -21, -28].filter(t => left <= t).pop();
   if (st === undefined) continue;
   const key = `doc:${d.id || d.name}:${d.exp}:${st}`;
   if (sent.has(key)) continue;

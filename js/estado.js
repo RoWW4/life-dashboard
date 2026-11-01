@@ -21,6 +21,8 @@ function seed(){
   once('clean-desc-v1', () => S.tx.forEach(x => { if (x.bank || x.xls) x.desc = cleanDesc(x.desc); }));
   // Compras con Google Pay (y similares) que habían caído en Suscripciones: se limpia el concepto y se reclasifican.
   once('gpay-v1', () => S.tx.forEach(x => { if (!PAYP.test(x.desc||'')) return; x.desc = cleanDesc(x.desc); if (x.cat==='Suscripciones') x.cat = classify(x.desc, x.t); }));
+  // La carpeta de documentos «Identidad» pasa a llamarse «Personal» (como en Drive y en el bot).
+  once('doc-personal-v1', () => S.docs.forEach(d => { if (d.cat==='Identidad') d.cat = 'Personal'; }));
   // Migraciones de versiones anteriores
   if (S.events.length) { S.events.forEach(e => S.tasks.push({id:id(),title:e.title,due:e.date,tm:e.start||'',pr:'Media',area:'Personal',rep:'',done:false})); S.events = []; c++; }
   S.tasks.forEach(t => { if(t.rep===undefined){ t.rep = t.area==='Cumpleaños'?'Anual':''; c++; } if(t.tm===undefined) t.tm=''; });

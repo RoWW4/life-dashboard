@@ -17,9 +17,9 @@
 const SB_URL = 'https://lvsjvdpxnuydtwajlvsv.supabase.co';
 const SB_KEY = 'sb_publishable_9XIhDkRWUeUjFY0qvk7Jhg_hgBc93wo'; // clave pública del panel (la misma que usa la web)
 // Carpeta del panel → subcarpeta de Drive dentro de «Documentos» ('' = la propia carpeta). Si no existe, se crea.
-const CARPETAS = { Identidad: '01 Personal', Coche: '02 Coche', Trabajo: '03 Trabajo', Mascotas: '06 Mascotas',
+const CARPETAS = { Personal: '01 Personal', Coche: '02 Coche', Trabajo: '03 Trabajo', Mascotas: '06 Mascotas',
   Salud: '07 Salud y deporte', Hogar: '09 Hogar', Finanzas: '10 Finanzas', Otros: '' };
-const ORDEN = ['Identidad', 'Coche', 'Hogar', 'Salud', 'Finanzas', 'Mascotas', 'Trabajo', 'Otros'];
+const ORDEN = ['Personal', 'Coche', 'Hogar', 'Salud', 'Finanzas', 'Mascotas', 'Trabajo', 'Otros'];
 const MAX_ARCHIVOS = 10;
 
 const P = () => PropertiesService.getScriptProperties();

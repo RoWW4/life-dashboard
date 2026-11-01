@@ -164,7 +164,8 @@ returns text language plpgsql security invoker set search_path = public as $$
 declare v_id text := 'dc-' || substr(md5(random()::text), 1, 8); n int;
 begin
   if coalesce(trim(p_name), '') = '' or p_url !~ '^https://drive\.google\.com/' then raise exception 'ldb_add_doc: datos no válidos'; end if;
-  if p_cat not in ('Identidad','Coche','Hogar','Salud','Finanzas','Mascotas','Trabajo','Otros') then p_cat := 'Otros'; end if;
+  if p_cat = 'Identidad' then p_cat := 'Personal'; end if;
+  if p_cat not in ('Personal','Coche','Hogar','Salud','Finanzas','Mascotas','Trabajo','Otros') then p_cat := 'Otros'; end if;
   if coalesce(p_exp, '') !~ '^(\d{4}-\d{2}-\d{2})?$' then p_exp := ''; end if;
   update ldb_state set
     data = jsonb_set(jsonb_set(data, '{docs}', coalesce(data->'docs', '[]'::jsonb) || jsonb_build_array(jsonb_build_object(

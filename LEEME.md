@@ -43,7 +43,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
     - de las tareas, 1 día antes (las que no tienen hora, como si fueran a las 9:00);
     - un resumen a las 7:00;
     - de Salud, 3 días antes;
-    - de los documentos que caducan: 30 días antes (60 los de Identidad), 7 días antes, el mismo día y una vez por semana durante un mes si sigue caducado.
+    - de los documentos que caducan: 30 días antes (60 los de la carpeta Personal), 7 días antes, el mismo día y una vez por semana durante un mes si sigue caducado.
   - **Conectar banco** y **Sincronizar banco** (`bank-link.yml`, `bank-sync.yml`): la conexión directa con el banco por Enable Banking. **En pausa desde el 27/10/2026** porque el banco cortaba el permiso a las pocas horas. Se pueden reactivar quitando los `#` del `schedule` de `bank-sync.yml`.
 - Secretos (Settings → Secrets and variables → Actions):
 

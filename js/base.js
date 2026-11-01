@@ -19,9 +19,9 @@ const AI = {Personal:'user',Hogar:'house',Trabajo:'briefcase','Salud y bienestar
 const AC = {Personal:'#0099ff',Hogar:'#38bdf8',Trabajo:'#94a3b8','Salud y bienestar':'#2fcf7a',Finanzas:'#facc15','Familia y amigos':'#f472b6',Cumpleaños:'#e879f9',Coche:'#f5a524',Mascotas:'#c08457',Ocio:'#a78bfa',Otros:'#94a3b8'};
 const PR = ['Baja','Media','Alta','Urgente'], REP = ['Diaria','Semanal','Mensual','Anual'];
 const FQ = {Única:0,Mensual:1,Trimestral:3,Semestral:6,Anual:12};
-const DC = ['Identidad','Coche','Hogar','Salud','Finanzas','Mascotas','Trabajo','Otros'];
-const DI = {Identidad:'id-card',Coche:'car',Hogar:'house',Salud:'stethoscope',Finanzas:'landmark',Mascotas:'paw-print',Trabajo:'briefcase',Otros:'file-text'};
-const DCOL = {Identidad:'#0099ff',Coche:'#f5a524',Hogar:'#38bdf8',Salud:'#f472b6',Finanzas:'#facc15',Mascotas:'#c08457',Trabajo:'#94a3b8',Otros:'#94a3b8'};
+const DC = ['Personal','Coche','Hogar','Salud','Finanzas','Mascotas','Trabajo','Otros'];
+const DI = {Personal:'id-card',Coche:'car',Hogar:'house',Salud:'stethoscope',Finanzas:'landmark',Mascotas:'paw-print',Trabajo:'briefcase',Otros:'file-text'};
+const DCOL = {Personal:'#0099ff',Coche:'#f5a524',Hogar:'#38bdf8',Salud:'#f472b6',Finanzas:'#facc15',Mascotas:'#c08457',Trabajo:'#94a3b8',Otros:'#94a3b8'};
 const DIA = ['shop','prox','cal','fact','gasto','docs'];
 /* Orden inicial de los paneles movibles de cada sección (cada uno se puede reordenar y se guarda en S.order). */
 const FIN = ['gasto','sinc','mov','reglas'];
