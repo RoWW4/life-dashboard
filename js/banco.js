@@ -43,17 +43,20 @@ function ingest(items, fld){
   return {add, link, skip};
 }
 /* Los PDF de Openbank (el móvil solo deja descargar estos) se leen con pdf.js y se convierten en las mismas filas que el .xls.
-   - Cuenta: «fecha operación · fecha valor · concepto · importe EUR · saldo EUR».
+   - Cuenta: «fecha operación · fecha valor · concepto · importe · saldo». Según la versión del banco, las fechas vienen
+     como dd-mm-aaaa o aaaa-mm-dd y los importes con «EUR» (1.234,56 EUR) o sin él (1234.56): se aceptan las dos.
    - Tarjeta prepago: «fecha (dd-mm-aaaa) · hora · concepto · situación · localidad · importe (con punto decimal) · EUR».
+   Se ignora el texto legal vertical del margen izquierdo: si coincide a la altura de un movimiento, lo tapaba.
    Si el concepto es largo, sigue en las líneas justo encima o debajo (a menos de 12 puntos), que se le juntan. */
 const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/';
 async function pdfRows(buf){
   const pdfjs = await import(PDFJS + 'pdf.min.mjs');
   pdfjs.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.mjs';
-  const doc = await pdfjs.getDocument({data: new Uint8Array(buf)}).promise, rows = [], DT = /^\d{2}[\/-]\d{2}[\/-]\d{4}$/;
+  const doc = await pdfjs.getDocument({data: new Uint8Array(buf)}).promise, rows = [], DT = /^(\d{2}[\/-]\d{2}[\/-]\d{4}|\d{4}-\d{2}-\d{2})$/,
+    dmy = f => f.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3-$2-$1'), dot = n => n.includes(',') ? n : n.replace('.', ',');
   let card = null, cx = 0;   // tipo de PDF y dónde acaba la columna de concepto (lo dice la cabecera)
   for (let p = 1; p <= doc.numPages; p++) {
-    const its = (await (await doc.getPage(p)).getTextContent()).items.filter(i => i.str.trim()).map(i => ({x:i.transform[4], y:Math.round(i.transform[5]), s:i.str.trim()})), L = new Map();
+    const its = (await (await doc.getPage(p)).getTextContent()).items.filter(i => i.str.trim() && !i.transform[1] && !i.transform[2] && i.transform[4] >= 40).map(i => ({x:i.transform[4], y:Math.round(i.transform[5]), s:i.str.trim()})), L = new Map();
     its.forEach(i => (L.get(i.y) || L.set(i.y, []).get(i.y)).push(i));
     const lines = [...L].map(([y, a]) => ({y, a:a.sort((u,v) => u.x-v.x)}));
     if (card === null) { const h = lines.find(l => l.a.some(i => i.s==='Concepto') && l.a.some(i => i.s==='Importe')); if (!h) continue;
@@ -61,9 +64,10 @@ async function pdfRows(buf){
     const mv = lines.filter(l => l.a.length >= 3 && DT.test(l.a[0].s) && l.a[0].x < 110).map(l => {
       const c = l.a.slice(2).filter(i => i.x > 150 && i.x < cx).map(i => i.s).join(' ');
       if (card) { const im = l.a.filter(i => i.x >= cx && /^-?[\d.,]+$/.test(i.s)).pop(), st = l.a.find(i => i.x >= cx && /^[A-ZÁÉÍÓÚ]{5,}$/.test(i.s));
-        return im && {y:l.y, f:l.a[0].s, st:st ? st.s : '', imp:im.s.replace(/,/g,'').replace('.',','), c:[[l.y, c]]}; }
-      const eu = l.a.filter(i => /EUR$/.test(i.s));
-      return DT.test(l.a[1].s) && eu.length >= 2 && {y:l.y, f:l.a[0].s, v:l.a[1].s, imp:eu[0].s.replace(/\s*EUR$/,''), sal:eu[eu.length-1].s.replace(/\s*EUR$/,''), c:[[l.y, c]]};
+        return im && {y:l.y, f:dmy(l.a[0].s), st:st ? st.s : '', imp:im.s.replace(/,/g,'').replace('.',','), c:[[l.y, c]]}; }
+      let eu = l.a.filter(i => /EUR$/.test(i.s)).map(i => i.s.replace(/\s*EUR$/,''));
+      if (eu.length < 2) eu = l.a.filter(i => i.x >= cx && /^-?[\d.,]+$/.test(i.s)).map(i => dot(i.s));
+      return DT.test(l.a[1].s) && eu.length >= 2 && {y:l.y, f:dmy(l.a[0].s), v:dmy(l.a[1].s), imp:eu[0], sal:eu[eu.length-1], c:[[l.y, c]]};
     }).filter(Boolean);
     // Trozos de concepto sueltos (entre la columna de fechas y la de importes): al movimiento más cercano.
     for (const l of lines) { if (mv.some(m => m.y===l.y)) continue;
