@@ -2,6 +2,7 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`. Aquí se dejan unas 20; las anteriores están en `HISTORIAL-antiguo.md`.
 
+- 01/11/2026 · móvil · Documentos: se dan por buenos los que hay (no se reponen más).
 - 01/11/2026 · móvil · Bot de documentos por Telegram: script `scripts/telegram-documentos.gs` (Google Apps Script; guarda en Drive preguntando la carpeta con botones y junta varios archivos en un documento) y función `ldb_add_doc` en Supabase para añadirlo al panel. Instalado y probado con un documento (nombre corregido; evita duplicados).
 - 01/11/2026 · móvil · Datos: región Andalucía (festivos nacionales y autonómicos), festivos locales del municipio de trabajo para 2026 y 2027, y enlaces de documentos recuperados desde Drive (uno añadido).
 - 01/11/2026 · móvil · Seguridad de datos: la app ya no sustituye la nube a ciegas (si otro dispositivo o Supabase cambió algo, junta los cambios antes de subir); la base de datos rechaza cambios que vacíen una sección o pierdan muchos datos y no deja borrar el panel; nueva comprobación `scripts/comprobar.mjs` obligatoria antes de subir; reglas en `CLAUDE.md` y `DATOS.md`. Versión v50.
