@@ -8,7 +8,6 @@ Solo lo importante que queda por decidir o hacer. **No hacerlo hasta que la due�
 - Cuando esté resuelto: volver a activar la limpieza automática de `ldb_state` (`alter table public.ldb_state reset (autovacuum_enabled, toast.autovacuum_enabled);`).
 
 ## Diseño
-- Móvil: poder cambiar el orden de todos los paneles (p. ej. flechas arriba/abajo en la esquina superior derecha de cada uno).
 - «Mi día»: revisar sus paneles, unificar lo que se repite y simplificar la sección.
 
 ## Wallet (banco)
