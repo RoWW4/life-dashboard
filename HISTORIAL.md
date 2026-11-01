@@ -2,6 +2,7 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`. Aquí se dejan unas 20; las anteriores están en `HISTORIAL-antiguo.md`.
 
+- 01/11/2026 · móvil · Gasto del mes: «Disponible» es el tope menos lo gastado; debajo, las facturas que faltan por pagar y lo que quedará después (antes se restaban ya del disponible). Versión v47.
 - 31/10/2026 · móvil · Datos: dos cargos del mismo día pasados de Compras a Mascotas (son del veterinario; se dejan los dos).
 - 31/10/2026 · móvil · Datos: revisión de movimientos. Bizums recibidos y reembolsos pasados a devolución de su categoría; descargas de la prepago, ingresos en efectivo propios y un Bizum devuelto pasados a Traspasos; varios gastos de «Otros» clasificados; un pago anual enlazado con su fijo (y su palabra de reconocimiento simplificada); borrado un apunte a mano repetido. Las recargas antiguas de la prepago se quedan en «Compras» (no hay detalle de la tarjeta antes de mayo de 2026).
 - 31/10/2026 · móvil · Finanzas: un ingreso puede llevar una categoría de gasto (= devolución, p. ej. un Bizum por una cena): resta del gasto de esa categoría y no cuenta como ingreso; chip «devolución» en la lista. Las reglas no convierten solos los ingresos en devoluciones. Versión v46.
@@ -21,5 +22,3 @@ Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qu
 - 30/10/2026 · móvil · Facturas: los pagos variables pueden reconocer varias palabras («También reconoce» en el formulario). Datos: dos cargos de un pago variable que no se reconocían por llevar otro nombre, enlazados con él (ya no se reservaba de más en «Disponible»). Versión v41.
 - 30/10/2026 · móvil · Al recargar (tirar hacia abajo en el móvil) se queda en la misma sección; al abrir la app de cero sigue empezando en Mi día. Versión v40.
 - 30/10/2026 · móvil · Detalle de categoría: tocando una barra del gráfico de 6 meses se ven los datos de ese mes; «Ver movimientos» abre ese mes. Versión v39.
-- 30/10/2026 · móvil · Tarjeta Banco: quitado el botón «Recargar» (la app ya recoge lo nuevo al abrirse) y texto actualizado con el horario real (Wallet consulta el banco de madrugada; el panel recoge a las 6:17, 10:17, 14:17, 18:17 y 22:17). Versión v38.
-- 30/10/2026 · móvil · Tareas: al completar una se guarda la fecha; pasados 7 días deja de verse en «Todas» y en el calendario (sigue en «Completadas»). Versión v37.

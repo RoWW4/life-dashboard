@@ -11,7 +11,7 @@ function vDia(){
     ...S.periods.filter(p => dayDiff(p.to)>=0 && dayDiff(p.from)<=14).map(p => [p.from, perRow(p)])].sort((a,b) => a[0].localeCompare(b[0]));
   const imp = [...open.filter(t => t.due && dayDiff(t.due)<=1).map(t => [t.due, ico(t), t.title, AC[t.area], t.id]), ...fxDue(7).map(o => [o.d, 'receipt', o.f.name+' · '+eur(o.f.amt), col(o.f.cat)]), ...S.docs.filter(d => d.exp && dayDiff(d.exp)<=30).map(d => [d.exp, DI[d.cat]||'file-text', 'Vence: '+d.name, DCOL[d.cat]]), ...bankAlerts()].sort((a,b) => a[0].localeCompare(b[0]));
   const bills = fxDue(30), btot = bills.reduce((a,o) => a+o.f.amt, 0), b7 = bills.filter(o => dayDiff(o.d)<=7);
-  const m = MN(now), sp = spent(m), fl = fxLeft(), rem = (S.budget||0) - sp - fl, left = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate() - now.getDate() + 1;
+  const m = MN(now), left = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate() - now.getDate() + 1;
   const P = S.shop.filter(s => !s.done), D = S.shop.length - P.length, pins = S.docs.filter(d => d.pin);
   // Todas las tarjetas se pliegan tocando el título (abiertas por defecto).
   const mp = (k, title, inner, cls) => pfold('dia', k, title, inner, cls), ic = PLG['dia:imp'];

@@ -2,6 +2,8 @@
 
 Cambios anteriores a los que hay en `HISTORIAL.md`, lo más reciente arriba.
 
+- 30/10/2026 · móvil · Tarjeta Banco: quitado el botón «Recargar» (la app ya recoge lo nuevo al abrirse) y texto actualizado con el horario real (Wallet consulta el banco de madrugada; el panel recoge a las 6:17, 10:17, 14:17, 18:17 y 22:17). Versión v38.
+- 30/10/2026 · móvil · Tareas: al completar una se guarda la fecha; pasados 7 días deja de verse en «Todas» y en el calendario (sigue en «Completadas»). Versión v37.
 - 30/10/2026 · móvil · Movimientos: etiqueta arriba a la derecha y debajo, en una línea, importe, botón de Facturas y X. Versión v36.
 - 30/10/2026 · móvil · Movimientos: las etiquetas (banco, prepago, fijo, factura, encargo, extraordinario, ¿duplicado?) pasan arriba a la derecha, sobre el importe; filas más bajas. Versión v35.
 - 30/10/2026 · móvil · Barra inferior del móvil: todos los iconos y textos alineados a la misma altura («Más» salía más abajo y el seleccionado se desplazaba). Versión v34.
