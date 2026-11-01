@@ -1,7 +1,10 @@
 # Historial de cambios
 
+> **Ya no se actualiza (desde el 01/11/2026).** Lo que se hace ahora queda en los commits: `git log --oneline`.
+
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`. Aquí se dejan unas 20; las anteriores están en `HISTORIAL-antiguo.md`.
 
+- 01/11/2026 · ordenador · Mi día: el calendario y «Próximos 14 días» ya no muestran facturas (tienen su tarjeta). Ajustes: quitada la opción de cuenta de Google para abrir documentos.
 - 01/11/2026 · móvil · Documentos: la carpeta «Identidad» pasa a llamarse «Personal» en la app, el bot, los avisos y la base de datos (los documentos que había se han pasado). Versión v51.
 - 01/11/2026 · móvil · Documentos: se dan por buenos los que hay (no se reponen más).
 - 01/11/2026 · móvil · Bot de documentos por Telegram: script `scripts/telegram-documentos.gs` (Google Apps Script; guarda en Drive preguntando la carpeta con botones y junta varios archivos en un documento) y función `ldb_add_doc` en Supabase para añadirlo al panel. Instalado y probado con un documento (nombre corregido; evita duplicados).

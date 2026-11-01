@@ -73,7 +73,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
 - **Plan B** si el banco falla: importar el archivo `.xls` de movimientos del banco desde **Ajustes → Banco**. Pasa por el mismo sistema anti-duplicados.
 
 ## Actualizar la app en el móvil
-`index.html` carga cada archivo con `?v=N` y `sw.js` guarda una caché `ldb-shell-vN`. En cada cambio de CSS o JS hay que subir los dos números para que el móvil coja la versión nueva.
+`index.html` carga cada archivo con `?v=N` y `sw.js` guarda una caché `ldb-shell-vN`. En cada cambio de CSS o JS se suben los dos números para que el móvil coja la versión nueva; lo hace solo `scripts/subir.mjs`.
 
 ## Límites y cosas a saber
 - **Supabase gratis** pausa los proyectos que pasan 7 días sin actividad. Las tareas programadas lo mantienen activo. Si alguna vez se pausa: supabase.com → *Restore*.
@@ -92,8 +92,10 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
 | `scripts/wallet-sync.mjs` | sincronización con Wallet |
 | `scripts/task-reminders.mjs` | avisos por Telegram |
 | `scripts/telegram-documentos.gs` | bot de documentos (se pega en Google Apps Script, no corre en GitHub) |
-| `scripts/comprobar.mjs` | comprobación obligatoria antes de subir una versión |
+| `scripts/subir.mjs` | subir una versión en un paso (trae lo nuevo, sube la versión, comprueba, commit y push) |
+| `scripts/comprobar.mjs` | comprobación obligatoria antes de subir (la lanza `subir.mjs`) |
 | `scripts/bank-link.mjs`, `scripts/bank-sync.mjs`, `scripts/eb.mjs` | Enable Banking (en pausa). `eb.mjs` también lo usan los demás scripts para hablar con Supabase |
 | `.github/workflows/*.yml` | los robots de arriba |
-| `CLAUDE.md`, `HISTORIAL.md`, `HISTORIAL-antiguo.md`, `PENDIENTES.md` | cómo trabaja Claude, qué se ha hecho y qué queda |
+| `CLAUDE.md`, `PENDIENTES.md` | cómo trabaja Claude y qué queda por hacer (lo hecho: `git log`) |
+| `HISTORIAL.md`, `HISTORIAL-antiguo.md` | historial antiguo, hasta el 01/11/2026 (ya no se actualiza) |
 | `DATOS.md` | cómo cambiar los datos del panel en Supabase (formato de cada lista) |

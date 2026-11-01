@@ -74,7 +74,6 @@ const A = {
   pd: i => { const d = S.docs.find(x => x.id===i); d.pin = !d.pin; ch(); },
   dd: i => CF('¿Quitar este documento de la lista? (No se borra ningún archivo)', () => { S.docs = S.docs.filter(x => x.id!==i); ch(); }),
   th: i => { S.theme = i; ch(); },
-  gac: () => CF('Email de la cuenta de Google con la que abrir los documentos de Drive (déjalo vacío para que Google pregunte)', v => { v = (v||'').trim(); if (v && !/^\S+@\S+\.\S+$/.test(v)) return toast('Email no válido'); S.gacct = v; ch(); }, S.gacct||''),
   nm: () => CF('¿Cómo quieres que te salude el panel?', v => { S.name = (v||'').trim().slice(0,30); ch(); }, S.name||''),
   cu: (i,el) => { S.cur = el.value; ch(); },
   // «No es duplicado»: quita el aviso a todo el grupo (mismo día, importe y tipo).

@@ -4,9 +4,9 @@
 function vDia(){
   const now = new Date(), h = now.getHours(), g = h<6?'Buenas noches':h<13?'Buenos días':h<21?'Buenas tardes':'Buenas noches', td = TD(), open = S.tasks.filter(t => !t.done);
   const tt = open.filter(t => t.due && t.due<=td).sort((a,b) => (a.due+(a.tm||'')).localeCompare(b.due+(b.tm||''))), late = tt.filter(t => t.due<td).length, inbox = open.filter(t => !t.due).length;
-  // Móvil: «Mi día» más corta. En Próximos no se repite lo que ya sale en «Lo más importante» (mañana y facturas).
+  // Móvil: «Mi día» más corta. En Próximos no se repite lo que ya sale en «Lo más importante» (mañana). Las facturas tienen su propia tarjeta.
   const mob = matchMedia('(max-width:760px)').matches;
-  const up = [...open.filter(t => t.due && dayDiff(t.due)>(mob?1:0) && dayDiff(t.due)<=14).map(t => [t.due+(t.tm||''), taskRow(t)]), ...(mob ? [] : fxDue(14).filter(o => dayDiff(o.d)>0).map(o => [o.d, fxRow(o)])),
+  const up = [...open.filter(t => t.due && dayDiff(t.due)>(mob?1:0) && dayDiff(t.due)<=14).map(t => [t.due+(t.tm||''), taskRow(t)]),
     ...[...new Set([td.slice(0,4), addD(td,14).slice(0,4)])].flatMap(y => holidays(+y)).filter(h => dayDiff(h.d)>=0 && dayDiff(h.d)<=14).map(h => [h.d, holRow(h)]),
     ...S.periods.filter(p => dayDiff(p.to)>=0 && dayDiff(p.from)<=14).map(p => [p.from, perRow(p)])].sort((a,b) => a[0].localeCompare(b[0]));
   const imp = [...open.filter(t => t.due && dayDiff(t.due)<=1).map(t => [t.due, ico(t), t.title, AC[t.area], t.id]), ...fxDue(7).map(o => [o.d, 'receipt', o.f.name+' · '+eur(o.f.amt), col(o.f.cat)]), ...S.docs.filter(d => d.exp && dayDiff(d.exp)<=30).map(d => [d.exp, DI[d.cat]||'file-text', 'Vence: '+d.name, DCOL[d.cat]]), ...bankAlerts()].sort((a,b) => a[0].localeCompare(b[0]));

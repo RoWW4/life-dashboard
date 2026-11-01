@@ -1,52 +1,31 @@
 # Panel de Rocío · instrucciones para Claude
 
-Rocío trabaja este proyecto desde el ordenador (Claude Code) y desde el móvil (Claude en la nube). Para que ninguna sesión pierda lo que hizo la otra:
+Rocío trabaja el panel desde el ordenador (`D:\Claude\life-dashboard`, copia de GitHub) y desde el móvil (Claude en la nube). Respóndele en español, breve y con palabras sencillas.
 
-## Al empezar la sesión
-1. `git pull` para traer lo último de GitHub. En el ordenador, `D:\Claude\life-dashboard` es la copia de GitHub (desde el 31/10/2026): se trabaja y se sube directamente desde ahí, sin copias en carpetas temporales.
-2. Leer solo el principio de `HISTORIAL.md` (lo más reciente está arriba) y `PENDIENTES.md`. `HISTORIAL-antiguo.md` solo se lee si hace falta buscar algo viejo.
+## Cómo se trabaja
+1. Al empezar: `git pull`. Si hay cambios locales sin subir, `git pull --rebase --autostash`. No hace falta leer nada más.
+2. Cambios en local, sin commit ni push. `PENDIENTES.md` solo se lee si lo pedido tiene que ver con algo pendiente.
+3. Comprobar con lo mínimo. La vista previa (localhost:8765) solo para cambios visuales que lo necesiten, **sin iniciar sesión** y con `localStorage.clear()` al acabar: probar con datos de mentira y luego iniciar sesión en el mismo navegador borró los datos reales el 31/10/2026.
+4. Cuando diga «súbelo» (o «ya está», «publícalo»): `node scripts/subir.mjs "qué se ha cambiado (una frase)"`. Trae lo de la otra sesión, sube la versión si cambió CSS o JS, pasa `scripts/comprobar.mjs` y hace un commit y push a `main` (GitHub Pages publica desde ahí). Si algo falla, no sube y dice por qué. Antes, mirar `git status` por si hay archivos que no deben subirse.
+5. Si Rocío se despide o cambia de dispositivo con cambios sin subir, recordárselo.
 
-## Mientras Rocío pide cambios (para gastar menos)
-- Hacer cada cambio en local, **sin commit ni push** y sin subir todavía el número de versión.
-- Por cada cambio hecho o decidido, añadir **arriba** de `HISTORIAL.md` una línea:
-  `- DD/MM/AAAA · móvil|ordenador · qué se hizo (una frase)`
-  Una sola línea, breve. No apuntar consultas que no cambian nada.
-- Los cambios de datos en Supabase se ven al momento en la app, pero su línea del historial también espera a la subida.
-- Probar con capturas solo cuando el cambio sea visual y haga falta; preferir comprobaciones cortas.
-- Respuestas breves.
+El historial de cambios es el de git (`git log --oneline`); `HISTORIAL.md` y `HISTORIAL-antiguo.md` son solo archivo hasta el 01/11/2026.
+`PENDIENTES.md`: solo lo importante por decidir o hacer, sin listas de ideas. «Apúntalo en pendientes» = añadirlo sin hacerlo. Al hacer uno, quitarlo de ahí.
 
-## Cuando diga «súbelo» (o «ya está», «publícalo»…)
-1. Si hubo cambios de CSS o JS, subir la versión **una sola vez** (ver abajo) y apuntarla en la última línea del historial.
-2. Ejecutar `node scripts/comprobar.mjs` (sintaxis, versión igual en `index.html` y `sw.js`, archivos en `SHELL`, la app abre sin errores y juntar cambios funciona). **Si falla, no se sube.**
-3. `git fetch` y comprobar que `main` no tiene commits nuevos de la otra sesión; si los tiene, traerlos primero (`git pull --rebase`) y repetir el paso 2.
-4. **Un solo** commit y `git push` a `main` (GitHub Pages publica desde `main`).
-- Lo que no se ha subido solo existe en esa sesión: si Rocío se despide o va a cambiar de dispositivo con cambios sin subir, recordárselo.
+## Datos y seguridad
+- Los datos viven en Supabase (tabla `ldb_state`, columna `data`). Para cambiarlos por SQL, seguir `DATOS.md`.
+- Ya protegen solos: la base de datos rechaza vaciar una sección o perder más de la mitad de los datos (`ldb_state_guard`, no desactivarlo); copia de la versión anterior en cada cambio (`ldb_state_hist`, 30 días) y copia diaria en Google Drive (60 días); la app junta los cambios de los dos dispositivos (`merge3` en `js/nube.js`).
+- Cualquier cambio en `js/nube.js` o `js/estado.js` se prueba antes simulando dos dispositivos.
+- No programar revisiones, comprobaciones ni avisos por iniciativa propia; revisar el panel solo cuando Rocío lo pida.
+- Nunca `git push --force` sin preguntar (la historia del repositorio se rehízo el 29/10/2026 para quitar datos personales).
 
-## Seguridad de los datos (no saltarse nada de esto)
-- Copias: Supabase guarda la versión anterior antes de cada cambio (`ldb_state_hist`, 30 días) y cada noche se copia todo el panel a Google Drive («Copias del panel», 60 días).
-- La base de datos **rechaza** cualquier cambio que vacíe una sección con datos o pierda más de la mitad de tareas/movimientos/facturas/documentos, y no deja borrar el panel (`ldb_state_guard`, ver `supabase/schema.sql`). No desactivarlo.
-- La app no sustituye la nube a ciegas: antes de subir mira si la nube cambió y, si cambió, junta los cambios (`merge3` en `js/nube.js`). Cualquier cambio en `js/nube.js` o `js/estado.js` (sincronización y migraciones) se prueba antes simulando dos dispositivos.
-- Al cambiar datos por SQL, seguir `DATOS.md`: solo las claves que cambian (`jsonb_set`), nunca pegar una copia entera de `data`, y comparar el resumen por secciones antes y después.
+## Privacidad (muy importante: el repositorio es público)
+En ningún archivo del repositorio (código, comentarios, ejemplos, `PENDIENTES.md`, mensajes de commit) van nombres de personas o mascotas, importes, nómina o empresa, préstamos, documentos, conceptos de movimientos, temas de salud, secretos ni semillas con datos reales. Se describe solo el cambio, de forma genérica («corregida una tarea repetida»). Las ideas con datos personales van en `D:\Claude\panel-privado.md`, fuera del repositorio.
 
-## Historial
-- En `HISTORIAL.md` se dejan unas 20 líneas. Al subir, si hay más, pasar las más antiguas al principio de `HISTORIAL-antiguo.md` (también lo más reciente arriba).
-
-## Pendientes
-- `PENDIENTES.md` guarda solo lo importante que queda por decidir o hacer; nada de listas de ideas.
-- Cuando Rocío diga «apúntalo en pendientes» (o similar), añadirlo a `PENDIENTES.md` sin hacerlo todavía.
-- Cuando se haga uno, quitarlo de `PENDIENTES.md` y apuntarlo en `HISTORIAL.md`.
-
-## Recordatorios
-- Responder a Rocío en español y de forma breve.
-- Los datos del panel están en Supabase (tabla `ldb_state`, columna `data`). Para cambiar datos, seguir `DATOS.md` (formato de cada lista; cada cambio lleva `_ts` nuevo para que la app no lo sobrescriba).
-- No programar revisiones, comprobaciones ni avisos por iniciativa propia. Revisar el panel solo cuando Rocío lo pida, y entonces contarle lo que se vea.
-- El repositorio es público: no meter datos personales ni secretos en el código.
-- **Privacidad (muy importante):** en ningún archivo del repositorio (código, `HISTORIAL.md`, `PENDIENTES.md`, comentarios, ejemplos o datos de prueba) van nombres de personas o mascotas, importes, nómina o empresa, préstamos, documentos, conceptos de movimientos ni temas de salud. En el historial y en pendientes se describe solo el cambio del panel de forma genérica (p. ej. «corregida una tarea repetida», no de quién es). Los datos reales viven solo en Supabase. Las ideas con datos personales van en `D:\Claude\panel-privado.md`, fuera del repositorio. Nada de semillas con datos reales en el código.
-
-## Dónde está cada cosa (código de la app)
-La app ya no está en un solo `app.js`: está repartida en `js/` y `index.html` carga los archivos **en este orden** (cada uno usa lo de los anteriores; todos comparten las mismas variables globales, no son módulos):
+## Dónde está cada cosa (código)
+`index.html` carga estos archivos **en este orden** (scripts normales, no módulos; comparten variables globales):
 - `js/base.js` · constantes, categorías y utilidades (fechas, euros…)
-- `js/estado.js` · el objeto `S` y migraciones (sin semillas con datos reales)
+- `js/estado.js` · el objeto `S` y migraciones
 - `js/facturas-calculo.js` · cálculos de Facturas (cobros previstos, estado, enlace con el banco)
 - `js/nube.js` · sincronización con Supabase
 - `js/banco.js` · clasificar, limpiar e importar movimientos del banco
@@ -58,5 +37,5 @@ La app ya no está en un solo `app.js`: está repartida en `js/` y `index.html` 
 - `js/acciones.js` · lo que hace cada botón (`data-a`)
 - `js/eventos.js` y `js/arranque.js` · eventos y arranque
 
-Al crear un archivo nuevo: añadirlo en `index.html` (en su sitio del orden) y en la lista `SHELL` de `sw.js`.
-En cada cambio de CSS o JS: subir el número `?v=N` de **todos** los archivos en `index.html` y `ldb-shell-vN` en `sw.js`, para que el móvil coja la versión nueva.
+Archivo nuevo: añadirlo en `index.html` (en su sitio) y en `SHELL` de `sw.js`. El número de versión lo sube `subir.mjs`.
+Cómo está montado todo (Supabase, robots, Wallet, Telegram): `LEEME.md`, solo si hace falta.

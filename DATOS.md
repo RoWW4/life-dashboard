@@ -27,7 +27,7 @@ Cuando te pida añadir, cambiar o consultar tareas, recordatorios, cumpleaños, 
 4. Fechas `AAAA-MM-DD`, horas `HH:MM`, importes como número (12.5, no "12,50 €").
 5. Para borrar o cambiar algo que ya existe, dime antes qué vas a cambiar y espera a que te diga que sí. Para añadir no hace falta preguntar.
 6. Al terminar, dime en una línea qué has hecho. Los cambios aparecen al abrir (o volver a) la app.
-7. Si se trabaja desde el repositorio (Claude Code), apuntar el cambio en `HISTORIAL.md` de forma genérica, sin nombres ni importes.
+7. Los cambios de datos no se apuntan en el repositorio (ni nombres ni importes en ningún archivo).
 
 Plantilla para añadir un elemento a una lista:
 ```sql

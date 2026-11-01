@@ -1,6 +1,6 @@
 # Pendientes
 
-Solo lo importante que queda por decidir o hacer. **No hacerlo hasta que la dueña del panel lo pida.** Cuando se haga uno, quitarlo de aquí y apuntarlo en `HISTORIAL.md`.
+Solo lo importante que queda por decidir o hacer. **No hacerlo hasta que la dueña del panel lo pida.** Cuando se haga uno, quitarlo de aquí.
 
 ## Recuperar los datos del panel
 - El 31/10/2026 los datos del panel en la nube se sobrescribieron por error. Se pidió al soporte de Supabase recuperar la versión anterior (aún existe dentro de la base de datos); sin respuesta de una persona todavía.
