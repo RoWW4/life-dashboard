@@ -151,9 +151,9 @@ function calHTML(){
   const sm = salDays(), sTip = k => sm.has(k) ? (sm.get(k) ? 'Salud (previsto)' : 'Salud') : '';
   let c = ['L','M','X','J','V','S','D'].map(d => `<div class="wd">${d}</div>`).join('') + '<div></div>'.repeat(off);
   for (let d=1; d<=n; d++) {
-    const k = y+'-'+p2(mo+1)+'-'+p2(d), q = S.tasks.filter(t => !t.done && t.due===k).length, h = holOn(k), v = perOn(k);
+    const k = y+'-'+p2(mo+1)+'-'+p2(d), dt = S.tasks.filter(t => !t.done && t.due===k), cb = dt.filter(t => t.area==='Cumpleaños').length, q = dt.length - cb, h = holOn(k), v = perOn(k);
     const tip = [...h.map(x => x.n), ...v.map(x => x.name), sTip(k)].filter(Boolean).join(' · ');
-    c += `<button class="${k===TD()?'t':''} ${k===sd?'sel':''} ${h.length?'hol':''} ${v.length?'vac':''} ${sm.has(k)?'sal':''}"data-a="sd" data-i="${k}" aria-label="${fd(k)}${tip?' · '+esc(tip):''}" ${tip?`title="${esc(tip)}"`:''}>${d}<span class="dots">${'<i></i>'.repeat(Math.min(q,3))}</span></button>`;
+    c += `<button class="${k===TD()?'t':''} ${k===sd?'sel':''} ${h.length?'hol':''} ${v.length?'vac':''} ${sm.has(k)?'sal':''}"data-a="sd" data-i="${k}" aria-label="${fd(k)}${tip?' · '+esc(tip):''}" ${tip?`title="${esc(tip)}"`:''}>${d}<span class="dots">${cb ? I('cake','bd') : ''}${'<i></i>'.repeat(Math.min(q, cb ? 2 : 3))}</span></button>`;
   }
   const dl = S.tasks.filter(t => t.due===sd && !oldDone(t)).sort((a,b) => (a.tm||'').localeCompare(b.tm||'')), hl = holOn(sd), vl = perOn(sd);
   const sl = sm.has(sd) ? `<div class="row">${tile('heart-pulse','#ff5d5d')}<span class="g">${sTip(sd)}</span></div>` : '';

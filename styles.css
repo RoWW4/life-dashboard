@@ -215,6 +215,8 @@ input[type=checkbox].ck:checked::after{content:'';width:6px;height:11px;border:s
 .cal button.sel{background:var(--ac);color:#fff}
 .cal .dots{display:flex;gap:2px;height:5px}.cal .dots i{width:5px;height:5px;border-radius:50%;background:var(--ac)}.cal .dots i.b{background:var(--wa)}
 .cal button.sel .dots i{background:#fff}
+.cal .dots{align-items:center;height:10px}.cal .dots .i.bd{width:10px;height:10px;color:#e879f9;stroke-width:2.5}
+.cal button.sel .dots .i.bd{color:#fff}
 .cal button.vac{background:color-mix(in srgb,var(--ok) 16%,var(--bg2))}
 .cal button.hol{color:var(--er);font-weight:700;background:color-mix(in srgb,var(--er) 16%,var(--bg2))}
 .cal button.sal{color:var(--er);font-weight:700;outline:1.5px dashed color-mix(in srgb,var(--er) 60%,transparent);outline-offset:-3px}
