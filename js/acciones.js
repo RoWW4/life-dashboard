@@ -62,6 +62,8 @@ const A = {
   savadd: () => { const d = V('sv1'), b = pnum(V('sv2')), dep = V('sv3') ? pnum(V('sv3')) : 0; if (!d || !(b>=0) || isNaN(dep)) return toast('Indica la fecha y el saldo');
     S.sav.snaps = (S.sav.snaps||[]).filter(x => x.d!==d); S.sav.snaps.push({id:id(), d, bal:b, dep}); ch(); toast('🐷 Saldo actualizado'); },
   saveye: () => { savShow = !savShow; render(); },
+  acceye: () => { accShow = !accShow; render(); },
+  accedit: () => CF('Saldo actual de la cuenta (€)', v => { const b = pnum(v); if (isNaN(b)) return toast('Escribe un importe'); S.acct = {bal:b, d:TD()}; ch(); toast('Saldo actualizado'); }, S.acct ? String(S.acct.bal).replace('.',',') : ''),
   savdel: i => CF('¿Eliminar este apunte?', () => { S.sav.snaps = S.sav.snaps.filter(x => x.id!==i); ch(); }),
   mkf: i => { const x = S.tx.find(y => y.id===i); const f = x.fid && S.fixed.find(y => y.id===x.fid); if (!f) { delete x.fid; return makeFixed(x); }
     CF(`«${f.name}» está en Facturas. ¿Quitarlo de la lista? Los movimientos se conservan.`, () => { S.fixed = S.fixed.filter(y => y.id!==f.id); S.tx.forEach(y => { if (y.fid===f.id) delete y.fid; }); ch(); }); },

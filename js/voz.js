@@ -124,7 +124,7 @@ function vacation(t){
 }
 function preview(src){
   if (!String(src).trim()) return '';
-  const r = interpret(src), c = (ic,txt,cls='') => `<span class="chip ${cls}">${I(ic,'sm')} ${esc(txt)}</span>`;
+  const r = interpret(src), c = (ic,txt,cls='') => `<span class="chip ${cls}">${I(ic,'sm')} ${cap(esc(txt))}</span>`;
   if (r.k==='shop') return c('shopping-cart','Compra','ac') + ' ' + esc(r.items);
   if (r.k==='tx') return c(r.ty==='i'?'arrow-up-right':'arrow-down-left', r.ty==='i'?'Ingreso':'Gasto', r.ty==='i'?'ok':'er') + c(CI[r.cat]||'package', r.cat) + ` <b>${eur(r.amt)}</b> · ${esc(r.desc)}`;
   if (r.k==='vac') return c('sun', r.name, 'ok') + c('calendar-days', r.from===r.to ? dlabel(r.from) : fd(r.from)+' → '+fd(r.to));
