@@ -156,3 +156,25 @@ language plpgsql as $$ begin raise exception 'ldb_guard: no se borra el panel'; 
 drop trigger if exists ldb_state_no_delete on public.ldb_state;
 create trigger ldb_state_no_delete before delete on public.ldb_state
   for each row execute function public.ldb_state_no_delete();
+
+-- Bot de documentos (01/11/2026): añade UN documento al panel de quien llama (auth.uid()), de forma atómica.
+-- Lo usa el Google Apps Script de scripts/telegram-documentos.gs. Solo admite enlaces de Google Drive.
+create or replace function public.ldb_add_doc(p_name text, p_cat text, p_url text, p_exp text default '')
+returns text language plpgsql security invoker set search_path = public as $$
+declare v_id text := 'dc-' || substr(md5(random()::text), 1, 8); n int;
+begin
+  if coalesce(trim(p_name), '') = '' or p_url !~ '^https://drive\.google\.com/' then raise exception 'ldb_add_doc: datos no válidos'; end if;
+  if p_cat not in ('Identidad','Coche','Hogar','Salud','Finanzas','Mascotas','Trabajo','Otros') then p_cat := 'Otros'; end if;
+  if coalesce(p_exp, '') !~ '^(\d{4}-\d{2}-\d{2})?$' then p_exp := ''; end if;
+  update ldb_state set
+    data = jsonb_set(jsonb_set(data, '{docs}', coalesce(data->'docs', '[]'::jsonb) || jsonb_build_array(jsonb_build_object(
+             'id', v_id, 'name', left(trim(p_name), 120), 'cat', p_cat, 'url', p_url, 'notes', '', 'exp', coalesce(p_exp, ''), 'pin', false))),
+           '{_ts}', to_jsonb((extract(epoch from now()) * 1000)::bigint)),
+    updated_at = now()
+  where user_id = auth.uid();
+  get diagnostics n = row_count;
+  if n = 0 then raise exception 'ldb_add_doc: sin panel'; end if;
+  return v_id;
+end $$;
+revoke all on function public.ldb_add_doc(text, text, text, text) from public, anon;
+grant execute on function public.ldb_add_doc(text, text, text, text) to authenticated;

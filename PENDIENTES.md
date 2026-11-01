@@ -4,7 +4,7 @@ Solo lo importante que queda por decidir o hacer. **No hacerlo hasta que la due�
 
 ## Recuperar los datos del panel
 - El 31/10/2026 los datos del panel en la nube se sobrescribieron por error. Se pidió al soporte de Supabase recuperar la versión anterior (aún existe dentro de la base de datos); sin respuesta de una persona todavía.
-- Ese mismo día se restauró la base del 28/10 (tareas, fijos y documentos de la copia local de la carpeta `copia-historial-panel` de `D:\Claude`, que nunca se sube) junto a los movimientos del banco que quedaban. Falta: volver a importar los movimientos antiguos del banco, revisar tope, festivos, reglas y enlaces de documentos, y añadir lo hecho después del 28/10. Si Supabase devuelve la versión completa, restaurar esa.
+- Ese mismo día se restauró la base del 28/10 (tareas, fijos y documentos de la copia local de la carpeta `copia-historial-panel` de `D:\Claude`, que nunca se sube) junto a los movimientos del banco que quedaban. Ya repuestos (01/11): festivos, Inversiones y parte de los documentos con sus enlaces. Falta: volver a importar los movimientos antiguos del banco, revisar tope y reglas, añadir los documentos que falten (la dueña dirá cuáles) y lo hecho después del 28/10. Si Supabase devuelve la versión completa, restaurar esa.
 - Cuando esté resuelto: volver a activar la limpieza automática de `ldb_state` (`alter table public.ldb_state reset (autovacuum_enabled, toast.autovacuum_enabled);`).
 
 ## Wallet (banco)

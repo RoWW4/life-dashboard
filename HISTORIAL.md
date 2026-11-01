@@ -2,6 +2,8 @@
 
 Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qué se hizo`. Aquí se dejan unas 20; las anteriores están en `HISTORIAL-antiguo.md`.
 
+- 01/11/2026 · móvil · Bot de documentos por Telegram: script `scripts/telegram-documentos.gs` (Google Apps Script; guarda en Drive preguntando la carpeta con botones y junta varios archivos en un documento) y función `ldb_add_doc` en Supabase para añadirlo al panel. Instalado y probado con un documento (nombre corregido; evita duplicados).
+- 01/11/2026 · móvil · Datos: región Andalucía (festivos nacionales y autonómicos), festivos locales del municipio de trabajo para 2026 y 2027, y enlaces de documentos recuperados desde Drive (uno añadido).
 - 01/11/2026 · móvil · Seguridad de datos: la app ya no sustituye la nube a ciegas (si otro dispositivo o Supabase cambió algo, junta los cambios antes de subir); la base de datos rechaza cambios que vacíen una sección o pierdan muchos datos y no deja borrar el panel; nueva comprobación `scripts/comprobar.mjs` obligatoria antes de subir; reglas en `CLAUDE.md` y `DATOS.md`. Versión v50.
 - 01/11/2026 · móvil · Inversiones: los intereses se calculan como la cuenta (interés diario sobre el saldo, abonado el día 1 menos impuestos; el primer mes desde la apertura). Datos: apuntados los saldos reales de los dos últimos abonos. Versión v49.
 - 01/11/2026 · móvil · Protección de datos: la app pide confirmación antes de subir una versión en la que se haya quedado vacía una sección que en la nube tiene datos (Inversiones, festivos, vacaciones, salud, reglas…). Datos: Inversiones rehecha a partir de la aportación inicial (se había perdido el 31/10). Versión v48.
@@ -20,5 +22,3 @@ Una línea por cambio, lo más reciente arriba: `fecha · móvil|ordenador · qu
 - 31/10/2026 · ordenador · `LEEME.md` puesto al día: Wallet, avisos por Telegram, tareas programadas de Supabase y secretos (Enable Banking queda como «en pausa»).
 - 31/10/2026 · ordenador · `CLAUDE.md`: forma de trabajar aclarada (los cambios se hacen sin subir y se suben todos juntos al decir «súbelo»); historial antiguo pasado a `HISTORIAL-antiguo.md`.
 - 31/10/2026 · móvil · Wallet: el movimiento de prueba no llegó (nada nuevo desde el 29/10); enviado correo a su soporte.
-- 31/10/2026 · móvil · Datos: una compra devuelta (cargo y devolución) pasada a Traspasos para que no cuente. `CLAUDE.md`: los cambios pedidos seguidos se publican juntos al terminar.
-- 31/10/2026 · móvil · Ficha de movimiento: las explicaciones de «Gasto extraordinario» y «Encargo» se ven tocando un icono «i» junto a cada casilla. Versión v42.

@@ -25,7 +25,11 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
   - `task_reminders`: avisos de Telegram ya mandados (para no repetirlos).
   - `wallet_log`: a qué hora trae Wallet cada movimiento (solo fechas y horas).
   - `ldb_state_hist`: copia automática de la versión anterior del panel antes de cada cambio (se guardan 30 días). Para recuperar datos, ver `DATOS.md`.
+- **Guardia de datos** (`ldb_state_guard`): la base de datos rechaza cualquier cambio que vacíe una sección con datos o pierda más de la mitad de tareas/movimientos/facturas/documentos, y no deja borrar el panel. Para hacerlo a propósito se manda `"_force": true` dentro de `data` (la app lo hace al confirmar).
+- **`ldb_add_doc`**: función que solo añade un documento al panel (la usa el bot de documentos).
 - **Copia diaria fuera de Supabase:** un Google Apps Script de la cuenta personal de Google (código guardado fuera del repositorio) entra cada noche con la cuenta del panel y guarda un `.json` en la carpeta «Copias del panel» de Drive (60 días). Si se cambia la contraseña del panel, hay que cambiarla también en las propiedades del script.
+- **Bot de documentos por Telegram** (`scripts/telegram-documentos.gs`, otro Google Apps Script de la cuenta personal): cada minuto mira si se le ha mandado una foto o un PDF al bot, pregunta la carpeta con botones, lo guarda en la carpeta «Documentos» de Drive (varios archivos seguidos = un documento en su subcarpeta) y lo añade a Documentos del panel con `ldb_add_doc`. Solo atiende el chat de `CHAT_ID`. Propiedades del script: `TELEGRAM_TOKEN`, `CHAT_ID`, `EMAIL`, `PASSWORD`, `DOCS_FOLDER`. Al cambiar el código hay que pegarlo de nuevo en Apps Script.
+- **Sincronización sin pisar cambios:** la app guarda en el dispositivo la última versión de la nube que conoce; antes de subir mira si la nube cambió y, si cambió, junta los cambios de los dos lados (`merge3` en `js/nube.js`).
 - Login con un único usuario y altas nuevas desactivadas.
 - **Programador (pg_cron):** dos tareas que llaman a la API de GitHub para lanzar los workflows, con un token de GitHub guardado en Vault. Se crearon a mano en Supabase (no están en `schema.sql`):
   - `sync-wallet`: `17 5,9,13,17,21 * * *` (UTC), unas 06:17, 10:17, 14:17, 18:17 y 22:17 en invierno.
@@ -87,6 +91,8 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
 | `supabase/schema.sql` | tablas y permisos de la base de datos |
 | `scripts/wallet-sync.mjs` | sincronización con Wallet |
 | `scripts/task-reminders.mjs` | avisos por Telegram |
+| `scripts/telegram-documentos.gs` | bot de documentos (se pega en Google Apps Script, no corre en GitHub) |
+| `scripts/comprobar.mjs` | comprobación obligatoria antes de subir una versión |
 | `scripts/bank-link.mjs`, `scripts/bank-sync.mjs`, `scripts/eb.mjs` | Enable Banking (en pausa). `eb.mjs` también lo usan los demás scripts para hablar con Supabase |
 | `.github/workflows/*.yml` | los robots de arriba |
 | `CLAUDE.md`, `HISTORIAL.md`, `HISTORIAL-antiguo.md`, `PENDIENTES.md` | cómo trabaja Claude, qué se ha hecho y qué queda |
