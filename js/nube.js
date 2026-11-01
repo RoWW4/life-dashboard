@@ -9,7 +9,12 @@ function setSync(t){ syncTxt = t; const e = $('#syncst'); if (e) e.textContent =
 /* Protección: no se sube a la nube una versión con menos de la mitad de elementos que la de la nube (p. ej. un
    navegador con datos de prueba o vacío), salvo que se confirme. cloudN = elementos de la última versión vista en la nube. */
 const nItems = d => ['tasks','tx','fixed','docs','shop'].reduce((a,k) => a + (Array.isArray(d&&d[k]) ? d[k].length : 0), 0);
-const tooSmall = () => cloudN >= 10 && nItems(S) < cloudN/2;
+/* Además, ninguna sección con datos en la nube puede quedarse vacía sin confirmar (Inversiones, festivos, vacaciones, salud, reglas…). La compra no cuenta: se vacía a menudo. */
+const SECS = {tasks:'Tareas', tx:'Movimientos', fixed:'Facturas', docs:'Documentos', rules:'Reglas', periods:'Vacaciones', localHol:'Festivos', sav:'Inversiones', salud:'Salud'};
+const secOn = (d,k) => { const v = d && d[k]; return k==='sav' ? !!(v && (v.snaps||[]).length) : k==='salud' ? !!(v && (v.ini||[]).length) : Array.isArray(v) && v.length > 0; };
+let cloudSec = [];
+const lostSecs = () => cloudSec.filter(k => !secOn(S,k)).map(k => SECS[k]);
+const tooSmall = () => (cloudN >= 10 && nItems(S) < cloudN/2) || lostSecs().length > 0;
 
 function save(){
   S._ts = Date.now();
@@ -19,9 +24,9 @@ function save(){
 async function push(force){
   pushT = 0;
   if (!sb || !user || !cloudOK) return;
-  if (!force && tooSmall()) { setSync('⚠️ Sin subir'); return CF(`Este dispositivo tiene muchos menos datos que la nube (${nItems(S)} frente a ${cloudN} elementos). ¿Subirlos y sustituir los de la nube?`, () => push(true)); }
+  if (!force && tooSmall()) { setSync('⚠️ Sin subir'); const ls = lostSecs(); return CF(ls.length ? `En este dispositivo está vacío lo que en la nube tiene datos: ${ls.join(', ')}. ¿Subirlo y borrar eso de la nube?` : `Este dispositivo tiene muchos menos datos que la nube (${nItems(S)} frente a ${cloudN} elementos). ¿Subirlos y sustituir los de la nube?`, () => push(true)); }
   const { error } = await sb.from('ldb_state').upsert({user_id:user.id, data:S, updated_at:new Date().toISOString()});
-  if (!error) cloudN = nItems(S);
+  if (!error) { cloudN = nItems(S); cloudSec = Object.keys(SECS).filter(k => secOn(S,k)); }
   setSync(error ? '⚠️ Error al sincronizar' : '☁️ Sincronizado');
 }
 async function cloudInit(){
@@ -41,7 +46,7 @@ async function pull(){
     const { data, error } = await sb.from('ldb_state').select('data').eq('user_id', user.id).maybeSingle();
     if (error) throw error;
     const remote = data && data.data; let changed = false;
-    if (remote) cloudN = nItems(remote);
+    if (remote) { cloudN = nItems(remote); cloudSec = Object.keys(SECS).filter(k => secOn(remote,k)); }
     // Si lo de este dispositivo es más nuevo pero tiene muchos menos datos, gana la nube (y se avisa).
     if (remote && (S._ts||0) > (remote._ts||0) && tooSmall()) { S = normalize(remote); localStorage.setItem(K, JSON.stringify(S)); changed = true; toast('Se han traído los datos de la nube: este dispositivo tenía muchos menos'); }
     if (remote && (remote._ts||0) > (S._ts||0)) { S = normalize(remote); localStorage.setItem(K, JSON.stringify(S)); changed = true; }
