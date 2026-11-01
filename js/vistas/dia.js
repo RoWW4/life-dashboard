@@ -1,6 +1,7 @@
 'use strict';
 /* Sección «Mi día». */
 /* ---------- vistas ---------- */
+let gOff = 0;   // meses hacia atrás en «Gasto del mes» de Mi día (no se guarda)
 function vDia(){
   const now = new Date(), h = now.getHours(), g = h<6?'Buenas noches':h<13?'Buenos días':h<21?'Buenas tardes':'Buenas noches', td = TD(), open = S.tasks.filter(t => !t.done);
   const tt = open.filter(t => t.due && t.due<=td).sort((a,b) => (a.due+(a.tm||'')).localeCompare(b.due+(b.tm||''))), late = tt.filter(t => t.due<td).length, inbox = open.filter(t => !t.due).length;
@@ -12,7 +13,9 @@ function vDia(){
   const imp = [...open.filter(t => t.due && dayDiff(t.due)<=1).map(t => [t.due, ico(t), t.title, AC[t.area], t.id]), ...fxDue(7).map(o => [o.d, 'receipt', o.f.name+' · '+eur(o.f.amt), col(o.f.cat)]), ...S.docs.filter(d => d.exp && dayDiff(d.exp)<=30).map(d => [d.exp, DI[d.cat]||'file-text', 'Vence: '+d.name, DCOL[d.cat]]), ...bankAlerts()].sort((a,b) => a[0].localeCompare(b[0]));
   const bills = fxDue(30), btot = bills.reduce((a,o) => a+o.f.amt, 0), b7 = bills.filter(o => dayDiff(o.d)<=7);
   const m = MN(now), left = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate() - now.getDate() + 1;
-  const P = S.shop.filter(s => !s.done), D = S.shop.length - P.length, pins = S.docs.filter(d => d.pin);
+  const P = S.shop.filter(s => !s.done), D = S.shop.length - P.length, pins = pinDocs().slice(0, PINMAX);
+  // En «Personalizar», los documentos a mano salen en lista con flechas para cambiar su orden.
+  const pinOrd = () => pins.map((d,j) => `<div class="row">${tile(DI[d.cat]||'file-text', DCOL[d.cat])}<span class="g">${esc(d.name)}</span><button class="ib" data-a="mv" data-i="pins|${d.id}|-1" aria-label="Subir" ${j?'':'disabled'}>${I('chevron-up')}</button><button class="ib" data-a="mv" data-i="pins|${d.id}|1" aria-label="Bajar" ${j<pins.length-1?'':'disabled'}>${I('chevron-down')}</button></div>`).join('');
   // Todas las tarjetas se pliegan tocando el título (abiertas por defecto).
   const mp = (k, title, inner, cls) => pfold('dia', k, title, inner, cls), ic = PLG['dia:imp'];
   const C = {
@@ -20,8 +23,8 @@ function vDia(){
     prox: mp('prox',`${I('calendar-clock')} Próximos 14 días`,up.length?fold('d-prox', up.map(x => x[1]), 6):empty('Nada en las próximas dos semanas.')),
     cal: mp('cal',`${I('calendar-days')} Calendario`,calHTML()),
     fact: mp('fact',`${I('receipt')} Facturas próximos 30 días${btot?` <span class="cnt">· ${eur(btot)}</span>`:''}`,(bills.length?bills.slice(0,5).map(fxRow).join(''):empty('Nada en los próximos 30 días.'))+'<div class="more mu"><a href="#" data-a="go" data-i="fact">Gestionar facturas</a></div>'),
-    gasto: mp('gasto',`${I('wallet')} Gasto del mes`,gastoHTML(m)+'<div class="more mu"><a href="#" data-a="go" data-i="fin">Ver detalle</a></div>','wide'),
-    docs: mp('docs',`${I('folder-open')} Documentos a mano`,(pins.length?`<div class="dtiles">${pins.map(docTile).join('')}</div>`:empty('Marca con la estrella los documentos que quieras tener a mano.'))+'<div class="more mu"><a href="#" data-a="go" data-i="docs">Ver todos los documentos</a></div>')
+    gasto: mp('gasto',`${I('wallet')} Gasto del mes`,gastoHTML(MN(new Date(now.getFullYear(), now.getMonth()+gOff, 1)), 'gm')+'<div class="more mu"><a href="#" data-a="go" data-i="fin">Ver detalle</a></div>','wide'),
+    docs: mp('docs',`${I('folder-open')} Documentos a mano`,(pins.length ? (cust ? pinOrd() : `<div class="dtiles">${pins.map(docTile).join('')}</div>`) : empty(`Marca con la estrella hasta ${PINMAX} documentos para tenerlos a mano.`))+'<div class="more mu"><a href="#" data-a="go" data-i="docs">Ver todos los documentos</a></div>')
   };
   VIS.dia = ord('dia', DIA);
   return `<div class="hdr"><div><h2>${g}${S.name?', '+esc(S.name):''}</h2><div class="sub">${cap(new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long'}).format(now))}</div></div></div>

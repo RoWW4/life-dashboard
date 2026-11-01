@@ -2,7 +2,7 @@
 /* Ventanas para añadir y editar: tareas, movimientos, compra, Facturas, vacaciones y documentos. */
 /* ---------- formularios en modal ---------- */
 function taskForm(t){
-  const n = !t; t = t || {title:'',due:'',tm:'',pr:'Media',area:'Personal',rep:''};
+  const n = !t; t = t || {title:'',due:'',tm:'',pr:'Normal',area:'Personal',rep:''};
   const o = modal(`<h3>${n?'Nueva tarea':'Editar tarea'}</h3><div class="fs"><label>Título<input id="ft1" value="${esc(t.title)}" placeholder="¿Qué hay que hacer?"></label><div class="two"><label>Fecha<input id="ft2" type="date" value="${t.due||''}"></label><label>Hora<input id="ft3" type="time" value="${t.tm||''}"></label></div><div class="two"><label>Prioridad<select id="ft4">${opts(PR,t.pr)}</select></label><label>Área<select id="ft5">${opts(AREAS,t.area)}</select></label></div><label>Repetir<select id="ft6"><option value="">No se repite</option>${opts(REP,t.rep)}</select></label></div><div class="acts">${n?'':'<button class="btn ghost danger" id="fdel">Eliminar</button>'}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">${n?'Añadir':'Guardar'}</button></div>`);
   const v = i => o.querySelector(i).value.trim();
   o.querySelector('#ok').onclick = () => {

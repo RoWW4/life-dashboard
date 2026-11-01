@@ -1,13 +1,13 @@
 'use strict';
 /* Sección «Facturas»: pagos e ingresos que se repiten. */
-/* Una fila de Facturas: estado del último cobro (pagado / pendiente / próximo) y acciones. */
+/* Una fila de Facturas: estado del último cobro y acciones. Etiquetas: pagado/cobrado (verde) · próximo (aún no toca) ·
+   pendiente (pasó la fecha hace ≤5 días: el banco suele tardar) · vencido (más de 5 días) · terminado (ya no hay más cobros). */
 const fxItem = f => { if (f.var) return fxVarItem(f); const s0 = fxState(f), late = s0.due && s0.due===s0.prev,
     // Cobro de este mes que aún no ha llegado: no se enseña el pago del mes anterior.
     pm = !late && s0.next && mon(s0.next)===MN(new Date()) && !(s0.paid && Math.abs(dd(s0.paid.date, s0.next)) <= 10), s = pm ? {...s0, paid:null} : s0, ag = late ? dd(TD(),s.prev) : 0;
-  const chip = late ? `<span class="chip ${ag>5?'er':'wa'}">${ag>5?'no ha llegado':'pendiente'} · ${fd(s.prev)}</span>`
-    : pm ? `<span class="chip">${f.t==='i'?'por cobrar':'pendiente'} · ${fd(s.next)}</span>`
+  const chip = late ? `<span class="chip ${ag>5?'er':'wa'}">${ag>5?'vencido':'pendiente'} ${fd(s.prev)}</span>`
     : s.paid ? `<span class="chip ok">${f.t==='i'?'cobrado':'pagado'} ${fd(s.paid.date)}</span>`
-    : s.next ? `<span class="chip">${f.once?'vence':fxStarted(f)||f.month||f.every?'próximo':'empieza'} ${fd(s.next)}</span>` : '<span class="chip">terminado</span>';
+    : s.next ? `<span class="chip">próximo ${fd(s.next)}</span>` : '<span class="chip">terminado</span>';
   return `<div class="row brow">${tile(CI[f.cat]||'receipt', col(f.cat))}<span class="g"><span class="tt">${esc(f.name)}</span><br><span class="mu">${fxFreq(f)}${s.paid?(fromBank(s.paid)?' · llegó del banco':' · apuntado en el panel, aún sin cargo del banco')+(s.next && Math.abs(dd(s.paid.date, s.next)) > 10 ? ' · próximo '+fd(s.next) : ''):''}</span></span>${chip}<span class="amt ${f.t==='i'?'ok':''}">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`; };
 /* Fila de un pago variable: lo que lleva este mes frente a lo previsto. */
 const fxVarItem = f => { const v = fxVar(f, MN(new Date()));

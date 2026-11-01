@@ -34,14 +34,14 @@ Plantilla para añadir un elemento a una lista:
 update ldb_state set
   data = jsonb_set(jsonb_set(data, '{tasks}', data->'tasks' || jsonb_build_object(
            'id', substr(md5(random()::text),1,10), 'title', 'Llamar al taller',
-           'due', '2026-10-29', 'tm', '', 'pr', 'Media', 'area', 'Coche', 'rep', '', 'done', false)),
+           'due', '2026-10-29', 'tm', '', 'pr', 'Normal', 'area', 'Coche', 'rep', '', 'done', false)),
          '{_ts}', to_jsonb((extract(epoch from now())*1000)::bigint)),
   updated_at = now();
 ```
 
 ## Formato de cada lista dentro de `data`
 - `tasks` (tareas): `{id, title, due, tm, pr, area, rep, done}`
-  - `due` fecha o "" · `tm` hora o "" · `pr`: Baja | Media | Alta | Urgente
+  - `due` fecha o "" · `tm` hora o "" · `pr`: Normal | Alta
   - `area`: Coche, Mascotas, Salud y bienestar, Ocio, Personal, Hogar, Trabajo, Finanzas, Familia y amigos, Otros, Cumpleaños
   - `rep`: "" | Diaria | Semanal | Mensual | Anual
   - Al completar una tarea con `rep`, además de poner `done: true`, añade una copia sin completar con la siguiente fecha (cumpleaños: el año siguiente).

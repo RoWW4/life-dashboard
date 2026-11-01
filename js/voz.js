@@ -23,7 +23,7 @@ const PRE = String.raw`(?:(?:para|antes\s+del?|de\s+cara\s+a|hasta|como\s+muy\s+
 const dlabel = d => cap(new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'short'}).format(new Date(d+'T00:00')));
 
 function parseTask(src){
-  let t = ' ' + String(src).replace(/[.!?¿¡"«»]+/g,' ').replace(/\s+/g,' ').trim() + ' ', m, due = '', tm = '', pr = 'Media', area = '';
+  let t = ' ' + String(src).replace(/[.!?¿¡"«»]+/g,' ').replace(/\s+/g,' ').trim() + ' ', m, due = '', tm = '', pr = 'Normal', area = '';
   const cut = re => { const r = t.match(re); if (r) t = t.slice(0, r.index) + ' ' + t.slice(r.index + r[0].length); return r; };
   const today = new Date(), dow = today.getDay();
   // 1) Frases de petición: «añádeme», «recuérdame que», «crea una tarea para»…
@@ -32,7 +32,7 @@ function parseTask(src){
     .replace(/^\s*(?:una?\s+)?(?:nueva\s+)?(?:tarea|recordatorio|nota)\b\s*(?:para|de|que|:|,)?\s*/i, '')
     .trim() + ' ';
   // 2) Prioridad
-  if (cut(/\s(?:(?:es|que\s+es)\s+)?(?:muy\s+)?urgente\b/i)) pr = 'Urgente';
+  if (cut(/\s(?:(?:es|que\s+es)\s+)?(?:muy\s+)?urgente\b/i)) pr = 'Alta';
   else if (cut(/\s(?:(?:es|que\s+es)\s+)?(?:muy\s+)?importante\b|\scon\s+prioridad\s+alta\b|\sprioridad\s+alta\b/i)) pr = 'Alta';
   // 3) Categoría dicha: «en la categoría finanzas», «en el área de mascotas»
   const am = t.match(/\s(?:(?:en|a|para|dentro\s+de)\s+)?(?:(?:la|el)\s+)?(?:categor[ií]a|[aá]rea|lista|secci[oó]n)\s+(?:de\s+)?/i);
@@ -128,7 +128,7 @@ function preview(src){
   if (r.k==='shop') return c('shopping-cart','Compra','ac') + ' ' + esc(r.items);
   if (r.k==='tx') return c(r.ty==='i'?'arrow-up-right':'arrow-down-left', r.ty==='i'?'Ingreso':'Gasto', r.ty==='i'?'ok':'er') + c(CI[r.cat]||'package', r.cat) + ` <b>${eur(r.amt)}</b> · ${esc(r.desc)}`;
   if (r.k==='vac') return c('sun', r.name, 'ok') + c('calendar-days', r.from===r.to ? dlabel(r.from) : fd(r.from)+' → '+fd(r.to));
-  return c('list-checks','Tarea','ac') + c(AI[r.area]||'pin', r.area) + c('calendar-days', r.due ? dlabel(r.due)+(r.tm?' · '+r.tm:'') : 'Sin fecha', r.due?'':'wa') + (r.pr!=='Media' ? c('triangle-alert', r.pr, 'er') : '') + `<div class="vpt">${esc(r.title || '…')}</div>`;
+  return c('list-checks','Tarea','ac') + c(AI[r.area]||'pin', r.area) + c('calendar-days', r.due ? dlabel(r.due)+(r.tm?' · '+r.tm:'') : 'Sin fecha', r.due?'':'wa') + (r.pr==='Alta' ? c('triangle-alert', r.pr, 'er') : '') + `<div class="vpt">${esc(r.title || '…')}</div>`;
 }
 function voice(src){
   const r = interpret(src);

@@ -37,8 +37,19 @@ document.addEventListener('pointerup', e => { const d = navDrag; navDrag = null;
   const keys = secs().map(x => x[0]), fi = keys.indexOf(d.k), ti = keys.indexOf(t.dataset.i); keys.splice(fi,1); keys.splice(fi<ti ? keys.indexOf(t.dataset.i)+1 : keys.indexOf(t.dataset.i), 0, d.k); S.order.nav = keys; ch(); toast('Orden del menú guardado'); });
 document.addEventListener('dragstart', e => { const h = e.target.closest && e.target.closest('.hd'); if (!h) return; const c = h.closest('.card'); drag = {v:c.dataset.v, k:c.dataset.k}; c.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', drag.k); try { e.dataTransfer.setDragImage(c,20,20); } catch(x) {} });
 document.addEventListener('dragover', e => { if (drag && e.target.closest && e.target.closest('.card[data-k]')) e.preventDefault(); });
-document.addEventListener('drop', e => { if (!drag) return; const c = e.target.closest && e.target.closest('.card[data-k]'); if (!c || c.dataset.v!==drag.v || c.dataset.k===drag.k) { drag = null; return; } e.preventDefault(); const keys = [...(VIS[drag.v]||[])], fi = keys.indexOf(drag.k), ti = keys.indexOf(c.dataset.k); if (fi<0||ti<0) { drag = null; return; } keys.splice(fi,1); const nt2 = keys.indexOf(c.dataset.k); keys.splice(fi<ti?nt2+1:nt2, 0, drag.k); S.order[drag.v] = keys; drag = null; ch(); });
-document.addEventListener('dragend', () => { drag = null; document.querySelectorAll('.dragging').forEach(x => x.classList.remove('dragging')); });
+// Soltar la tarjeta arrastrada sobre otra de la misma sección: se coloca en su sitio y se guarda el orden.
+const dropOn = c => { if (!drag) return false; if (!c || c.dataset.v!==drag.v || c.dataset.k===drag.k) { drag = null; return false; } const keys = [...(VIS[drag.v]||[])], fi = keys.indexOf(drag.k), ti = keys.indexOf(c.dataset.k); if (fi<0||ti<0) { drag = null; return false; } keys.splice(fi,1); const nt2 = keys.indexOf(c.dataset.k); keys.splice(fi<ti?nt2+1:nt2, 0, drag.k); S.order[drag.v] = keys; drag = null; ch(); return true; };
+document.addEventListener('drop', e => { if (!drag) return; const c = e.target.closest && e.target.closest('.card[data-k]'); if (dropOn(c)) e.preventDefault(); });
+const dragEnd = () => { drag = null; document.querySelectorAll('.dragging,.dropto').forEach(x => x.classList.remove('dragging','dropto')); };
+document.addEventListener('dragend', dragEnd);
+// Móvil: el arrastre normal no funciona con el dedo; con «Personalizar» activo se arrastra desde el asa (⋮⋮).
+const cardAt = (x,y) => { const el = document.elementFromPoint(x,y); return el && el.closest && el.closest('.card[data-k]'); };
+document.addEventListener('touchstart', e => { const h = e.target.closest && e.target.closest('.hd'); if (!h || !cust) return; const c = h.closest('.card'); drag = {v:c.dataset.v, k:c.dataset.k}; c.classList.add('dragging'); }, {passive:true});
+document.addEventListener('touchmove', e => { if (!drag || !cust) return; e.preventDefault(); const t = e.touches[0], c = cardAt(t.clientX, t.clientY);
+  document.querySelectorAll('.dropto').forEach(x => x !== c && x.classList.remove('dropto')); if (c && c.dataset.v===drag.v && c.dataset.k!==drag.k) c.classList.add('dropto');
+  if (t.clientY < 60) window.scrollBy(0,-12); else if (t.clientY > innerHeight-60) window.scrollBy(0,12); }, {passive:false});
+document.addEventListener('touchend', e => { if (!drag || !cust) return; const t = e.changedTouches[0], c = cardAt(t.clientX, t.clientY); document.querySelectorAll('.dragging,.dropto').forEach(x => x.classList.remove('dragging','dropto')); if (!dropOn(c)) drag = null; });
+document.addEventListener('touchcancel', dragEnd);
 document.addEventListener('visibilitychange', async () => { if (document.visibilityState==='visible' && cloudOK && await pull()) render(); });
 window.addEventListener('online', async () => { if (user && await pull()) render(); });
 

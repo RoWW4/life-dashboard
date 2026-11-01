@@ -17,7 +17,7 @@ const PAL = {Traspasos:'#64748b',Vivienda:'#0099ff',Alimentación:'#2fcf7a',Tran
 const AREAS = ['Coche','Mascotas','Salud y bienestar','Ocio','Personal','Hogar','Trabajo','Finanzas','Familia y amigos','Otros','Cumpleaños'];
 const AI = {Personal:'user',Hogar:'house',Trabajo:'briefcase','Salud y bienestar':'dumbbell',Finanzas:'piggy-bank','Familia y amigos':'users',Cumpleaños:'cake',Coche:'car',Mascotas:'paw-print',Ocio:'gamepad-2',Otros:'pin'};
 const AC = {Personal:'#0099ff',Hogar:'#38bdf8',Trabajo:'#94a3b8','Salud y bienestar':'#2fcf7a',Finanzas:'#facc15','Familia y amigos':'#f472b6',Cumpleaños:'#e879f9',Coche:'#f5a524',Mascotas:'#c08457',Ocio:'#a78bfa',Otros:'#94a3b8'};
-const PR = ['Baja','Media','Alta','Urgente'], REP = ['Diaria','Semanal','Mensual','Anual'];
+const PR = ['Normal','Alta'], REP = ['Diaria','Semanal','Mensual','Anual'];
 const FQ = {Única:0,Mensual:1,Trimestral:3,Semestral:6,Anual:12};
 const DC = ['Personal','Coche','Hogar','Salud','Finanzas','Mascotas','Trabajo','Otros'];
 const DI = {Personal:'id-card',Coche:'car',Hogar:'house',Salud:'stethoscope',Finanzas:'landmark',Mascotas:'paw-print',Trabajo:'briefcase',Otros:'file-text'};

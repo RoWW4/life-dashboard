@@ -70,7 +70,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
   - la categoría **Traspasos** (dinero entre cuentas propias);
   - los gastos marcados **extraordinarios**;
   - los marcados **encargo** (compras para otra persona que paga en mano).
-- **Plan B** si el banco falla: importar el archivo `.xls` de movimientos del banco desde **Ajustes → Banco**. Pasa por el mismo sistema anti-duplicados.
+- **Plan B** si el banco falla: importar el archivo `.xls` o el PDF de movimientos de la cuenta desde **Ajustes → Banco** (el PDF se lee con pdf.js, que se descarga de cdnjs al usarlo). Pasa por el mismo sistema anti-duplicados.
 
 ## Actualizar la app en el móvil
 `index.html` carga cada archivo con `?v=N` y `sw.js` guarda una caché `ldb-shell-vN`. En cada cambio de CSS o JS se suben los dos números para que el móvil coja la versión nueva; lo hace solo `scripts/subir.mjs`.

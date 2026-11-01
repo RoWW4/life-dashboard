@@ -23,8 +23,10 @@ function seed(){
   once('gpay-v1', () => S.tx.forEach(x => { if (!PAYP.test(x.desc||'')) return; x.desc = cleanDesc(x.desc); if (x.cat==='Suscripciones') x.cat = classify(x.desc, x.t); }));
   // La carpeta de documentos «Identidad» pasa a llamarse «Personal» (como en Drive y en el bot).
   once('doc-personal-v1', () => S.docs.forEach(d => { if (d.cat==='Identidad') d.cat = 'Personal'; }));
+  // Prioridad de las tareas: solo Normal o Alta (Baja y Media pasan a Normal; Urgente, a Alta).
+  once('pr-2-v1', () => S.tasks.forEach(t => { t.pr = t.pr==='Alta' || t.pr==='Urgente' ? 'Alta' : 'Normal'; }));
   // Migraciones de versiones anteriores
-  if (S.events.length) { S.events.forEach(e => S.tasks.push({id:id(),title:e.title,due:e.date,tm:e.start||'',pr:'Media',area:'Personal',rep:'',done:false})); S.events = []; c++; }
+  if (S.events.length) { S.events.forEach(e => S.tasks.push({id:id(),title:e.title,due:e.date,tm:e.start||'',pr:'Normal',area:'Personal',rep:'',done:false})); S.events = []; c++; }
   S.tasks.forEach(t => { if(t.rep===undefined){ t.rep = t.area==='Cumpleaños'?'Anual':''; c++; } if(t.tm===undefined) t.tm=''; });
   // Fijos y facturas pasan a ser una sola lista (S.fixed, sección Facturas). La app deja de apuntar gastos sola:
   // cada pago se da por hecho cuando llega su movimiento del banco (o se marca a mano).

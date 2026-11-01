@@ -89,6 +89,8 @@ body.cust .card .mtg>.i{display:none}
 .mvb{display:flex;gap:0;opacity:.0;transition:opacity .15s}.card:hover .mvb,.card:focus-within .mvb{opacity:1}
 @media(hover:none){.mvb{opacity:.6}}
 .card.dragging,.nv.dragging{opacity:.5}
+.card.dropto{outline:2px dashed var(--ac);outline-offset:2px}
+body.cust .card .hd{touch-action:none;padding:6px;margin:-6px 0 -6px -12px;opacity:.7}
 .nv.dropt{box-shadow:inset 0 2px 0 var(--ac);background:color-mix(in srgb,var(--ac) 12%,transparent)}
 .navdrag,.navdrag *{cursor:grabbing!important;user-select:none}
 

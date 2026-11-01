@@ -42,14 +42,39 @@ function ingest(items, fld){
   }
   return {add, link, skip};
 }
-/* "Movimientos de Cuenta.xls" de Openbank es una tabla HTML; también vale un CSV. */
+/* "Movimientos de Cuenta" de Openbank en PDF (el móvil solo deja descargar este): se lee con pdf.js y se convierte en las
+   mismas filas que el .xls. Cada movimiento tiene una línea con «fecha operación · fecha valor · concepto · importe · saldo»;
+   si el concepto es largo, sigue en las líneas justo encima y debajo (a menos de 9 puntos), que se le juntan. */
+const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/';
+async function pdfRows(buf){
+  const pdfjs = await import(PDFJS + 'pdf.min.mjs');
+  pdfjs.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.mjs';
+  const doc = await pdfjs.getDocument({data: new Uint8Array(buf)}).promise, rows = [], DT = /^\d{2}\/\d{2}\/\d{4}$/;
+  for (let p = 1; p <= doc.numPages; p++) {
+    const its = (await (await doc.getPage(p)).getTextContent()).items.filter(i => i.str.trim()).map(i => ({x:i.transform[4], y:Math.round(i.transform[5]), s:i.str.trim()})), L = new Map();
+    its.forEach(i => (L.get(i.y) || L.set(i.y, []).get(i.y)).push(i));
+    const lines = [...L].map(([y, a]) => ({y, a:a.sort((u,v) => u.x-v.x)}));
+    const mv = lines.filter(l => l.a.length >= 2 && DT.test(l.a[0].s) && l.a[0].x < 110 && DT.test(l.a[1].s) && l.a.filter(i => /EUR$/.test(i.s)).length >= 2)
+      .map(l => { const eu = l.a.filter(i => /EUR$/.test(i.s)); return {y:l.y, f:l.a[0].s, v:l.a[1].s, imp:eu[0].s, sal:eu[eu.length-1].s, xi:eu[0].x, c:[[l.y, l.a.slice(2).filter(i => i.x < eu[0].x).map(i => i.s).join(' ')]]}; });
+    // Trozos de concepto sueltos (entre la columna de fechas y la de importes): al movimiento más cercano.
+    for (const l of lines) { if (mv.some(m => m.y===l.y)) continue;
+      const t = l.a.filter(i => i.x > 150 && (!mv.length || i.x < mv[0].xi)).map(i => i.s).join(' '); if (!t) continue;
+      const m = mv.reduce((b, m) => !b || Math.abs(m.y-l.y) < Math.abs(b.y-l.y) ? m : b, null);
+      if (m && Math.abs(m.y-l.y) < 9) m.c.push([l.y, t]); }
+    mv.sort((a,b) => b.y-a.y).forEach(m => rows.push([m.f, m.v, m.c.sort((a,b) => b[0]-a[0]).map(c => c[1]).filter(Boolean).join(' ').replace(/\s+/g,' '), m.imp.replace(/\s*EUR$/,''), m.sal.replace(/\s*EUR$/,'')]));
+  }
+  return rows.length ? [['Fecha Operación','Fecha Valor','Concepto','Importe','Saldo'], ...rows] : [];
+}
+/* "Movimientos de Cuenta.xls" de Openbank es una tabla HTML; también vale un CSV o el PDF. */
 async function importFile(file){
   const buf = await file.arrayBuffer(), head = new Uint8Array(buf.slice(0,4));
   if (head[0]===0x50 && head[1]===0x4b) return toast('Es un .xlsx real: ábrelo en Excel y guárdalo como CSV');
-  let txt = new TextDecoder('utf-8').decode(buf);
+  const pdf = head[0]===0x25 && head[1]===0x50 && head[2]===0x44 && head[3]===0x46;   // %PDF
+  let txt = pdf ? '' : new TextDecoder('utf-8').decode(buf);
   if (txt.includes('�')) txt = new TextDecoder('windows-1252').decode(buf);
   let rows;
-  if (/<table/i.test(txt)) rows = [...new DOMParser().parseFromString(txt,'text/html').querySelectorAll('tr')].map(tr => [...tr.cells].map(c => c.textContent.replace(/\s+/g,' ').trim()));
+  if (pdf) { toast('Leyendo el PDF…'); rows = await pdfRows(buf); }
+  else if (/<table/i.test(txt)) rows = [...new DOMParser().parseFromString(txt,'text/html').querySelectorAll('tr')].map(tr => [...tr.cells].map(c => c.textContent.replace(/\s+/g,' ').trim()));
   else { const sep = (txt.split('\n')[0].match(/;/g)||[]).length ? ';' : (txt.includes('\t') ? '\t' : ','); rows = txt.split(/\r?\n/).map(l => l.split(sep).map(c => c.replace(/^"|"$/g,'').trim())); }
   // "Movimientos de Tarjeta.xls" (prepago): las cargas son la otra cara de la «Recarga» de la cuenta y se omiten.
   const card = /tarjetas\s*-\s*movimientos|tipo de tarjeta/i.test(txt);
@@ -70,7 +95,11 @@ async function importFile(file){
     items.push({id:(card?'c':'x')+hash(base+'|'+occ[base]), date, amt, desc});
   }
   if (!items.length && !card) return toast('No he encontrado movimientos en el archivo');
-  const r = ingest(items, card ? 'card' : 'xls');
+  // El concepto del PDF puede no ser letra por letra el del .xls: lo ya importado de la cuenta (mismo día, importe y tipo) no se repite.
+  if (pdf) { const had = {}; S.tx.forEach(x => { if (x.xls) { const k = x.date+'|'+x.t+'|'+x.amt.toFixed(2); had[k] = (had[k]||0) + 1; } });
+    for (const it of items) { const k = it.date+'|'+(it.amt<0?'g':'i')+'|'+Math.abs(it.amt).toFixed(2); if (had[k] > 0) { had[k]--; it.dup = true; } } }
+  const r = ingest(items.filter(it => !it.dup), card ? 'card' : 'xls');
+  r.skip += items.filter(it => it.dup).length;
   // Con las compras de la prepago ya dentro, sus recargas en la cuenta pasan a ser traspasos (si no, se contaría dos veces).
   let tr = 0;
   if (card && ds.length) { const a = ds.reduce((m,d) => d<m?d:m), b = ds.reduce((m,d) => d>m?d:m);

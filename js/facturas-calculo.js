@@ -33,7 +33,6 @@ function fxState(f){
 /* Pago variable (f.var: p. ej. gasolina, varios cargos al mes sin día fijo): lo cobrado en el mes m y cuántos cargos. */
 const fxVar = (f, m) => { const L = S.tx.filter(x => x.fid===f.id && mon(x.date)===m); return {n:L.length, s:L.reduce((a,x) => a+x.amt, 0)}; };
 const fxLive = f => !f.until || f.until >= TD();
-const fxStarted = f => !f.once && !(f.from && f.from > MN(new Date()));
 /* Pagos que piden atención en los próximos n días (o atrasados en el último mes). */
 const fxDue = n => S.fixed.filter(f => f.t==='g' && fxLive(f)).map(f => ({f, d:fxState(f).due})).filter(o => o.d && dayDiff(o.d) <= n).sort((a,b) => a.d.localeCompare(b.d));
 /* Palabras con las que un pago reconoce sus cargos: la principal (f.k) y, en los variables, las extra (f.kx). */

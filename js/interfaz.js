@@ -62,7 +62,7 @@ const I = (n, c='') => `<svg class="i ${c}" viewBox="0 0 24 24" aria-hidden="tru
 const tile = (n, c) => `<span class="ic" style="--c:${c||'var(--mu)'}">${I(n)}</span>`;
 const ico = t => (KW.find(([r]) => r.test(t.title)) || [0, AI[t.area]||'pin'])[1];
 const empty = t => `<div class="empty">${t}</div>`;
-const prChip = p => p==='Urgente' ? '<span class="chip er">Urgente</span>' : p==='Alta' ? '<span class="chip wa">Alta</span>' : '';
+const prChip = p => p==='Alta' ? '<span class="chip wa">Alta</span>' : '';
 /* Gasto que cuenta en totales y comparaciones: fuera traspasos, gastos extraordinarios (x.ex, p. ej. cancelar un préstamo)
    y encargos (x.enc: compras para otra persona que devuelve el dinero en mano). */
 const cntG = x => x.t==='g' && x.cat!==NOCNT && !x.ex && !x.enc;
@@ -94,7 +94,10 @@ const taskRow = t => { const n = t.due ? dayDiff(t.due) : null, late = !t.done &
 const fxRow = ({f, d}) => `<div class="row">${tile(CI[f.cat]||'receipt', col(f.cat))}<span class="g">${esc(f.name)}</span><span class="when ${dayDiff(d)<0?'er':dayDiff(d)<=7?'wa':''}">${rel(d)}</span><span class="amt">${eur(f.amt)}</span></div>`;
 const expChip = d => d.exp ? `<span class="chip ${dayDiff(d.exp)<0?'er':dayDiff(d.exp)<=60?'wa':''}">${dayDiff(d.exp)<0?'caducó':'vence'} ${fd(d.exp)}</span>` : '';
 const docRow = d => `<div class="row">${tile(DI[d.cat]||'file-text', DCOL[d.cat])}<span class="g">${d.url?`<a class="dl" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">${esc(d.name)}${I('external-link','sm')}</a>`:`<span>${esc(d.name)}</span> <button class="btn sm ghost" data-a="ed" data-i="${d.id}">${I('link','sm')} Añadir enlace</button>`}${d.notes||d.exp?`<span class="meta">${expChip(d)}${d.notes?`<span class="mu">${esc(d.notes)}</span>`:''}</span>`:''}</span><button class="ib ${d.pin?'pin':''}" data-a="pd" data-i="${d.id}" aria-label="${d.pin?'Quitar de acceso rápido':'Añadir a acceso rápido'}" title="Acceso rápido en Mi día">${I('star', d.pin?'fill':'')}</button><button class="ib" data-a="ed" data-i="${d.id}" aria-label="Editar">${I('pencil')}</button><button class="ib" data-a="dd" data-i="${d.id}" aria-label="Quitar">${I('x')}</button></div>`;
-/* Acceso rápido de Mi día: una pastilla por documento que abre el archivo directamente. */
+/* Acceso rápido de Mi día: hasta PINMAX documentos con estrella, en el orden elegido (S.order.pins, flechas en «Personalizar»). */
+const PINMAX = 4;
+const pinDocs = () => { const p = S.docs.filter(d => d.pin), o = ord('pins', p.map(d => d.id)); VIS.pins = o; return o.map(k => p.find(d => d.id===k)); };
+/* Una pastilla por documento que abre el archivo directamente. */
 const docTile = d => d.url
   ? `<a class="dtile" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">${tile(DI[d.cat]||'file-text', DCOL[d.cat])}<span>${esc(d.name)}${d.exp&&dayDiff(d.exp)<=60?`<em class="${dayDiff(d.exp)<0?'er':'wa'}">${dayDiff(d.exp)<0?'caducó':'vence'} ${fd(d.exp)}</em>`:''}</span></a>`
   : `<button class="dtile off" data-a="ed" data-i="${d.id}">${tile(DI[d.cat]||'file-text', DCOL[d.cat])}<span>${esc(d.name)}<em>Añadir enlace</em></span></button>`;
@@ -102,11 +105,16 @@ const docTile = d => d.url
 function donut(cats, budget, sp, rem){
   const R = 52, C = 2*Math.PI*R, den = Math.max(budget, sp, 1); let off = 0;
   const segs = cats.map(([c,v]) => { const len = v/den*C, g = len > 4 ? 1.5 : 0; const s = `<circle r="${R}" cx="64" cy="64" fill="none" stroke="${col(c)}" stroke-width="13" stroke-dasharray="${Math.max(len-g,0.5)} ${C}" stroke-dashoffset="${-off}"><title>${c}: ${eur(v)}</title></circle>`; off += len; return s; }).join('');
-  return `<div class="donut"><svg viewBox="0 0 128 128" role="img" aria-label="Gasto del mes por categoría"><g transform="rotate(-90 64 64)"><circle r="${R}" cx="64" cy="64" fill="none" stroke="var(--bd)" stroke-width="13"/>${segs}</g></svg><div class="c"><b class="${rem<0?'er':''}">${eur(Math.abs(rem))}</b><span>${rem>=0?'disponible':'por encima'}</span></div></div>`;
+  return `<div class="donut"><svg viewBox="0 0 128 128" role="img" aria-label="Gasto del mes por categoría"><g transform="rotate(-90 64 64)"><circle r="${R}" cx="64" cy="64" fill="none" stroke="color-mix(in srgb,var(--ok) 30%,transparent)" stroke-width="13"/>${segs}</g></svg><div class="c"><b class="${rem<0?'er':''}">${eur(Math.abs(rem))}</b><span>${rem>=0?'disponible':'por encima'}</span></div></div>`;
 }
-/* Gasto del mes (igual en Mi día y en Finanzas): anillo con lo disponible (tope − gastado; las facturas por pagar se ven debajo), total gastado con una sola línea de contexto
-   y todas las categorías en barras (icono, % del gasto y total): a la derecha en el ordenador, debajo en el móvil. */
-function gastoHTML(m){
+/* Gasto del mes (igual en Mi día y en Finanzas): anillo con lo disponible (verde: tope − gastado; las facturas por pagar se ven debajo), total gastado con una sola línea de contexto
+   y todas las categorías en barras (icono, % del gasto y total): a la derecha en el ordenador, debajo en el móvil.
+   nav: acción de las flechas para ir a meses anteriores ('fm' en Finanzas, 'gm' en Mi día). */
+function gastoHTML(m, nav){
+  const top = nav ? `<div class="calh"><button class="ib" data-a="${nav}" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b>${mLabel(m)}</b><button class="ib" data-a="${nav}" data-i="1" aria-label="Mes siguiente" ${m>=MN(new Date())?'disabled style="opacity:.4"':''}>${I('chevron-right')}</button></div>` : '';
+  return top + gastoBody(m);
+}
+function gastoBody(m){
   const now = new Date(), cur = m===MN(now), sp = spent(m), cats = byCat(m), B = S.budget||0, fl = cur ? fxLeft() : 0, rem = B - sp, pc = B ? sp/B*100 : 0;
   const info = B ? `<b class="${pc>=100?'er':pc>=80?'wa':'ok'}">${Math.round(pc)} %</b> de tu tope` : 'Define un tope en Ajustes';
   const gx = `<div class="gx">${B?donut(cats,B,sp,rem):''}<div class="gxi"><div class="mu">Gastado ${cur?'este mes':'en '+MS[+m.slice(5)]}</div><div class="big">${eur(sp)}</div><div class="mu">${info}</div>${fl&&B?`<div class="mu">Facturas por pagar: ${eur(fl)} · te quedarán ${eur(rem-fl)}</div>`:fl?`<div class="mu">Facturas por pagar: ${eur(fl)}</div>`:''}</div></div>`;
@@ -126,7 +134,13 @@ function holLoad(y){
     if ($('#nav').innerHTML) render();   // no repintar encima de la pantalla de inicio de sesión
   }).catch(() => {});
 }
-const holidays = y => { holLoad(y); return [...HOL[y].filter(h => !h.c || (S.region && h.c.includes(S.region))).map(h => ({d:h.d, n:h.n})), ...S.localHol.filter(h => h.d.startsWith(y+'-')).map(h => ({d:h.d, n:h.n}))]; };
+/* Festivos que la comunidad pasa al lunes por caer en domingo (date.nager.at no los trae). Sale del decreto de cada año:
+   añadir aquí los del año nuevo cuando se publiquen. */
+const TRAS = {
+  'ES-AN': {'2026-11-01':'2026-11-02', '2026-12-06':'2026-12-07', '2027-02-28':'2027-03-01', '2027-08-15':'2027-08-16'}  // BOJA 93/2025 y 84/2026
+};
+const holidays = y => { holLoad(y); const tr = TRAS[S.region] || {};
+  return [...HOL[y].filter(h => !h.c || (S.region && h.c.includes(S.region))).map(h => tr[h.d] ? {d:tr[h.d], n:h.n+' (trasladado)'} : {d:h.d, n:h.n}), ...S.localHol.filter(h => h.d.startsWith(y+'-')).map(h => ({d:h.d, n:h.n}))]; };
 const holOn = d => holidays(+d.slice(0,4)).filter(h => h.d===d);
 const perOn = d => S.periods.filter(p => p.from<=d && d<=p.to);
 const perRow = p => `<div class="row">${tile('sun','#2fcf7a')}<span class="g">${esc(p.name)}<span class="meta"><span class="mu">del ${fd(p.from)} al ${fd(p.to)} · ${dd(p.to,p.from)+1} días</span></span></span><span class="when ${dayDiff(p.from)<=0&&dayDiff(p.to)>=0?'ok':''}">${dayDiff(p.from)>0?rel(p.from):dayDiff(p.to)>=0?'ahora':'pasadas'}</span></div>`;
