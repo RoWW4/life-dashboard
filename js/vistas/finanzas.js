@@ -115,9 +115,11 @@ function catDetail(c, sel){
   o.querySelector('#ok').onclick = () => { const n = new Date(); finOff = (+m.slice(0,4)*12 + +m.slice(5,7)) - (n.getFullYear()*12 + n.getMonth()+1); txf = {...txf, cat:c, t:'g', q:''}; o.remove(); render(); const e = $('#txcard'); if (e) e.scrollIntoView({behavior:'smooth'}); };
 }
 
-/* Más recientes primero. El banco solo da la fecha (sin hora): dentro del mismo día va primero el último que llegó al panel
-   (los del banco se incorporan en el orden en que el robot los guardó). */
-const txNewest = () => { const pos = new Map(S.tx.map((x,i) => [x.id, i])); return (a,b) => b.date.localeCompare(a.date) || pos.get(b.id) - pos.get(a.id); };
+/* Más recientes primero. El banco solo da la fecha (sin hora), así que dentro del mismo día se usa el orden de llegada:
+   - del .xls o el PDF, el orden del archivo (viene del más nuevo al más antiguo, igual que en el banco);
+   - del robot (Wallet), el último que llegó primero (los guarda del más antiguo al más nuevo). */
+const txNewest = () => { const pos = new Map(S.tx.map((x,i) => [x.id, i])), file = x => !!(x.xls || x.card);
+  return (a,b) => b.date.localeCompare(a.date) || (file(a) && file(b) ? pos.get(a.id) - pos.get(b.id) : pos.get(b.id) - pos.get(a.id)); };
 /* Lista de movimientos con filtros (texto, categoría, periodo y tipo) */
 function txListHTML(){
   const m = finMonth(), from = {mes:m+'-01', '3m':mAdd(m,-2)+'-01', anio:m.slice(0,4)+'-01-01', todo:''}[txf.per], to = txf.per==='todo' || txf.per==='anio' ? '9999' : m+'-31', q = nt(txf.q).trim();
