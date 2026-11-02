@@ -3,13 +3,25 @@
 /* ---------- formularios en modal ---------- */
 function taskForm(t){
   const n = !t; t = t || {title:'',due:'',tm:'',pr:'Normal',area:'Personal',rep:''};
-  const o = modal(`<h3>${n?'Nueva tarea':'Editar tarea'}</h3><div class="fs"><label>Título<input id="ft1" value="${esc(t.title)}" placeholder="¿Qué hay que hacer?"></label><div class="two"><label>Fecha<input id="ft2" type="date" value="${t.due||''}"></label><label>Hora<input id="ft3" type="time" value="${t.tm||''}"></label></div><div class="two"><label>Prioridad<select id="ft4">${opts(PR,t.pr)}</select></label><label>Área<select id="ft5">${opts(AREAS,t.area)}</select></label></div><label>Repetir<select id="ft6"><option value="">No se repite</option>${opts(REP,t.rep)}</select></label></div><div class="acts">${n?'':'<button class="btn ghost danger" id="fdel">Eliminar</button>'}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">${n?'Añadir':'Guardar'}</button></div>`);
+  const o = modal(`<h3>${n?'Nueva tarea':'Editar tarea'}</h3><div class="fs"><label>Título<input id="ft1" value="${esc(t.title)}" placeholder="¿Qué hay que hacer?"></label><div class="two"><label>Fecha<input id="ft2" type="date" value="${t.due||''}"></label><label>Hora<input id="ft3" type="time" value="${t.tm||''}"></label></div><div class="two"><label>Prioridad<select id="ft4">${opts(PR,t.pr)}</select></label><label>Área<select id="ft5">${opts(AREAS,t.area)}</select></label></div><label>Repetir<select id="ft6"><option value="">No se repite</option>${opts(REP,t.rep)}</select></label><div class="notes"><h4>${I('message-square','sm')} Notas y enlaces</h4><div id="fnl"></div><div class="nadd"><input id="fn1" class="in" placeholder="Escribe una nota o pega un enlace"><button class="btn sm" id="fn2" aria-label="Añadir nota">${I('plus','sm')}</button></div></div></div><div class="acts">${n?'':'<button class="btn ghost danger" id="fdel">Eliminar</button>'}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">${n?'Añadir':'Guardar'}</button></div>`);
   const v = i => o.querySelector(i).value.trim();
+  /* Notas: en una tarea ya creada se guardan al momento; en una nueva, al pulsar «Añadir». */
+  let nl = [...(t.notes||[])];
+  const cur = () => S.tasks.find(x => x.id===t.id) || t;   // por si la nube ha cambiado el objeto mientras la ventana estaba abierta
+  const keep = () => { if (n) return; const c = cur(); if (nl.length) c.notes = nl; else delete c.notes; ch(); };
+  const drawN = () => { o.querySelector('#fnl').innerHTML = nl.length ? nl.map(x => `<div class="note"><div class="g"><span class="nt">${linkify(x.tx)}</span><span class="nd">${fd(x.at)}</span></div><button class="ib" data-n="${x.id}" aria-label="Borrar nota">${I('x','sm')}</button></div>`).join('') : '<div class="mu nd">Aún no hay notas.</div>';
+    o.querySelectorAll('#fnl [data-n]').forEach(b => b.onclick = () => { nl = nl.filter(x => x.id!==b.dataset.n); keep(); drawN(); toast('Nota borrada'); }); };
+  const addN = () => { const e = o.querySelector('#fn1'), tx = e.value.trim(); if (!tx) return; nl = [...nl, {id:id(), at:TD(), tx}]; e.value = ''; keep(); drawN(); e.focus(); };
+  o.querySelector('#fn2').onclick = addN;
+  o.querySelector('#fn1').addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); e.stopPropagation(); addN(); } });
+  drawN();
   o.querySelector('#ok').onclick = () => {
     const d = {title:v('#ft1'), due:v('#ft2'), tm:v('#ft3'), pr:v('#ft4'), area:v('#ft5'), rep:v('#ft6')};
     if (!d.title) return toast('Escribe un título');
+    const pend = v('#fn1'); if (pend) nl = [...nl, {id:id(), at:TD(), tx:pend}];   // nota escrita sin pulsar +
+    if (nl.length) d.notes = nl; else if (!n) delete cur().notes;
     if (n) { if (S.tasks.some(x => !x.done && x.title.toLowerCase()===d.title.toLowerCase() && x.due===d.due)) return toast('Ya existe esa tarea'); S.tasks.push({id:id(), ...d, done:false}); }
-    else Object.assign(t, d);
+    else Object.assign(cur(), d);
     o.remove(); ch(); toast(n ? '✅ Tarea añadida' : 'Guardado');
   };
   const del = o.querySelector('#fdel'); if (del) del.onclick = () => { o.remove(); A.dt(t.id); };
