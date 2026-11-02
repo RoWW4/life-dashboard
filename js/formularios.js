@@ -9,8 +9,17 @@ function taskForm(t){
   let nl = [...(t.notes||[])];
   const cur = () => S.tasks.find(x => x.id===t.id) || t;   // por si la nube ha cambiado el objeto mientras la ventana estaba abierta
   const keep = () => { if (n) return; const c = cur(); if (nl.length) c.notes = nl; else delete c.notes; ch(); };
-  const drawN = () => { o.querySelector('#fnl').innerHTML = nl.length ? nl.map(x => `<div class="note"><div class="g"><span class="nt">${linkify(x.tx)}</span><span class="nd">${fd(x.at)}</span></div><button class="ib" data-n="${x.id}" aria-label="Borrar nota">${I('x','sm')}</button></div>`).join('') : '<div class="mu nd">Aún no hay notas.</div>';
-    o.querySelectorAll('#fnl [data-n]').forEach(b => b.onclick = () => { nl = nl.filter(x => x.id!==b.dataset.n); keep(); drawN(); toast('Nota borrada'); }); };
+  const drawN = () => { o.querySelector('#fnl').innerHTML = nl.length ? nl.map(x => `<div class="note"><div class="g"><span class="nt">${linkify(x.tx)}</span><span class="nd">${fd(x.at)}</span></div><button class="ib" data-e="${x.id}" aria-label="Editar nota">${I('pencil','sm')}</button><button class="ib" data-n="${x.id}" aria-label="Borrar nota">${I('x','sm')}</button></div>`).join('') : '<div class="mu nd">Aún no hay notas.</div>';
+    o.querySelectorAll('#fnl [data-n]').forEach(b => b.onclick = () => { nl = nl.filter(x => x.id!==b.dataset.n); keep(); drawN(); toast('Nota borrada'); });
+    o.querySelectorAll('#fnl [data-e]').forEach(b => b.onclick = () => editN(b.closest('.note'), b.dataset.e)); };
+  /* Editar una nota en su sitio: Intro o ✓ guarda, Escape o ✕ cancela. */
+  const editN = (row, k) => { const x = nl.find(y => y.id===k); if (!x) return;
+    row.innerHTML = `<input class="in g" value="${esc(x.tx)}" aria-label="Editar nota"><button class="ib" data-s aria-label="Guardar nota">${I('check','sm')}</button><button class="ib" data-c aria-label="Cancelar">${I('x','sm')}</button>`;
+    const e = row.querySelector('input'), ok = () => { const tx = e.value.trim(); if (!tx) return toast('La nota está vacía');
+      nl = nl.map(y => y.id===k ? {...y, tx} : y); keep(); drawN(); toast('Nota guardada'); };
+    row.querySelector('[data-s]').onclick = ok; row.querySelector('[data-c]').onclick = drawN;
+    e.addEventListener('keydown', ev => { if (ev.key==='Enter') { ev.preventDefault(); ev.stopPropagation(); ok(); } else if (ev.key==='Escape') { ev.stopPropagation(); drawN(); } });
+    e.focus(); e.setSelectionRange(e.value.length, e.value.length); };
   const addN = () => { const e = o.querySelector('#fn1'), tx = e.value.trim(); if (!tx) return; nl = [...nl, {id:id(), at:TD(), tx}]; e.value = ''; keep(); drawN(); e.focus(); };
   o.querySelector('#fn2').onclick = addN;
   o.querySelector('#fn1').addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); e.stopPropagation(); addN(); } });
