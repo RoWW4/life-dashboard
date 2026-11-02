@@ -54,3 +54,19 @@ document.addEventListener('touchcancel', dragEnd);
 document.addEventListener('visibilitychange', async () => { if (document.visibilityState==='visible' && cloudOK && await pull()) render(); });
 window.addEventListener('online', async () => { if (user && await pull()) render(); });
 
+
+/* Móvil: deslizar el contenido a izquierda o derecha pasa a la sección siguiente o anterior de la barra.
+   No salta si el dedo empieza en algo que se desliza de lado, en un campo, en una ventana o en el asa de una tarjeta. */
+let sw = null;
+const hScroll = el => { for (; el && el !== document.body; el = el.parentElement) { if (el.scrollWidth > el.clientWidth + 2 && /auto|scroll/.test(getComputedStyle(el).overflowX)) return true; } return false; };
+document.addEventListener('touchstart', e => { sw = null;
+  if (e.touches.length !== 1 || !matchMedia('(max-width:760px)').matches || !$('#nav').innerHTML) return;
+  const t = e.target; if (!t.closest || !t.closest('#m') || t.closest('.hd,input,textarea,select,[contenteditable],.ov') || hScroll(t)) return;
+  sw = {x:e.touches[0].clientX, y:e.touches[0].clientY, t:Date.now()}; }, {passive:true});
+document.addEventListener('touchend', e => { const s = sw; sw = null; if (!s || drag) return;
+  const p = e.changedTouches[0], dx = p.clientX - s.x, dy = p.clientY - s.y;
+  if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2 || Date.now() - s.t > 700 || String(getSelection())) return;
+  const k = tabs().map(x => x[0]), i = k.indexOf(view); if (i < 0) return;
+  const j = i + (dx < 0 ? 1 : -1); if (j < 0 || j >= k.length) return;
+  view = k[j]; render();
+  const m = $('#m'); if (m.animate && !matchMedia('(prefers-reduced-motion: reduce)').matches) m.animate([{transform:`translateX(${dx < 0 ? 40 : -40}px)`, opacity:0}, {transform:'none', opacity:1}], {duration:220, easing:'cubic-bezier(.2,.8,.2,1)'}); }, {passive:true});

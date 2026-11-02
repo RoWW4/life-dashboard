@@ -63,6 +63,12 @@ nav{width:224px;flex-shrink:0;position:sticky;top:14px;height:calc(100vh - 28px)
 .badge{min-width:20px;height:19px;padding:0 6px;border-radius:7px;background:var(--hov);box-shadow:inset 0 0 0 1px var(--bd2);color:var(--tx2);font-size:11px;font-weight:600;display:grid;place-items:center;font-style:normal;font-variant-numeric:tabular-nums}
 .nv.on .badge{background:rgba(255,255,255,.22);box-shadow:none;color:#fff}
 .nv.more{display:none}
+/* Botón de Ajustes del móvil (en el ordenador, Ajustes está en el menú lateral) */
+.app{position:relative}
+.ajb{all:unset;box-sizing:border-box;display:none;place-items:center;width:38px;height:38px;border-radius:50%;cursor:pointer;color:var(--mu);background:var(--card);border:1px solid var(--bd);box-shadow:var(--sh)}
+.ajb .i{width:19px;height:19px}.ajb.on{color:var(--ac);background:var(--acs);border-color:transparent}
+.ajb:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+#nav:empty~.ajb{display:none!important}
 .pick button.on{border-color:var(--ac);color:var(--ac)}
 .pick .badge{display:inline-grid;margin-left:4px}
 .navfoot{margin-top:auto;padding:12px 10px 0;font-size:12px;color:var(--mu);border-top:1px solid var(--sep);display:flex;flex-direction:column;gap:4px}
@@ -378,19 +384,22 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 
 /* ---------- móvil: barra inferior tipo app ---------- */
 @media(max-width:760px){
-  nav{position:fixed;bottom:0;left:0;right:0;top:auto;width:auto;height:auto;margin:0;border:0;border-radius:0;box-shadow:none;flex-direction:row;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));border-right:0;border-top:1px solid var(--bd);z-index:20;background:var(--bg2);background:color-mix(in srgb,var(--bg2) 85%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);gap:0}
+  /* Pastilla flotante con todas las secciones (menos Ajustes, que va arriba a la derecha): solo iconos,
+     y la sección abierta resaltada con su nombre debajo. Al bajar por la página se encoge. */
+  nav{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));top:auto;width:auto;height:auto;margin:0;border:1px solid var(--bd);border-radius:24px;box-shadow:0 10px 30px -10px rgba(0,0,0,.45);flex-direction:row;align-items:center;padding:5px;z-index:20;background:var(--bg2);background:color-mix(in srgb,var(--nav) 82%,transparent);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);gap:2px;transform-origin:50% 100%;transition:transform .25s,opacity .25s}
+  nav.mini{transform:scale(.86) translateY(4px);opacity:.92}
+  nav.mini .nv.on .s{display:none}
   .brand,.navfoot{display:none}
-  .nv.sec2{display:none}.nv.more{display:flex}
-  .nv{flex:1;flex-direction:column;gap:0;padding:5px 0;align-items:center;font-size:10.5px;border-radius:10px;position:relative;min-width:0}
-  .nv .e{width:auto}.nv .e .i{width:22px;height:22px}.nv .l{display:none}.nv .s{display:block;margin-top:2px}
-  /* Todos los iconos con el mismo hueco (el seleccionado solo cambia el fondo) para que no bailen al cambiar de sección */
-  .nv .e{padding:2px 14px;border-radius:12px}.nv.on .e{background:var(--acs)}
-  .nv.more{margin-top:0}
-  .nv.on{background:none;box-shadow:none;color:var(--ac2)}.nv.on .e{color:var(--ac)}.nv:hover{background:none}.nv.on .badge{background:var(--ac)}
-  .badge{position:absolute;top:0;left:calc(50% + 6px);min-width:16px;height:16px;font-size:9.5px;padding:0 4px}
+  .nv[data-i=ajus]{display:none}
+  .nv{flex:1 1 0;flex-direction:column;justify-content:center;gap:1px;padding:8px 0;min-height:44px;align-items:center;font-size:10.5px;font-weight:600;border-radius:19px;position:relative;min-width:0;transition:flex-grow .25s,background .2s,color .2s}
+  .nv .e{width:auto}.nv .e .i{width:21px;height:21px}.nv .l,.nv .s{display:none}
+  .nv.on{flex-grow:1.55;background:var(--acs);box-shadow:none;color:var(--ac2);padding:6px 0 5px}.nv.on .e{color:var(--ac)}.nv.on .s{display:block;white-space:nowrap;line-height:1.1}
+  .nv:hover{background:none}.nv.on:hover{background:var(--acs)}.nv.on .badge{background:var(--ac)}
+  .badge{position:absolute;top:2px;left:calc(50% + 5px);min-width:16px;height:16px;font-size:9.5px;padding:0 4px}
+  .ajb{display:grid;position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px;z-index:5}
   main{padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(160px + env(safe-area-inset-bottom,0px))}
   h2{font-size:23px}.hdr{margin-bottom:18px}
-  .fabs{right:16px;bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+  .fabs{right:16px;bottom:calc(80px + env(safe-area-inset-bottom,0px))}
   .fab{width:50px;height:50px;border-radius:16px}
   #toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   .grid,.grid2{grid-template-columns:1fr}

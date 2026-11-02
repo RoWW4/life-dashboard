@@ -4,8 +4,6 @@
 const V = i => { const e = document.getElementById(i); return e ? e.value.trim() : ''; };
 const A = {
   go: i => { view = i; render(); },
-  more: () => { const c = pend(), n = {tareas:c.t, compra:c.s, fact:c.b};
-    modal(`<h3>Más secciones</h3><div class="pick">${secs().filter(x => !bar().includes(x[0])).map(([k,e,l]) => `<button data-a="go" data-i="${k}" data-close class="${view===k?'on':''}">${tile(e, view===k?'var(--ac)':'')}${l}${n[k]?` <i class="badge">${n[k]}</i>`:''}</button>`).join('')}</div>`); },
   sd: i => { selD = i; render(); },
   pm: i => { cm = new Date(cm.getFullYear(), cm.getMonth() + +i, 1); render(); },
   fm: i => { finOff = Math.min(0, finOff + +i); render(); },
@@ -97,10 +95,6 @@ const A = {
   txen: i => { const x = S.tx.find(y => y.id===i); if (!x) return; x.enc = !x.enc; if (!x.enc) delete x.enc; ch(); toast(x.enc ? 'Marcado como encargo: no cuenta como gasto tuyo' : 'Vuelve a contar en el gasto del mes'); },
   txex: i => { const x = S.tx.find(y => y.id===i); if (!x) return; x.ex = !x.ex; if (!x.ex) delete x.ex; ch(); toast(x.ex ? 'Marcado como extraordinario: ya no cuenta en el gasto del mes' : 'Vuelve a contar en el gasto del mes'); },
   nodup: i => { const x = S.tx.find(y => y.id===i); if (!x) return; S.tx.forEach(y => { if (y.date===x.date && y.amt===x.amt && y.t===x.t) y.notDup = true; }); ch(); toast('Aviso quitado: no es un duplicado'); },
-  bar: i => { const b = bar().slice(), k = b.indexOf(i);
-    if (k >= 0) { if (b.length === 1) return toast('Deja al menos una pestaña en la barra'); b.splice(k,1); }
-    else { if (b.length >= BARMAX) return toast(`Máximo ${BARMAX} pestañas: quita una antes`); b.push(i); }
-    S.bar = secs().map(x => x[0]).filter(x => b.includes(x)); ch(); },
   ex: () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'})); a.download = 'life-dashboard-'+TD()+'.json'; a.click(); },
   rs: () => CF('¿Borrar TODOS los datos? No se puede deshacer.', () => { S = def(); ch(); }),
   bsync: async () => { setSync('Comprobando…'); const c = await pull(); render(); toast(c ? 'Actualizado' : 'No hay movimientos nuevos'); },

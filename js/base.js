@@ -27,12 +27,9 @@ const DIA = ['imp','cal'];
 const FIN = ['gasto','sinc','mov','reglas'];
 const AJ = [['Personalizar',['midia','apar','fest','dict']], ['Dinero',['dinero','bank']], ['Cuenta y datos',['cuenta','copias','avz']]];
 const SEC = [['dia','house','Mi día','Hoy'],['tareas','list-checks','Tareas','Tareas'],['compra','shopping-cart','Compra','Compra'],['fin','wallet','Finanzas','Finanzas'],['fact','receipt','Facturas','Facturas'],['docs','folder-open','Documentos','Docs'],['inv','trending-up','Inversiones','Inversión'],['salud','heart-pulse','Salud','Salud'],['ajus','settings','Ajustes','Ajustes']];
-/* En el móvil la barra inferior muestra solo estas; el resto va en «Más». */
-// Pestañas fijas de la barra inferior en el móvil (el resto va en «Más»); se eligen en Ajustes.
-const BAR0 = ['dia','tareas','fin','inv'], BARMAX = 4;
 const FAILMAX = 3; // fallos seguidos del banco antes de avisar (y de que GitHub mande correo)
-const bar = () => S.bar && S.bar.length ? S.bar : BAR0;
 const secs = () => ord('nav', SEC.map(x => x[0])).map(k => SEC.find(x => x[0]===k)); // secciones en el orden elegido (en el ordenador se arrastran en el menú)
+const tabs = () => secs().filter(x => x[0]!=='ajus'); // barra del móvil: todas menos Ajustes, que va en el botón de arriba
 const MS = ['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const KW = [[/cumplea/i,'cake'],[/vacun/i,'syringe'],[/comida|arena/i,'shopping-basket'],[/itv|revisi/i,'wrench'],[/seguro|p[oó]liza/i,'shield-check'],[/document/i,'file-text'],[/gym|gimnas/i,'dumbbell'],[/bici|carrera/i,'bike'],[/cine|pel[ií]cula/i,'clapperboard'],[/black friday|oferta/i,'tag'],[/llamar|tel[eé]fono/i,'phone'],[/m[eé]dico|cita/i,'stethoscope']];
 const NW = {un:1,una:1,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6};

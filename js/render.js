@@ -4,12 +4,12 @@
 const V_ = {dia:vDia, tareas:vTareas, compra:vCompra, fin:vFin, fact:vFact, docs:vDocs, inv:vInv, salud:vSalud, ajus:vAjus};
 function theme(){ const r = document.documentElement; S.theme==='light' || S.theme==='blue' ? r.setAttribute('data-theme',S.theme) : r.removeAttribute('data-theme'); const mc = document.querySelector('meta[name=theme-color]'); if (mc) mc.content = {light:'#efefeb', blue:'#08101d'}[S.theme] || '#0c0d0f'; }
 function nav(){
-  const c = pend(), n = {tareas:c.t, compra:c.s, fact:c.b}, MAIN = bar();
+  const c = pend(), n = {tareas:c.t, compra:c.s, fact:c.b};
   $('#nav').innerHTML = `<div class="brand"><span class="logo"><i><b></b><b></b><b></b><b></b></i></span>${APP}</div>` +
-    secs().map(([k,e,l,s]) => `<button class="nv ${view===k?'on':''} ${MAIN.includes(k)?'':'sec2'}" data-a="go" data-i="${k}" title="Arrastra para cambiar el orden" ${view===k?'aria-current="page"':''}><span class="e">${I(e)}</span><span class="l">${l}</span><span class="s">${s}</span>${n[k]?`<i class="badge">${n[k]}</i>`:''}</button>`).join('') +
-    (() => { const m = secs().filter(x => !MAIN.includes(x[0])), b = m.reduce((a,x) => a+(n[x[0]]||0), 0), on = m.some(x => x[0]===view);
-      return `<button class="nv more ${on?'on':''}" data-a="more"><span class="e">${I('menu')}</span><span class="s">${on ? SEC.find(x => x[0]===view)[3] : 'Más'}</span>${b?`<i class="badge">${b}</i>`:''}</button>`; })() +
+    secs().map(([k,e,l,s]) => `<button class="nv ${view===k?'on':''}" data-a="go" data-i="${k}" title="Arrastra para cambiar el orden" aria-label="${l}" ${view===k?'aria-current="page"':''}><span class="e">${I(e)}</span><span class="l">${l}</span><span class="s">${s}</span>${n[k]?`<i class="badge">${n[k]}</i>`:''}</button>`).join('') +
     `<div class="navfoot"><span id="syncst">${syncTxt}</span>${user?`<span>${esc(user.email)}</span>`:''}</div>`;
+  // Móvil: Ajustes sale de la barra y queda como botón redondo arriba a la derecha.
+  const a = $('#ajb'); a.innerHTML = I('settings'); a.classList.toggle('on', view==='ajus');
 }
 function render(){
   theme(); bgApply(); nav();
@@ -45,9 +45,12 @@ MQD.addEventListener && MQD.addEventListener('change', masonry);
 const ch = () => { save(); render(); };
 
 
-/* Móvil: los botones + y micrófono se esconden al bajar (para no tapar contenido) y vuelven al subir o al llegar arriba. */
+/* Móvil: al bajar, los botones + y micrófono se esconden y la barra se encoge (para no tapar contenido);
+   al subir o al llegar arriba vuelven a su tamaño. */
 (() => { let ly = window.scrollY;
-  window.addEventListener('scroll', () => { const f = document.querySelector('.fabs'); if (!f) return; const y = window.scrollY;
-    if (!matchMedia('(max-width:760px)').matches || y < 80) f.classList.remove('off');
-    else if (Math.abs(y - ly) > 6) f.classList.toggle('off', y > ly);
+  window.addEventListener('scroll', () => { const f = document.querySelector('.fabs'), nv = $('#nav'), y = window.scrollY;
+    let off = null;
+    if (!matchMedia('(max-width:760px)').matches || y < 80) off = false;
+    else if (Math.abs(y - ly) > 6) off = y > ly;
+    if (off !== null) { if (f) f.classList.toggle('off', off); nv.classList.toggle('mini', off); }
     ly = y; }, {passive:true}); })();
