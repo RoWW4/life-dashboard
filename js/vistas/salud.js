@@ -24,7 +24,7 @@ function salRing(st, n){
   const R = 54, C = 2*Math.PI*R, late = n < 0, p = late ? 1 : Math.min(1, (st.day-1) / st.avg);
   const col = 'var(--rose)';
   return `<div class="sring"><svg viewBox="0 0 128 128" role="img" aria-label="Días que faltan para el próximo inicio"><g transform="rotate(-90 64 64)"><circle r="${R}" cx="64" cy="64" fill="none" stroke="var(--roses)" stroke-width="12"/><circle r="${R}" cx="64" cy="64" fill="none" stroke="${col}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(C*p).toFixed(1)} ${C.toFixed(1)}"/></g></svg>
-    <div class="c">${late ? `<b class="wa">+${-n}</b><span>${-n===1 ? 'día de retraso' : 'días de retraso'}</span>` : n===0 ? `<b>Hoy</b><span>próximo previsto</span>` : `<b>${n}</b><span>${n===1 ? 'día para el próximo' : 'días para el próximo'}</span>`}</div></div>`;
+    <div class="c">${late ? `<b class="wa">+${-n}</b><span>${-n===1 ? 'Día de retraso' : 'Días de retraso'}</span>` : n===0 ? `<b>Hoy</b><span>Próximo previsto</span>` : `<b>${n}</b><span>${n===1 ? 'Día para el próximo' : 'Días para el próximo'}</span>`}</div></div>`;
 }
 function vSalud(){
   const st = salStats(), n = st.next ? dayDiff(st.next) : null;

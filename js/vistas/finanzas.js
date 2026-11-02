@@ -54,18 +54,18 @@ function savChart(st){
   const K = keys.slice(-13), mx = Math.max(1, ...K.map(k => M[k] ? M[k].r + M[k].g + M[k].p : 0));
   return `<div class="savbars" role="img" aria-label="Intereses netos por mes">${K.map(k => { const v = M[k] || {r:0,g:0,p:0}, t = Math.max(0, v.r + v.g + v.p),
       tip = [v.r && eur(v.r)+' cobrado', v.g && eur(v.g)+' generado hasta hoy', v.p && eur(v.p)+' previsto'].filter(Boolean).join(' + ');
-    return `<div class="${k===cm?'now':''}" title="${mLabel(k)}: ${tip||eur(0)}"><em>${t?t.toFixed(2).replace('.',',')+' €':''}</em><i style="height:${t/mx*100}%">${v.g?`<b class="g" style="height:${v.g/t*100}%"></b>`:''}<b style="height:${t ? Math.max(0,v.r)/t*100 : 0}%"></b></i><span>${MS[+k.slice(5)]}</span></div>`; }).join('')}</div>
-    <div class="savlg"><span><i></i>Cobrado</span><span><i class="g"></i>Generado este mes</span><span><i class="p"></i>Previsto</span><span class="mu">interés neto de cada mes; se cobra el día 1 del siguiente</span></div>`;
+    return `<div class="${k===cm?'now':''}" title="${mLabel(k)}: ${tip||eur(0)}"><em>${t?t.toFixed(2).replace('.',',')+' €':''}</em><i style="height:${t/mx*100}%">${v.g?`<b class="g" style="height:${v.g/t*100}%"></b>`:''}<b style="height:${t ? Math.max(0,v.r)/t*100 : 0}%"></b></i><span>${cap(MS[+k.slice(5)])}</span></div>`; }).join('')}</div>
+    <div class="savlg"><span><i></i>Cobrado</span><span><i class="g"></i>Generado este mes</span><span><i class="p"></i>Previsto</span><span class="mu">Interés neto de cada mes; se cobra el día 1 del siguiente</span></div>`;
 }
 function savCard(){
   const s = S.sav;
   if (!s) return panel('inv','ahorro',`${I('piggy-bank')} Ahorros`,`<div class="mu" style="margin-bottom:10px">Sigue aquí tu cuenta de ahorro (por ejemplo una cuenta remunerada): saldo, intereses y evolución, sin mezclarlo con tus gastos.</div><button class="btn" data-a="savcfg">${I('plus')} Configurar cuenta de ahorro</button>`,'wide');
   const st = savStats(), tax = s.tax??SAV_TAX;
   const body = st ? `<div class="savk">
-      <div class="bal"><span>Saldo hoy${st.est?' (estimado)':''}</span><b>${money(eur(st.now))}</b><em>último saldo real apuntado: ${fd(st.last.d)}</em></div>
-      <div class="up"><span>Ganado este mes</span><b>${money('+'+eur(st.acc))}</b><em>se abona el ${fd(st.next)}</em><em>total cobrado desde ${fd(st.L[0].d)}: ${money('+'+eur(st.gain))}</em></div>
+      <div class="bal"><span>Saldo hoy${st.est?' (estimado)':''}</span><b>${money(eur(st.now))}</b><em>Último saldo real apuntado: ${fd(st.last.d)}</em></div>
+      <div class="up"><span>Ganado este mes</span><b>${money('+'+eur(st.acc))}</b><em>Se abona el ${fd(st.next)}</em><em>Total cobrado desde ${fd(st.L[0].d)}: ${money('+'+eur(st.gain))}</em></div>
       <div class="hi"><span>Rentabilidad anual</span><b>${pct(st.net*100)}</b><em>${pct(s.rate)} bruto − ${tax} % impuestos</em></div>
-      <div class="up"><span>En 12 meses</span><b>${money('+'+eur(st.y1-st.now))}</b><em class="fin">saldo final ≈ ${money(eur(st.y1))}</em></div>
+      <div class="up"><span>En 12 meses</span><b>${money('+'+eur(st.y1-st.now))}</b><em class="fin">Saldo final ≈ ${money(eur(st.y1))}</em></div>
     </div>
     ${savChart(st)}
     <h4 class="savh">Previsión mes a mes</h4>
@@ -103,11 +103,11 @@ function catDetail(c, sel){
   const g = {}; L.forEach(x => { const k = nt(concept(x)); const e = g[k] = g[k] || {n:concept(x), s:0, c:0, last:'', fx:false, bank:false}; e.s += sg(x); e.c++; if (x.date > e.last) e.last = x.date; if (x.fid) e.fx = true; if (fromBank(x)) e.bank = true; });
   const rows = Object.values(g).sort((a,b) => b.s-a.s);
   const ms = [-5,-4,-3,-2,-1,0].map(i => mAdd(base,i)), hv = ms.map(k => Math.max(0, S.tx.filter(x => x.cat===c && mon(x.date)===k).reduce((a,x) => a+gAmt(x), 0))), hmax = Math.max(1, ...hv);
-  const rec = S.fixed.filter(f => f.t==='g' && f.cat===c && fxLive(f) && !f.once).map(f => ({n:f.name, y:yearly(f), d:fxWhen(f)})).sort((a,b) => b.y-a.y);
+  const rec = S.fixed.filter(f => f.t==='g' && f.cat===c && fxLive(f) && !f.once).map(f => ({n:f.name, y:yearly(f), d:cap(fxWhen(f))})).sort((a,b) => b.y-a.y);
   const ry = rec.reduce((a,r) => a+r.y, 0);
   const o = modal(`<h3 class="cdh">${tile(CI[c]||'package', col(c))}<span>${esc(c)}<span class="mu">${mLabel(m)}</span></span></h3>
-    <div class="cdk"><div><b>${eur(tot)}</b><span>${m===MN(new Date())?'este mes':'en '+MS[+m.slice(5)]}</span></div><div><b>${all ? Math.round(tot/all*100) : 0}%</b><span>de tu gasto</span></div><div><b>${L.length}</b><span>movimientos</span></div></div>
-    <div class="hist">${ms.map((k,i) => `<button class="hb ${k===m?'on':''}" data-m="${k}" title="${mLabel(k)}: ${eur(hv[i])}" aria-label="Ver ${mLabel(k)}"><i style="height:${Math.max(3, hv[i]/hmax*100)}%;background:${k===m ? col(c) : 'var(--bd2)'}"></i><span>${MS[+k.slice(5)]}</span></button>`).join('')}</div>
+    <div class="cdk"><div><b>${eur(tot)}</b><span>${m===MN(new Date())?'Este mes':'En '+MS[+m.slice(5)]}</span></div><div><b>${all ? Math.round(tot/all*100) : 0}%</b><span>De tu gasto</span></div><div><b>${L.length}</b><span>Movimientos</span></div></div>
+    <div class="hist">${ms.map((k,i) => `<button class="hb ${k===m?'on':''}" data-m="${k}" title="${mLabel(k)}: ${eur(hv[i])}" aria-label="Ver ${mLabel(k)}"><i style="height:${Math.max(3, hv[i]/hmax*100)}%;background:${k===m ? col(c) : 'var(--bd2)'}"></i><span>${cap(MS[+k.slice(5)])}</span></button>`).join('')}</div>
     <h4>Por concepto</h4>${rows.length ? rows.map(r => `<div class="row"><span class="g">${esc(r.n)}<span class="meta">${r.c>1 ? `<span class="mu">${r.c} veces</span>` : ''}<span class="mu">${fd(r.last)}</span>${r.fx ? `<span class="chip">${I('repeat','sm')} Fijo</span>` : ''}${r.bank ? `<span class="chip">${I('landmark','sm')} Banco</span>` : ''}</span></span><b class="amt">${eur(r.s)}</b></div>`).join('') : empty('Sin gastos este mes.')}
     ${rec.length ? `<h4>Recurrentes · ${eur(ry)}/año <span class="mu">(≈ ${eur(ry/12)}/mes)</span></h4><div class="mu" style="margin-bottom:4px">¿Sigues usando todas? Dar de baja una te ahorra su coste anual.</div>${rec.map(r => `<div class="row"><span class="g">${esc(r.n)}<span class="meta"><span class="mu">${r.d}</span></span></span><span class="amt">${eur(r.y)}<span class="mu">/año</span></span></div>`).join('')}` : ''}
     <div class="acts" style="margin-top:14px"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button><button class="btn" id="ok">${I('list-checks')} Ver movimientos</button></div>`);
@@ -171,10 +171,10 @@ function vFin(){
   return `<div class="hdr"><div><h2>Finanzas</h2><div class="sub help">${user&&BANK&&BANK.session_id?`${I('landmark','sm')} Conectado al banco · ${ago(BANK.last_sync)}`:'Movimientos manuales, fijos e importados'}</div></div><div class="hact"><button class="btn ghost sm ico" data-a="fm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b style="min-width:130px;text-align:center">${ml}</b><button class="btn ghost sm ico" data-a="fm" data-i="1" aria-label="Mes siguiente" ${finOff>=0?'disabled style="opacity:.4"':''}>${I('chevron-right')}</button><button class="btn" data-a="nx">${I('plus')} Movimiento</button></div></div>
   <div class="fintop">${acctHTML()}
   <div class="kpis">
-    <div class="kpi"><span class="k">${I('arrow-up-right')} Ingresos</span><span class="v ok">${eur(inc)}</span><span class="d">${incL.length} movimientos</span></div>
+    <div class="kpi"><span class="k">${I('arrow-up-right')} Ingresos</span><span class="v ok">${eur(inc)}</span><span class="d">${incL.length} movimiento${incL.length===1?"":"s"}</span></div>
     <div class="kpi"><span class="k">${I('arrow-down-left')} Gastos</span><span class="v">${eur(sp)}</span><span class="d ${sp>ps?'wa':'ok'}">${I(sp>ps?'trending-up':'trending-down','sm')} ${eur(Math.abs(sp-ps))} vs mes anterior</span></div>
-    <div class="kpi"><span class="k">${I('scale')} Balance</span><span class="v ${inc-sp<0?'er':'ok'}">${eur(inc-sp)}</span><span class="d">ingresos − gastos</span></div>
-    <div class="kpi"><span class="k">${I('target')} Tope mensual</span><span class="v">${eur(S.budget)}</span><span class="d"><a href="#" data-a="eb2">cambiar</a></span></div>
+    <div class="kpi"><span class="k">${I('scale')} Balance</span><span class="v ${inc-sp<0?'er':'ok'}">${eur(inc-sp)}</span><span class="d">Ingresos − gastos</span></div>
+    <div class="kpi"><span class="k">${I('target')} Tope mensual</span><span class="v">${eur(S.budget)}</span><span class="d"><a href="#" data-a="eb2">Cambiar</a></span></div>
   </div></div>
   ${(() => { const C = {
     gasto: panel('fin','gasto',`${I('wallet')} Gasto del mes`,gastoHTML(m, 'fm'),'wide'),

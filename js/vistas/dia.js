@@ -60,8 +60,8 @@ function vDia(){
   const hs = (go, k, v, d, extra='') => `<button class="hs" data-a="go" data-i="${go}"><span class="hk">${k}</span><span class="hv">${v}${extra}</span><span class="hd2">${d}</span></button>`;
   // Fila de accesos: la compra (cuántos productos faltan) y los documentos a mano, que se abren directamente.
   const qd = d => d.url
-    ? `<a class="qc" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer"><span class="qi" style="--c:${DCOL[d.cat]}">${I(DI[d.cat]||'file-text')}</span>${esc(d.name)}${d.exp&&dayDiff(d.exp)<=60?`<em class="${dayDiff(d.exp)<0?'er':'wa'}">${dayDiff(d.exp)<0?'caducó':'vence '+fd(d.exp)}</em>`:''}</a>`
-    : `<button class="qc off" data-a="ed" data-i="${d.id}"><span class="qi" style="--c:${DCOL[d.cat]}">${I(DI[d.cat]||'file-text')}</span>${esc(d.name)}<em>añadir enlace</em></button>`;
+    ? `<a class="qc" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer"><span class="qi" style="--c:${DCOL[d.cat]}">${I(DI[d.cat]||'file-text')}</span>${esc(d.name)}${d.exp&&dayDiff(d.exp)<=60?`<em class="${dayDiff(d.exp)<0?'er':'wa'}">${dayDiff(d.exp)<0?'Caducó':'Vence '+fd(d.exp)}</em>`:''}</a>`
+    : `<button class="qc off" data-a="ed" data-i="${d.id}"><span class="qi" style="--c:${DCOL[d.cat]}">${I(DI[d.cat]||'file-text')}</span>${esc(d.name)}<em>Añadir enlace</em></button>`;
   const quick = `<div class="qrow" aria-label="Accesos rápidos">
     <button class="qc" data-a="go" data-i="compra"><span class="qi" style="--c:#34c77b">${I('shopping-cart')}</span>Compra${P.length?` <b>${P.length}</b>`:''}</button>
     ${pins.map(qd).join('')}
@@ -72,9 +72,9 @@ function vDia(){
     <div class="hmain"><div class="eyb">${cap(new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long'}).format(now))}</div>
       <h2>${g}${S.name?', '+esc(S.name):''}</h2>${S.wxOff ? '' : `<div id="hwx">${wxHTML()}</div>`}<p class="hctx">${ctx}</p></div>
     <div class="hst">
-      ${hs('tareas', 'Tareas hoy', tt.length, late ? `<span class="hwarn">${pl(late,'atrasada','atrasadas')}</span>` : tt.length ? 'sin atrasos' : 'nada pendiente')}
-      ${hs('fact', 'Facturas 7 días', b7.length, b7.length ? eur(b7t) : 'nada a la vista')}
-      ${B ? hs('fin', 'Gasto del mes', pc+'<small>%</small>', 'de tu tope · '+eur(sp), ring(pc)) : hs('fin', 'Gasto del mes', `<span class="hsm">${eur(sp)}</span>`, 'sin tope definido')}
+      ${hs('tareas', 'Tareas hoy', tt.length, late ? `<span class="hwarn">${pl(late,'atrasada','atrasadas')}</span>` : tt.length ? 'Sin atrasos' : 'Nada pendiente')}
+      ${hs('fact', 'Facturas 7 días', b7.length, b7.length ? eur(b7t) : 'Nada a la vista')}
+      ${B ? hs('fin', 'Gasto del mes', pc+'<small>%</small>', 'De tu tope · '+eur(sp), ring(pc)) : hs('fin', 'Gasto del mes', `<span class="hsm">${eur(sp)}</span>`, 'Sin tope definido')}
     </div>
   </section>
   <div class="grid dgrid">
