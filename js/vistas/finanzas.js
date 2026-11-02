@@ -115,11 +115,14 @@ function catDetail(c, sel){
   o.querySelector('#ok').onclick = () => { const n = new Date(); finOff = (+m.slice(0,4)*12 + +m.slice(5,7)) - (n.getFullYear()*12 + n.getMonth()+1); txf = {...txf, cat:c, t:'g', q:''}; o.remove(); render(); const e = $('#txcard'); if (e) e.scrollIntoView({behavior:'smooth'}); };
 }
 
+/* Más recientes primero. El banco solo da la fecha (sin hora): dentro del mismo día va primero el último que llegó al panel
+   (los del banco se incorporan en el orden en que el robot los guardó). */
+const txNewest = () => { const pos = new Map(S.tx.map((x,i) => [x.id, i])); return (a,b) => b.date.localeCompare(a.date) || pos.get(b.id) - pos.get(a.id); };
 /* Lista de movimientos con filtros (texto, categoría, periodo y tipo) */
 function txListHTML(){
   const m = finMonth(), from = {mes:m+'-01', '3m':mAdd(m,-2)+'-01', anio:m.slice(0,4)+'-01-01', todo:''}[txf.per], to = txf.per==='todo' || txf.per==='anio' ? '9999' : m+'-31', q = nt(txf.q).trim();
   const L = S.tx.filter(x => x.date>=from && x.date<=to && (!txf.cat || x.cat===txf.cat) && (!txf.t || x.t===txf.t) && (!q || nt(x.desc||x.cat).includes(q)))
-    .sort((a,b) => b.date.localeCompare(a.date) || (b.id>a.id?1:-1));
+    .sort(txNewest());
   // Posible duplicado: mismo día, importe y tipo, y además uno apuntado a mano junto a otro del banco, o dos a mano con el mismo concepto.
   // Dos movimientos que vienen los dos del banco son filas distintas del banco (p. ej. dos Bizums de 8 €): no se avisan.
   const dupG = {}; S.tx.forEach(x => { const k = x.date+'|'+x.amt+'|'+x.t; (dupG[k] = dupG[k] || []).push(x); });
@@ -142,7 +145,7 @@ const txRefresh = () => { const e = $('#txlist'); if (e) e.innerHTML = txListHTM
 
 /* Bandeja «Sin clasificar»: gastos en «Otros» (de cualquier mes) para ponerles categoría de uno en uno.
    «Dejar en Otros» (x.keep) y «Encargo» (x.enc) los sacan de la bandeja. Sin pendientes, la tarjeta no se muestra. */
-const sincL = () => S.tx.filter(x => x.t==='g' && x.cat==='Otros' && !x.keep && !x.enc).sort((a,b) => b.date.localeCompare(a.date));
+const sincL = () => S.tx.filter(x => x.t==='g' && x.cat==='Otros' && !x.keep && !x.enc).sort(txNewest());
 function sincCard(){
   const L = sincL();
   if (!L.length) return '';
