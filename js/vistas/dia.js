@@ -32,7 +32,7 @@ function vDia(){
     <button class="kpi" data-a="go" data-i="fact"><span class="k">${I('receipt')} Facturas 7 días</span><span class="v ${b7.length?'wa':''}">${b7.length}</span><span class="d">${b7.length?eur(b7.reduce((a,o) => a+o.f.amt,0)):'nada a la vista'}</span></button>
     <button class="kpi" data-a="go" data-i="compra"><span class="k">${I('shopping-cart')} Compra</span><span class="v">${P.length}</span><span class="d">${P.length===1?'producto':'productos'} pendientes</span></button>
   </div>
-  ${imp.length?`<div class="card hl ${ic?'mc':''}"><h3>${foldBtn('dia:imp', `${I('sparkles')} Lo más importante`)}</h3>${ic?'':imp.map(([d,n,t,c,ti]) => `<div class="row">${ti?`<input type="checkbox" class="ck" data-a="tt" data-i="${ti}" aria-label="Completar «${esc(t)}»">`:''}${tile(n,c)}<span class="g">${esc(t)}</span><span class="chip ${dayDiff(d)<0?'er':'wa'}">${cap(rel(d))}</span></div>`).join('')}</div>`:''}
+  ${imp.length?`<div class="card hl ${ic?'mc':''}"><h3>${foldBtn('dia:imp', `${I('sparkles')} Lo más importante`)}</h3>${ic?'':imp.map(([d,n,t,c,ti]) => `<div class="row">${ti?`<input type="checkbox" class="ck" data-a="tt" data-i="${ti}" aria-label="Completar «${esc(t)}»">`:''}${tile(n,c)}${ti?`<button class="link" data-a="et" data-i="${ti}"><span class="tt">${esc(t)}</span></button>`:`<span class="g">${esc(t)}</span>`}<span class="chip ${dayDiff(d)<0?'er':'wa'}">${cap(rel(d))}</span></div>`).join('')}</div>`:''}
   <div class="grid">${VIS.dia.map(k => C[k]).join('')}</div>`;
 }
 
