@@ -10,6 +10,7 @@ document.addEventListener('change', e => {
   const t = e.target;
   if (t.tagName==='SELECT' && t.dataset.a && A[t.dataset.a]) A[t.dataset.a](t.dataset.i, t);
   if (t.id==='im' && t.files[0]) { const r = new FileReader(); r.onload = () => { try { const d = JSON.parse(r.result); if (!Array.isArray(d.tasks)) throw 0; S = normalize(d); seed(); ch(); toast('Copia restaurada'); } catch(x) { toast('Archivo no válido'); } }; r.readAsText(t.files[0]); }
+  if (t.id==='bgfile' && t.files[0]) bgFile(t.files[0]);
   if (t.id==='bankfile' && t.files[0]) importFile(t.files[0]).catch(() => toast('No se pudo leer el archivo'));
 });
 document.addEventListener('input', e => { if (e.target.id==='txq') { txf.q = e.target.value; txRefresh(); } });

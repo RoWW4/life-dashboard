@@ -25,7 +25,7 @@ const DCOL = {Personal:'#0099ff',Coche:'#f5a524',Hogar:'#38bdf8',Salud:'#f472b6'
 const DIA = ['imp','cal'];
 /* Orden inicial de los paneles movibles de cada sección (cada uno se puede reordenar y se guarda en S.order). */
 const FIN = ['gasto','sinc','mov','reglas'];
-const AJ = ['cuenta','apar','bank','copias','fest','dict','avz'];
+const AJ = [['Personalizar',['midia','apar','fest','dict']], ['Dinero',['dinero','bank']], ['Cuenta y datos',['cuenta','copias','avz']]];
 const SEC = [['dia','house','Mi día','Hoy'],['tareas','list-checks','Tareas','Tareas'],['compra','shopping-cart','Compra','Compra'],['fin','wallet','Finanzas','Finanzas'],['fact','receipt','Facturas','Facturas'],['docs','folder-open','Documentos','Docs'],['inv','trending-up','Inversiones','Inversión'],['salud','heart-pulse','Salud','Salud'],['ajus','settings','Ajustes','Ajustes']];
 /* En el móvil la barra inferior muestra solo estas; el resto va en «Más». */
 // Pestañas fijas de la barra inferior en el móvil (el resto va en «Más»); se eligen en Ajustes.

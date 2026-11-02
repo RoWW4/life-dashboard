@@ -92,6 +92,27 @@ const nextDue = (d,r) => r==='Anual' ? addM(d,12) : r==='Mensual' ? addM(d,1) : 
 const ord = (v,keys) => { const o = S.order[v]||[]; return [...keys].sort((a,b) => { const x = o.indexOf(a), y = o.indexOf(b); return (x<0?1e3+keys.indexOf(a):x) - (y<0?1e3+keys.indexOf(b):y); }); };
 const pend = () => ({t:S.tasks.filter(t => !t.done && t.due && dayDiff(t.due)<=0).length, s:S.shop.filter(s => !s.done).length, b:fxDue(7).length});
 
+/* Fondo (se elige en cada dispositivo): ninguno, estrellas (hecho con CSS), el planeta (img/fondo-planeta.jpg, el de serie) o una imagen propia.
+   La imagen propia no se sube a ningún sitio.
+   Se ve en la portada de Mi día o, si se elige, detrás de toda la app. La imagen se guarda reducida en este navegador. */
+const BG = (() => { try { return JSON.parse(localStorage.getItem('ldb-bg')) || {k:'planet', all:false}; } catch(e) { return {k:'planet', all:false}; } })();
+const bgSave = () => { try { localStorage.setItem('ldb-bg', JSON.stringify(BG)); } catch(e) {} };
+const bgImg = () => { try { return localStorage.getItem('ldb-bgimg') || ''; } catch(e) { return ''; } };
+function bgApply(){
+  const b = document.body, r = document.documentElement, img = BG.k==='img' ? bgImg() : BG.k==='planet' ? 'img/fondo-planeta.jpg' : '', on = BG.k==='stars' || !!img;
+  b.classList.toggle('bg-on', on); b.classList.toggle('bg-all', on && !!BG.all); b.classList.toggle('bg-stars', on && BG.k==='stars');
+  if (img) r.style.setProperty('--bgimg', `url("${img}")`); else r.style.removeProperty('--bgimg');
+}
+/* Imagen propia: se reduce a 1920 px de ancho como mucho y se guarda en JPEG (unos cientos de KB) para que quepa en el navegador. */
+function bgFile(f){
+  const u = URL.createObjectURL(f), im = new Image();
+  im.onload = () => { const s = Math.min(1, 1920/im.width), c = document.createElement('canvas'); c.width = Math.round(im.width*s); c.height = Math.round(im.height*s);
+    c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u);
+    try { localStorage.setItem('ldb-bgimg', c.toDataURL('image/jpeg', .82)); BG.k = 'img'; bgSave(); render(); toast('Fondo cambiado'); }
+    catch(e) { toast('La imagen es demasiado grande para guardarla aquí: prueba con otra'); } };
+  im.onerror = () => { URL.revokeObjectURL(u); toast('No se pudo abrir la imagen'); };
+  im.src = u;
+}
 /* Ancho de cada panel en el ordenador (1/3, 1/2, 2/3 o completo): se elige con el botón del título y se recuerda en este dispositivo.
    Sin elegir, cada sección usa su ancho por defecto (ver «Rejilla de paneles» en styles.css). En el móvil todos ocupan el ancho completo. */
 const SZ = (() => { try { return JSON.parse(localStorage.getItem('ldb-size')) || {}; } catch(e) { return {}; } })();

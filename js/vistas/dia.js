@@ -3,6 +3,32 @@
    con los próximos días y una fila de accesos (compra y documentos a mano). Facturas y gasto se ven en su sección. */
 /* ---------- vistas ---------- */
 let gOff = 0;   // meses hacia atrás en «Gasto del mes» (acción 'gm'; no se guarda)
+/* Tiempo de la portada (Open-Meteo, gratis y sin clave) de la ciudad elegida en Ajustes (S.wx = {n, lat, lon}, va con tus datos).
+   Se guarda 30 minutos en este dispositivo; al llegar uno nuevo se cambia solo ese trozo, sin repintar la sección. */
+const WX = 'ldb-wx', WXMIN = 30*60*1000;
+const wxCache = () => { try { const c = JSON.parse(localStorage.getItem(WX)); return c && S.wx && c.k===S.wx.lat+','+S.wx.lon ? c : null; } catch(e) { return null; } };
+/* Código del tiempo (WMO) → texto e icono; de noche, luna en lugar de sol. */
+const wxTxt = (c, day) => c>=95 ? ['Tormenta','cloud-lightning'] : c>=85 ? ['Chubascos de nieve','cloud-snow'] : c>=80 ? ['Chubascos','cloud-rain'] : c>=71 ? ['Nieve','cloud-snow']
+  : c>=61 ? ['Lluvia','cloud-rain'] : c>=51 ? ['Llovizna','cloud-drizzle'] : c>=45 ? ['Niebla','cloud-fog'] : c===3 ? ['Nublado','cloud']
+  : c===2 ? ['Algo nuboso', day ? 'cloud-sun' : 'cloud-moon'] : [c===1 ? 'Casi despejado' : 'Despejado', day ? 'sun' : 'moon'];
+function wxHTML(){
+  if (!S.wx) return `<button class="hwxadd" data-a="wxc">${I('cloud-sun','sm')} Elige tu ciudad para ver el tiempo</button>`;
+  const c = wxCache(); if (!c) return `<div class="hwx"><span class="hwt">${esc(S.wx.n)}</span></div>`;
+  // Temperatura grande, el cielo y la ciudad, y una curva fina con la máxima de hoy y de los 3 días siguientes
+  // (cada punto sube o baja según haga más o menos calor; --y va de 0, el día más caluroso, a 1, el más fresco).
+  const d = c.d, [t, ic] = wxTxt(d.current.weather_code, d.current.is_day), wd = new Intl.DateTimeFormat('es-ES',{weekday:'short'}), r = Math.round;
+  const mx = d.daily.temperature_2m_max.slice(0, 4).map(r), hi = Math.max(...mx), lo = Math.min(...mx), y = v => hi===lo ? .5 : (hi-v)/(hi-lo);
+  const pts = mx.map((v,j) => `${j+.5},${y(v).toFixed(2)}`).join(' ');
+  const cols = mx.map((v,j) => `<span style="--y:${y(v).toFixed(2)}" title="${wxTxt(d.daily.weather_code[j], 1)[0]}"><b>${v}°</b><i></i><em>${j ? wd.format(new Date(d.daily.time[j]+'T12:00')).replace('.','') : 'hoy'}</em></span>`).join('');
+  return `<div class="hwx" title="Tiempo en ${esc(S.wx.n)} (Open-Meteo)"><div class="hwn"><b>${r(d.current.temperature_2m)}°</b><span class="hwt"><span>${I(ic,'sm')}${t}</span><small>${esc(S.wx.n)} · ${r(d.daily.temperature_2m_min[0])}° mín</small></span></div><div class="hwc"><svg viewBox="0 -.08 4 1.16" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" vector-effect="non-scaling-stroke"/></svg>${cols}</div></div>`;
+}
+function wxLoad(){
+  const c = wxCache(); if (!S.wx || S.wxOff || (c && Date.now()-c.t < WXMIN) || wxLoad.on) return; wxLoad.on = 1;
+  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${S.wx.lat}&longitude=${S.wx.lon}&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4`)
+    .then(r => r.ok ? r.json() : Promise.reject()).then(d => { try { localStorage.setItem(WX, JSON.stringify({k:S.wx.lat+','+S.wx.lon, t:Date.now(), d})); } catch(e) {}
+      const e = document.getElementById('hwx'); if (e) e.innerHTML = wxHTML(); }).catch(() => {}).finally(() => { wxLoad.on = 0; });
+}
+setInterval(() => { if (document.getElementById('hwx')) wxLoad(); }, 5*60*1000);
 function vDia(){
   const now = new Date(), h = now.getHours(), g = h<6?'Buenas noches':h<13?'Buenos días':h<21?'Buenas tardes':'Buenas noches', td = TD(), open = S.tasks.filter(t => !t.done);
   const tt = open.filter(t => t.due && t.due<=td).sort((a,b) => (a.due+(a.tm||'')).localeCompare(b.due+(b.tm||''))), late = tt.filter(t => t.due<td).length;
@@ -41,9 +67,10 @@ function vDia(){
     ${pins.map(qd).join('')}
     ${pins.length>1?`<button class="qlk" data-a="cust">${cust?'Listo':'Ordenar'}</button>`:''}${pins.length?'':`<button class="qlk" data-a="go" data-i="docs">${I('star','sm')} Marca documentos con la estrella para tenerlos aquí</button>`}
   </div>${cust && pins.length>1 ? `<div class="card qord">${pinOrd()}</div>` : ''}`;
+  setTimeout(wxLoad);
   return `<section class="hero" aria-label="Resumen de hoy">
     <div class="hmain"><div class="eyb">${cap(new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long'}).format(now))}</div>
-      <h2>${g}${S.name?', '+esc(S.name):''}</h2><p class="hctx">${ctx}</p></div>
+      <h2>${g}${S.name?', '+esc(S.name):''}</h2>${S.wxOff ? '' : `<div id="hwx">${wxHTML()}</div>`}<p class="hctx">${ctx}</p></div>
     <div class="hst">
       ${hs('tareas', 'Tareas hoy', tt.length, late ? `<span class="hwarn">${pl(late,'atrasada','atrasadas')}</span>` : tt.length ? 'sin atrasos' : 'nada pendiente')}
       ${hs('fact', 'Facturas 7 días', b7.length, b7.length ? eur(b7t) : 'nada a la vista')}

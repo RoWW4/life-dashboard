@@ -80,6 +80,15 @@ const A = {
   pd: i => { const d = S.docs.find(x => x.id===i); if (!d.pin && S.docs.filter(x => x.pin).length >= PINMAX) return toast(`Ya tienes ${PINMAX} documentos a mano: quita la estrella a otro primero`); d.pin = !d.pin; ch(); },
   dd: i => CF('¿Quitar este documento de la lista? (No se borra ningún archivo)', () => { S.docs = S.docs.filter(x => x.id!==i); ch(); }),
   th: i => { S.theme = i; ch(); },
+  wxo: i => { if (i==='1') S.wxOff = true; else delete S.wxOff; ch(); },
+  wxc: () => CF('¿De qué ciudad quieres ver el tiempo? (déjalo vacío para quitarlo)', v => { v = (v||'').trim();
+    if (!v) { delete S.wx; ch(); return; }
+    fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=es&name=' + encodeURIComponent(v)).then(r => r.json()).then(j => { const r = j.results && j.results[0];
+      if (!r) return toast('No encuentro esa ciudad: prueba a escribirla de otra forma');
+      S.wx = {n:r.name, lat:+r.latitude.toFixed(3), lon:+r.longitude.toFixed(3)}; ch(); toast('Tiempo de ' + r.name + (r.admin1 ? ' (' + r.admin1 + ')' : '')); }).catch(() => toast('Sin conexión: inténtalo más tarde'));
+  }, S.wx ? S.wx.n : ''),
+  bg: i => { BG.k = i; bgSave(); render(); },
+  bga: i => { BG.all = i==='1'; bgSave(); render(); },
   nm: () => CF('¿Cómo quieres que te salude el panel?', v => { S.name = (v||'').trim().slice(0,30); ch(); }, S.name||''),
   cu: (i,el) => { S.cur = el.value; ch(); },
   // «No es duplicado»: quita el aviso a todo el grupo (mismo día, importe y tipo).

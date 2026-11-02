@@ -12,7 +12,7 @@ function nav(){
     `<div class="navfoot"><span id="syncst">${syncTxt}</span>${user?`<span>${esc(user.email)}</span>`:''}</div>`;
 }
 function render(){
-  theme(); nav();
+  theme(); bgApply(); nav();
   const y = window.scrollY, same = render.last === view;
   if (!same) cust = false;
   if (!V_[view]) view = 'dia';
