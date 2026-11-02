@@ -2,7 +2,7 @@
 /* Pintar la sección actual, el menú y el tema. */
 /* ---------- render ---------- */
 const V_ = {dia:vDia, tareas:vTareas, compra:vCompra, fin:vFin, fact:vFact, docs:vDocs, inv:vInv, salud:vSalud, ajus:vAjus};
-function theme(){ const r = document.documentElement; S.theme==='light' || S.theme==='blue' ? r.setAttribute('data-theme',S.theme) : r.removeAttribute('data-theme'); const mc = document.querySelector('meta[name=theme-color]'); if (mc) mc.content = {light:'#eceff4', blue:'#091629'}[S.theme] || '#0f141a'; }
+function theme(){ const r = document.documentElement; S.theme==='light' || S.theme==='blue' ? r.setAttribute('data-theme',S.theme) : r.removeAttribute('data-theme'); const mc = document.querySelector('meta[name=theme-color]'); if (mc) mc.content = {light:'#efefeb', blue:'#08101d'}[S.theme] || '#0c0d0f'; }
 function nav(){
   const c = pend(), n = {tareas:c.t, compra:c.s, fact:c.b}, MAIN = bar();
   $('#nav').innerHTML = `<div class="brand"><span class="logo"><i><b></b><b></b><b></b><b></b></i></span>${APP}</div>` +

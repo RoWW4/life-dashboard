@@ -13,7 +13,9 @@ const A = {
   mv: i => { const [v,k,d] = i.split('|'), keys = [...(VIS[v]||[])], j = keys.indexOf(k), n = j + +d; if (j<0||n<0||n>=keys.length) return; keys.splice(j,1); keys.splice(n,0,k); S.order[v] = keys; ch(); },
   gp: i => { grp = i; render(); }, fl: i => { flt = i; render(); },
   xp: i => { exp[i] = !exp[i]; if (i==='tx') txRefresh(); else render(); },
-  pl: i => { if (PLG[i]) delete PLG[i]; else PLG[i] = 1; try { localStorage.setItem('ldb-fold', JSON.stringify(PLG)); } catch(e) {} render(); },
+  // Ancho del panel: pasa al siguiente (1/3 → 1/2 → 2/3 → completo → 1/3) partiendo del que tiene ahora en pantalla.
+  sz: (i, b) => { const c = b.closest('.card'), now = +(getComputedStyle(c).gridColumnStart.match(/\d+/) || [12])[0], W = [4,6,8,12], n = W.find(w => w > now) || 4;
+    SZ[i] = n; try { localStorage.setItem('ldb-size', JSON.stringify(SZ)); } catch(e) {} render(); toast('Ancho del panel: ' + SZN[n]); },
   cust: () => { cust = !cust; render(); },
   txm: () => { txN += matchMedia('(max-width:760px)').matches ? 10 : 40; txRefresh(); },
   cd: i => { if (view!=='fin') { view = 'fin'; finOff = 0; render(); } catDetail(i); },

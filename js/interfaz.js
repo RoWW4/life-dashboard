@@ -92,11 +92,13 @@ const nextDue = (d,r) => r==='Anual' ? addM(d,12) : r==='Mensual' ? addM(d,1) : 
 const ord = (v,keys) => { const o = S.order[v]||[]; return [...keys].sort((a,b) => { const x = o.indexOf(a), y = o.indexOf(b); return (x<0?1e3+keys.indexOf(a):x) - (y<0?1e3+keys.indexOf(b):y); }); };
 const pend = () => ({t:S.tasks.filter(t => !t.done && t.due && dayDiff(t.due)<=0).length, s:S.shop.filter(s => !s.done).length, b:fxDue(7).length});
 
-const panel = (v,k,title,inner,cls='') => `<div class="card ${cls}" data-v="${v}" data-k="${esc(k)}"><h3><span class="hd" draggable="true" title="Arrastra para mover">${I('grip-vertical')}</span><span class="t">${title}</span></h3>${inner}</div>`;
-/* Tarjetas plegables: se abren y cierran tocando el título. Lo plegado se recuerda en este dispositivo. */
-const PLG = (() => { try { return JSON.parse(localStorage.getItem('ldb-fold')) || {}; } catch(e) { return {}; } })();
-const foldBtn = (key, title) => `<button class="mtg" data-a="pl" data-i="${esc(key)}" aria-expanded="${!PLG[key]}"><span>${title}</span>${I(PLG[key]?'chevron-down':'chevron-up')}</button>`;
-const pfold = (v,k,title,inner,cls='') => { const c = PLG[v+':'+k]; return panel(v, k, foldBtn(v+':'+k, title), c ? '' : inner, cls+(c?' mc':'')); };
+/* Ancho de cada panel en el ordenador (1/3, 1/2, 2/3 o completo): se elige con el botón del título y se recuerda en este dispositivo.
+   Sin elegir, cada sección usa su ancho por defecto (ver «Rejilla de paneles» en styles.css). En el móvil todos ocupan el ancho completo. */
+const SZ = (() => { try { return JSON.parse(localStorage.getItem('ldb-size')) || {}; } catch(e) { return {}; } })();
+const SZN = {4:'1/3', 6:'1/2', 8:'2/3', 12:'completo'};
+/* Panel movible: título a la izquierda; a la derecha, el botón del ancho y el asa para arrastrarlo. */
+const panel = (v,k,title,inner,cls='') => { const z = SZ[v+':'+k];
+  return `<div class="card ${cls}${z?' sz'+z:''}" data-v="${v}" data-k="${esc(k)}"><h3><span class="t">${title}</span><span class="pa"><button class="ib szb" data-a="sz" data-i="${esc(v+':'+k)}" title="Ancho del panel${z?': '+SZN[z]:''} (toca para cambiarlo)" aria-label="Cambiar el ancho del panel">${I('move-horizontal')}</button><span class="hd" draggable="true" title="Arrastra para mover">${I('grip-vertical')}</span></span></h3>${inner}</div>`; };
 /* Muestra las n primeras filas y un botón para desplegar el resto (estado por panel, no se guarda). */
 const fold = (k, rows, n) => { const open = exp[k], sh = open ? rows : rows.slice(0,n), more = rows.length - n;
   return sh.join('') + (more > 0 ? `<button class="morebtn" data-a="xp" data-i="${esc(k)}">${open ? I('chevron-up')+'Ver menos' : I('chevron-down')+'Ver '+more+' más'}</button>` : ''); };
@@ -167,13 +169,13 @@ function calHTML(){
   let c = ['L','M','X','J','V','S','D'].map(d => `<div class="wd">${d}</div>`).join('') + '<div></div>'.repeat(off);
   for (let d=1; d<=n; d++) {
     const k = y+'-'+p2(mo+1)+'-'+p2(d), dt = S.tasks.filter(t => !t.done && t.due===k), cb = dt.filter(t => t.area==='Cumpleaños').length, q = dt.length - cb, h = holOn(k), v = perOn(k);
-    const tip = [...h.map(x => x.n), ...v.map(x => x.name), sTip(k)].filter(Boolean).join(' · ');
-    c += `<button class="${k===TD()?'t':''} ${k===sd?'sel':''} ${h.length?'hol':''} ${v.length?'vac':''} ${sm.has(k)?'sal':''}"data-a="sd" data-i="${k}" aria-label="${fd(k)}${tip?' · '+esc(tip):''}" ${tip?`title="${esc(tip)}"`:''}>${d}<span class="dots">${cb ? I('cake','bd') : ''}${'<i></i>'.repeat(Math.min(q, cb ? 2 : 3))}</span></button>`;
+    const tip = [...dt.filter(t => t.area==='Cumpleaños').map(t => t.title), ...h.map(x => x.n), ...v.map(x => x.name), sTip(k)].filter(Boolean).join(' · ');
+    c += `<button class="${k===TD()?'t':''} ${k===sd?'sel':''} ${h.length?'hol':''} ${v.length?'vac':''} ${cb?'bdy':''} ${sm.has(k)?(sm.get(k)?'sal salp':'sal'):''}" data-a="sd" data-i="${k}" aria-label="${fd(k)}${tip?' · '+esc(tip):''}" ${tip?`title="${esc(tip)}"`:''}>${d}<span class="dots">${cb ? I('cake','bd') : ''}${'<i></i>'.repeat(Math.min(q, cb ? 2 : 3))}</span></button>`;
   }
-  const dl = S.tasks.filter(t => t.due===sd && !oldDone(t)).sort((a,b) => (a.tm||'').localeCompare(b.tm||'')), hl = holOn(sd), vl = perOn(sd);
-  const sl = sm.has(sd) ? `<div class="row">${tile('heart-pulse','#ff5d5d')}<span class="g">${sTip(sd)}</span></div>` : '';
+  const isT = sd===TD(), dl = isT ? [] : S.tasks.filter(t => t.due===sd && !oldDone(t)).sort((a,b) => (a.tm||'').localeCompare(b.tm||'')), hl = holOn(sd), vl = perOn(sd);
+  const sl = sm.has(sd) ? `<div class="row">${tile('heart-pulse','var(--rose)')}<span class="g">${sTip(sd)}</span></div>` : '';
   const day = hl.map(holRow).join('') + sl + vl.map(perRow).join('') + dl.map(taskRow).join('');
-  return `<div class="calh"><button class="ib" data-a="pm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b>${cap(new Intl.DateTimeFormat('es-ES',{month:'long',year:'numeric'}).format(cm))}</b><button class="ib" data-a="pm" data-i="1" aria-label="Mes siguiente">${I('chevron-right')}</button></div><div class="cal">${c}</div><div class="calk"><span><i class="kh"></i>Festivo</span><span><i class="kv"></i>Vacaciones</span>${sm.size?'<span><i class="ks"></i>Salud</span>':''}<span><i class="kt"></i>Tareas</span></div><div class="dh">${sd===TD()?'Hoy':rel(sd)} · ${fd(sd)}</div>${day || empty('Nada este día.')}`;
+  return `<div class="calh"><button class="ib" data-a="pm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b>${cap(new Intl.DateTimeFormat('es-ES',{month:'long',year:'numeric'}).format(cm))}</b><button class="ib" data-a="pm" data-i="1" aria-label="Mes siguiente">${I('chevron-right')}</button></div><div class="cal">${c}</div><div class="calk"><span><i class="kh"></i>Festivo</span><span><i class="kv"></i>Vacaciones</span>${sm.size?'<span><i class="ks"></i>Salud</span><span><i class="ksp"></i>Previsto</span>':''}<span><i class="kt"></i>Tareas</span><span><i class="kbd"></i>Cumpleaños</span></div>${isT && !day ? '' : `<div class="dh">${isT?'Hoy':rel(sd)} · ${fd(sd)}</div>${day || empty('Nada este día.')}`}`;
 }
 function bankAlerts(){
   const a = [];

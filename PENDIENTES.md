@@ -7,9 +7,6 @@ Solo lo importante que queda por decidir o hacer. **No hacerlo hasta que la due�
 - Ese mismo día se restauró la base del 28/10 (tareas, fijos y documentos de la copia local de la carpeta `copia-historial-panel` de `D:\Claude`, que nunca se sube) junto a los movimientos del banco que quedaban. Ya repuestos (01/11): festivos, Inversiones y parte de los documentos con sus enlaces. Falta: volver a importar los movimientos antiguos del banco, revisar tope y reglas y añadir lo hecho después del 28/10. Si Supabase devuelve la versión completa, restaurar esa.
 - Cuando esté resuelto: volver a activar la limpieza automática de `ldb_state` (`alter table public.ldb_state reset (autovacuum_enabled, toast.autovacuum_enabled);`).
 
-## Diseño
-- «Mi día»: revisar sus paneles, unificar lo que se repite y simplificar la sección. Idea en estudio: «Lo más importante» con las tareas de los próximos 7 días y quitar el panel «Próximos 14 días», llevando su lista dentro del Calendario (debajo del mes). Falta decidir si las tareas de esa semana se repiten en los dos sitios.
-
 ## Wallet (banco)
 - Desde el 29/10/2026 a las 16:05 Wallet no trae movimientos nuevos, aunque la sincronización del panel funciona bien. El 31/10 se envió un correo a su soporte: pendiente de respuesta.
 - La prueba de Wallet Premium acaba hacia el 10/11/2026: antes, decidir si se paga.

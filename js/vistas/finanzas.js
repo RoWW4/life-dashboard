@@ -169,13 +169,13 @@ function vFin(){
   const incL = income(m), inc = incL.reduce((a,x) => a+x.amt, 0), sp = spent(m), ps = spent(pm);
   const ml = mLabel(m);
   return `<div class="hdr"><div><h2>Finanzas</h2><div class="sub help">${user&&BANK&&BANK.session_id?`${I('landmark','sm')} Conectado al banco · ${ago(BANK.last_sync)}`:'Movimientos manuales, fijos e importados'}</div></div><div class="hact"><button class="btn ghost sm ico" data-a="fm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b style="min-width:130px;text-align:center">${ml}</b><button class="btn ghost sm ico" data-a="fm" data-i="1" aria-label="Mes siguiente" ${finOff>=0?'disabled style="opacity:.4"':''}>${I('chevron-right')}</button><button class="btn" data-a="nx">${I('plus')} Movimiento</button></div></div>
-  ${acctHTML()}
+  <div class="fintop">${acctHTML()}
   <div class="kpis">
     <div class="kpi"><span class="k">${I('arrow-up-right')} Ingresos</span><span class="v ok">${eur(inc)}</span><span class="d">${incL.length} movimientos</span></div>
     <div class="kpi"><span class="k">${I('arrow-down-left')} Gastos</span><span class="v">${eur(sp)}</span><span class="d ${sp>ps?'wa':'ok'}">${I(sp>ps?'trending-up':'trending-down','sm')} ${eur(Math.abs(sp-ps))} vs mes anterior</span></div>
     <div class="kpi"><span class="k">${I('scale')} Balance</span><span class="v ${inc-sp<0?'er':'ok'}">${eur(inc-sp)}</span><span class="d">ingresos − gastos</span></div>
     <div class="kpi"><span class="k">${I('target')} Tope mensual</span><span class="v">${eur(S.budget)}</span><span class="d"><a href="#" data-a="eb2">cambiar</a></span></div>
-  </div>
+  </div></div>
   ${(() => { const C = {
     gasto: panel('fin','gasto',`${I('wallet')} Gasto del mes`,gastoHTML(m, 'fm'),'wide'),
     mov: panel('fin','mov',`${I('list-checks')} Movimientos`,`<span id="txcard"></span>

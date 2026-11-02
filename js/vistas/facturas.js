@@ -34,7 +34,7 @@ function vFact(){
   const {tot, paid, cur} = fxMonth();
   const rest = pays.filter(f => !cur.includes(f));
   const mes = new Intl.DateTimeFormat('es-ES',{month:'long'}).format(now), ingm = ings.reduce((q,f) => q + fxOcc(f, a, b).reduce((s,d) => { const x = S.tx.find(x => x.fid===f.id && Math.abs(dd(x.date, d)) <= 10); return s + (x ? x.amt : f.amt); }, 0), 0);
-  const pag = `<div class="mu">Pagado ${eur(paid)} · falta ${eur(tot-paid)}</div>`
+  const pag = `<div class="mu">Pagado ${eur(paid)} · falta ${eur(tot-paid)}</div>${tot ? `<div class="bar fxbar" role="img" aria-label="Pagado el ${Math.round(paid/tot*100)} % de los pagos del mes"><div style="width:${Math.min(100, paid/tot*100)}%;background:var(--ok)"></div></div>` : ''}`
     + (cur.length ? `<div class="dh">Este mes</div>${by(cur, f => fxOcc(f, a, b)[0] || fxState(f).due)}` : '')
     + (rest.length ? `<div class="dh">Próximos</div>${by(rest, f => fxState(f).next)}` : '');
   const C = {
