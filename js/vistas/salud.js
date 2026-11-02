@@ -33,8 +33,8 @@ function vSalud(){
     seg: panel('salud','seg',`${I('heart-pulse')} Seguimiento`, st.last
       ? `<div class="gx">${salRing(st, n)}<div class="sinf">
           <div class="mu">Próximo previsto</div><div class="big">${fd(st.next)}</div>
-          <div class="mu">Día ${st.day} · empezó el ${fd(st.last)}</div>
-          <div class="mu">Ciclo de ${st.avg} días · ${st.gaps.length ? 'media de los últimos '+st.gaps.length : 'duración habitual'}</div>
+          <div class="mu">Día ${st.day} · Empezó el ${fd(st.last)}</div>
+          <div class="mu">Ciclo de ${st.avg} días · ${st.gaps.length ? 'Media de los últimos '+st.gaps.length : 'duración habitual'}</div>
           <div class="mu">${I('clock','sm')} Aviso por Telegram 3 días antes.</div></div></div>
         ${add}<div class="sact"><button class="btn ghost" data-a="sah">${I('calendar-days')} Ver histórico</button><button class="link txl mu" data-a="sad" data-i="${st.last}">Quitar la última fecha (${fd(st.last)})</button></div>`
       : empty('Apunta el día de inicio para empezar a calcular el siguiente.') + add, 'wide'),

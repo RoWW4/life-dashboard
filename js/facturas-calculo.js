@@ -8,8 +8,8 @@
 const mIdx = m => +m.slice(0,4)*12 + +m.slice(5,7);
 const fxFq = f => f.var ? 'Variable' : f.once ? 'Única' : f.every===3 ? 'Trimestral' : f.every===6 ? 'Semestral' : f.month ? 'Anual' : 'Mensual';
 /* Solo la frecuencia, sin día ni categoría (para las filas de Facturas). */
-const fxFreq = f => f.var ? 'sin día fijo' : f.once ? 'una vez' : f.month ? 'anual' : f.every ? 'cada '+f.every+' meses' : 'mensual';
-const fxWhen = f => { if (f.var) return 'sin día fijo · cada mes'; const d = f.days ? 'días '+f.days.join(', ') : 'día '+(f.day||1); return f.once ? 'una vez · '+fd(f.once) : f.month ? 'anual · '+(f.day||1)+' de '+MS[f.month] : f.every ? 'cada '+f.every+' meses · '+d : 'mensual · '+d; };
+const fxFreq = f => f.var ? 'Sin día fijo' : f.once ? 'Una vez' : f.month ? 'Anual' : f.every ? 'Cada '+f.every+' meses' : 'Mensual';
+const fxWhen = f => { if (f.var) return 'Sin día fijo · Cada mes'; const d = f.days ? 'Días '+f.days.join(', ') : 'Día '+(f.day||1); return f.once ? 'Una vez · '+fd(f.once) : f.month ? 'Anual · '+(f.day||1)+' de '+MS[f.month] : f.every ? 'Cada '+f.every+' meses · '+d : 'Mensual · '+d; };
 /* Fechas de cobro previstas entre a y b (AAAA-MM-DD). */
 function fxOcc(f, a, b){
   if (f.var) return [];   // variable: varios cargos al mes sin día fijo (ver fxVar)

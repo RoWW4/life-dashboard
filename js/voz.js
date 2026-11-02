@@ -137,7 +137,7 @@ function voice(src){
   if (r.k==='vac') return addVac(r.name, r.from, r.to);
   if (!r.title) return toast('No he entendido la tarea');
   S.tasks.push({id:id(), title:r.title, due:r.due, tm:r.tm, pr:r.pr, area:r.area, rep:'', done:false}); ch();
-  toast(`✅ Tarea en ${r.area}` + (r.due ? ' · ' + dlabel(r.due) + (r.tm ? ' ' + r.tm : '') : ' · sin fecha'));
+  toast(`✅ Tarea en ${r.area}` + (r.due ? ' · ' + dlabel(r.due) + (r.tm ? ' ' + r.tm : '') : ' · Sin fecha'));
 }
 function guessArea(t){
   const d = nt(t);
