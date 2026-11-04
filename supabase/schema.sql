@@ -41,6 +41,10 @@ create table if not exists public.bank_status (
   fail_count  int not null default 0         -- fallos seguidos del banco; vuelve a 0 al sincronizar bien
 );
 alter table public.bank_status add column if not exists fail_count int not null default 0;
+-- Saldo real de la cuenta que da el banco en cada sincronización (Enable Banking) y cuándo se leyó
+alter table public.bank_status add column if not exists balance numeric(12,2);
+alter table public.bank_status add column if not exists balance_type text;
+alter table public.bank_status add column if not exists balance_at timestamptz;
 alter table public.bank_status enable row level security;
 drop policy if exists "bank_status leer propio" on public.bank_status;
 create policy "bank_status leer propio" on public.bank_status

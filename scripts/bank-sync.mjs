@@ -87,11 +87,23 @@ try {
     else rows.delete(r.id); // ya guardado con este mismo id
   }
   for (const [id, r] of rows) if (old[key(r)]) { old[key(r)]--; rows.delete(id); }
+  // Saldo real de la cuenta (la primera; solo hay una conectada). Se prefiere el contable (el que enseña el banco)
+  // y, si no lo da, el disponible. Si el banco no responde, se deja el último guardado. En el resumen de GitHub
+  // (público) solo se escribe el tipo de saldo, nunca el importe.
+  let bal = null;
+  if (accounts[0]) try {
+    const { balances = [] } = await eb(`${accUrl(accounts[0])}/balances`, {}, 1);
+    const pref = ['ITBD', 'CLBD', 'ITAV', 'CLAV', 'XPCD'];
+    const b = [...balances].sort((x, y) => (pref.indexOf(x.balance_type) + 1 || 99) - (pref.indexOf(y.balance_type) + 1 || 99))[0];
+    const amt = b && +(b.balance_amount && b.balance_amount.amount) * (b.credit_debit_indicator === 'DBIT' ? -1 : 1);
+    if (b && Number.isFinite(amt)) bal = { balance: amt.toFixed(2), balance_type: b.balance_type || '', balance_at: new Date().toISOString() };
+  } catch (e) { diag.push(`⚠️ Saldo (/balances): ${e.status ?? ''} ${(e.body || e.message).slice(0, 120)}`); }
   if (rows.size) await sb('bank_tx?on_conflict=id', { method: 'POST', body: [...rows.values()], prefer: 'resolution=ignore-duplicates,return=minimal' });
   await sb(`bank_pending?user_id=eq.${uid()}`, { method: 'DELETE', prefer: 'return=minimal' });
   if (pend.size) await sb('bank_pending', { method: 'POST', body: [...pend.values()], prefer: 'return=minimal' });
-  await setStatus({ last_sync: new Date().toISOString(), last_error: null, fail_count: 0, valid_until: (sess.access && sess.access.valid_until) || st.valid_until });
+  await setStatus({ last_sync: new Date().toISOString(), last_error: null, fail_count: 0, valid_until: (sess.access && sess.access.valid_until) || st.valid_until, ...(bal || {}) });
   summary(`## ✅ Sincronizado\n\n${total} movimientos revisados (${rows.size} nuevos) y ${pend.size} pendientes en ${accounts.length} cuenta(s). Los repetidos se ignoran.` +
+    (bal ? `\n\nSaldo de la cuenta guardado (tipo ${bal.balance_type}).` : '\n\nEl banco no dio el saldo de la cuenta: se mantiene el último.') +
     (diag.length ? `\n\n### ⚠️ La consulta normal falló y se usó una más corta\n${diag.map(d => '- ' + d).join('\n')}` : ''));
 } catch (e) {
   // Fallo pasajero del banco: se apunta y la ejecución termina «bien» (sin correo) hasta que se repita FAILMAX veces.

@@ -126,7 +126,7 @@ async function importFile(file){
   const r = ingest(items.filter(it => !it.dup), card ? 'card' : 'xls');
   // Saldo de la cuenta para Finanzas (no se pisa con un extracto más antiguo). «seen» marca qué movimientos ya están dentro de ese saldo:
   // solo los que lleguen después se le suman, aunque el banco les ponga una fecha anterior o posterior.
-  if (ac && (!S.acct || ac.d >= S.acct.d)) S.acct = {...ac, seen: S.bankSeen.length};
+  if (ac && (!S.acct || ac.d >= S.acct.d)) S.acct = {...ac, seen: S.bankSeen.length, t: Date.now()};
   r.skip += items.filter(it => it.dup).length;
   // Con las compras de la prepago ya dentro, sus recargas en la cuenta pasan a ser traspasos (si no, se contaría dos veces).
   let tr = 0;

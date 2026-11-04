@@ -155,10 +155,13 @@ function sincCard(){
     + fold('sinc', L.map(x => `<div class="row">${tile(CI.Otros||'package', col('Otros'))}<span class="g">${esc(x.desc||'Sin concepto')}<span class="meta"><span class="mu">${fd(x.date)}</span><select class="sel" data-a="txc" data-i="${x.id}" aria-label="Categoría">${opts(CATS.filter(c => c!=='Nómina'), x.cat)}</select><button class="chip" data-a="txk" data-i="${x.id}" title="Está bien en «Otros»: quitar de esta bandeja">Dejar en Otros</button><button class="chip" data-a="txen" data-i="${x.id}" title="Compra para otra persona que te paga en mano: no cuenta como gasto tuyo">${I('hand-coins','sm')} Encargo</button></span></span><span class="amt neg">−${eur(x.amt)}</span></div>`), 5));
 }
 
-/* Saldo de la cuenta: S.acct = {bal, d}. Se apunta solo al importar el extracto de la cuenta (PDF o .xls) o a mano con el lápiz. */
+/* Saldo de la cuenta: S.acct = {bal, d, seen, t}. Se apunta solo al importar el extracto de la cuenta (PDF o .xls) o a mano con el lápiz
+   (t = cuándo). Si la sincronización con el banco ha traído un saldo real más nuevo (BANK.balance), se enseña ese tal cual. */
 function acctHTML(){
   // Al saldo apuntado se le suman los movimientos de la cuenta que han llegado al panel después (Wallet o importados), sin la prepago ni los apuntes a mano.
   const a = S.acct, later = new Set(a && a.seen != null ? S.bankSeen.slice(a.seen) : []), nx = a ? S.tx.filter(x => (x.bank || x.xls) && !x.card && later.has(x.bank || x.xls)) : [], now = a ? Math.round((a.bal + nx.reduce((s,x) => s + (x.t==='i' ? x.amt : -x.amt), 0))*100)/100 : 0, eye = `<button class="ib" data-a="acceye" aria-label="${accShow?'Ocultar saldo':'Mostrar saldo'}" title="${accShow?'Ocultar saldo':'Mostrar saldo'}">${I(accShow?'eye-off':'eye')}</button>`;
+  const bk = BANK && BANK.balance != null && BANK.balance_at && (!a || !a.t || new Date(BANK.balance_at).getTime() > a.t);
+  if (bk) return `<div class="acct ${accShow?'':'priv'}"><div class="k">${I('landmark')} Saldo de la cuenta <span class="bk">(Openbank)</span>${eye}<button class="ib" data-a="accedit" aria-label="Cambiar saldo" title="Cambiar saldo a mano">${I('pencil')}</button></div><b>${money(eur(+BANK.balance))}</b><span class="d">Del banco · ${ago(BANK.balance_at)}</span></div>`;
   return `<div class="acct ${accShow?'':'priv'}"><div class="k">${I('landmark')} Saldo de la cuenta <span class="bk">(Openbank)</span>${eye}<button class="ib" data-a="accedit" aria-label="Cambiar saldo" title="Cambiar saldo a mano">${I('pencil')}</button></div>`
     + (a ? `<b>${money(eur(now))}</b><span class="d">Actualizado a ${fd(nx.reduce((m,x) => x.date > m ? x.date : m, a.d))}</span>`
          : `<b>—</b>`) + `</div>`;

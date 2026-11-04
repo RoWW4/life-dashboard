@@ -120,7 +120,7 @@ async function pullBank(){
   let q = sb.from('bank_tx').select('id,booking_date,amount,description,created_at').order('created_at',{ascending:true}).limit(1000);
   if (S.bankLast) q = q.gt('created_at', S.bankLast);
   const { data, error } = await q;
-  const st = await sb.from('bank_status').select('valid_until,last_sync,last_error,session_id,fail_count').eq('user_id', user.id).maybeSingle();
+  const st = await sb.from('bank_status').select('valid_until,last_sync,last_error,session_id,fail_count,balance,balance_at').eq('user_id', user.id).maybeSingle();
   BANK = st.data || null;
   // Retenciones y bizums que el banco aún no ha confirmado: se muestran aparte y no se guardan en S.tx.
   const pd = await sb.from('bank_pending').select('id,booking_date,amount,description').order('booking_date',{ascending:false});
