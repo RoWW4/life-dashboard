@@ -1,6 +1,8 @@
 # Panel de Rocío (Life Dashboard)
 
-App personal (tareas, compra, dinero, facturas, salud, documentos) que funciona en el móvil y en el ordenador con los mismos datos. Todo con servicios gratuitos, salvo Wallet Premium para traer el banco.
+App personal (tareas, compra, dinero, facturas, salud, documentos) que funciona en el móvil y en el ordenador con los mismos datos. Todo con servicios gratuitos.
+
+**Banco desde el 04/11/2026:** entra por Enable Banking (conexión directa, «Sincronizar banco», 4 veces al día). Wallet está en pausa (tarea `sync-wallet` de pg_cron desactivada, sin borrar). El esquema de abajo es el de Wallet.
 
 ```
 GitHub Pages ──► la app (HTML + js/) ◄──► Supabase (datos + login)
@@ -32,7 +34,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
 - **Sincronización sin pisar cambios:** la app guarda en el dispositivo la última versión de la nube que conoce; antes de subir mira si la nube cambió y, si cambió, junta los cambios de los dos lados (`merge3` en `js/nube.js`).
 - Login con un único usuario y altas nuevas desactivadas.
 - **Programador (pg_cron):** dos tareas que llaman a la API de GitHub para lanzar los workflows, con un token de GitHub guardado en Vault. Se crearon a mano en Supabase (no están en `schema.sql`):
-  - `sync-wallet`: `17 5,9,13,17,21 * * *` (UTC), unas 06:17, 10:17, 14:17, 18:17 y 22:17 en invierno.
+  - `sync-wallet`: `17 5,9,13,17,21 * * *` (UTC), unas 06:17, 10:17, 14:17, 18:17 y 22:17 en invierno. **Desactivada desde el 04/11/2026.** Para volver a activarla: `select cron.alter_job(1, active := true);`.
   - `task-reminders`: `7,22,37,52 * * * *`.
 
 ### GitHub (la app y los robots)
@@ -44,7 +46,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
     - un resumen a las 7:00;
     - de Salud, 3 días antes;
     - de los documentos que caducan: 30 días antes (60 los de la carpeta Personal), 7 días antes, el mismo día y una vez por semana durante un mes si sigue caducado.
-  - **Conectar banco** y **Sincronizar banco** (`bank-link.yml`, `bank-sync.yml`): la conexión directa con el banco por Enable Banking. **En pausa desde el 27/10/2026** porque el banco cortaba el permiso a las pocas horas. Se pueden reactivar quitando los `#` del `schedule` de `bank-sync.yml`.
+  - **Conectar banco** y **Sincronizar banco** (`bank-link.yml`, `bank-sync.yml`): la conexión directa con el banco por Enable Banking. Estuvo en pausa del 27/10 al 04/11/2026 porque el banco cortaba el permiso a las pocas horas; ahora vuelve a ser la vía principal (4 veces al día, con el `schedule` de GitHub). Si el permiso caduca: lanzar «Conectar banco» con el código vacío, entrar en el banco con el enlace que da y volver a lanzarlo pegando el código que muestra el panel. Para pausarla otra vez, poner `#` delante del `schedule` de `bank-sync.yml`.
 - Secretos (Settings → Secrets and variables → Actions):
 
   | Nombre | Para qué |
@@ -53,7 +55,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
   | `LDB_USER_ID` | id del usuario del panel en Supabase |
   | `WALLET_TOKEN` | token de la API de Wallet (requiere Premium) |
   | `TELEGRAM_TOKEN`, `TELEGRAM_CHAT_ID` | bot y chat de los avisos |
-  | `EB_APP_ID`, `EB_PRIVATE_KEY`, `APP_URL` | solo para Enable Banking (en pausa) |
+  | `EB_APP_ID`, `EB_PRIVATE_KEY`, `APP_URL` | solo para Enable Banking |
 
 ### Instalarla como app
 - **Android (Chrome):** abrir la web de la app y pulsar ⋮ → **Añadir a pantalla de inicio**.
@@ -94,7 +96,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
 | `scripts/telegram-documentos.gs` | bot de documentos (se pega en Google Apps Script, no corre en GitHub) |
 | `scripts/subir.mjs` | subir una versión en un paso (trae lo nuevo, sube la versión, comprueba, commit y push) |
 | `scripts/comprobar.mjs` | comprobación obligatoria antes de subir (la lanza `subir.mjs`) |
-| `scripts/bank-link.mjs`, `scripts/bank-sync.mjs`, `scripts/eb.mjs` | Enable Banking (en pausa). `eb.mjs` también lo usan los demás scripts para hablar con Supabase |
+| `scripts/bank-link.mjs`, `scripts/bank-sync.mjs`, `scripts/eb.mjs` | Enable Banking. `eb.mjs` también lo usan los demás scripts para hablar con Supabase |
 | `.github/workflows/*.yml` | los robots de arriba |
 | `CLAUDE.md`, `PENDIENTES.md` | cómo trabaja Claude y qué queda por hacer (lo hecho: `git log`) |
 | `HISTORIAL.md`, `HISTORIAL-antiguo.md` | historial antiguo, hasta el 01/11/2026 (ya no se actualiza) |

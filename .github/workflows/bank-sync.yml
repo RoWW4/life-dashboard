@@ -1,15 +1,15 @@
 name: Sincronizar banco
 
 on:
-  # PAUSADA desde el 27/10/2026: Openbank (vía Redsys) corta el permiso a las ~2 h de conectar y solo llegaban
-  # correos de fallo. Para reactivarla, quita los # de las líneas de schedule y cron.
-  # schedule:
+  # Reactivada el 04/11/2026 (Wallet en pausa). Estuvo parada desde el 27/10/2026 porque Openbank (vía Redsys)
+  # cortaba el permiso a las ~2 h de conectar. Si vuelve a pasar, se reconecta a mano con «Conectar banco».
+  schedule:
     # 4 al día: el máximo que permite PSD2 sin que estés delante. Horas de invierno (en verano, una más).
     # Minutos "raros" a propósito: GitHub retrasa o descarta más las tareas en horas en punto y cuartos.
-    # - cron: '43 5 * * *'   # ~06:43
-    # - cron: '43 10 * * *'  # ~11:43
-    # - cron: '43 14 * * *'  # ~15:43
-    # - cron: '43 19 * * *'  # ~20:43
+    - cron: '43 5 * * *'   # ~06:43
+    - cron: '43 10 * * *'  # ~11:43
+    - cron: '43 14 * * *'  # ~15:43
+    - cron: '43 19 * * *'  # ~20:43
   workflow_dispatch:
 
 # Nunca dos sincronizaciones a la vez (p. ej. una manual y una programada).
