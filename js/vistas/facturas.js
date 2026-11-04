@@ -2,16 +2,19 @@
 /* Sección «Facturas»: pagos e ingresos que se repiten. */
 /* Una fila de Facturas: estado del último cobro y acciones. Etiquetas: pagado/cobrado (verde) · próximo (aún no toca) ·
    pendiente (pasó la fecha hace ≤5 días: el banco suele tardar) · vencido (más de 5 días) · terminado (ya no hay más cobros). */
+/* Pago con fecha de fin: hasta qué mes y cuántos cobros quedan desde el próximo. */
+const fxEnd = (f, next) => { if (!f.until) return ''; const n = next ? fxOcc(f, next, f.until).length : 0;
+  return ` · Hasta ${MS[+f.until.slice(5,7)]} ${f.until.slice(0,4)}${n ? ` · Quedan ${n} pago${n===1?'':'s'}` : ''}`; };
 const fxItem = f => { if (f.var) return fxVarItem(f); const s0 = fxState(f), late = s0.due && s0.due===s0.prev,
     // Cobro de este mes que aún no ha llegado: no se enseña el pago del mes anterior.
     pm = !late && s0.next && mon(s0.next)===MN(new Date()) && !(s0.paid && Math.abs(dd(s0.paid.date, s0.next)) <= 10), s = pm ? {...s0, paid:null} : s0, ag = late ? dd(TD(),s.prev) : 0;
   const chip = late ? `<span class="chip ${ag>5?'er':'wa'}">${ag>5?'Vencido':'Pendiente'} ${fd(s.prev)}</span>`
     : s.paid ? `<span class="chip ok">${f.t==='i'?'Cobrado':'Pagado'} ${fd(s.paid.date)}</span>`
     : s.next ? `<span class="chip">Próximo ${fd(s.next)}</span>` : '<span class="chip">Terminado</span>';
-  return `<div class="row brow">${tile(CI[f.cat]||'receipt', col(f.cat))}<span class="g"><span class="tt">${esc(f.name)}</span><br><span class="mu">${fxFreq(f)}${s.paid?(fromBank(s.paid)?' · Llegó del banco':' · Apuntado en el panel, aún sin cargo del banco')+(s.next && Math.abs(dd(s.paid.date, s.next)) > 10 ? ' · Próximo '+fd(s.next) : ''):''}</span></span>${chip}<span class="amt ${f.t==='i'?'ok':''}">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`; };
+  return `<div class="row brow">${tile(CI[f.cat]||'receipt', col(f.cat))}<span class="g"><span class="tt">${esc(f.name)}</span><br><span class="mu">${fxFreq(f)}${fxEnd(f, s.next)}${s.paid?(fromBank(s.paid)?' · Llegó del banco':' · Apuntado en el panel, aún sin cargo del banco')+(s.next && Math.abs(dd(s.paid.date, s.next)) > 10 ? ' · Próximo '+fd(s.next) : ''):''}</span></span>${chip}<span class="amt ${f.t==='i'?'ok':''}">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`; };
 /* Fila de un pago variable: lo que lleva este mes frente a lo previsto. */
 const fxVarItem = f => { const v = fxVar(f, MN(new Date()));
-  return `<div class="row brow">${tile(CI[f.cat]||'receipt', col(f.cat))}<span class="g"><span class="tt">${esc(f.name)}</span><br><span class="mu">${fxFreq(f)} · ${v.n} cargo${v.n===1?'':'s'} este mes</span></span><span class="chip ${v.s>=f.amt?'ok':''}">Llevas ${eur(v.s)}</span><span class="amt">≈ ${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`; };
+  return `<div class="row brow">${tile(CI[f.cat]||'receipt', col(f.cat))}<span class="g"><span class="tt">${esc(f.name)}</span><br><span class="mu">${fxFreq(f)}${fxEnd(f)} · ${v.n} cargo${v.n===1?'':'s'} este mes</span></span><span class="chip ${v.s>=f.amt?'ok':''}">Llevas ${eur(v.s)}</span><span class="amt">≈ ${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`; };
 /* Pagos de Facturas de este mes: total previsto (lo real si ya llegó), lo pagado y la lista (incluye lo atrasado del mes anterior). */
 function fxMonth(){
   const now = new Date(), m = MN(now), a = m+'-01', b = m+'-'+p2(new Date(now.getFullYear(), now.getMonth()+1, 0).getDate());

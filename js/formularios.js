@@ -95,21 +95,23 @@ function fixedForm(f, isNew){
     <div class="two"><label class="r-d">Día del mes<input id="ff3" value="${f.days ? f.days.join(', ') : f.day||1}"></label><label class="r-m">Mes<select id="ff7">${opt(MS.slice(1).map((n,i) => [i+1, n]), f.month||+TD().slice(5,7))}</select></label><label class="r-o">Fecha<input id="ff8" type="date" value="${f.once||''}"></label></div>
     <div class="mu r-v">Variable: varios cargos al mes sin día fijo (p. ej. gasolina). Pon en Importe lo que sueles gastar al mes; se juntan todos los cargos del banco con este nombre.</div>
     <label class="r-v">También reconoce (palabras separadas por comas)<input id="ff9" value="${esc((f.kx||[]).join(', '))}" placeholder="Ej. gasolina, repsol"></label>
-    <label class="r-f">Empieza en<input id="ff5" type="month" value="${f.from||''}"></label>
-    <div class="mu">Mientras no llegue el mes de inicio sale como previsto y no cuenta como gasto. Vacío = ya se está cobrando. Cuando llega el cargo del banco se marca como pagado solo.</div></div><div class="acts">${isNew?'':`<button class="btn ghost" data-a="df" data-i="${f.id}">${I('trash-2')} Quitar</button>`}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`);
+    <div class="two r-f"><label>Empieza en<input id="ff5" type="month" value="${f.from||''}"></label><label>Termina en (opcional)<input id="ff10" type="month" value="${(f.until||'').slice(0,7)}"></label></div>
+    <div class="mu">Mientras no llegue el mes de inicio sale como previsto y no cuenta como gasto. Vacío = ya se está cobrando. «Termina en» es el último mes que se paga; vacío = sin fin. Cuando llega el cargo del banco se marca como pagado solo.</div></div><div class="acts">${isNew?'':`<button class="btn ghost" data-a="df" data-i="${f.id}">${I('trash-2')} Quitar</button>`}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`);
   const v = s => o.querySelector(s).value.trim(), sh = () => { const q = v('#ff6'); o.querySelector('.r-d').hidden = q==='Única' || q==='Variable'; o.querySelector('.r-m').hidden = q!=='Anual'; o.querySelector('.r-o').hidden = q!=='Única'; o.querySelector('.r-f').hidden = q==='Única'; o.querySelectorAll('.r-v').forEach(e => e.hidden = q!=='Variable'); o.querySelector('.r-v').hidden = q!=='Variable'; };
   o.querySelector('#ff6').onchange = sh; sh();
   o.querySelectorAll('[data-a="df"]').forEach(b => b.addEventListener('click', () => o.remove()));
   o.querySelector('#ok').onclick = () => {
-    const q = v('#ff6'), n = v('#ff1'), a = pnum(v('#ff2')), ds = v('#ff3').split(/[^\d]+/).map(Number).filter(d => d>=1 && d<=31), fr = q==='Única' ? '' : ymOf(v('#ff5'));
+    const q = v('#ff6'), n = v('#ff1'), a = pnum(v('#ff2')), ds = v('#ff3').split(/[^\d]+/).map(Number).filter(d => d>=1 && d<=31), fr = q==='Única' ? '' : ymOf(v('#ff5')), un = q==='Única' ? '' : ymOf(v('#ff10'));
     if (!n || !(a>0)) return toast('Indica nombre e importe');
     // «Empieza en» no válido (p. ej. una fecha escrita que el móvil no entiende): avisar en vez de guardarlo vacío.
     if (q!=='Única' && (fr===null || o.querySelector('#ff5').validity.badInput)) return toast('«Empieza en» no es válido: elige el mes y el año (p. ej. noviembre de 2027)');
+    if (q!=='Única' && (un===null || o.querySelector('#ff10').validity.badInput)) return toast('«Termina en» no es válido: elige el mes y el año (p. ej. diciembre de 2028)');
+    if (un && fr && un < fr) return toast('«Termina en» no puede ser antes de «Empieza en»');
     if (q!=='Variable' && (q==='Única' ? !v('#ff8') : !ds.length)) return toast(q==='Única' ? 'Indica la fecha' : 'Indica el día del mes');
     // Movimientos apuntados a mano antes del nuevo inicio (los del banco no se tocan).
     const old = fr && !isNew ? S.tx.filter(x => x.fid===f.id && !fromBank(x) && mon(x.date) < fr) : [];
     const done = () => {
-      ['day','days','month','every','once','from','var','kx'].forEach(k => delete f[k]);
+      ['day','days','month','every','once','from','until','var','kx'].forEach(k => delete f[k]);
       Object.assign(f, {name:n, amt:a, t:v('#ff0'), cat:v('#ff4')});
       if (q==='Variable') { f.var = true; if (fr) f.from = fr; if (!f.k) f.k = nt(n).trim();
         const kx = v('#ff9').split(',').map(w => nt(w).trim()).filter(w => w && w!==f.k); if (kx.length) f.kx = kx;
@@ -120,6 +122,8 @@ function fixedForm(f, isNew){
         if (q==='Anual') f.month = +v('#ff7');
         if (FQ[q]===3 || FQ[q]===6) f.every = FQ[q];
         const st = fr || (f.every ? MN(new Date()) : ''); if (st) f.from = st; }
+      // Fecha de fin: el último día de ese mes (los cobros de ese mes aún cuentan).
+      if (un) f.until = un+'-'+p2(new Date(+un.slice(0,4), +un.slice(5,7), 0).getDate());
       if (old.length) { const ids = new Set(old.map(x => x.id)); S.tx = S.tx.filter(x => !ids.has(x.id)); }
       if (isNew) S.fixed.push(f);
       o.remove(); ch(); };

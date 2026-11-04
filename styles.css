@@ -754,3 +754,10 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 /* Inversiones: las cifras con las mismas esquinas que el resto; el saldo como la tarjeta de Finanzas */
 .savk>div{border-radius:18px;padding:14px 16px}
 .savk>div.bal{border-radius:22px;padding:16px 18px}
+/* Inversiones con los importes ocultos: el difuminado se extiende suave alrededor de la cifra, como en Finanzas (sin recortarlo) */
+.priv .savk b{overflow:visible;text-overflow:clip}
+.priv .savk>div{overflow:hidden}
+/* Pantallas medianas: las cuatro cifras de Inversiones en dos columnas para que quepan */
+@media(min-width:761px) and (max-width:1180px){.savk{grid-template-columns:1fr 1fr}}
+/* Lo marcado como oculto (hidden) no se ve nunca, aunque otra regla le dé display (p. ej. los campos de Facturas que no tocan) */
+[hidden]{display:none!important}
