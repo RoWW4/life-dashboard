@@ -58,7 +58,7 @@ function vDia(){
     b7.length ? pl(b7.length,'factura','facturas')+' en los próximos 7 días' : ''].filter(Boolean).join(' y ') + '.';
   const ring = p => { const R = 15, C = 2*Math.PI*R; return `<svg class="hring" viewBox="0 0 36 36" aria-hidden="true"><circle r="${R}" cx="18" cy="18"/><circle r="${R}" cx="18" cy="18" class="${p>=100?'over':p>=80?'near':''}" stroke-dasharray="${(C*Math.min(p,100)/100).toFixed(1)} ${C.toFixed(1)}"/></svg>`; };
   // Cada cifra lleva el icono y el color de su sección (--c).
-  const hs = (go, ic, c, k, v, d, extra='') => `<button class="hs" style="--c:${c}" data-a="go" data-i="${go}"><span class="hk"><span class="hi">${I(ic)}</span>${k}</span><span class="hv">${v}${extra}</span><span class="hd2">${d}</span></button>`;
+  const hs = (go, ic, c, k, v, d, extra='') => `<button class="hs" style="--c:${c}" data-a="go" data-i="${go}"><span class="hk"><span class="hico">${I(ic)}</span>${k}</span><span class="hv">${v}${extra}</span><span class="hd2">${d}</span></button>`;
   // Fila de accesos: la compra (cuántos productos faltan) y los documentos a mano, que se abren directamente.
   const qd = d => d.url
     ? `<a class="qc" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer"><span class="qi" style="--c:${DCOL[d.cat]}">${I(DI[d.cat]||'file-text')}</span>${esc(d.name)}${d.exp&&dayDiff(d.exp)<=60?`<em class="${dayDiff(d.exp)<0?'er':'wa'}">${dayDiff(d.exp)<0?'Caducó':'Vence '+fd(d.exp)}</em>`:''}</a>`
