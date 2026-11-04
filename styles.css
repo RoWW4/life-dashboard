@@ -623,3 +623,130 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
 }
+
+/* ---------- Rediseño de Mi día y del menú ---------- */
+/* Menú del ordenador: sin caja, pegado al borde sobre el fondo de la página. Cada sección tiene su icono en una baldosa
+   de su color (--c); la abierta va en una tarjeta con la baldosa rellena. */
+.nv[data-i=dia]{--c:#2f9bff}.nv[data-i=tareas]{--c:#9b87f5}.nv[data-i=compra]{--c:#34c77b}.nv[data-i=fin]{--c:#22c3b4}
+.nv[data-i=fact]{--c:#f0a83a}.nv[data-i=docs]{--c:#f07da8}.nv[data-i=inv]{--c:#7aa7ff}.nv[data-i=salud]{--c:var(--rose)}.nv[data-i=ajus]{--c:var(--mu)}
+@media(min-width:761px){
+  nav{width:240px;top:0;height:100vh;height:100dvh;margin:0;padding:26px 14px 18px;border:0;border-right:1px solid var(--sep);border-radius:0;background:transparent;box-shadow:none;gap:3px}
+  .brand{font-size:16.5px;font-weight:700;padding:0 8px 26px;gap:11px}
+  .logo{width:34px;height:34px;border-radius:11px;box-shadow:0 6px 16px -6px rgba(10,110,230,.7)}
+  .nv{gap:12px;padding:6px 10px 6px 6px;border-radius:14px;color:var(--tx2);font-weight:500;transition:background .18s,color .18s,box-shadow .18s}
+  .nv .e{width:32px;height:32px;border-radius:10px;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);transition:background .18s,color .18s}
+  .nv .e .i{width:17px;height:17px}
+  .nv:hover{background:var(--hov);color:var(--tx)}
+  .nv.on{background:var(--card);color:var(--tx);font-weight:600;box-shadow:var(--sh),inset 0 0 0 1px var(--bd)}
+  .nv.on .e{background:var(--c);color:#fff;box-shadow:0 6px 14px -6px var(--c)}
+  .nv.on .badge{background:var(--acs);color:var(--ac2);box-shadow:none}
+  .navfoot{margin:auto 4px 0;padding:10px 12px;border:1px solid var(--bd);border-radius:14px;background:var(--card);box-shadow:var(--sh)}
+  main{padding-top:34px}
+}
+/* Móvil: la barra de abajo, más sólida; la sección abierta con su icono en un círculo de su color */
+@media(max-width:760px){
+  nav{background:color-mix(in srgb,var(--card) 90%,transparent);border-color:var(--bd2);border-radius:26px;padding:6px}
+  .nv{color:var(--mu)}
+  .nv.on{background:none;color:var(--tx);padding:3px 0 4px}
+  .nv.on .e{width:34px;height:28px;border-radius:14px;background:var(--c);color:#fff;display:grid;place-items:center;box-shadow:0 6px 14px -6px var(--c)}
+  .nv.on .e .i{width:18px;height:18px}
+  .nv.on:hover{background:none}
+  .nv.on .badge{background:var(--er);color:#fff}
+  /* El botón de Ajustes no tapa los botones de la cabecera */
+  .hdr{padding-right:48px}
+}
+
+/* Mi día: portada con el saludo grande y el tiempo a la derecha; las tres cifras salen debajo en tarjetas que
+   montan sobre el borde de la portada. */
+.hero{grid-template-columns:minmax(0,1fr) auto;align-items:end;min-height:230px;padding:34px 36px 64px;margin-bottom:0;border-radius:30px}
+.hero .eyb{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+.hero h2{font-size:46px;font-weight:650;letter-spacing:-.045em;line-height:1.02}
+.hctx{margin-top:12px;font-size:16px}
+.haside{justify-self:end}
+.haside .hwx{margin:0;justify-content:flex-end}
+.haside .hwxadd{margin:0;padding:8px 12px;border:1px solid var(--hero-bd);border-radius:999px;background:var(--hero-tile)}
+.hst{position:relative;z-index:1;margin:-44px 22px 22px;gap:14px}
+.hs{min-height:132px;padding:16px 18px 15px;border-radius:22px;background:var(--card);border:1px solid var(--bd);box-shadow:var(--sh2);color:var(--tx);transition:transform .18s,box-shadow .18s,border-color .18s}
+.hs:hover{background:var(--card);transform:translateY(-2px);border-color:color-mix(in srgb,var(--c) 40%,var(--bd))}
+.hs:focus-visible{outline:2px solid var(--ac)}
+.hst .hk,.hst .hd2{color:var(--mu)}
+.hk{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:var(--tx2)}
+.hst .hk{color:var(--tx2)}
+.hi{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
+.hi .i{width:16px;height:16px}
+.hv{font-size:40px}
+.hwarn{color:var(--er)}
+.hring circle{stroke:var(--bd2)}
+.hring circle+circle{stroke:var(--ok)}.hring circle.near{stroke:var(--wa)}.hring circle.over{stroke:var(--er)}
+/* Con fondo de imagen: las cifras siguen siendo tarjetas normales (fuera de la imagen) */
+.bg-on .hst .hs{background:var(--card);border-color:var(--bd);backdrop-filter:none;-webkit-backdrop-filter:none}
+.bg-on .hero{min-height:260px}
+.bg-on .haside .hwxadd{background:rgba(8,14,30,.4);border-color:rgba(255,255,255,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.bg-all .hst{margin-top:6px;margin-left:0;margin-right:0}
+.bg-all .hst .hs{background:color-mix(in srgb,var(--card) 74%,transparent);backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2)}
+.bg-all .hero{padding-bottom:20px}
+/* Tarjetas y cifras de todas las secciones algo más redondas; accesos rápidos más grandes */
+.card{border-radius:22px}
+.kpi{border-radius:20px}
+.qc{padding:8px 15px 8px 8px;border-radius:14px;font-weight:550}
+.qi{width:32px;height:32px;border-radius:10px}.qi .i{width:16px;height:16px}
+@media(max-width:760px){
+  .hero{grid-template-columns:1fr;min-height:0;padding:24px 20px 56px;border-radius:26px;gap:16px}
+  .hero h2{font-size:32px}
+  .haside{justify-self:start}.haside .hwx{justify-content:flex-start}
+  .hst{margin:-38px 10px 18px;gap:8px}
+  .hs{min-height:118px;padding:12px 11px;border-radius:18px;box-shadow:var(--sh2)}
+  .hk{flex-direction:column;align-items:flex-start;gap:7px;font-size:12px}
+  .hi{width:28px;height:28px;border-radius:9px}
+  .hv{font-size:30px}
+}
+
+/* ---------- Rediseño de Finanzas ---------- */
+/* Cabecera: el cambio de mes en una pastilla; saldo grande como una tarjeta bancaria; las cuatro cifras con el icono
+   en una baldosa de su color (--c), como las de Mi día, y el tope con una barra de lo gastado. */
+.finh .hact{gap:8px}
+.finh .hact>.btn.ghost,.finh .hact>b{background:var(--card);border:1px solid var(--bd);box-shadow:var(--sh)}
+.finh .hact>b{display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 14px;border-radius:12px;font-size:14px}
+.finh .hact>.btn.ghost{border-radius:12px}
+.fintop{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-bottom:22px}
+.fintop .acct{min-height:228px;padding:26px 28px;border-radius:30px}
+.fintop .acct .k{top:24px;left:28px;right:20px;font-weight:600}
+.fintop .acct b{font-size:52px;font-weight:650;letter-spacing:-.045em;line-height:1}
+.fintop .acct .d{margin-top:8px;font-size:13px}
+.fintop .kpis{gap:14px}
+.fintop .kpi{border-radius:22px;padding:16px 18px;gap:6px;box-shadow:var(--sh2);justify-content:space-between}
+.fintop .kpi .k{font-weight:600;color:var(--tx2);gap:9px}
+.fintop .kpi .k .i{color:inherit}
+.fintop .kpi .v{font-size:28px;font-weight:650}
+.kbar{display:block;height:6px;border-radius:99px;background:var(--bd2);overflow:hidden}
+.kbar i{display:block;height:100%;border-radius:inherit;background:var(--ok)}
+.kbar.near i{background:var(--wa)}.kbar.over i{background:var(--er)}
+.bg-all .fintop .kpi{background:color-mix(in srgb,var(--card) 74%,transparent)}
+@media(max-width:1180px) and (min-width:761px){.fintop{grid-template-columns:1fr}}
+@media(max-width:760px){
+  .finh .hact{justify-content:space-between}
+  .finh .hact>.btn:not(.ghost){margin-left:auto}
+  .fintop{grid-template-columns:1fr;gap:10px}
+  .fintop .acct{min-height:170px;padding:22px;border-radius:26px}
+  .fintop .acct .k{top:18px;left:22px}
+  .fintop .acct b{font-size:40px}
+  .fintop .kpis{gap:10px}
+  .fintop .kpi{padding:13px 14px;border-radius:18px}
+  .fintop .kpi .k{flex-direction:column;align-items:flex-start;gap:7px;font-size:12.5px}
+  .fintop .kpi .v{font-size:22px}
+}
+/* El «%» del gasto pegado a la cifra (el anillo queda a la derecha) */
+.hv small{margin-right:auto}
+
+/* Móvil: casillas, botones de icono y desplegables con tamaño cómodo para el dedo */
+@media(max-width:760px){
+  input[type=checkbox].ck{width:24px;height:24px}
+  .ib{padding:9px}
+  .btn.sm.ico{padding:9px 11px}
+  .sel{padding:6px 10px;font-size:13px}
+  .kpi .d a{display:inline-block;padding:6px 0}
+  /* Compra: la cantidad estrecha y el precio con el resto, para que se lea entero */
+  .f #s2{min-width:0;flex:0 0 76px}.f #s3{flex:1 1 0}
+}
+/* Movimientos en el móvil: cada desplegable en su línea para que se lea entero */
+@media(max-width:760px){.txf select{flex-basis:100%}}

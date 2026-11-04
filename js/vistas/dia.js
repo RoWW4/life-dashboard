@@ -57,7 +57,8 @@ function vDia(){
   const ctx = [tt.length ? pl(tt.length,'tarea','tareas')+' para hoy'+(late ? ` (${pl(late,'atrasada','atrasadas')})` : '') : 'Ninguna tarea para hoy',
     b7.length ? pl(b7.length,'factura','facturas')+' en los próximos 7 días' : ''].filter(Boolean).join(' y ') + '.';
   const ring = p => { const R = 15, C = 2*Math.PI*R; return `<svg class="hring" viewBox="0 0 36 36" aria-hidden="true"><circle r="${R}" cx="18" cy="18"/><circle r="${R}" cx="18" cy="18" class="${p>=100?'over':p>=80?'near':''}" stroke-dasharray="${(C*Math.min(p,100)/100).toFixed(1)} ${C.toFixed(1)}"/></svg>`; };
-  const hs = (go, k, v, d, extra='') => `<button class="hs" data-a="go" data-i="${go}"><span class="hk">${k}</span><span class="hv">${v}${extra}</span><span class="hd2">${d}</span></button>`;
+  // Cada cifra lleva el icono y el color de su sección (--c).
+  const hs = (go, ic, c, k, v, d, extra='') => `<button class="hs" style="--c:${c}" data-a="go" data-i="${go}"><span class="hk"><span class="hi">${I(ic)}</span>${k}</span><span class="hv">${v}${extra}</span><span class="hd2">${d}</span></button>`;
   // Fila de accesos: la compra (cuántos productos faltan) y los documentos a mano, que se abren directamente.
   const qd = d => d.url
     ? `<a class="qc" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer"><span class="qi" style="--c:${DCOL[d.cat]}">${I(DI[d.cat]||'file-text')}</span>${esc(d.name)}${d.exp&&dayDiff(d.exp)<=60?`<em class="${dayDiff(d.exp)<0?'er':'wa'}">${dayDiff(d.exp)<0?'Caducó':'Vence '+fd(d.exp)}</em>`:''}</a>`
@@ -70,13 +71,14 @@ function vDia(){
   setTimeout(wxLoad);
   return `<section class="hero" aria-label="Resumen de hoy">
     <div class="hmain"><div class="eyb">${cap(new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long'}).format(now))}</div>
-      <h2>${g}${S.name?', '+esc(S.name):''}</h2>${S.wxOff ? '' : `<div id="hwx">${wxHTML()}</div>`}<p class="hctx">${ctx}</p></div>
-    <div class="hst">
-      ${hs('tareas', 'Tareas hoy', tt.length, late ? `<span class="hwarn">${pl(late,'atrasada','atrasadas')}</span>` : tt.length ? 'Sin atrasos' : 'Nada pendiente')}
-      ${hs('fact', 'Facturas 7 días', b7.length, b7.length ? eur(b7t) : 'Nada a la vista')}
-      ${B ? hs('fin', 'Gasto del mes', pc+'<small>%</small>', 'De tu tope · '+eur(sp), ring(pc)) : hs('fin', 'Gasto del mes', `<span class="hsm">${eur(sp)}</span>`, 'Sin tope definido')}
-    </div>
+      <h2>${g}${S.name?', '+esc(S.name):''}</h2><p class="hctx">${ctx}</p></div>
+    ${S.wxOff ? '' : `<div id="hwx" class="haside">${wxHTML()}</div>`}
   </section>
+  <div class="hst">
+    ${hs('tareas', 'list-checks', '#9b87f5', 'Tareas hoy', tt.length, late ? `<span class="hwarn">${pl(late,'atrasada','atrasadas')}</span>` : tt.length ? 'Sin atrasos' : 'Nada pendiente')}
+    ${hs('fact', 'receipt', '#f0a83a', 'Facturas 7 días', b7.length, b7.length ? eur(b7t) : 'Nada a la vista')}
+    ${B ? hs('fin', 'wallet', '#22c3b4', 'Gasto del mes', pc+'<small>%</small>', 'De tu tope · '+eur(sp), ring(pc)) : hs('fin', 'wallet', '#22c3b4', 'Gasto del mes', `<span class="hsm">${eur(sp)}</span>`, 'Sin tope definido')}
+  </div>
   <div class="grid dgrid">
   ${VIS.dia.map(k => C[k]).join('')}
   ${quick}</div>`;
