@@ -701,6 +701,13 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
   .hico{width:28px;height:28px;border-radius:9px}
   .hv{font-size:30px}
 }
+/* Ordenador con ventana estrecha: el tiempo baja bajo el saludo para que la fecha y la frase no se partan. */
+@media(min-width:761px) and (max-width:1100px){
+  .hero{grid-template-columns:1fr;gap:18px}
+  .hero h2{font-size:38px}
+  .haside{justify-self:start}.haside .hwx{justify-content:flex-start}
+  .hst{gap:10px}.hk{flex-direction:column;align-items:flex-start;gap:7px}
+}
 
 /* ---------- Rediseño de Finanzas ---------- */
 /* Cabecera: el cambio de mes en una pastilla; saldo grande como una tarjeta bancaria; las cuatro cifras con el icono

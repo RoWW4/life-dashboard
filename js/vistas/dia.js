@@ -36,7 +36,9 @@ function vDia(){
   const up = [...open.filter(t => t.due && dayDiff(t.due)>=2 && dayDiff(t.due)<=7).map(t => [t.due, t.tm||'', taskRow(t)]),
     ...[...new Set([td.slice(0,4), addD(td,7).slice(0,4)])].flatMap(y => holidays(+y)).filter(h => dayDiff(h.d)>=1 && dayDiff(h.d)<=7).map(h => [h.d, '', holRow(h)]),
     ...S.periods.filter(p => dayDiff(p.from)>=1 && dayDiff(p.from)<=7).map(p => [p.from, '', perRow(p)])].sort((a,b) => (a[0]+a[1]).localeCompare(b[0]+b[1]));
-  let lastU = ''; const upRows = up.map(([d,,r]) => { const hd = d!==lastU ? `<div class="dh">${cap(rel(d))} · ${fd(d)}</div>` : ''; lastU = d; return hd + r; });
+  // Cabecera de cada día con el día de la semana (también el séptimo, que rel() daría como «En 7 d»).
+  const wday = d => dayDiff(d)===7 ? new Intl.DateTimeFormat('es-ES',{weekday:'long'}).format(new Date(d+'T00:00')) : rel(d);
+  let lastU = ''; const upRows = up.map(([d,,r]) => { const hd = d!==lastU ? `<div class="dh">${cap(wday(d))} · ${fd(d)}</div>` : ''; lastU = d; return hd + r; });
   const imp = [...open.filter(t => t.due && dayDiff(t.due)<=1).map(t => [t.due, ico(t), t.title, AC[t.area], t.id]), ...fxDue(7).map(o => [o.d, 'receipt', o.f.name+' · '+eur(o.f.amt), col(o.f.cat)]), ...S.docs.filter(d => d.exp && dayDiff(d.exp)<=30).map(d => [d.exp, DI[d.cat]||'file-text', 'Vence: '+d.name, DCOL[d.cat]]), ...bankAlerts()].sort((a,b) => a[0].localeCompare(b[0]));
   const b7 = fxDue(7), m = MN(now);
   const P = S.shop.filter(s => !s.done), pins = pinDocs().slice(0, PINMAX);

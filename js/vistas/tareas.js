@@ -13,7 +13,8 @@ function vTareas(){
     // Cada panel enseña sus 5 tareas más próximas (Cumpleaños, solo la siguiente) y se despliega con «Ver más».
     body = `<div class="grid">${keys.map(a => panel('tareas', a, `<span style="color:${AC[a]||'inherit'}">${I(AI[a]||'pin')}</span> ${esc(a)} <span class="cnt">· ${g[a].length}</span>`, fold('a-'+a, so(g[a]).map(taskRow), a==='Cumpleaños'?1:5))).join('')}</div>`;
   } else {
-    const B = [['triangle-alert','Atrasadas',t => t.due && dayDiff(t.due)<0],['calendar-clock','Hoy y próximos 7 días',t => t.due && dayDiff(t.due)>=0 && dayDiff(t.due)<=7],['calendar-days','Este mes',t => t.due && dayDiff(t.due)>7 && dayDiff(t.due)<=31],['telescope','Más adelante',t => t.due && dayDiff(t.due)>31],['inbox','Sin fecha (bandeja)',t => !t.due]];
+    // Las completadas con fecha pasada no son atrasadas: van en su propio grupo.
+    const B = [['triangle-alert','Atrasadas',t => !t.done && t.due && dayDiff(t.due)<0],['calendar-clock','Hoy y próximos 7 días',t => t.due && dayDiff(t.due)>=0 && dayDiff(t.due)<=7],['calendar-days','Próximos 30 días',t => t.due && dayDiff(t.due)>7 && dayDiff(t.due)<=30],['telescope','Más adelante',t => t.due && dayDiff(t.due)>30],['inbox','Sin fecha (bandeja)',t => !t.due],['circle-check','Completadas',t => t.done && t.due && dayDiff(t.due)<0]];
     const G = {}; B.forEach(([ic,n,f]) => { const x = so(l.filter(f)); if (x.length) G[n] = panel('tareasf', n, `${I(ic)} ${n} <span class="cnt">· ${x.length}</span>`, fold('f-'+n, x.map(taskRow), 5)); });
     // VIS.tareas también aquí, para saber si la sección tiene más de un panel (y enseñar el asa).
     VIS.tareas = VIS.tareasf = ord('tareasf', Object.keys(G));
