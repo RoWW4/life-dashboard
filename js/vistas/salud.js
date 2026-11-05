@@ -104,11 +104,53 @@ function hlHTML(){
       + `${hlKpi(HLC.sueno,'moon','Sueño',hlD(sl), `<button class="hlmb" data-a="hlm" data-i="sueno" title="Cambiar el objetivo de sueño">${sleepDay===td ? 'Anoche' : 'Noche anterior'} · meta ${hlHm(HL_SUENO)} ${I('pencil','sm')}</button>`, sl != null ? sl/HL_SUENO*100 : null)}`
       + `${hlKpi(HLC.pulso,'heart-pulse','Pulso',rhrRow ? `${rhrRow.rhr}<small>ppm</small>` : '—', 'En reposo' + (rhrRow && rhrRow.day !== td ? ' · ' + fd(rhrRow.day) : ''))}</div>
     ${hlNoche(by[sleepDay])}
-    <div class="hlw"><div class="hlwh"><b>Últimos 7 días</b><span><i style="--c:${HLC.pasos}"></i>Pasos</span><span><i style="--c:${HLC.sueno}"></i>Sueño</span><button class="hlmb hlmeta" data-a="hlm" data-i="pasos" title="Cambiar el objetivo de pasos"><i></i>Objetivo ${hlN(HL_PASOS)}</button></div>
+    <div class="hlw"><div class="hlwh"><b>Últimos 7 días</b><button class="btn ghost sm hlxb" data-a="hlx">${I('calendar-days','sm')} Histórico</button><span><i style="--c:${HLC.pasos}"></i>Pasos</span><span><i style="--c:${HLC.sueno}"></i>Sueño</span><button class="hlmb hlmeta" data-a="hlm" data-i="pasos" title="Cambiar el objetivo de pasos"><i></i>Objetivo ${hlN(HL_PASOS)}</button></div>
     <div class="hlbars" role="img" aria-label="Pasos y horas de sueño de los últimos 7 días" style="--g:${(HL_PASOS/mx*100).toFixed(1)}%">${bars}</div></div>`
     : empty(HLS ? 'Google Health todavía no ha mandado datos.' : 'Cuando el programa de Google Health esté instalado, aquí saldrán tus pasos, kcal y sueño.'))
     + (HLS && HLS.last_error ? `<div class="mu wa" style="margin-top:8px">${I('triangle-alert','sm')} ${esc(HLS.last_error)}</div>` : '')
     + `<div class="sact"><span class="mu">${I('clock','sm')} ${st}</span><button class="btn ghost" data-a="hls" ${hlSync.on ? 'disabled' : ''}>${I('refresh-cw')} Sincronizar ahora</button></div>`;
+}
+/* ---------- Histórico (ventana) ----------
+   Elige el dato (pasos, sueño, kcal, pulso) y el periodo (30 días, 3 meses, 1 año). Hasta 3 meses, una barra por día;
+   el año, la media de cada mes. Se lee de health_daily una vez (último año) y se filtra aquí. */
+const HLX_M = {steps:['Pasos','footprints',HLC.pasos], sleep_min:['Sueño','moon',HLC.sueno], kcal:['Calorías','flame',HLC.kcal], rhr:['Pulso','heart-pulse',HLC.pulso]};
+let hlx = {m:'steps', d:30}, HLX = null;
+const hlxF = (m, v) => v == null ? '—' : m === 'sleep_min' ? hlHm(Math.round(v)) : m === 'rhr' ? Math.round(v) + ' ppm' : m === 'kcal' ? hlN(v) + ' kcal' : hlN(v);
+async function hlxOpen(){
+  modal(`<div id="hlx">${hlxHTML()}</div>`);
+  if (HLX === null && sb && user) {
+    const r = await sb.from('health_daily').select('day,steps,kcal,sleep_min,rhr').gte('day', addD(TD(), -365)).order('day');
+    HLX = r.error ? [] : (r.data || []);
+    const e = document.getElementById('hlx'); if (e) e.innerHTML = hlxHTML();
+  }
+}
+function hlxHTML(){
+  const {m, d} = hlx, [nom, ic, c] = HLX_M[m], td = TD(), desde = addD(td, -(d-1)), M = hlMeta();
+  const meta = m === 'steps' ? M.pasos : m === 'sleep_min' ? M.sueno : null;
+  const seg = (a, cur, L) => `<div class="seg">${L.map(([k,n]) => `<button class="${String(cur)===String(k)?'on':''}" data-a="${a}" data-i="${k}">${n}</button>`).join('')}</div>`;
+  const head = `<div class="hlxh"><span class="hico" style="--c:${c}">${I(ic)}</span><h3>Histórico de ${nom.toLowerCase()}</h3></div>
+    <div class="hlxt">${seg('hlxm', m, Object.entries(HLX_M).map(([k,[n]]) => [k,n]))}${seg('hlxd', d, [[30,'30 días'],[90,'3 meses'],[365,'1 año']])}</div>`;
+  const close = `<div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button></div>`;
+  if (HLX === null) return head + `<div class="mu" style="padding:24px 0">Cargando…</div>` + close;
+  const R = HLX.filter(r => r.day >= desde && r.day <= td && r[m] != null);
+  if (!R.length) return head + empty('Aún no hay datos de esos días.') + close;
+  const vals = R.map(r => r[m]), avg = vals.reduce((a,v) => a+v, 0) / vals.length;
+  const best = R.reduce((b,r) => (m === 'rhr' ? r[m] < b[m] : r[m] > b[m]) ? r : b, R[0]);
+  const ok = meta ? R.filter(r => r[m] >= meta).length : null;
+  // Barras: por día (30 días y 3 meses) o media por mes (1 año).
+  let B;
+  if (d <= 90) { const by = Object.fromEntries(R.map(r => [r.day, r[m]]));
+    B = [...Array(d)].map((_,i) => { const k = addD(desde, i), dt = new Date(k+'T12:00');
+      return {v: by[k], t: fd(k), l: (d === 30 ? i % 6 === 0 || i === d-1 : dt.getDate() === 1) ? dt.getDate() + ' ' + new Intl.DateTimeFormat('es-ES',{month:'short'}).format(dt).replace('.','') : ''}; }); }
+  else { const G = {}; R.forEach(r => (G[r.day.slice(0,7)] = G[r.day.slice(0,7)] || []).push(r[m]));
+    const meses = [...Array(12)].map((_,i) => { const x = new Date(td+'T12:00'); x.setDate(1); x.setMonth(x.getMonth() - 11 + i); return iso(x).slice(0,7); });
+    B = meses.map(k => { const a = G[k]; return {v: a ? a.reduce((s,v) => s+v, 0)/a.length : null, t: mLabel(k) + ' · media', l: new Intl.DateTimeFormat('es-ES',{month:'short'}).format(new Date(k+'-15T12:00')).replace('.','')}; }); }
+  const all = B.map(b => b.v).filter(v => v != null), lo = m === 'rhr' ? Math.min(...all) - 5 : 0, mx = Math.max(meta || 0, ...all);
+  const h = v => v == null ? 0 : Math.max(2, (v - lo) / (mx - lo || 1) * 100);
+  const tile = (k, v, sub) => `<div class="hlxk"><span>${k}</span><b>${v}</b>${sub ? `<small>${sub}</small>` : ''}</div>`;
+  return head + `<div class="hlxs" style="--c:${c}">${tile(d > 90 ? 'Media diaria' : 'Media', hlxF(m, avg), R.length + (R.length === 1 ? ' día con datos' : ' días con datos'))}${tile(m === 'rhr' ? 'Más bajo' : 'Mejor día', hlxF(m, best[m]), fd(best.day))}${meta ? tile('Objetivo cumplido', ok + ' de ' + R.length, Math.round(ok/R.length*100) + ' % de los días') : tile(m === 'kcal' ? 'Total' : 'Más alto', m === 'kcal' ? hlN(vals.reduce((a,v) => a+v, 0)) + ' kcal' : hlxF(m, Math.max(...vals)), '')}</div>
+    <div class="hlxc${d > 90 ? ' big' : d > 30 ? ' fine' : ''}" style="--c:${c}${meta ? ';--g:' + h(meta).toFixed(1) + '%' : ''}" role="img" aria-label="${nom}: ${d === 365 ? 'media de cada mes del último año' : 'cada día de los últimos ' + d + ' días'}">${B.map(b => `<div title="${b.t}: ${hlxF(m, b.v)}"><div class="tr${meta ? ' gl' : ''}"><i style="height:${h(b.v).toFixed(1)}%"></i></div><em>${b.l}</em></div>`).join('')}</div>`
+    + (meta ? `<div class="mu hlxl"><i></i>Objetivo: ${hlxF(m, meta)}</div>` : '') + close;
 }
 function vSalud(){
   setTimeout(hlOpen);

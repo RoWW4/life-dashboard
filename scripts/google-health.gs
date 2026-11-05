@@ -113,9 +113,9 @@ function lista(tipo, filtro) {
    (despierta, ligero, profundo, REM) y hora de dormirte y de despertar. Si hay varias sesiones, se suman las fases
    y se toma la primera hora de inicio y la última de fin. */
 const FASES = { AWAKE: 'awake_min', LIGHT: 'light_min', DEEP: 'deep_min', REM: 'rem_min' };
-function sueno(desde) {
+function sueno(desde, hasta) {
   const out = { sleep_min: {}, awake_min: {}, light_min: {}, deep_min: {}, rem_min: {}, bed_at: {}, wake_at: {} };
-  lista('sleep', 'sleep.interval.civil_end_time >= "' + desde + 'T00:00:00"').forEach(p => {
+  lista('sleep', 'sleep.interval.civil_end_time >= "' + desde + 'T00:00:00" AND sleep.interval.civil_end_time < "' + hasta + 'T00:00:00"').forEach(p => {
     const s = p.sleep || {}, iv = s.interval || {}, fin = iv.endTime, sm = s.summary || {};
     if (!fin || sm.minutesAsleep == null || (s.metadata && s.metadata.nap)) return;
     const d = dia(new Date(fin)), suma = (c, v) => { out[c][d] = (out[c][d] || 0) + Number(v); };
@@ -127,9 +127,9 @@ function sueno(desde) {
   return out;
 }
 /* Pulso en reposo de cada día. */
-function pulso(desde) {
+function pulso(desde, hasta) {
   const out = {};
-  lista('daily-resting-heart-rate', 'daily_resting_heart_rate.date >= "' + desde + '"').forEach(p => {
+  lista('daily-resting-heart-rate', 'daily_resting_heart_rate.date >= "' + desde + '" AND daily_resting_heart_rate.date < "' + hasta + '"').forEach(p => {
     for (const k in p) { const v = p[k]; if (v && v.date && v.beatsPerMinute != null) out[deCivil(v)] = Math.round(Number(v.beatsPerMinute)); }
   });
   return out;
@@ -152,30 +152,50 @@ function guardar(token, tabla, filas, clave) {
 }
 
 /* ---------- Sincronizar ---------- */
+/* Lee todos los datos de [desde, hasta) y los guarda. Cada tipo por separado: si uno falla, los demás se guardan
+   igual y esa columna no se toca. Devuelve los avisos. */
+function leerYGuardar(token, desde, hasta) {
+  const avisos = [], datos = {}, ahora = new Date().toISOString();
+  const tipos = { // cada lectura devuelve {columna: {día: valor}}
+    pasos: () => ({ steps: porDia('steps', 'countSum', desde, hasta) }),
+    kcal: () => ({ kcal: porDia('total-calories', 'kcalSum', desde, hasta) }),
+    sueño: () => sueno(desde, hasta),
+    pulso: () => ({ rhr: pulso(desde, hasta) }),
+  };
+  for (const t in tipos) { try { Object.assign(datos, tipos[t]()); } catch (e) { avisos.push(t + ': ' + e.message); } }
+  const cols = Object.keys(datos);
+  const dias = [...new Set(cols.flatMap(c => Object.keys(datos[c])))].filter(d => d >= desde && d < hasta).sort();
+  if (dias.length && cols.length) guardar(token, 'health_daily', dias.map(d => {
+    const f = { day: d, updated_at: ahora }; cols.forEach(c => { f[c] = datos[c][d] != null ? datos[c][d] : null; }); return f; }), 'user_id,day');
+  return avisos;
+}
 function sincronizar() {
   const lock = LockService.getScriptLock(); if (!lock.tryLock(30000)) return 'ocupado';
   try {
-    const hoy = dia(new Date()), desde = sumar(hoy, -(DIAS - 1)), hasta = sumar(hoy, 1), avisos = [], datos = {};
-    // Cada tipo por separado: si uno falla, los demás se guardan igual y esa columna no se toca.
-    // Cada lectura devuelve {columna: {día: valor}}.
-    const tipos = {
-      pasos: () => ({ steps: porDia('steps', 'countSum', desde, hasta) }),
-      kcal: () => ({ kcal: porDia('total-calories', 'kcalSum', desde, hasta) }),
-      sueño: () => sueno(sumar(desde, -1)),
-      pulso: () => ({ rhr: pulso(desde) }),
-    };
-    for (const t in tipos) { try { Object.assign(datos, tipos[t]()); } catch (e) { avisos.push(t + ': ' + e.message); } }
-    const cols = Object.keys(datos), token = entrar(), ahora = new Date().toISOString();
-    const dias = [...new Set(cols.flatMap(c => Object.keys(datos[c])))].filter(d => d >= desde && d <= hoy).sort();
-    if (dias.length && cols.length) guardar(token, 'health_daily', dias.map(d => {
-      const f = { day: d, updated_at: ahora }; cols.forEach(c => { f[c] = datos[c][d] != null ? datos[c][d] : null; }); return f; }), 'user_id,day');
+    const hoy = dia(new Date()), token = entrar();
+    const avisos = leerYGuardar(token, sumar(hoy, -(DIAS - 1)), sumar(hoy, 1));
     let url = ''; try { url = urlApp() || ''; } catch (e) {}
     if (/\/dev$/.test(url)) url = '';
-    const estado = { last_sync: ahora, last_error: avisos.length ? avisos.join(' · ').slice(0, 500) : null };
+    const estado = { last_sync: new Date().toISOString(), last_error: avisos.length ? avisos.join(' · ').slice(0, 500) : null };
     if (url) estado.sync_url = url;
     guardar(token, 'health_status', [estado], 'user_id');
     if (avisos.length) console.warn(avisos.join('\n'));
     return avisos.length ? 'con avisos' : 'ok';
+  } finally { lock.releaseLock(); }
+}
+/** Ejecutar UNA vez desde el editor: trae el histórico de Google Health (por defecto el último año) en tramos de 14 días. */
+function historico(dias) {
+  dias = dias || 365;
+  const lock = LockService.getScriptLock(); if (!lock.tryLock(30000)) return console.log('Hay otra sincronización en marcha; prueba en un minuto.');
+  try {
+    const hoy = dia(new Date()), token = entrar(), avisos = [];
+    for (let fin = sumar(hoy, -(DIAS - 1)), n = 0; n < dias; n += 14) {
+      const ini = sumar(fin, -14);
+      leerYGuardar(token, ini, fin).forEach(a => avisos.push(ini + ' · ' + a));
+      console.log('Hecho hasta el ' + ini);
+      fin = ini;
+    }
+    console.log(avisos.length ? 'Terminado con avisos:\n' + avisos.join('\n') : 'Histórico terminado sin errores.');
   } finally { lock.releaseLock(); }
 }
 
