@@ -53,8 +53,9 @@ const A = {
   sah: () => { const R = salStats().L.slice().reverse(); modal(`<h3>Histórico · ${R.length}</h3><div class="shist">${R.map((d,i) => `<span>${fd(d)}${R[i+1] ? ` <i>${dd(d, R[i+1])} d</i>` : ''}</span>`).join('')}</div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button></div>`); },
   hls: () => hlSync(true),
   hlx: () => hlxOpen(),
-  hlxm: k => { hlx.m = k; const e = document.getElementById('hlx'); if (e) e.innerHTML = hlxHTML(); },
-  hlxd: k => { hlx.d = +k; const e = document.getElementById('hlx'); if (e) e.innerHTML = hlxHTML(); },
+  hlxm: k => { hlx.m = k; hlx.s = null; const e = document.getElementById('hlx'); if (e) e.innerHTML = hlxHTML(); },
+  hlxd: k => { hlx.d = +k; hlx.s = null; const e = document.getElementById('hlx'); if (e) e.innerHTML = hlxHTML(); },
+  hlxs: k => { hlx.s = hlx.s === +k ? null : +k; const e = document.getElementById('hlx'); if (e) e.innerHTML = hlxHTML(); },
   hlm: k => { const M = hlMeta(), P = k === 'pasos';
     CF(P ? 'Objetivo de pasos al día' : 'Objetivo de sueño (horas, por ejemplo 7,5)', v => {
       const n = pnum(v); if (!(n > 0)) return toast('Número no válido');

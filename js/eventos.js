@@ -15,6 +15,7 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('input', e => { if (e.target.id==='txq') { txf.q = e.target.value; txRefresh(); } });
 document.addEventListener('keydown', e => {
+  if ((e.key==='Enter' || e.key===' ') && e.target.matches('[role=button][data-a]')) { e.preventDefault(); e.target.click(); return; }
   if (e.key==='Enter' && e.target.tagName==='INPUT' && !e.target.closest('.ov')) { const b = e.target.closest('.f,.quick,.login')?.querySelector('button[data-a]'); if (b) { e.preventDefault(); b.click(); } }
   if (e.key==='n' && !/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) && !document.querySelector('.ov') && user!==undefined) { e.preventDefault(); addPicker(); }
 });
