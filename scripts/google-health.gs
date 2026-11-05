@@ -2,7 +2,7 @@
  * Salud del panel (Google Apps Script, en la cuenta de Google de la dueña del panel).
  *
  * Cada hora (y cuando el panel pulsa «Sincronizar ahora») lee de Google Health los últimos días:
- *   pasos y kcal (dailyRollUp), sueño (sesiones, sin siestas) y pulso en reposo,
+ *   pasos y kcal (dailyRollUp), sueño (sesiones, sin siestas: minutos, fases y horas) y pulso en reposo,
  * y los deja en Supabase: tabla health_daily (un día por fila) y health_status (hora, error y la dirección
  * de esta app web, que el panel usa para el botón «Sincronizar ahora»).
  *
@@ -109,13 +109,20 @@ function lista(tipo, filtro) {
   } while (tok);
   return out;
 }
-/* Minutos dormidos por día (el día en que te despiertas), sin contar siestas. */
+/* Sueño por día (el día en que te despiertas), sin contar siestas: minutos dormidos, minutos de cada fase
+   (despierta, ligero, profundo, REM) y hora de dormirte y de despertar. Si hay varias sesiones, se suman las fases
+   y se toma la primera hora de inicio y la última de fin. */
+const FASES = { AWAKE: 'awake_min', LIGHT: 'light_min', DEEP: 'deep_min', REM: 'rem_min' };
 function sueno(desde) {
-  const out = {};
+  const out = { sleep_min: {}, awake_min: {}, light_min: {}, deep_min: {}, rem_min: {}, bed_at: {}, wake_at: {} };
   lista('sleep', 'sleep.interval.civil_end_time >= "' + desde + 'T00:00:00"').forEach(p => {
-    const s = p.sleep || {}, fin = s.interval && s.interval.endTime, min = s.summary && s.summary.minutesAsleep;
-    if (!fin || min == null || (s.metadata && s.metadata.nap)) return;
-    const d = dia(new Date(fin)); out[d] = (out[d] || 0) + Number(min);
+    const s = p.sleep || {}, iv = s.interval || {}, fin = iv.endTime, sm = s.summary || {};
+    if (!fin || sm.minutesAsleep == null || (s.metadata && s.metadata.nap)) return;
+    const d = dia(new Date(fin)), suma = (c, v) => { out[c][d] = (out[c][d] || 0) + Number(v); };
+    suma('sleep_min', sm.minutesAsleep);
+    (sm.stagesSummary || []).forEach(f => { const c = FASES[String(f.type || '').toUpperCase()]; if (c && f.minutes != null) suma(c, f.minutes); });
+    if (iv.startTime && (!out.bed_at[d] || iv.startTime < out.bed_at[d])) out.bed_at[d] = iv.startTime;
+    if (!out.wake_at[d] || fin > out.wake_at[d]) out.wake_at[d] = fin;
   });
   return out;
 }
@@ -150,13 +157,14 @@ function sincronizar() {
   try {
     const hoy = dia(new Date()), desde = sumar(hoy, -(DIAS - 1)), hasta = sumar(hoy, 1), avisos = [], datos = {};
     // Cada tipo por separado: si uno falla, los demás se guardan igual y esa columna no se toca.
+    // Cada lectura devuelve {columna: {día: valor}}.
     const tipos = {
-      steps: () => porDia('steps', 'countSum', desde, hasta),
-      kcal: () => porDia('total-calories', 'kcalSum', desde, hasta),
-      sleep_min: () => sueno(sumar(desde, -1)),
-      rhr: () => pulso(desde),
+      pasos: () => ({ steps: porDia('steps', 'countSum', desde, hasta) }),
+      kcal: () => ({ kcal: porDia('total-calories', 'kcalSum', desde, hasta) }),
+      sueño: () => sueno(sumar(desde, -1)),
+      pulso: () => ({ rhr: pulso(desde) }),
     };
-    for (const col in tipos) { try { datos[col] = tipos[col](); } catch (e) { avisos.push(col + ': ' + e.message); } }
+    for (const t in tipos) { try { Object.assign(datos, tipos[t]()); } catch (e) { avisos.push(t + ': ' + e.message); } }
     const cols = Object.keys(datos), token = entrar(), ahora = new Date().toISOString();
     const dias = [...new Set(cols.flatMap(c => Object.keys(datos[c])))].filter(d => d >= desde && d <= hoy).sort();
     if (dias.length && cols.length) guardar(token, 'health_daily', dias.map(d => {

@@ -35,7 +35,7 @@ const HL_OLD = 30*60*1000;
 async function hlLoad(){
   if (!sb || !user) return;
   const [a, b] = await Promise.all([
-    sb.from('health_daily').select('day,steps,kcal,sleep_min,rhr').gte('day', addD(TD(), -13)).order('day'),
+    sb.from('health_daily').select('day,steps,kcal,sleep_min,rhr,awake_min,light_min,deep_min,rem_min,bed_at,wake_at').gte('day', addD(TD(), -13)).order('day'),
     sb.from('health_status').select('last_sync,last_error,sync_url').eq('user_id', user.id).maybeSingle()]);
   HL = a.error ? (HL || []) : (a.data || []);
   if (!b.error) HLS = b.data || null;
@@ -62,6 +62,18 @@ async function hlSync(manual){
 }
 const hlH = m => m == null ? '—' : Math.floor(m/60) + ' h ' + String(m%60).padStart(2,'0');
 const hlN = n => n == null ? '—' : Math.round(n).toLocaleString('es-ES');
+const hlHM = t => t ? new Date(t).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : '';
+/* Última noche: hora de dormirse → despertar y barra con el reparto de fases (despierta, REM, ligero, profundo). */
+function hlNoche(r){
+  if (!r) return '';
+  const F = [['awake_min','Despierta','aw'],['rem_min','REM','rem'],['light_min','Ligero','li'],['deep_min','Profundo','de']].filter(([k]) => r[k] != null);
+  const tot = F.reduce((a,[k]) => a + r[k], 0), hrs = r.bed_at && r.wake_at ? `${I('moon','sm')} ${hlHM(r.bed_at)} → ${hlHM(r.wake_at)}` : '';
+  if (!tot && !hrs) return '';
+  return `<div class="hln"><div class="hlnh"><b>Última noche</b><span class="mu">${hrs}</span></div>`
+    + (tot ? `<div class="hlst" role="img" aria-label="Fases del sueño">${F.map(([k,n,c]) => r[k] ? `<i class="${c}" style="flex:${r[k]}" title="${n}: ${hlH(r[k])}"></i>` : '').join('')}</div>
+      <div class="hlleg">${F.map(([k,n,c]) => `<span><i class="${c}"></i>${n} <b>${hlH(r[k])}</b> <small>${Math.round(r[k]/tot*100)} %</small></span>`).join('')}</div>` : '')
+    + `</div>`;
+}
 function hlHTML(){
   if (!sb || !user) return empty('Inicia sesión para ver los datos de Google Health.');
   if (HL === null) return `<div class="mu">Cargando…</div>`;
@@ -76,6 +88,7 @@ function hlHTML(){
     return `<div class="hlb${d===td?' on':''}" title="${fd(d)} · ${hlN(r.steps)} pasos · ${hlN(r.kcal)} kcal · sueño ${hlH(r.sleep_min)}"><small>${r.steps ? (r.steps >= 1000 ? (r.steps/1000).toFixed(1).replace('.',',') + 'k' : r.steps) : ''}</small><div class="tr"><i style="height:${h}%"></i></div><em>${d===td ? 'hoy' : wd.format(new Date(d+'T12:00')).replace('.','')}</em><span>${r.sleep_min != null ? (r.sleep_min/60).toFixed(1).replace('.',',') + ' h' : '·'}</span></div>`; }).join('');
   const st = HLS ? (hlSync.on ? 'Sincronizando…' : 'Actualizado ' + ago(HLS.last_sync)) : 'Aún no se ha sincronizado nunca';
   return (HL.length ? `<div class="hlg">${kpi('footprints','Pasos hoy',hlN(hoy.steps))}${kpi('flame','Kcal hoy',hlN(hoy.kcal))}${kpi('moon','Sueño',hlH(sl), sleepDay===td ? 'Anoche' : 'Noche anterior')}${kpi('heart-pulse','Pulso en reposo', rhrRow ? rhrRow.rhr + ' ppm' : '—', rhrRow && rhrRow.day !== td ? fd(rhrRow.day) : '')}</div>
+    ${hlNoche(by[sleepDay])}
     <div class="hlbars" role="img" aria-label="Pasos y horas de sueño de los últimos 7 días">${bars}</div>`
     : empty(HLS ? 'Google Health todavía no ha mandado datos.' : 'Cuando el programa de Google Health esté instalado, aquí saldrán tus pasos, kcal y sueño.'))
     + (HLS && HLS.last_error ? `<div class="mu wa" style="margin-top:8px">${I('triangle-alert','sm')} ${esc(HLS.last_error)}</div>` : '')

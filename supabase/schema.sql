@@ -192,6 +192,8 @@ create table if not exists public.health_daily (
   kcal       int,
   sleep_min  int,
   rhr        int,
+  awake_min  int, light_min int, deep_min int, rem_min int,   -- fases del sueño
+  bed_at     timestamptz, wake_at timestamptz,               -- hora de dormirse y de despertar
   updated_at timestamptz not null default now(),
   primary key (user_id, day)
 );
@@ -210,5 +212,6 @@ alter table public.health_status enable row level security;
 drop policy if exists "health_status propio" on public.health_status;
 create policy "health_status propio" on public.health_status
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+alter table public.health_daily add column if not exists awake_min int, add column if not exists light_min int, add column if not exists deep_min int, add column if not exists rem_min int, add column if not exists bed_at timestamptz, add column if not exists wake_at timestamptz;
 grant select, insert, update on public.health_daily, public.health_status to authenticated;
 grant all on public.health_daily, public.health_status to service_role;
