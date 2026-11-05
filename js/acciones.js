@@ -51,6 +51,7 @@ const A = {
   sai: () => { const d = V('sa1') || TD(); if (d > TD()) return toast('La fecha no puede ser futura'); const s = S.salud = S.salud || {ini:[], len:SAL_LEN}; if (s.ini.includes(d)) return toast('Ese día ya está apuntado'); s.ini.push(d); s.ini.sort(); ch(); toast('Apuntado'); },
   sad: i => CF('¿Quitar esta fecha?', () => { S.salud.ini = S.salud.ini.filter(d => d!==i); ch(); }),
   sah: () => { const R = salStats().L.slice().reverse(); modal(`<h3>Histórico · ${R.length}</h3><div class="shist">${R.map((d,i) => `<span>${fd(d)}${R[i+1] ? ` <i>${dd(d, R[i+1])} d</i>` : ''}</span>`).join('')}</div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button></div>`); },
+  hls: () => hlSync(true),
   sal: () => { const n = Math.round(+V('sa2')), m = Math.round(+V('sa3')); if (!(n >= 15 && n <= 60)) return toast('Pon un número de días entre 15 y 60'); if (!(m >= 1 && m <= 10)) return toast('Los días marcados van de 1 a 10'); S.salud = {ini:[], ...(S.salud||{}), len:n, dur:m}; ch(); toast('Guardado'); },
   dpe: i => CF('¿Eliminar este periodo?', () => { S.periods = S.periods.filter(p => p.id!==i); ch(); }),
   eb2: () => CF('Tope de gasto mensual (€)', v => { const a = pnum(v); if (!(a>=0)) return toast('Importe no válido'); S.budget = a; ch(); }, String(S.budget||'')),

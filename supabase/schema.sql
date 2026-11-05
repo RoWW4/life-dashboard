@@ -183,3 +183,32 @@ begin
 end $$;
 revoke all on function public.ldb_add_doc(text, text, text, text) from public, anon;
 grant execute on function public.ldb_add_doc(text, text, text, text) to authenticated;
+
+-- Salud: pasos, kcal, sueño y pulso en reposo por día (los escribe el Apps Script scripts/google-health.gs con la cuenta del panel)
+create table if not exists public.health_daily (
+  user_id    uuid not null default auth.uid() references auth.users on delete cascade,
+  day        date not null,
+  steps      int,
+  kcal       int,
+  sleep_min  int,
+  rhr        int,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, day)
+);
+alter table public.health_daily enable row level security;
+drop policy if exists "health_daily propio" on public.health_daily;
+create policy "health_daily propio" on public.health_daily
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+-- Estado de la sincronización y dirección de la app web para el botón «Sincronizar ahora»
+create table if not exists public.health_status (
+  user_id    uuid primary key default auth.uid() references auth.users on delete cascade,
+  last_sync  timestamptz,
+  last_error text,
+  sync_url   text
+);
+alter table public.health_status enable row level security;
+drop policy if exists "health_status propio" on public.health_status;
+create policy "health_status propio" on public.health_status
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+grant select, insert, update on public.health_daily, public.health_status to authenticated;
+grant all on public.health_daily, public.health_status to service_role;

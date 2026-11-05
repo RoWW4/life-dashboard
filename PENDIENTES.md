@@ -14,5 +14,5 @@ Solo lo importante que queda por decidir o hacer. **No hacerlo hasta que la due�
 - Plan B si el banco falla: importar el `.xls` o el PDF desde Ajustes → Banco.
 - Si vuelve a funcionar: sacar de `wallet_log` (`kind='rec'`) a qué horas trae Wallet los movimientos y ajustar las horas de la tarea `sync-wallet` de pg_cron para ir justo detrás.
 
-## Idea con fecha
-- Fitbit: traer pasos, sueño y pulso con la Google Health API. La API antigua de Fitbit se apaga el 02/11/2026. Si interesa, comprobar antes si el permiso de Google caduca cada 7 días en modo prueba.
+## Salud (Google Health)
+- Montado el 05/11/2026; falta instalar el Apps Script y comprobar con datos reales que llegan los cuatro datos y que el permiso no caduca a los 7 días (consentimiento «En producción»).
