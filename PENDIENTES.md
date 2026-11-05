@@ -15,4 +15,4 @@ Solo lo importante que queda por decidir o hacer. **No hacerlo hasta que la due�
 - Si vuelve a funcionar: sacar de `wallet_log` (`kind='rec'`) a qué horas trae Wallet los movimientos y ajustar las horas de la tarea `sync-wallet` de pg_cron para ir justo detrás.
 
 ## Salud (Google Health)
-- Montado el 05/11/2026; falta instalar el Apps Script y comprobar con datos reales que llegan los cuatro datos y que el permiso no caduca a los 7 días (consentimiento «En producción»).
+- Funcionando desde el 05/11/2026 (llegan los cuatro datos). Comprobar a partir del 13/11 que sigue sincronizando, es decir, que el permiso de Google no caduca a los 7 días; si caduca, ejecutar otra vez `conectar()` en Apps Script.
