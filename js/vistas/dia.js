@@ -22,9 +22,10 @@ function wxHTML(){
   const cols = mx.map((v,j) => `<span style="--y:${y(v).toFixed(2)}" title="${wxTxt(d.daily.weather_code[j], 1)[0]}"><b>${v}°</b><i></i><em>${j ? wd.format(new Date(d.daily.time[j]+'T12:00')).replace('.','') : 'hoy'}</em></span>`).join('');
   return `<div class="hwx" title="Tiempo en ${esc(S.wx.n)} (Open-Meteo)"><div class="hwn"><b>${r(d.current.temperature_2m)}°</b><span class="hwt"><span>${I(ic,'sm')}${t}</span><small>${esc(S.wx.n)} · ${r(d.daily.temperature_2m_min[0])}° mín</small></span></div><div class="hwc"><svg viewBox="0 -.08 4 1.16" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" vector-effect="non-scaling-stroke"/></svg>${cols}</div></div>`;
 }
+// Modelo europeo ECMWF (forzado con models=).
 function wxLoad(){
   const c = wxCache(); if (!S.wx || S.wxOff || (c && Date.now()-c.t < WXMIN) || wxLoad.on) return; wxLoad.on = 1;
-  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${S.wx.lat}&longitude=${S.wx.lon}&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4`)
+  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${S.wx.lat}&longitude=${S.wx.lon}&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4&models=ecmwf_ifs025`)
     .then(r => r.ok ? r.json() : Promise.reject()).then(d => { try { localStorage.setItem(WX, JSON.stringify({k:S.wx.lat+','+S.wx.lon, t:Date.now(), d})); } catch(e) {}
       const e = document.getElementById('hwx'); if (e) e.innerHTML = wxHTML(); }).catch(() => {}).finally(() => { wxLoad.on = 0; });
 }
