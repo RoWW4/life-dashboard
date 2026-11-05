@@ -13,6 +13,7 @@
  *
  * Propiedades del script (Configuración del proyecto → Propiedades del script), NUNCA en el código:
  *   EMAIL / PASSWORD · cuenta del panel     CLIENT_ID / CLIENT_SECRET · cliente OAuth del proyecto de Google Cloud
+ *   APP_URL · URL de la app web (la que acaba en /exec)
  *   (REFRESH y STATE las escribe el propio script)
  * Instalar: pegar este archivo y el manifiesto, rellenar las propiedades, implementar como «Aplicación web»
  * (ejecutar como: yo · acceso: cualquier usuario), ejecutar conectar() y abrir el enlace del registro, y luego instalar().
@@ -33,7 +34,9 @@ const deCivil = c => c && c.date ? c.date.year + '-' + ('0' + c.date.month).slic
 /* ---------- Permiso de Google Health (OAuth aparte, solo con estos permisos) ---------- */
 const SCOPES = ['activity_and_fitness', 'sleep', 'health_metrics_and_measurements']
   .map(s => 'https://www.googleapis.com/auth/googlehealth.' + s + '.readonly').join(' ');
-const urlApp = () => ScriptApp.getService().getUrl();
+// Dirección /exec de la app web. Desde el editor getUrl() da la de pruebas (/dev), que solo vale con la sesión
+// de Google abierta, así que se guarda la buena en la propiedad APP_URL.
+const urlApp = () => (P().getProperty('APP_URL') || '').trim() || ScriptApp.getService().getUrl();
 function pedirToken(datos) {
   const r = UrlFetchApp.fetch('https://oauth2.googleapis.com/token', { method: 'post', muteHttpExceptions: true,
     payload: Object.assign({ client_id: prop('CLIENT_ID'), client_secret: prop('CLIENT_SECRET') }, datos) });
@@ -52,6 +55,7 @@ function token() {
 /** Ejecutar desde el editor: escribe en el registro la URI de redirección (para el cliente OAuth) y el enlace para dar permiso. */
 function conectar() {
   prop('CLIENT_ID'); prop('CLIENT_SECRET');
+  if (!/\/exec$/.test(urlApp())) throw new Error('Falta la propiedad APP_URL con la URL de la app web (la que acaba en /exec)');
   const st = Utilities.getUuid(); P().setProperty('STATE', st);
   const url = 'https://accounts.google.com/o/oauth2/v2/auth?' + [['client_id', prop('CLIENT_ID')], ['redirect_uri', urlApp()],
     ['response_type', 'code'], ['scope', SCOPES], ['access_type', 'offline'], ['prompt', 'consent'], ['state', st]]
@@ -157,7 +161,8 @@ function sincronizar() {
     const dias = [...new Set(cols.flatMap(c => Object.keys(datos[c])))].filter(d => d >= desde && d <= hoy).sort();
     if (dias.length && cols.length) guardar(token, 'health_daily', dias.map(d => {
       const f = { day: d, updated_at: ahora }; cols.forEach(c => { f[c] = datos[c][d] != null ? datos[c][d] : null; }); return f; }), 'user_id,day');
-    let url = ''; try { url = ScriptApp.getService().getUrl() || ''; } catch (e) {}
+    let url = ''; try { url = urlApp() || ''; } catch (e) {}
+    if (/\/dev$/.test(url)) url = '';
     const estado = { last_sync: ahora, last_error: avisos.length ? avisos.join(' · ').slice(0, 500) : null };
     if (url) estado.sync_url = url;
     guardar(token, 'health_status', [estado], 'user_id');
