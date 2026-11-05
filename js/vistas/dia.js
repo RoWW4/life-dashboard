@@ -57,8 +57,6 @@ function vDia(){
   // Portada: fecha, saludo, una frase con lo que hay hoy y tres cifras (tareas, facturas y gasto del mes) que llevan a su sección.
   const sp = spent(m), B = S.budget||0, pc = B ? Math.round(sp/B*100) : 0, b7t = b7.reduce((a,o) => a+o.f.amt, 0);
   const pl = (n, s, p) => n+' '+(n===1 ? s : p);
-  const ctx = [tt.length ? pl(tt.length,'tarea','tareas')+' para hoy'+(late ? ` (${pl(late,'atrasada','atrasadas')})` : '') : 'Ninguna tarea para hoy',
-    b7.length ? pl(b7.length,'factura','facturas')+' en los próximos 7 días' : ''].filter(Boolean).join(' y ') + '.';
   const ring = p => { const R = 15, C = 2*Math.PI*R; return `<svg class="hring" viewBox="0 0 36 36" aria-hidden="true"><circle r="${R}" cx="18" cy="18"/><circle r="${R}" cx="18" cy="18" class="${p>=100?'over':p>=80?'near':''}" stroke-dasharray="${(C*Math.min(p,100)/100).toFixed(1)} ${C.toFixed(1)}"/></svg>`; };
   // Cada cifra lleva el icono y el color de su sección (--c).
   const hs = (go, ic, c, k, v, d, extra='') => `<button class="hs" style="--c:${c}" data-a="go" data-i="${go}"><span class="hk"><span class="hico">${I(ic)}</span>${k}</span><span class="hv">${v}${extra}</span><span class="hd2">${d}</span></button>`;
@@ -74,7 +72,7 @@ function vDia(){
   setTimeout(wxLoad);
   return `<section class="hero" aria-label="Resumen de hoy">
     <div class="hmain"><div class="eyb">${cap(new Intl.DateTimeFormat('es-ES',{weekday:'long',day:'numeric',month:'long'}).format(now))}</div>
-      <h2>${g}${S.name?', '+esc(S.name):''}</h2><p class="hctx">${ctx}</p></div>
+      <h2>${g}${S.name?', '+esc(S.name):''}</h2></div>
     ${S.wxOff ? '' : `<div id="hwx" class="haside">${wxHTML()}</div>`}
   </section>
   <div class="hst">
