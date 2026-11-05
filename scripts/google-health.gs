@@ -8,11 +8,14 @@
  *
  * Necesita un proyecto de Google Cloud propio con «Google Health API» habilitada y la pantalla de consentimiento
  * «En producción» (si se queda en «Prueba», el permiso caduca cada 7 días). El manifiesto es scripts/google-health-appsscript.json.
+ * Google Health rechaza el token propio de Apps Script (lleva otros permisos), así que el script pide uno aparte, solo
+ * con los permisos de salud, con un cliente OAuth «Aplicación web» del proyecto cuya URI de redirección es la de esta app web.
  *
  * Propiedades del script (Configuración del proyecto → Propiedades del script), NUNCA en el código:
- *   EMAIL / PASSWORD · cuenta del panel
+ *   EMAIL / PASSWORD · cuenta del panel     CLIENT_ID / CLIENT_SECRET · cliente OAuth del proyecto de Google Cloud
+ *   (REFRESH y STATE las escribe el propio script)
  * Instalar: pegar este archivo y el manifiesto, rellenar las propiedades, implementar como «Aplicación web»
- * (ejecutar como: yo · acceso: cualquier usuario) y ejecutar UNA vez la función instalar().
+ * (ejecutar como: yo · acceso: cualquier usuario), ejecutar conectar() y abrir el enlace del registro, y luego instalar().
  */
 const SB_URL = 'https://lvsjvdpxnuydtwajlvsv.supabase.co';
 const SB_KEY = 'sb_publishable_9XIhDkRWUeUjFY0qvk7Jhg_hgBc93wo'; // clave pública del panel (la misma que usa la web)
@@ -27,10 +30,51 @@ const sumar = (s, n) => { const [y, m, d] = s.split('-').map(Number); return dia
 const civil = s => { const [y, m, d] = s.split('-').map(Number); return { date: { year: y, month: m, day: d } }; };
 const deCivil = c => c && c.date ? c.date.year + '-' + ('0' + c.date.month).slice(-2) + '-' + ('0' + c.date.day).slice(-2) : '';
 
+/* ---------- Permiso de Google Health (OAuth aparte, solo con estos permisos) ---------- */
+const SCOPES = ['activity_and_fitness', 'sleep', 'health_metrics_and_measurements']
+  .map(s => 'https://www.googleapis.com/auth/googlehealth.' + s + '.readonly').join(' ');
+const urlApp = () => ScriptApp.getService().getUrl();
+function pedirToken(datos) {
+  const r = UrlFetchApp.fetch('https://oauth2.googleapis.com/token', { method: 'post', muteHttpExceptions: true,
+    payload: Object.assign({ client_id: prop('CLIENT_ID'), client_secret: prop('CLIENT_SECRET') }, datos) });
+  const j = JSON.parse(r.getContentText() || '{}');
+  if (r.getResponseCode() !== 200) throw new Error('permiso de Google: ' + (j.error_description || j.error || r.getResponseCode()));
+  return j;
+}
+function token() {
+  const c = CacheService.getScriptCache(), t = c.get('AT'); if (t) return t;
+  const rt = P().getProperty('REFRESH');
+  if (!rt) throw new Error('falta conectar con Google Health: ejecuta conectar() y abre el enlace');
+  const j = pedirToken({ grant_type: 'refresh_token', refresh_token: rt });
+  c.put('AT', j.access_token, Math.max(60, Math.min(3000, (j.expires_in || 3600) - 300)));
+  return j.access_token;
+}
+/** Ejecutar desde el editor: escribe en el registro la URI de redirección (para el cliente OAuth) y el enlace para dar permiso. */
+function conectar() {
+  prop('CLIENT_ID'); prop('CLIENT_SECRET');
+  const st = Utilities.getUuid(); P().setProperty('STATE', st);
+  const url = 'https://accounts.google.com/o/oauth2/v2/auth?' + [['client_id', prop('CLIENT_ID')], ['redirect_uri', urlApp()],
+    ['response_type', 'code'], ['scope', SCOPES], ['access_type', 'offline'], ['prompt', 'consent'], ['state', st]]
+    .map(([k, v]) => k + '=' + encodeURIComponent(v)).join('&');
+  console.log('1) URI de redirección del cliente OAuth:\n' + urlApp());
+  console.log('2) Abre este enlace y da permiso:\n' + url);
+}
+function recibirPermiso(p) {
+  const pag = t => HtmlService.createHtmlOutput('<meta name="viewport" content="width=device-width"><p style="font:18px system-ui;padding:24px">' + t + '</p>');
+  if (p.error) return pag('❌ Google no ha dado el permiso: ' + p.error);
+  if (!p.state || p.state !== P().getProperty('STATE')) return pag('❌ Enlace caducado: vuelve a ejecutar conectar().');
+  const j = pedirToken({ grant_type: 'authorization_code', code: p.code, redirect_uri: urlApp() });
+  if (!j.refresh_token) return pag('❌ Google no ha mandado el permiso permanente. Quita el acceso de «Panel salud» en tu cuenta de Google y repite conectar().');
+  P().setProperty('REFRESH', j.refresh_token); P().deleteProperty('STATE');
+  CacheService.getScriptCache().put('AT', j.access_token, 3000);
+  let r = ''; try { r = sincronizar(); } catch (e) { r = 'error: ' + e.message; }
+  return pag('✅ Conectado con Google Health. Primera sincronización: ' + r + '.<br>Ya puedes cerrar esta pestaña.');
+}
+
 /* ---------- Google Health ---------- */
 function gh(ruta, opciones) {
   const r = UrlFetchApp.fetch(GH + ruta, Object.assign({
-    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, contentType: 'application/json', muteHttpExceptions: true }, opciones || {}));
+    headers: { Authorization: 'Bearer ' + token() }, contentType: 'application/json', muteHttpExceptions: true }, opciones || {}));
   if (r.getResponseCode() !== 200) throw new Error(ruta.split('/')[0] + ' → ' + r.getResponseCode() + ' ' + r.getContentText().slice(0, 300));
   return JSON.parse(r.getContentText() || '{}');
 }
@@ -122,15 +166,17 @@ function sincronizar() {
   } finally { lock.releaseLock(); }
 }
 
-/* El botón «Sincronizar ahora» del panel abre esta dirección. */
-function doGet() {
+/* El botón «Sincronizar ahora» del panel abre esta dirección; Google vuelve aquí también al dar el permiso (?code=…). */
+function doGet(e) {
+  const p = (e && e.parameter) || {};
+  if (p.code || p.error) return recibirPermiso(p);
   let res; try { res = { ok: true, estado: sincronizar() }; } catch (e) { res = { ok: false, error: String(e.message || e) }; }
   return ContentService.createTextOutput(JSON.stringify(res)).setMimeType(ContentService.MimeType.JSON);
 }
 
 /** Ejecutar UNA vez (después de implementar la app web): pide los permisos, sincroniza y deja la sincronización cada hora. */
 function instalar() {
-  ['EMAIL', 'PASSWORD'].forEach(prop);
+  ['EMAIL', 'PASSWORD', 'CLIENT_ID', 'CLIENT_SECRET', 'REFRESH'].forEach(prop);
   ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'sincronizar').forEach(t => ScriptApp.deleteTrigger(t));
   ScriptApp.newTrigger('sincronizar').timeBased().everyHours(1).create();
   console.log('Primera sincronización: ' + sincronizar());
