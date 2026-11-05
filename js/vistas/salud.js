@@ -64,7 +64,9 @@ const hlH = m => m == null ? '—' : Math.floor(m/60) + ' h ' + String(m%60).pad
 const hlN = n => n == null ? '—' : Math.round(n).toLocaleString('es-ES', {useGrouping:'always'});
 const hlD = m => m == null ? '—' : `${Math.floor(m/60)}<small>h</small> ${String(m%60).padStart(2,'0')}<small>min</small>`;
 const hlHM = t => t ? new Date(t).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : '';
-const HL_PASOS = 10000, HL_SUENO = 8*60;   // objetivos para las barras de progreso
+/* Objetivos para las barras de progreso: los pone Rocío (se guardan en S.salud); si no, 10.000 pasos y 8 h. */
+const hlMeta = () => ({pasos: (S.salud||{}).pasos || 10000, sueno: (S.salud||{}).sueno || 8*60});
+const hlHm = m => m%60 ? `${Math.floor(m/60)}h ${String(m%60).padStart(2,'0')}` : `${m/60} h`;
 /* Colores: cada dato y cada fase del sueño tiene el suyo (se usan como --c en las piezas). */
 const HLC = {pasos:'#34d399', kcal:'#fb923c', sueno:'#a78bfa', pulso:'#f472b6'};
 const HLF = [['awake_min','Despierta','#fbbf24'],['rem_min','REM','#38bdf8'],['light_min','Ligero','#818cf8'],['deep_min','Profundo','#4f46e5']];
@@ -80,7 +82,7 @@ function hlNoche(r){
   const F = HLF.filter(([k]) => r[k] != null), tot = F.reduce((a,[k]) => a + r[k], 0);
   const hrs = r.bed_at && r.wake_at ? `<span class="hlhr">${I('moon','sm')}${hlHM(r.bed_at)}<i>→</i>${I('sunrise','sm')}${hlHM(r.wake_at)}</span>` : '';
   if (!tot && !hrs) return '';
-  return `<div class="hln" style="--c:${HLC.sueno}"><div class="hlnh"><span class="hico">${I('moon-star')}</span><b>Última noche</b>${hrs}</div>`
+  return `<div class="hln" style="--c:${HLC.sueno}"><div class="hlnh"><span class="hico">${I('bed')}</span><b>Última noche</b>${hrs}</div>`
     + (tot ? `<div class="hlst" role="img" aria-label="Fases del sueño">${F.map(([k,n,c]) => r[k] ? `<i style="flex:${r[k]};--c:${c}" title="${n}: ${hlH(r[k])}"></i>` : '').join('')}</div>
       <div class="hlleg">${F.map(([k,n,c]) => `<div style="--c:${c}"><span><i></i>${n}</span><b>${hlD(r[k])}</b><small>${Math.round(r[k]/tot*100)} %</small></div>`).join('')}</div>` : '')
     + `</div>`;
@@ -90,19 +92,19 @@ function hlHTML(){
   if (HL === null) return `<div class="mu">Cargando…</div>`;
   const by = Object.fromEntries(HL.map(r => [r.day, r])), td = TD(), hoy = by[td] || {};
   const sleepDay = by[td] && by[td].sleep_min != null ? td : addD(td, -1), sl = (by[sleepDay] || {}).sleep_min;
-  const rhrRow = [...HL].reverse().find(r => r.rhr != null);
+  const rhrRow = [...HL].reverse().find(r => r.rhr != null), M = hlMeta(), HL_PASOS = M.pasos, HL_SUENO = M.sueno;
   // Últimos 7 días: barras de pasos (con la línea del objetivo) y, debajo, las horas de sueño.
   const days = [...Array(7)].map((_,i) => addD(td, i-6)), mx = Math.max(HL_PASOS, ...days.map(d => (by[d]||{}).steps || 0));
   const wd = new Intl.DateTimeFormat('es-ES', {weekday:'short'});
   const bars = days.map(d => { const r = by[d] || {}, h = r.steps ? Math.max(3, r.steps/mx*100) : 0, ok = r.steps >= HL_PASOS;
-    return `<div class="hlb${d===td?' on':''}${ok?' ok':''}" title="${fd(d)} · ${hlN(r.steps)} pasos · ${hlN(r.kcal)} kcal · sueño ${hlH(r.sleep_min)}"><small>${r.steps ? (r.steps >= 1000 ? (r.steps/1000).toFixed(1).replace('.',',') + 'k' : r.steps) : ''}</small><div class="tr"><i style="height:${h.toFixed(1)}%"></i></div><em>${d===td ? 'Hoy' : wd.format(new Date(d+'T12:00')).replace('.','')}</em><span class="hlz">${r.sleep_min != null ? (r.sleep_min/60).toFixed(1).replace('.',',') + 'h' : '–'}</span></div>`; }).join('');
+    return `<div class="hlb${d===td?' on':''}${ok?' ok':''}" title="${fd(d)} · ${hlN(r.steps)} pasos · ${hlN(r.kcal)} kcal · sueño ${hlH(r.sleep_min)}"><small>${r.steps ? (r.steps >= 1000 ? (r.steps/1000).toFixed(1).replace('.',',') + 'k' : r.steps) : ''}</small><div class="tr"><i style="height:${h.toFixed(1)}%"></i></div><em>${d===td ? 'Hoy' : wd.format(new Date(d+'T12:00')).replace('.','')}</em><span class="hlz">${r.sleep_min != null ? hlHm(r.sleep_min) : '–'}</span></div>`; }).join('');
   const st = HLS ? (hlSync.on ? 'Sincronizando…' : 'Actualizado ' + ago(HLS.last_sync)) : 'Aún no se ha sincronizado nunca';
-  return (HL.length ? `<div class="hlg">${hlKpi(HLC.pasos,'footprints','Pasos',hlN(hoy.steps), hoy.steps != null ? `${Math.round(hoy.steps/HL_PASOS*100)} % de ${hlN(HL_PASOS)}` : 'Hoy', hoy.steps != null ? hoy.steps/HL_PASOS*100 : null)}`
+  return (HL.length ? `<div class="hlg">${hlKpi(HLC.pasos,'footprints','Pasos',hlN(hoy.steps), `<button class="hlmb" data-a="hlm" data-i="pasos" title="Cambiar el objetivo de pasos">${hoy.steps != null ? Math.round(hoy.steps/HL_PASOS*100) + ' % de ' : 'Objetivo '}${hlN(HL_PASOS)} ${I('pencil','sm')}</button>`, hoy.steps != null ? hoy.steps/HL_PASOS*100 : null)}`
       + `${hlKpi(HLC.kcal,'flame','Calorías',`${hlN(hoy.kcal)}<small>kcal</small>`, 'Quemadas hoy')}`
-      + `${hlKpi(HLC.sueno,'moon','Sueño',hlD(sl), sleepDay===td ? 'Anoche' : 'Noche anterior', sl != null ? sl/HL_SUENO*100 : null)}`
+      + `${hlKpi(HLC.sueno,'moon','Sueño',hlD(sl), `<button class="hlmb" data-a="hlm" data-i="sueno" title="Cambiar el objetivo de sueño">${sleepDay===td ? 'Anoche' : 'Noche anterior'} · meta ${hlHm(HL_SUENO)} ${I('pencil','sm')}</button>`, sl != null ? sl/HL_SUENO*100 : null)}`
       + `${hlKpi(HLC.pulso,'heart-pulse','Pulso',rhrRow ? `${rhrRow.rhr}<small>ppm</small>` : '—', 'En reposo' + (rhrRow && rhrRow.day !== td ? ' · ' + fd(rhrRow.day) : ''))}</div>
     ${hlNoche(by[sleepDay])}
-    <div class="hlw"><div class="hlwh"><b>Últimos 7 días</b><span><i style="--c:${HLC.pasos}"></i>Pasos</span><span><i style="--c:${HLC.sueno}"></i>Sueño</span></div>
+    <div class="hlw"><div class="hlwh"><b>Últimos 7 días</b><span><i style="--c:${HLC.pasos}"></i>Pasos</span><span><i style="--c:${HLC.sueno}"></i>Sueño</span><button class="hlmb hlmeta" data-a="hlm" data-i="pasos" title="Cambiar el objetivo de pasos"><i></i>Objetivo ${hlN(HL_PASOS)}</button></div>
     <div class="hlbars" role="img" aria-label="Pasos y horas de sueño de los últimos 7 días" style="--g:${(HL_PASOS/mx*100).toFixed(1)}%">${bars}</div></div>`
     : empty(HLS ? 'Google Health todavía no ha mandado datos.' : 'Cuando el programa de Google Health esté instalado, aquí saldrán tus pasos, kcal y sueño.'))
     + (HLS && HLS.last_error ? `<div class="mu wa" style="margin-top:8px">${I('triangle-alert','sm')} ${esc(HLS.last_error)}</div>` : '')

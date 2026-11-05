@@ -52,6 +52,12 @@ const A = {
   sad: i => CF('¿Quitar esta fecha?', () => { S.salud.ini = S.salud.ini.filter(d => d!==i); ch(); }),
   sah: () => { const R = salStats().L.slice().reverse(); modal(`<h3>Histórico · ${R.length}</h3><div class="shist">${R.map((d,i) => `<span>${fd(d)}${R[i+1] ? ` <i>${dd(d, R[i+1])} d</i>` : ''}</span>`).join('')}</div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button></div>`); },
   hls: () => hlSync(true),
+  hlm: k => { const M = hlMeta(), P = k === 'pasos';
+    CF(P ? 'Objetivo de pasos al día' : 'Objetivo de sueño (horas, por ejemplo 7,5)', v => {
+      const n = pnum(v); if (!(n > 0)) return toast('Número no válido');
+      if (P ? !(n >= 1000 && n <= 50000) : !(n >= 4 && n <= 12)) return toast(P ? 'Pon entre 1.000 y 50.000 pasos' : 'Pon entre 4 y 12 horas');
+      S.salud = {ini:[], len:SAL_LEN, ...(S.salud||{}), [k]: P ? Math.round(n) : Math.round(n*60)}; ch(); toast('Objetivo guardado'); },
+      P ? String(M.pasos) : String(M.sueno/60).replace('.',',')); },
   sal: () => { const n = Math.round(+V('sa2')), m = Math.round(+V('sa3')); if (!(n >= 15 && n <= 60)) return toast('Pon un número de días entre 15 y 60'); if (!(m >= 1 && m <= 10)) return toast('Los días marcados van de 1 a 10'); S.salud = {ini:[], ...(S.salud||{}), len:n, dur:m}; ch(); toast('Guardado'); },
   dpe: i => CF('¿Eliminar este periodo?', () => { S.periods = S.periods.filter(p => p.id!==i); ch(); }),
   eb2: () => CF('Tope de gasto mensual (€)', v => { const a = pnum(v); if (!(a>=0)) return toast('Importe no válido'); S.budget = a; ch(); }, String(S.budget||'')),
