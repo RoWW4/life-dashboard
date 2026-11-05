@@ -577,7 +577,8 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .card[data-k=cal],.card[data-k=mov]{--mod:var(--ac)}
 .card[data-k=fact],.card[data-k=pag],.card[data-k=sinc]{--mod:#f0a83a}
 .card[data-k=gasto],.card[data-k=ahorro]{--mod:#22c3b4}
-.card[data-k=docs]{--mod:#f07da8}
+.card[data-k=docs]{--mod:#f5d33d}
+.nv[data-i=docs].on .e{color:#2b2300}:root[data-theme=light] .nv[data-i=docs]{--c:#c99a06}:root[data-theme=light] .card[data-k=docs]{--mod:#c99a06}
 .card[data-k=ing]{--mod:var(--ok)}
 .card[data-k=reglas],.card[data-k=det]{--mod:#9b87f5}
 .card[data-v=salud]{--mod:var(--rose)}
@@ -695,7 +696,7 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 /* Menú del ordenador: sin caja, pegado al borde sobre el fondo de la página. Cada sección tiene su icono en una baldosa
    de su color (--c); la abierta va en una tarjeta con la baldosa rellena. */
 .nv[data-i=dia]{--c:#2f9bff}.nv[data-i=tareas]{--c:#9b87f5}.nv[data-i=compra]{--c:#34c77b}.nv[data-i=fin]{--c:#22c3b4}
-.nv[data-i=fact]{--c:#f0a83a}.nv[data-i=docs]{--c:#f07da8}.nv[data-i=inv]{--c:#7aa7ff}.nv[data-i=salud]{--c:var(--rose)}.nv[data-i=ajus]{--c:var(--mu)}
+.nv[data-i=fact]{--c:#f0a83a}.nv[data-i=docs]{--c:#f5d33d}.nv[data-i=inv]{--c:#7aa7ff}.nv[data-i=salud]{--c:var(--rose)}.nv[data-i=ajus]{--c:var(--mu)}
 @media(min-width:761px){
   nav{width:240px;top:0;height:100vh;height:100dvh;margin:0;padding:26px 14px 18px;border:0;border-right:1px solid var(--sep);border-radius:0;background:transparent;box-shadow:none;gap:3px}
   .brand{font-size:16.5px;font-weight:700;padding:0 8px 26px;gap:11px}
