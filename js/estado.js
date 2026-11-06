@@ -1,10 +1,10 @@
 'use strict';
 /* Estado del panel (objeto S), semillas y migraciones de datos. */
 /* ---------- estado ---------- */
-const def = () => ({name:'',tasks:[],events:[],shop:[],tx:[],bills:[],fixed:[],fxIgn:[],docs:[],order:{},fxDone:[],fxFrom:'',budget:0,theme:'dark',cur:'EUR',seeded:[],rules:[],fixes:[],region:'',localHol:[],periods:[],bankSeen:[],bankLast:'',gacct:'',sav:null,bar:null,_ts:0});
+const def = () => ({name:'',tasks:[],shop:[],tx:[],fixed:[],fxIgn:[],docs:[],order:{},fxDone:[],fxFrom:'',budget:0,theme:'dark',cur:'EUR',seeded:[],rules:[],fixes:[],region:'',localHol:[],periods:[],bankSeen:[],bankLast:'',gacct:'',sav:null,bar:null,_ts:0});
 function normalize(o){
   const s = {...def(), ...(o||{})};
-  for (const k of ['tasks','events','shop','tx','bills','fixed','fxIgn','docs','fxDone','seeded','rules','fixes','localHol','periods','bankSeen']) if(!Array.isArray(s[k])) s[k] = [];
+  for (const k of ['tasks','shop','tx','fixed','fxIgn','docs','fxDone','seeded','rules','fixes','localHol','periods','bankSeen']) if(!Array.isArray(s[k])) s[k] = [];
   if (!s.order || typeof s.order !== 'object') s.order = {};
   return s;
 }
@@ -26,12 +26,12 @@ function seed(){
   // Prioridad de las tareas: solo Normal o Alta (Baja y Media pasan a Normal; Urgente, a Alta).
   once('pr-2-v1', () => S.tasks.forEach(t => { t.pr = t.pr==='Alta' || t.pr==='Urgente' ? 'Alta' : 'Normal'; }));
   // Migraciones de versiones anteriores
-  if (S.events.length) { S.events.forEach(e => S.tasks.push({id:id(),title:e.title,due:e.date,tm:e.start||'',pr:'Normal',area:'Personal',rep:'',done:false})); S.events = []; c++; }
+  if (Array.isArray(S.events) && S.events.length) S.events.forEach(e => S.tasks.push({id:id(),title:e.title,due:e.date,tm:e.start||'',pr:'Normal',area:'Personal',rep:'',done:false}));
   S.tasks.forEach(t => { if(t.rep===undefined){ t.rep = t.area==='Cumpleaños'?'Anual':''; c++; } if(t.tm===undefined) t.tm=''; });
   // Fijos y facturas pasan a ser una sola lista (S.fixed, sección Facturas). La app deja de apuntar gastos sola:
   // cada pago se da por hecho cuando llega su movimiento del banco (o se marca a mano).
   once('unify-v1', () => {
-    S.bills.filter(b => !b.paid).forEach(b => {
+    (S.bills||[]).filter(b => !b.paid).forEach(b => {
       const f = {id:'fx-'+b.id, name:b.name, t:'g', amt:b.amount||0, cat:b.cat||classify(b.name), day:+b.due.slice(8), from:mon(b.due)};
       if (b.freq==='Única') { f.once = b.due; delete f.day; }
       else if (b.freq==='Anual') f.month = +b.due.slice(5,7);
@@ -39,10 +39,11 @@ function seed(){
       S.fixed.push(f);
       S.tx.forEach(x => { if (x.billId===b.id) { x.fid = f.id; delete x.billId; } });
     });
-    S.bills = [];
     S.fixed.forEach(f => { const x = S.tx.find(y => y.fid===f.id && fromBank(y)); if (x && !f.k) f.k = nt(concept(x)).trim(); });
     S.tx.filter(x => fromBank(x) && x.date >= addD(TD(),-90)).forEach(fxMatch);
   });
+  // «events» (agenda antigua) y «bills» (facturas antiguas) ya pasaron a Tareas y Facturas: se quitan de los datos.
+  for (const k of ['events','bills']) if (k in S) { delete S[k]; c++; }
   c += fxLearn();
   if (S.theme === 'auto') S.theme = 'dark';
   return c > 0;

@@ -136,7 +136,7 @@ function voice(src){
   if (r.k==='tx') { if (!(r.amt>0)) return toast('No he entendido el importe'); S.tx.push({id:id(), t:r.ty, amt:r.amt, cat:r.cat, date:TD(), desc:r.desc}); ch(); return toast(`💶 ${r.ty==='i'?'Ingreso':'Gasto'} de ${eur(r.amt)} en ${r.cat}`); }
   if (r.k==='vac') return addVac(r.name, r.from, r.to);
   if (!r.title) return toast('No he entendido la tarea');
-  S.tasks.push({id:id(), title:r.title, due:r.due, tm:r.tm, pr:r.pr, area:r.area, rep:'', done:false}); ch();
+  S.tasks.push({id:id(), title:r.title, due:r.due, tm:r.tm, pr:r.pr, area:r.area, rep:r.area==='Cumpleaños'?'Anual':'', done:false}); ch();
   toast(`✅ Tarea en ${r.area}` + (r.due ? ' · ' + dlabel(r.due) + (r.tm ? ' ' + r.tm : '') : ' · Sin fecha'));
 }
 function guessArea(t){

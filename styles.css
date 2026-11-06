@@ -522,6 +522,11 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .txr{max-width:60%}
 .txb{display:flex;align-items:center;gap:2px}
 .txb .amt{margin-right:4px}
+/* Movimientos: una línea limpia (concepto y, debajo, la categoría); al tocarla se abre para cambiar categoría, nota, Facturas o eliminar. */
+.txg{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:2px;cursor:pointer}
+.txg .tt{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.txg:hover .tt{color:var(--ac2)}
+.txg .meta{font-size:12px}
 
 /* Casillas con icono «i» que despliega su explicación */
 .chkr{display:flex;align-items:center;gap:2px}.chkr .chk{flex:none;margin:0}

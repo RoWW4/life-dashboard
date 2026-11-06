@@ -39,7 +39,7 @@ function vDia(){
     ...S.periods.filter(p => dayDiff(p.from)>=1 && dayDiff(p.from)<=7).map(p => [p.from, '', perRow(p)])].sort((a,b) => (a[0]+a[1]).localeCompare(b[0]+b[1]));
   // Cabecera de cada día con el día de la semana (también el séptimo, que rel() daría como «En 7 d»).
   const wday = d => dayDiff(d)===7 ? new Intl.DateTimeFormat('es-ES',{weekday:'long'}).format(new Date(d+'T00:00')) : rel(d);
-  let lastU = ''; const upRows = up.map(([d,,r]) => { const hd = d!==lastU ? `<div class="dh">${cap(wday(d))} · ${fd(d)}</div>` : ''; lastU = d; return hd + r; });
+  let lastU = ''; const upRows = up.map(([d,,r]) => { const hd = d!==lastU ? `<div class="dh">${cap(wday(d))} · ${fdc(d)}</div>` : ''; lastU = d; return hd + r; });
   const imp = [...open.filter(t => t.due && dayDiff(t.due)<=1).map(t => [t.due, ico(t), t.title, AC[t.area], t.id]), ...fxDue(7).map(o => [o.d, 'receipt', o.f.name+' · '+eur(o.f.amt), col(o.f.cat)]), ...S.docs.filter(d => d.exp && dayDiff(d.exp)<=30).map(d => [d.exp, DI[d.cat]||'file-text', 'Vence: '+d.name, DCOL[d.cat]]), ...bankAlerts()].sort((a,b) => a[0].localeCompare(b[0]));
   const b7 = fxDue(7), m = MN(now);
   const P = S.shop.filter(s => !s.done), pins = pinDocs().slice(0, PINMAX);
@@ -62,7 +62,7 @@ function vDia(){
   const hs = (go, ic, c, k, v, d, extra='') => `<button class="hs" style="--c:${c}" data-a="go" data-i="${go}"><span class="hk"><span class="hico">${I(ic)}</span>${k}</span><span class="hv">${v}${extra}</span><span class="hd2">${d}</span></button>`;
   // Fila de accesos: la compra (cuántos productos faltan) y los documentos a mano, que se abren directamente.
   const qd = d => d.url
-    ? `<a class="qc" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer"><span class="qi" style="--c:${DCOL[d.cat]}">${I(DI[d.cat]||'file-text')}</span>${esc(d.name)}${d.exp&&dayDiff(d.exp)<=60?`<em class="${dayDiff(d.exp)<0?'er':'wa'}">${dayDiff(d.exp)<0?'Caducó':'Vence '+fd(d.exp)}</em>`:''}</a>`
+    ? `<a class="qc" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer"><span class="qi" style="--c:${DCOL[d.cat]}">${I(DI[d.cat]||'file-text')}</span>${esc(d.name)}${d.exp&&dayDiff(d.exp)<=60?`<em class="${dayDiff(d.exp)<0?'er':'wa'}">${dayDiff(d.exp)<0?'Caducó':'Vence '+fdc(d.exp)}</em>`:''}</a>`
     : `<button class="qc off" data-a="ed" data-i="${d.id}"><span class="qi" style="--c:${DCOL[d.cat]}">${I(DI[d.cat]||'file-text')}</span>${esc(d.name)}<em>Añadir enlace</em></button>`;
   const quick = `<div class="qrow" aria-label="Accesos rápidos">
     <button class="qc" data-a="go" data-i="compra"><span class="qi" style="--c:#34c77b">${I('shopping-cart')}</span>Compra${P.length?` <b>${P.length}</b>`:''}</button>

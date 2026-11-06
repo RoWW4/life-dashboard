@@ -72,6 +72,9 @@ const nt = s => ' ' + String(s||'').toLowerCase().normalize('NFD').replace(/[̀-
 const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
 const opts = (arr,sel) => arr.map(x => `<option ${x===sel?'selected':''}>${esc(x)}</option>`).join('');
 const hash = s => { let h1 = 0xdeadbeef, h2 = 0x41c6ce57; for (let i=0;i<s.length;i++){ const c=s.charCodeAt(i); h1=Math.imul(h1^c,2654435761); h2=Math.imul(h2^c,1597334677); } h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909); h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909); return (4294967296*(2097151&h2)+(h1>>>0)).toString(36); };
-const rel = d => { if(!d) return 'sin fecha'; const n = dayDiff(d); return n<-1 ? 'hace '+(-n)+' d' : n===-1 ? 'ayer' : n===0 ? 'hoy' : n===1 ? 'mañana' : n<7 ? new Intl.DateTimeFormat('es-ES',{weekday:'long'}).format(new Date(d+'T00:00')) : n<31 ? 'en '+n+' d' : fd(d); };
+/* Fecha corta: «22 dic» (con el año si no es el actual: «22 dic 2027»). */
+const fdc = d => { if (!d) return ''; const [y,m,dd] = d.split('-'); return +dd+' '+['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][+m-1]+(y===TD().slice(0,4)?'':' '+y); };
+/* Cuándo, siempre igual en toda la app: hoy, mañana, el día de la semana, «en N d» / «hace N d» hasta un mes y, más lejos, «22 dic». */
+const rel = d => { if(!d) return 'sin fecha'; const n = dayDiff(d); return n<-30 ? fdc(d) : n<-1 ? 'hace '+(-n)+' d' : n===-1 ? 'ayer' : n===0 ? 'hoy' : n===1 ? 'mañana' : n<7 ? new Intl.DateTimeFormat('es-ES',{weekday:'long'}).format(new Date(d+'T00:00')) : n<31 ? 'en '+n+' d' : fdc(d); };
 const ago = t => { if(!t) return 'nunca'; const m = Math.round((Date.now()-new Date(t))/6e4); return m<2?'ahora mismo':m<60?'hace '+m+' min':m<1440?'hace '+Math.round(m/60)+' h':'hace '+Math.round(m/1440)+' d'; };
 

@@ -22,7 +22,7 @@ const A = {
   txfp: (i,el) => { const v = el.value; if (v.startsWith('m:')) { const n = new Date(); finOff = (+v.slice(2,6)*12 + +v.slice(7,9)) - (n.getFullYear()*12 + n.getMonth()+1); txf.per = 'mes'; render(); } else { txf.per = v; txRefresh(); } },
   txft: i => { txf.t = i; render(); },
   txr: () => { txf = {q:'', cat:'', per:'mes', t:''}; render(); },
-  add: () => addPicker(), nt: () => taskForm(), nx: () => txForm(),
+  add: () => addPicker(), nt: () => taskForm(), nc: () => taskForm(null, {area:'Cumpleaños', rep:'Anual'}), nx: () => txForm(),
   et: i => taskForm(S.tasks.find(x => x.id===i)),
   tt: i => { const t = S.tasks.find(x => x.id===i); t.done = !t.done; if (t.done) t.doneAt = TD(); else delete t.doneAt;
     if (t.done && t.rep && t.due) { const nd = nextDue(t.due, t.rep); if (!S.tasks.some(x => !x.done && x.title===t.title && x.due===nd)) { S.tasks.push({id:id(), title:t.title, due:nd, pr:t.pr, area:t.area, rep:t.rep, tm:t.tm||'', done:false}); toast('🔁 Próxima: '+fd(nd)); } }
