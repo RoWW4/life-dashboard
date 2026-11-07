@@ -644,7 +644,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 }
 
 /* ---------- reloj y fondos ---------- */
-/* Tiempo en la portada: sin caja. Temperatura grande y fina, el cielo y la ciudad, y una curva con la máxima de 4 días */
+/* Tiempo en la portada: sin caja. Temperatura grande y fina, el cielo y la ciudad, y una curva con la máxima de 4 días y la mínima debajo */
 .hwx{display:flex;align-items:flex-end;gap:26px;margin:16px 0 4px;flex-wrap:wrap}
 .hwn{display:flex;align-items:center;gap:14px}
 .hwn>b{font-size:64px;font-weight:300;letter-spacing:-.06em;line-height:.85;font-variant-numeric:tabular-nums}
@@ -657,11 +657,12 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .hwc{position:relative;display:grid;grid-template-columns:repeat(4,38px);padding-left:22px;border-left:1px solid var(--hero-bd)}
 .hwc svg{position:absolute;left:22px;right:0;top:22px;height:22px;width:calc(100% - 22px);overflow:visible}
 .hwc polyline{fill:none;stroke:var(--hero-mu);stroke-width:1.2;stroke-linejoin:round;stroke-linecap:round;opacity:.7}
-.hwc>span{position:relative;height:66px;text-align:center}
+.hwc>span{position:relative;height:82px;text-align:center}
 .hwc>span b{position:absolute;left:0;right:0;top:calc(var(--y)*22px);font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
 .hwc>span i{position:absolute;left:50%;top:calc(22px + var(--y)*22px);width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:var(--hero-tx);box-shadow:0 0 0 3px color-mix(in srgb,var(--hero-tx) 18%,transparent)}
 .hwc>span:first-child i{background:var(--ac);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 30%,transparent),0 0 14px var(--ac)}
 .hwc>span em{position:absolute;left:0;right:0;bottom:0;font-style:normal;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--hero-mu)}
+.hwc>span small{position:absolute;left:0;right:0;bottom:16px;font-size:11px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1;color:var(--hero-mu)}
 .hwc>span:first-child em{color:var(--hero-tx)}
 .hwxadd{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin:12px 0 4px;font-size:13px;color:var(--hero-mu);border-bottom:1px dashed currentColor}
 .hwxadd:hover{color:var(--hero-tx)}
@@ -681,7 +682,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .bg-on .hero::before,.bg-on .hero::after{display:none}
 .bg-on .hs{background:rgba(8,14,30,.38);border-color:rgba(255,255,255,.14);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .bg-on .hs:hover{background:rgba(8,14,30,.55)}
-.bg-on .hero .eyb,.bg-on .hctx,.bg-on .hk,.bg-on .hd2,.bg-on .hwc em,.bg-on .hwt small{color:rgba(235,242,255,.82)}
+.bg-on .hero .eyb,.bg-on .hctx,.bg-on .hk,.bg-on .hd2,.bg-on .hwc em,.bg-on .hwc small,.bg-on .hwt small{color:rgba(235,242,255,.82)}
 .bg-on .hero h2,.bg-on .hwn{text-shadow:0 2px 24px rgba(0,0,0,.35)}
 /* Toda la app: el fondo queda fijo detrás y las tarjetas y el menú se vuelven translúcidos */
 body.bg-all{background:#050a18}
