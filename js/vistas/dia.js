@@ -14,7 +14,7 @@ const wxTxt = (c, day) => c>=95 ? ['Tormenta','cloud-lightning'] : c>=85 ? ['Chu
 function wxHTML(){
   if (!S.wx) return `<button class="hwxadd" data-a="wxc">${I('cloud-sun','sm')} Elige tu ciudad para ver el tiempo</button>`;
   const c = wxCache(); if (!c) return `<div class="hwx"><span class="hwt">${esc(S.wx.n)}</span></div>`;
-  // Temperatura grande, el cielo y la ciudad, y una curva fina con la máxima de hoy y de los 3 días siguientes, con la mínima debajo
+  // Temperatura grande, el cielo y la ciudad, y una curva fina con la máxima de hoy y de los 3 días siguientes, con la mínima justo debajo de cada bolita
   // (cada punto sube o baja según haga más o menos calor; --y va de 0, el día más caluroso, a 1, el más fresco).
   const d = c.d, [t, ic] = wxTxt(d.current.weather_code, d.current.is_day), wd = new Intl.DateTimeFormat('es-ES',{weekday:'short'}), r = Math.round;
   const mx = d.daily.temperature_2m_max.slice(0, 4).map(r), hi = Math.max(...mx), lo = Math.min(...mx), y = v => hi===lo ? .5 : (hi-v)/(hi-lo);

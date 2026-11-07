@@ -662,7 +662,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .hwc>span i{position:absolute;left:50%;top:calc(22px + var(--y)*22px);width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:var(--hero-tx);box-shadow:0 0 0 3px color-mix(in srgb,var(--hero-tx) 18%,transparent)}
 .hwc>span:first-child i{background:var(--ac);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 30%,transparent),0 0 14px var(--ac)}
 .hwc>span em{position:absolute;left:0;right:0;bottom:0;font-style:normal;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--hero-mu)}
-.hwc>span small{position:absolute;left:0;right:0;bottom:16px;font-size:11px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1;color:var(--hero-mu)}
+.hwc>span small{position:absolute;left:0;right:0;top:calc(31px + var(--y)*22px);font-size:11px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1;color:var(--hero-mu)}
 .hwc>span:first-child em{color:var(--hero-tx)}
 .hwxadd{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin:12px 0 4px;font-size:13px;color:var(--hero-mu);border-bottom:1px dashed currentColor}
 .hwxadd:hover{color:var(--hero-tx)}
