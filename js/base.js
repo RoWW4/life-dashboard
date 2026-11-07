@@ -26,6 +26,8 @@ const DIA = ['imp','cal'];
 /* Orden inicial de los paneles movibles de cada sección (cada uno se puede reordenar y se guarda en S.order). */
 const FIN = ['gasto','sinc','mov','reglas'];
 const AJ = [['Personalizar',['midia','apar','fest','dict']], ['Dinero',['dinero','bank']], ['Cuenta y datos',['cuenta','copias','avz']]];
+/* Grupo de cada panel de Ajustes: el de serie, o al que se haya arrastrado (S.order.ajusg, «panel:Grupo»). */
+const ajGrp = k => { const m = ((S.order||{}).ajusg||[]).find(x => x.split(':')[0]===k); const g = m && m.slice(k.length+1); return g && AJ.some(([n]) => n===g) ? g : (AJ.find(([,ks]) => ks.includes(k))||[])[0]; };
 const SEC = [['dia','house','Mi día','Hoy'],['tareas','list-checks','Tareas','Tareas'],['compra','shopping-cart','Compra','Compra'],['fin','wallet','Finanzas','Finanzas'],['fact','receipt','Facturas','Facturas'],['docs','folder-open','Documentos','Docs'],['inv','trending-up','Inversiones','Inversión'],['salud','heart-pulse','Salud','Salud'],['ajus','settings','Ajustes','Ajustes']];
 const FAILMAX = 3; // fallos seguidos del banco antes de avisar (y de que GitHub mande correo)
 const secs = () => ord('nav', SEC.map(x => x[0])).map(k => SEC.find(x => x[0]===k)); // secciones en el orden elegido (en el ordenador se arrastran en el menú)

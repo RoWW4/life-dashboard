@@ -29,7 +29,8 @@ function vAjus(){
   <div class="f" style="margin:10px 0 0"><input id="fx_a" placeholder="Lo que entiende (ej. mercado na)"><input id="fx_b" placeholder="Lo correcto (ej. Mercadona)"><button class="btn" data-a="afx">Añadir</button></div>`),
   avz: panel('ajus','avz',`${I('eraser')} Avanzado`,`<div class="f" style="margin:0"><button class="btn ghost danger" style="flex:none" data-a="rs">Borrar todo</button></div><div class="mu" style="margin-top:10px">Borra todos los datos del panel, también los de la nube. No se puede deshacer.</div>`) };
   VIS.ajus = ord('ajus', AJ.flatMap(([,ks]) => ks));
-  return AJ.map(([n,ks]) => `<h3 class="agrp">${n}</h3><div class="grid2">${VIS.ajus.filter(k => ks.includes(k)).map(k => C[k]).join('')}</div>`).join(''); })()}`;
+  const gs = AJ.map(([n]) => n).filter(n => VIS.ajus.some(k => ajGrp(k)===n)); VIS.ajgrp = ord('ajgrp', gs);
+  return VIS.ajgrp.map((n,i) => `<h3 class="agrp">${n}<span class="agmv">${i?`<button class="ib" data-a="mv" data-i="${esc('ajgrp|'+n+'|-1')}" aria-label="Subir el grupo ${esc(n)}">${I('chevron-up','sm')}</button>`:''}${i<gs.length-1?`<button class="ib" data-a="mv" data-i="${esc('ajgrp|'+n+'|1')}" aria-label="Bajar el grupo ${esc(n)}">${I('chevron-down','sm')}</button>`:''}</span></h3><div class="grid2">${VIS.ajus.filter(k => ajGrp(k)===n).map(k => C[k]).join('')}</div>`).join(''); })()}`;
 }
 
 function vLogin(){
