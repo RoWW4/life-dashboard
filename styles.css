@@ -119,7 +119,7 @@ body.solo .card .pa{display:none}
 .morebtn .i{width:15px;height:15px}
 .card.dragging,.nv.dragging{opacity:.5}
 .card.dropto{outline:2px dashed var(--ac);outline-offset:2px}
-.card .hd{touch-action:none}
+.card .hd{touch-action:manipulation;-webkit-touch-callout:none}
 .nv.dropt{box-shadow:inset 0 2px 0 var(--ac);background:color-mix(in srgb,var(--ac) 12%,transparent)}
 .navdrag,.navdrag *{cursor:grabbing!important;user-select:none}
 

@@ -119,7 +119,7 @@ const SZ = (() => { try { return JSON.parse(localStorage.getItem('ldb-size')) ||
 const SZN = {4:'1/3', 6:'1/2', 8:'2/3', 12:'completo'};
 /* Panel movible: título a la izquierda; a la derecha, el botón del ancho y el asa para arrastrarlo. */
 const panel = (v,k,title,inner,cls='') => { const z = SZ[v+':'+k];
-  return `<div class="card ${cls}${z?' sz'+z:''}" data-v="${v}" data-k="${esc(k)}"><h3><span class="t">${title}</span><span class="pa"><button class="ib szb" data-a="sz" data-i="${esc(v+':'+k)}" title="Ancho del panel${z?': '+SZN[z]:''} (toca para cambiarlo)" aria-label="Cambiar el ancho del panel">${I('move-horizontal')}</button><span class="hd" draggable="true" title="Arrastra para mover">${I('grip-vertical')}</span></span></h3>${inner}</div>`; };
+  return `<div class="card ${cls}${z?' sz'+z:''}" data-v="${v}" data-k="${esc(k)}"><h3><span class="t">${title}</span><span class="pa"><button class="ib szb" data-a="sz" data-i="${esc(v+':'+k)}" title="Ancho del panel${z?': '+SZN[z]:''} (toca para cambiarlo)" aria-label="Cambiar el ancho del panel">${I('move-horizontal')}</button><span class="hd" draggable="true" title="Mantén pulsado y arrastra para mover">${I('grip-vertical')}</span></span></h3>${inner}</div>`; };
 /* Muestra las n primeras filas y un botón para desplegar el resto (estado por panel, no se guarda). */
 const fold = (k, rows, n) => { const open = exp[k], sh = open ? rows : rows.slice(0,n), more = rows.length - n;
   return sh.join('') + (more > 0 ? `<button class="morebtn" data-a="xp" data-i="${esc(k)}">${open ? I('chevron-up')+'Ver menos' : I('chevron-down')+'Ver '+more+' más'}</button>` : ''); };
