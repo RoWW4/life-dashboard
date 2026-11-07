@@ -19,15 +19,22 @@ function wxHTML(){
   const d = c.d, [t, ic] = wxTxt(d.current.weather_code, d.current.is_day), wd = new Intl.DateTimeFormat('es-ES',{weekday:'short'}), r = Math.round;
   const mx = d.daily.temperature_2m_max.slice(0, 4).map(r), hi = Math.max(...mx), lo = Math.min(...mx), y = v => hi===lo ? .5 : (hi-v)/(hi-lo);
   const pts = mx.map((v,j) => `${j+.5},${y(v).toFixed(2)}`).join(' ');
-  // En el punto de cada día va el icono de su tiempo (sol, nube, lluvia…).
+  // En el punto de cada día va el icono de su tiempo (sol, nube, lluvia…); al tocarlo, un aviso dice la lluvia prevista (wxDia).
   const cols = mx.map((v,j) => { const [dt, di] = wxTxt(d.daily.weather_code[j], 1);
-    return `<span style="--y:${y(v).toFixed(2)}" title="${dt}"><b>${v}°</b><i>${I(di)}</i><small>${r(d.daily.temperature_2m_min[j])}°</small><em>${j ? wd.format(new Date(d.daily.time[j]+'T12:00')).replace('.','') : 'hoy'}</em></span>`; }).join('');
+    return `<span style="--y:${y(v).toFixed(2)}" title="${dt}"><b>${v}°</b><i role="button" tabindex="0" data-a="wxd" data-i="${j}" aria-label="${dt}: ver lluvia prevista">${I(di)}</i><small>${r(d.daily.temperature_2m_min[j])}°</small><em>${j ? wd.format(new Date(d.daily.time[j]+'T12:00')).replace('.','') : 'hoy'}</em></span>`; }).join('');
   return `<div class="hwx" title="Tiempo en ${esc(S.wx.n)} (Open-Meteo)"><div class="hwn"><b>${r(d.current.temperature_2m)}°</b><span class="hwt"><span>${I(ic,'sm')}${t}</span><small>${esc(S.wx.n)} · ${r(d.daily.temperature_2m_min[0])}° mín</small></span></div><div class="hwc"><svg viewBox="0 -.08 4 1.16" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" vector-effect="non-scaling-stroke"/></svg>${cols}</div></div>`;
+}
+/* Texto del aviso al tocar el icono de un día: su tiempo y la probabilidad de lluvia o nieve (o los litros, si el modelo no da la probabilidad). */
+function wxDia(j){
+  const c = wxCache(); if (!c) return ''; const dd = c.d.daily, p = (dd.precipitation_probability_max||[])[j], l = (dd.precipitation_sum||[])[j];
+  const dia = +j ? new Intl.DateTimeFormat('es-ES',{weekday:'long'}).format(new Date(dd.time[j]+'T12:00')) : 'hoy', mm = l ? ' (' + String(Math.round(l*10)/10).replace('.', ',') + ' mm)' : '';
+  const ll = p != null ? Math.round(p) + ' % de probabilidad de lluvia' + mm : l == null ? 'sin datos de lluvia' : l >= .1 ? 'se esperan' + mm.slice(1, -1) : 'sin lluvia prevista';
+  return dia[0].toUpperCase() + dia.slice(1) + ': ' + wxTxt(dd.weather_code[j], 1)[0].toLowerCase() + ' · ' + ll;
 }
 // Modelo europeo ECMWF (forzado con models=).
 function wxLoad(){
-  const c = wxCache(); if (!S.wx || S.wxOff || (c && Date.now()-c.t < WXMIN) || wxLoad.on) return; wxLoad.on = 1;
-  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${S.wx.lat}&longitude=${S.wx.lon}&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4&models=ecmwf_ifs025`)
+  const c = wxCache(); if (!S.wx || S.wxOff || (c && c.d.daily.precipitation_sum && Date.now()-c.t < WXMIN) || wxLoad.on) return; wxLoad.on = 1;
+  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${S.wx.lat}&longitude=${S.wx.lon}&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum&timezone=auto&forecast_days=4&models=ecmwf_ifs025`)
     .then(r => r.ok ? r.json() : Promise.reject()).then(d => { try { localStorage.setItem(WX, JSON.stringify({k:S.wx.lat+','+S.wx.lon, t:Date.now(), d})); } catch(e) {}
       const e = document.getElementById('hwx'); if (e) e.innerHTML = wxHTML(); }).catch(() => {}).finally(() => { wxLoad.on = 0; });
 }

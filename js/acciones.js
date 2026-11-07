@@ -89,6 +89,7 @@ const A = {
   pd: i => { const d = S.docs.find(x => x.id===i); if (!d.pin && S.docs.filter(x => x.pin).length >= PINMAX) return toast(`Ya tienes ${PINMAX} documentos a mano: quita la estrella a otro primero`); d.pin = !d.pin; ch(); },
   dd: i => CF('¿Quitar este documento de la lista? (No se borra ningún archivo)', () => { S.docs = S.docs.filter(x => x.id!==i); ch(); }),
   th: i => { S.theme = i; ch(); },
+  wxd: i => { const t = wxDia(i); if (t) toast(t); },
   wxo: i => { if (i==='1') S.wxOff = true; else delete S.wxOff; ch(); },
   wxc: () => CF('¿De qué ciudad quieres ver el tiempo? (déjalo vacío para quitarlo)', v => { v = (v||'').trim();
     if (!v) { delete S.wx; ch(); return; }
