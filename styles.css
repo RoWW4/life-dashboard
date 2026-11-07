@@ -655,14 +655,16 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 @keyframes hwfl{50%{transform:translateY(-2px) rotate(-6deg)}}
 /* Curva: la línea está dibujada detrás y cada día pone su punto a la altura que le toca (--y) */
 .hwc{position:relative;display:grid;grid-template-columns:repeat(4,38px);padding-left:22px;border-left:1px solid var(--hero-bd)}
-.hwc svg{position:absolute;left:22px;right:0;top:22px;height:22px;width:calc(100% - 22px);overflow:visible}
+.hwc>svg{position:absolute;left:22px;right:0;top:24px;height:22px;width:calc(100% - 22px);overflow:visible}
 .hwc polyline{fill:none;stroke:var(--hero-mu);stroke-width:1.2;stroke-linejoin:round;stroke-linecap:round;opacity:.7}
-.hwc>span{position:relative;height:82px;text-align:center}
+.hwc>span{position:relative;height:84px;text-align:center}
 .hwc>span b{position:absolute;left:0;right:0;top:calc(var(--y)*22px);font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
-.hwc>span i{position:absolute;left:50%;top:calc(22px + var(--y)*22px);width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:var(--hero-tx);box-shadow:0 0 0 3px color-mix(in srgb,var(--hero-tx) 18%,transparent)}
-.hwc>span:first-child i{background:var(--ac);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 30%,transparent),0 0 14px var(--ac)}
+.hwc>span i{position:absolute;left:50%;top:calc(24px + var(--y)*22px);width:20px;height:20px;margin:-10px 0 0 -10px;display:grid;place-items:center;border-radius:50%;background:var(--hero);color:var(--hero-tx)}
+.hwc>span i .i{width:15px;height:15px}
+.hwc>span:first-child i{color:var(--ac);filter:drop-shadow(0 0 6px var(--ac))}
+.bg-on .hwc>span i,.bg-all .hwc>span i{background:rgba(5,10,24,.55)}
 .hwc>span em{position:absolute;left:0;right:0;bottom:0;font-style:normal;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--hero-mu)}
-.hwc>span small{position:absolute;left:0;right:0;top:calc(31px + var(--y)*22px);font-size:11px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1;color:var(--hero-mu)}
+.hwc>span small{position:absolute;left:0;right:0;top:calc(38px + var(--y)*22px);font-size:11px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1;color:var(--hero-mu)}
 .hwc>span:first-child em{color:var(--hero-tx)}
 .hwxadd{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin:12px 0 4px;font-size:13px;color:var(--hero-mu);border-bottom:1px dashed currentColor}
 .hwxadd:hover{color:var(--hero-tx)}
@@ -692,7 +694,7 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .bg-all :is(.card,nav,.kpi,.qc,.acct:not(.fintop .acct),.seg){background:color-mix(in srgb,var(--card) 74%,transparent);backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2)}
 .bg-all main>.hdr,.bg-all main>.hdr h2{color:#fff}
 .bg-all main>.hdr .sub,.bg-all main>.mu,.bg-all .qlk{color:rgba(235,242,255,.78)}
-@media(max-width:760px){.hwn>b{font-size:52px}.hwx{gap:14px}.hwc{flex-basis:100%;grid-template-columns:repeat(4,1fr);padding:0;border:0}.hwc svg{left:0;width:100%}.bg-on .hero{min-height:0}}
+@media(max-width:760px){.hwn>b{font-size:52px}.hwx{gap:14px}.hwc{flex-basis:100%;grid-template-columns:repeat(4,1fr);padding:0;border:0}.hwc>svg{left:0;width:100%}.bg-on .hero{min-height:0}}
 
 /* Menos movimiento si el sistema lo pide: todo sigue funcionando sin animaciones */
 @media (prefers-reduced-motion: reduce){

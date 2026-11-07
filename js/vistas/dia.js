@@ -19,7 +19,9 @@ function wxHTML(){
   const d = c.d, [t, ic] = wxTxt(d.current.weather_code, d.current.is_day), wd = new Intl.DateTimeFormat('es-ES',{weekday:'short'}), r = Math.round;
   const mx = d.daily.temperature_2m_max.slice(0, 4).map(r), hi = Math.max(...mx), lo = Math.min(...mx), y = v => hi===lo ? .5 : (hi-v)/(hi-lo);
   const pts = mx.map((v,j) => `${j+.5},${y(v).toFixed(2)}`).join(' ');
-  const cols = mx.map((v,j) => `<span style="--y:${y(v).toFixed(2)}" title="${wxTxt(d.daily.weather_code[j], 1)[0]}"><b>${v}°</b><i></i><small>${r(d.daily.temperature_2m_min[j])}°</small><em>${j ? wd.format(new Date(d.daily.time[j]+'T12:00')).replace('.','') : 'hoy'}</em></span>`).join('');
+  // En el punto de cada día va el icono de su tiempo (sol, nube, lluvia…).
+  const cols = mx.map((v,j) => { const [dt, di] = wxTxt(d.daily.weather_code[j], 1);
+    return `<span style="--y:${y(v).toFixed(2)}" title="${dt}"><b>${v}°</b><i>${I(di)}</i><small>${r(d.daily.temperature_2m_min[j])}°</small><em>${j ? wd.format(new Date(d.daily.time[j]+'T12:00')).replace('.','') : 'hoy'}</em></span>`; }).join('');
   return `<div class="hwx" title="Tiempo en ${esc(S.wx.n)} (Open-Meteo)"><div class="hwn"><b>${r(d.current.temperature_2m)}°</b><span class="hwt"><span>${I(ic,'sm')}${t}</span><small>${esc(S.wx.n)} · ${r(d.daily.temperature_2m_min[0])}° mín</small></span></div><div class="hwc"><svg viewBox="0 -.08 4 1.16" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" vector-effect="non-scaling-stroke"/></svg>${cols}</div></div>`;
 }
 // Modelo europeo ECMWF (forzado con models=).
