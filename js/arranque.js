@@ -10,7 +10,7 @@ function afterLoad(){
   const q = new URLSearchParams(location.search);
   if (q.get('code')) {
     const code = q.get('code'); history.replaceState(null, '', location.pathname);
-    const o = modal(`<h3>🏦 Banco autorizado</h3><p>Copia este código y pégalo en GitHub al ejecutar «Conectar banco» (paso 6 de la guía). Caduca en unos minutos.</p><div class="code">${esc(code)}</div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button><button class="btn" id="ok">Copiar código</button></div>`);
+    const o = modal(`<h3>🏦 Banco autorizado</h3><p>Copia este código y pégalo en GitHub al ejecutar «Conectar banco» por segunda vez. Caduca en unos minutos.</p><div class="code">${esc(code)}</div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button><a class="btn ghost" href="https://github.com/RoWW4/life-dashboard/actions/workflows/bank-link.yml" target="_blank" rel="noopener noreferrer">Abrir «Conectar banco»</a><button class="btn" id="ok">Copiar código</button></div>`);
     o.querySelector('#ok').onclick = () => { navigator.clipboard.writeText(code).then(() => toast('Código copiado')).catch(() => toast('Selecciónalo y cópialo a mano')); };
   } else if (q.get('error')) { history.replaceState(null, '', location.pathname); toast('El banco no autorizó la conexión: ' + q.get('error')); }
 }
