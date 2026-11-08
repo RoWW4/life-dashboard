@@ -523,6 +523,18 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .txr{max-width:60%}
 .txb{display:flex;align-items:center;gap:2px}
 .txb .amt{margin-right:4px}
+/* Movimiento dividido: sus partes (categoría o encargo e importe) debajo, sangradas bajo el icono */
+.row.has-parts{border-bottom:0}
+.txparts{display:flex;flex-direction:column;gap:2px;padding:0 0 9px 40px;border-bottom:1px solid var(--sep)}
+.txparts:last-child{border-bottom:0}
+.txpart{display:flex;align-items:center;gap:8px;width:100%;padding:3px 4px 3px 0;background:none;border:0;color:var(--tx2);font:inherit;font-size:13px;text-align:left;cursor:pointer}
+.txpart>i{width:8px;height:8px;border-radius:50%;flex:none}
+.txpart>span:first-of-type{flex:1;min-width:0;display:flex;align-items:center;gap:5px}
+.txpart .amt{margin-right:4px;font-size:13px;font-weight:500}
+/* Ventana «Dividir»: una fila por parte (importe, categoría o encargo, quitar) */
+.spl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) 32px;gap:8px;align-items:center}
+.spl input,.spl select{width:100%}
+.spl .rest{padding:9px 2px;font-weight:600;font-variant-numeric:tabular-nums}
 /* Movimientos: una línea limpia (concepto y, debajo, la categoría); al tocarla se abre para cambiar categoría, nota, Facturas o eliminar. */
 .txg{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:2px;cursor:pointer}
 .txg .tt{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

@@ -53,26 +53,56 @@ function txForm(){
 }
 /* Ficha de un movimiento: descripción, categoría, nota y «extraordinario». Los del banco no dejan cambiar importe ni fecha. */
 function txEdit(x){
-  const bk = fromBank(x), cats = x.t==='i' ? ICATS : CATS.filter(c => c!=='Nómina');
-  const o = modal(`<h3>Editar ${x.t==='i'?'ingreso':'gasto'}</h3><div class="fs"><label>Descripción<input id="ex1" value="${esc(x.desc||'')}"></label><div class="two"><label>Importe (€)<input id="ex2" inputmode="decimal" value="${(+x.amt).toFixed(2).replace('.',',')}" ${bk?'disabled':''}></label><label>Fecha<input id="ex3" type="date" value="${x.date}" ${bk?'disabled':''}></label></div>${bk?`<div class="mu" style="margin-top:-4px">${I('landmark','sm')} Viene del banco: el importe y la fecha no se pueden cambiar.</div>`:''}<label>Categoría<select id="ex4">${opts(cats, x.cat)}</select></label><label>Nota<input id="ex5" value="${esc(x.note||'')}" placeholder="Opcional"></label>${x.t==='g'?`<div class="chkr"><label class="chk"><input type="checkbox" id="ex6" ${x.ex?'checked':''}> Gasto extraordinario</label><button type="button" class="ib inf" aria-label="Qué es un gasto extraordinario" aria-expanded="false">${I('info','sm')}</button></div><div class="infx mu" hidden>Se ve en la lista, pero no cuenta en el gasto del mes ni en las comparaciones (p. ej. un pago grande y puntual).</div><div class="chkr"><label class="chk"><input type="checkbox" id="ex7" ${x.enc?'checked':''}> Encargo</label><button type="button" class="ib inf" aria-label="Qué es un encargo" aria-expanded="false">${I('info','sm')}</button></div><div class="infx mu" hidden>Compra para otra persona que te paga en mano: no cuenta como gasto tuyo.</div>`:''}</div><div class="acts"><button class="btn ghost danger" id="fdel">Eliminar</button>${x.billId?'':`<button class="btn ghost" id="fmkf">${I('repeat','sm')} ${x.fid?'Quitar de Facturas':'Añadir a Facturas'}</button>`}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`);
+  const bk = fromBank(x), cats = x.t==='i' ? ICATS : CATS.filter(c => c!=='Nómina'), sp = isSplit(x);
+  const o = modal(`<h3>Editar ${x.t==='i'?'ingreso':'gasto'}</h3><div class="fs"><label>Descripción<input id="ex1" value="${esc(x.desc||'')}"></label><div class="two"><label>Importe (€)<input id="ex2" inputmode="decimal" value="${(+x.amt).toFixed(2).replace('.',',')}" ${bk?'disabled':''}></label><label>Fecha<input id="ex3" type="date" value="${x.date}" ${bk?'disabled':''}></label></div>${bk?`<div class="mu" style="margin-top:-4px">${I('landmark','sm')} Viene del banco: el importe y la fecha no se pueden cambiar.</div>`:''}${sp ? `<div class="mu">${I('split','sm')} Dividido: ${txp(x).map(p => (p.enc ? 'encargo' : esc(p.cat))+' '+eur(p.amt)).join(' · ')}</div>` : `<label>Categoría<select id="ex4">${opts(cats, x.cat)}</select></label>`}<label>Nota<input id="ex5" value="${esc(x.note||'')}" placeholder="Opcional"></label>${x.t==='g'?`<div class="chkr"><label class="chk"><input type="checkbox" id="ex6" ${x.ex?'checked':''}> Gasto extraordinario</label><button type="button" class="ib inf" aria-label="Qué es un gasto extraordinario" aria-expanded="false">${I('info','sm')}</button></div><div class="infx mu" hidden>Se ve en la lista, pero no cuenta en el gasto del mes ni en las comparaciones (p. ej. un pago grande y puntual).</div>${sp?'':`<div class="chkr"><label class="chk"><input type="checkbox" id="ex7" ${x.enc?'checked':''}> Encargo</label><button type="button" class="ib inf" aria-label="Qué es un encargo" aria-expanded="false">${I('info','sm')}</button></div><div class="infx mu" hidden>Compra para otra persona que te paga en mano: no cuenta como gasto tuyo. Si solo una parte es encargo, usa «Dividir».</div>`}`:''}</div><div class="acts"><button class="btn ghost danger" id="fdel">Eliminar</button>${x.t==='g'?`<button class="btn ghost" id="fspl" title="Repartir el importe en varias categorías o separar la parte que es encargo">${I('split','sm')} ${sp?'Cambiar división':'Dividir'}</button>`:''}${x.billId?'':`<button class="btn ghost" id="fmkf">${I('repeat','sm')} ${x.fid?'Quitar de Facturas':'Añadir a Facturas'}</button>`}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`);
   const v = i => o.querySelector(i).value.trim();
   // Iconos «i»: muestran u ocultan la explicación de cada casilla.
   o.querySelectorAll('.inf').forEach(b => b.onclick = () => { const t = b.parentElement.nextElementSibling; t.hidden = !t.hidden; b.setAttribute('aria-expanded', !t.hidden); });
   o.querySelector('#ok').onclick = () => {
-    const a = pnum(v('#ex2')), dt = v('#ex3'), cat = v('#ex4');
+    const a = pnum(v('#ex2')), dt = v('#ex3'), cat = sp ? x.cat : v('#ex4');
+    if (sp && !bk && Math.abs(a - x.amt) >= 0.01) return toast('Está dividido: quita la división antes de cambiar el importe');
     if (!bk && (!(a > 0) || !dt)) return toast('Introduce un importe válido y una fecha');
     x.desc = v('#ex1'); if (!bk) { x.amt = a; x.date = dt; }
     const nt0 = v('#ex5'); if (nt0) x.note = nt0; else delete x.note;
     const ex = o.querySelector('#ex6'); if (ex && ex.checked) x.ex = true; else delete x.ex;
-    const en = o.querySelector('#ex7'); if (en && en.checked) x.enc = true; else delete x.enc;
+    const en = o.querySelector('#ex7'); if (en) { if (en.checked) x.enc = true; else delete x.enc; }
     o.remove();
     if (cat !== x.cat) A.txc(x.id, {value:cat}); else ch();
     toast('Guardado');
   };
   o.querySelector('#fdel').onclick = () => { o.remove(); A.dx(x.id); };
+  const spb = o.querySelector('#fspl'); if (spb) spb.onclick = () => { o.remove(); splitForm(x); };
   // Añadir a Facturas (se repite cada mes) o quitarlo: antes era un botón en cada fila de Movimientos.
   const mk = o.querySelector('#fmkf'); if (mk) mk.onclick = () => { o.remove(); A.mkf(x.id); };
   o.querySelector('#ex1').focus();
+}
+/* Dividir un gasto: cada parte con su importe y su categoría, o «Encargo» (para otra persona, no cuenta como gasto tuyo).
+   La última parte es lo que falta hasta el total, así siempre cuadra. Se guarda en x.parts (ver isSplit en interfaz.js). */
+function splitForm(x){
+  const ENC = '__enc', cats = CATS.filter(c => c!=='Nómina'), r2 = n => Math.round(n*100)/100;
+  let P = isSplit(x) ? x.parts.map(p => ({amt:(+p.amt).toFixed(2).replace('.',','), cat:p.enc ? ENC : p.cat})) : [{amt:'', cat:x.cat}, {amt:'', cat:x.cat}];
+  const o = modal(`<h3>Dividir gasto</h3><div class="mu" style="margin:-4px 0 12px">${esc(x.desc||x.cat)} · ${eur(x.amt)}. Pon cuánto es de cada cosa; la última parte se calcula sola.</div><div class="fs" id="spl"></div><div class="acts">${isSplit(x)?`<button class="btn ghost danger" id="sno">Quitar división</button>`:''}<button class="btn ghost" id="sadd">${I('plus','sm')} Añadir parte</button><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`);
+  const box = o.querySelector('#spl'), last = () => P.length-1;
+  const rest = () => r2(x.amt - P.slice(0,-1).reduce((a,p) => a+(pnum(p.amt)||0), 0));
+  const read = () => box.querySelectorAll('.spl').forEach((r,i) => { const a = r.querySelector('input'); if (a) P[i].amt = a.value; P[i].cat = r.querySelector('select').value; });
+  const showRest = () => { const e = box.querySelector('.rest'), v = rest(); e.textContent = eur(v); e.style.color = v > 0.005 ? '' : 'var(--er)'; };
+  const draw = () => {
+    box.innerHTML = P.map((p,i) => `<div class="spl">${i<last() ? `<input inputmode="decimal" placeholder="Importe" value="${esc(p.amt)}" aria-label="Importe de la parte ${i+1}">` : `<span class="rest" title="Lo que falta hasta el total"></span>`}<select aria-label="Categoría de la parte ${i+1}"><option value="${ENC}" ${p.cat===ENC?'selected':''}>Encargo</option>${opts(cats, p.cat)}</select>${P.length>2 ? `<button type="button" class="ib" data-k="${i}" aria-label="Quitar esta parte">${I('x','sm')}</button>` : '<span></span>'}</div>`).join('');
+    box.querySelectorAll('input').forEach(a => a.oninput = () => { read(); showRest(); });
+    box.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { read(); P.splice(+b.dataset.k, 1); draw(); });
+    showRest();
+  };
+  draw();
+  o.querySelector('#sadd').onclick = () => { read(); P.splice(last(), 0, {amt:'', cat:x.cat}); draw(); const a = box.querySelectorAll('input'); if (a[last()-1]) a[last()-1].focus(); };
+  const no = o.querySelector('#sno'); if (no) no.onclick = () => { delete x.parts; o.remove(); ch(); toast('Ya no está dividido: cuenta entero en «'+x.cat+'»'); };
+  o.querySelector('#ok').onclick = () => {
+    read();
+    if (P.slice(0,-1).some(p => !(pnum(p.amt) > 0))) return toast('Pon un importe en cada parte');
+    if (!(rest() > 0.005)) return toast('Las partes suman más que el total ('+eur(x.amt)+')');
+    x.parts = P.map((p,i) => ({amt: i<last() ? r2(pnum(p.amt)) : rest(), cat: p.cat===ENC ? x.cat : p.cat, ...(p.cat===ENC ? {enc:true} : {})}));
+    delete x.enc; o.remove(); ch(); toast('Gasto dividido en '+P.length+' partes');
+  };
+  const a0 = box.querySelector('input'); if (a0) a0.focus();
 }
 function shopForm(){
   const o = modal(`<h3>Añadir a la compra</h3><div class="fs"><label>Productos (separa con comas)<input id="sh1" placeholder="leche, 2 pan, tomates"></label></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Añadir</button></div>`);

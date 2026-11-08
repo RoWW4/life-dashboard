@@ -82,11 +82,17 @@ const cntG = x => x.t==='g' && x.cat!==NOCNT && !x.ex && !x.enc;
 const isDev = x => x.t==='i' && !['Nómina','Otros',NOCNT].includes(x.cat);
 /* Importe con signo para el gasto: + gasto que cuenta, − devolución, 0 lo demás. */
 const gAmt = x => cntG(x) ? x.amt : isDev(x) ? -x.amt : 0;
-const spent = m => Math.max(0, S.tx.filter(x => mon(x.date)===m).reduce((a,x) => a+gAmt(x), 0));
+/* Gasto dividido (x.parts = [{cat, amt, enc}]): una compra con cosas de varias categorías o con parte de encargo.
+   Sigue siendo un solo movimiento, pero en las sumas cada parte cuenta en su categoría (txp lo parte; TXP = todos partidos).
+   Si las partes no suman el total (p. ej. tras juntar cambios de dos dispositivos), cuenta entero como antes. */
+const isSplit = x => x.t==='g' && Array.isArray(x.parts) && x.parts.length>1 && Math.abs(x.parts.reduce((a,p) => a+(+p.amt||0), 0) - x.amt) < 0.01;
+const txp = x => isSplit(x) ? x.parts.map(p => ({...x, cat:p.cat, amt:+p.amt, enc:!!p.enc, of:x})) : [x];
+const TXP = () => S.tx.flatMap(txp);
+const spent = m => Math.max(0, TXP().filter(x => mon(x.date)===m).reduce((a,x) => a+gAmt(x), 0));
 /* Mes al que cuenta un ingreso: la nómina que llega a partir del día 25 es la del mes siguiente. */
 const incMon = x => x.cat==='Nómina' && +x.date.slice(8) >= 25 ? MN(new Date(+x.date.slice(0,4), +x.date.slice(5,7), 1)) : mon(x.date);
 const income = m => S.tx.filter(x => x.t==='i' && x.cat!==NOCNT && !isDev(x) && incMon(x)===m);
-const byCat = m => { const o = {}; S.tx.filter(x => gAmt(x) && mon(x.date)===m).forEach(x => o[x.cat] = (o[x.cat]||0) + gAmt(x)); return Object.entries(o).filter(e => e[1] > 0.005).sort((a,b) => b[1]-a[1]); };
+const byCat = m => { const o = {}; TXP().filter(x => gAmt(x) && mon(x.date)===m).forEach(x => o[x.cat] = (o[x.cat]||0) + gAmt(x)); return Object.entries(o).filter(e => e[1] > 0.005).sort((a,b) => b[1]-a[1]); };
 const col = c => PAL[c] || '#94a3b8';
 const nextDue = (d,r) => r==='Anual' ? addM(d,12) : r==='Mensual' ? addM(d,1) : addD(d, r==='Semanal' ? 7 : 1);
 const ord = (v,keys) => { const o = S.order[v]||[]; return [...keys].sort((a,b) => { const x = o.indexOf(a), y = o.indexOf(b); return (x<0?1e3+keys.indexOf(a):x) - (y<0?1e3+keys.indexOf(b):y); }); };
@@ -159,7 +165,7 @@ function gastoBody(m){
   const now = new Date(), cur = m===MN(now), sp = spent(m), cats = byCat(m), B = S.budget||0, fl = cur ? fxLeft() : 0, rem = B - sp, pc = B ? sp/B*100 : 0;
   const info = B ? `<b class="${pc>=100?'er':pc>=80?'wa':'ok'}">${Math.round(pc)} %</b> de tu tope` : 'Define un tope en Ajustes';
   const gx = `<div class="gx">${B?donut(cats,B,sp,rem):''}<div class="gxi"><div class="mu">Gastado ${cur?'este mes':'en '+MS[+m.slice(5)]}</div><div class="big">${eur(sp)}</div><div class="mu">${info}</div>${fl&&B?`<div class="mu">Facturas por pagar: ${eur(fl)} · Te quedarán ${eur(rem-fl)}</div>`:fl?`<div class="mu">Facturas por pagar: ${eur(fl)}</div>`:''}</div></div>`;
-  const txm = S.tx.filter(x => mon(x.date)===m), mx = Math.max(1, ...cats.map(c => c[1]));
+  const txm = TXP().filter(x => mon(x.date)===m), mx = Math.max(1, ...cats.map(c => c[1]));
   const bars = cats.map(([c,v]) => { const n = txm.filter(x => x.t==='g' && x.cat===c).length; return `<button class="catrow" data-a="cd" data-i="${esc(c)}">${tile(CI[c]||'package', col(c))}<span>${c}<span class="mu" style="display:block;font-size:12px;line-height:1.2">${n} mov. · ${Math.round(v/sp*100)}% del gasto</span></span><b class="amt">${eur(v)}</b>${I('chevron-right','cr')}<div class="bar"><div style="width:${v/mx*100}%;background:${col(c)}"></div></div></button>`; }).join('');
   return `<div class="gxf">${gx}<div class="gxc">${bars || '<div class="mu">Aún sin gastos este mes.</div>'}</div></div>`;
 }
