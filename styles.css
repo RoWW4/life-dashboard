@@ -733,9 +733,9 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
   .hdr{padding-right:48px}
 }
 
-/* Mi día: portada con el saludo grande y el tiempo a la derecha; las tres cifras salen debajo en tarjetas que
+/* Mi día: portada con el saludo grande y el tiempo a la derecha, centrados en vertical en la parte visible del fondo; las tres cifras salen debajo en tarjetas que
    montan sobre el borde de la portada. */
-.hero{grid-template-columns:minmax(0,1fr) auto;align-items:end;min-height:230px;padding:34px 36px 64px;margin-bottom:0;border-radius:30px}
+.hero{grid-template-columns:minmax(0,1fr) auto;align-items:center;align-content:center;min-height:230px;padding:34px 36px 78px;margin-bottom:0;border-radius:30px}
 .hero .eyb{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
 .hero h2{font-size:46px;font-weight:650;letter-spacing:-.045em;line-height:1.02}
 .hctx{margin-top:12px;font-size:16px}
