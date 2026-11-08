@@ -37,6 +37,8 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           LDB_USER_ID: ${{ secrets.LDB_USER_ID }}
+          # Correos de fallo en pausa desde el 08/11/2026: el error se sigue guardando y se ve en el panel. Para reactivarlos, poner '0'.
+          SIN_CORREO: '1'
       # GitHub pausa las tareas programadas tras 60 días sin actividad en el repositorio; esto la mantiene activa.
       - name: Mantener activa la tarea programada
         if: always()

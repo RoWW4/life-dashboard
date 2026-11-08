@@ -7,7 +7,7 @@ const DAYS = +(process.env.DAYS_BACK || 14);
 const FAILMAX = 3; // fallos pasajeros seguidos antes de dar la ejecución por fallida (y que GitHub mande correo)
 const day = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
 
-const st = await getStatus().catch(e => { summary('## ❌ ' + e.message); process.exit(1); });
+const st = await getStatus().catch(e => { summary('## ❌ ' + e.message); process.exit(process.env.SIN_CORREO === '1' ? 0 : 1); });
 if (!st || !st.session_id) { summary('Banco aún no conectado: ejecuta antes «Conectar banco».'); process.exit(0); }
 
 const diag = [];
@@ -113,5 +113,6 @@ try {
   summary(`## ${quiet ? `⚠️ El banco no respondió (fallo ${fc} de ${FAILMAX} antes de avisar)` : '❌ Error al sincronizar'}\n\n\`\`\`\n${e.message}\n\`\`\`` +
     (e.rid ? `\nID de la petición: \`${e.rid}\`` : '') +
     (diag.length ? `\n\n### Diagnóstico\n${diag.map(d => '- ' + d).join('\n')}` : ''));
-  process.exit(quiet ? 0 : 1);
+  // SIN_CORREO=1 (en bank-sync.yml): el fallo se guarda igual (el panel lo enseña), pero la ejecución acaba «bien» y GitHub no manda correo.
+  process.exit(quiet || process.env.SIN_CORREO === '1' ? 0 : 1);
 }
