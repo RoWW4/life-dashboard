@@ -1,5 +1,6 @@
 // Avisos de las tareas por Telegram (hora de España):
-//  · aviso 1 día antes (24 h antes de la hora de la tarea; si no tiene hora, como si fuera a las 9:00);
+//  · aviso a la fecha y hora elegidas en la tarea (t.rem) o, si no tiene, 1 día antes (24 h antes de la hora de la tarea;
+//    si no tiene hora, como si fuera a las 9:00);
 //  · resumen a las 7:00 con las tareas de hoy, las atrasadas y los cumpleaños (si no hay nada, no se manda);
 //  · Salud (3 días antes) y documentos que caducan (ver apartados 3 y 4).
 // La lanza Supabase cada 15 minutos (pg_cron, tarea «task-reminders»). Lo ya avisado se apunta en la tabla
@@ -32,8 +33,20 @@ const sent = new Set((await sb(`task_reminders?user_id=eq.${uid()}&select=key`))
 const out = [];
 const mark = key => sb('task_reminders', { method: 'POST', body: { user_id: uid(), key }, prefer: 'resolution=ignore-duplicates,return=minimal' });
 
+// 0) Aviso elegido en la tarea (t.rem = 'AAAA-MM-DDTHH:MM', hora de España): se manda en cuanto llega la hora
+//    (si la ejecución se retrasa, hasta 6 h después). Sustituye al aviso de 1 día antes.
+const REM = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+for (const t of ((row && row.data && row.data.tasks) || []).filter(t => !t.done && t.title && REM.test(t.rem || ''))) {
+  const w = at(t.rem.slice(0, 10), t.rem.slice(11, 16)), key = `tr:${t.id}:${t.rem}`;
+  if (w > nowL || nowL - w > 6 * 36e5 || sent.has(key)) continue;
+  const hm = /^\d{1,2}:\d{2}$/.test(t.tm || '') ? t.tm : '', due = /^\d{4}-\d{2}-\d{2}$/.test(t.due || '') ? t.due : '';
+  const cuando = !due ? '' : (due === today ? 'hoy' : due === iso(nowL + DAY) ? 'mañana' : `el ${DOW[new Date(at(due, '12:00')).getUTCDay()]} ${fd(due)}`) + (hm ? ' a las ' + hm : '');
+  await telegram(`🔔 ${t.title}${cuando ? ' · ' + cuando : ''}`);
+  await mark(key); out.push('Aviso elegido');
+}
+
 // 1) Aviso 24 h antes (o en cuanto se crea, si ya falta menos). Las tareas sin hora cuentan como a las 9:00.
-for (const t of tasks.filter(t => /^\d{4}-\d{2}-\d{2}$/.test(t.due))) {
+for (const t of tasks.filter(t => /^\d{4}-\d{2}-\d{2}$/.test(t.due) && !REM.test(t.rem || ''))) {
   const hm = /^\d{1,2}:\d{2}$/.test(t.tm || '') ? t.tm : '', tm = hm || DEF_TM;
   const w = at(t.due, tm), key = `tk:${t.id}:${t.due}T${tm}`;
   if (w <= nowL || w - nowL > DAY || sent.has(key)) continue;

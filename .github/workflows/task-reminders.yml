@@ -1,6 +1,7 @@
 name: Avisos de tareas (Telegram)
 
-# Manda por Telegram los avisos de las tareas del panel (1 día antes, a las 9:00 si no tienen hora, y un resumen a las 7:00).
+# Manda por Telegram los avisos de las tareas del panel (a la hora elegida en la tarea o, si no, 1 día antes, a las 9:00 si
+# no tienen hora) y un resumen a las 7:00.
 # La lanza Supabase cada 15 minutos (pg_cron, tarea «task-reminders»: 7,22,37,52 * * * *) llamando a la API de
 # GitHub. También se puede lanzar a mano (Run workflow).
 on:
