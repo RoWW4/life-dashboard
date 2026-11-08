@@ -88,7 +88,8 @@ const gAmt = x => cntG(x) ? x.amt : isDev(x) ? -x.amt : 0;
 const isSplit = x => x.t==='g' && Array.isArray(x.parts) && x.parts.length>1 && Math.abs(x.parts.reduce((a,p) => a+(+p.amt||0), 0) - x.amt) < 0.01;
 const txp = x => isSplit(x) ? x.parts.map(p => ({...x, cat:p.cat, amt:+p.amt, enc:!!p.enc, of:x})) : [x];
 const TXP = () => S.tx.flatMap(txp);
-const spent = m => Math.max(0, TXP().filter(x => mon(x.date)===m).reduce((a,x) => a+gAmt(x), 0));
+/* Gasto del mes m; con d, solo hasta ese día del mes (para comparar con el mes anterior a la misma altura). */
+const spent = (m, d=31) => Math.max(0, TXP().filter(x => mon(x.date)===m && +x.date.slice(8) <= d).reduce((a,x) => a+gAmt(x), 0));
 /* Mes al que cuenta un ingreso: la nómina que llega a partir del día 25 es la del mes siguiente. */
 const incMon = x => x.cat==='Nómina' && +x.date.slice(8) >= 25 ? MN(new Date(+x.date.slice(0,4), +x.date.slice(5,7), 1)) : mon(x.date);
 const income = m => S.tx.filter(x => x.t==='i' && x.cat!==NOCNT && !isDev(x) && incMon(x)===m);

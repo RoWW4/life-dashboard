@@ -9,7 +9,7 @@ const APP = 'Panel de Rocío';
 /* Los iconos son nombres de Lucide (ver icons.js) */
 const CATS = ['Vivienda','Alimentación','Transporte','Restaurantes','Ocio','Suscripciones','Salud','Mascotas','Compras','Viajes','Préstamos','Otros','Traspasos','Nómina'];
 /* Traspasos: dinero que mueves entre tus propias cuentas. Se ve en la lista pero no cuenta como gasto ni ingreso. */
-const NOCNT = 'Traspasos', EXMIN = 300; // desde este importe un gasto ofrece marcarse como extraordinario
+const NOCNT = 'Traspasos', EXMIN = 300, DUPD = 3; // EXMIN: desde este importe un gasto ofrece marcarse como extraordinario · DUPD: días entre un gasto a mano y el del banco para avisar de duplicado
 /* Categorías de un ingreso: Nómina, Otros, Traspasos o una de gasto (= devolución: te devuelven parte de ese gasto, p. ej. un Bizum por una cena; resta de esa categoría y no cuenta como ingreso). */
 const ICATS = ['Nómina','Otros','Traspasos', ...CATS.filter(c => !['Nómina','Otros','Traspasos'].includes(c))];
 const CI = {Traspasos:'arrow-left-right',Vivienda:'house',Alimentación:'shopping-basket',Transporte:'fuel',Restaurantes:'utensils',Ocio:'clapperboard',Suscripciones:'tv',Salud:'heart-pulse',Mascotas:'paw-print',Compras:'shopping-bag',Viajes:'plane',Préstamos:'hand-coins',Otros:'package',Nómina:'briefcase'};

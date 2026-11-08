@@ -101,12 +101,12 @@ const A = {
   bga: i => { BG.all = i==='1'; bgSave(); render(); },
   nm: () => CF('¿Cómo quieres que te salude el panel?', v => { S.name = (v||'').trim().slice(0,30); ch(); }, S.name||''),
   cu: (i,el) => { S.cur = el.value; ch(); },
-  // «No es duplicado»: quita el aviso a todo el grupo (mismo día, importe y tipo).
+  // «No es duplicado»: quita el aviso a todo el grupo (mismo importe y tipo, con hasta DUPD días de diferencia).
   etx: i => { const x = S.tx.find(y => y.id===i); if (x) txEdit(x); },
   txk: i => { const x = S.tx.find(y => y.id===i); if (!x) return; x.keep = true; ch(); toast('Se queda en «Otros»'); },
   txen: i => { const x = S.tx.find(y => y.id===i); if (!x) return; x.enc = !x.enc; if (!x.enc) delete x.enc; ch(); toast(x.enc ? 'Marcado como encargo: no cuenta como gasto tuyo' : 'Vuelve a contar en el gasto del mes'); },
   txex: i => { const x = S.tx.find(y => y.id===i); if (!x) return; x.ex = !x.ex; if (!x.ex) delete x.ex; ch(); toast(x.ex ? 'Marcado como extraordinario: ya no cuenta en el gasto del mes' : 'Vuelve a contar en el gasto del mes'); },
-  nodup: i => { const x = S.tx.find(y => y.id===i); if (!x) return; S.tx.forEach(y => { if (y.date===x.date && y.amt===x.amt && y.t===x.t) y.notDup = true; }); ch(); toast('Aviso quitado: no es un duplicado'); },
+  nodup: i => { const x = S.tx.find(y => y.id===i); if (!x) return; S.tx.forEach(y => { if (y.amt===x.amt && y.t===x.t && Math.abs(dd(y.date, x.date)) <= DUPD) y.notDup = true; }); ch(); toast('Aviso quitado: no es un duplicado'); },
   ex: () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'})); a.download = 'life-dashboard-'+TD()+'.json'; a.click(); },
   rs: () => CF('¿Borrar TODOS los datos? No se puede deshacer.', () => { S = def(); ch(); }),
   bsync: async () => { setSync('Comprobando…'); const c = await pull(); render(); toast(c ? 'Actualizado' : 'No hay movimientos nuevos'); },

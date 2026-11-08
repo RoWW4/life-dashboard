@@ -4,14 +4,14 @@
    pendiente (pasó la fecha hace ≤5 días: el banco suele tardar) · vencido (más de 5 días) · terminado (ya no hay más cobros). */
 /* Pago con fecha de fin: hasta qué mes y cuántos cobros quedan desde el próximo. */
 const fxEnd = (f, next) => { if (!f.until) return ''; const n = next ? fxOcc(f, next, f.until).length : 0;
-  return ` · Hasta ${MS[+f.until.slice(5,7)]} ${f.until.slice(0,4)}${n ? ` · Quedan ${n} pago${n===1?'':'s'}` : ''}`; };
+  return ` · Hasta ${MS[+f.until.slice(5,7)]}${f.until.slice(0,4)===TD().slice(0,4)?'':' '+f.until.slice(0,4)}${n ? ` · Quedan ${n} pago${n===1?'':'s'}` : ''}`; };
 const fxItem = f => { if (f.var) return fxVarItem(f); const s0 = fxState(f), late = s0.due && s0.due===s0.prev,
     // Cobro de este mes que aún no ha llegado: no se enseña el pago del mes anterior.
     pm = !late && s0.next && mon(s0.next)===MN(new Date()) && !(s0.paid && Math.abs(dd(s0.paid.date, s0.next)) <= 10), s = pm ? {...s0, paid:null} : s0, ag = late ? dd(TD(),s.prev) : 0;
-  const chip = late ? `<span class="chip ${ag>5?'er':'wa'}">${ag>5?'Vencido':'Pendiente'} ${fd(s.prev)}</span>`
-    : s.paid ? `<span class="chip ok">${f.t==='i'?'Cobrado':'Pagado'} ${fd(s.paid.date)}</span>`
-    : s.next ? `<span class="chip">Próximo ${fd(s.next)}</span>` : '<span class="chip">Terminado</span>';
-  return `<div class="row brow">${tile(CI[f.cat]||'receipt', col(f.cat))}<span class="g"><span class="tt">${esc(f.name)}</span><br><span class="mu">${fxFreq(f)}${fxEnd(f, s.next)}${s.paid?(fromBank(s.paid)?' · Llegó del banco':' · Apuntado en el panel, aún sin cargo del banco')+(s.next && Math.abs(dd(s.paid.date, s.next)) > 10 ? ' · Próximo '+fd(s.next) : ''):''}</span></span>${chip}<span class="amt ${f.t==='i'?'ok':''}">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`; };
+  const chip = late ? `<span class="chip ${ag>5?'er':'wa'}">${ag>5?'Vencido':'Pendiente'} ${fdc(s.prev)}</span>`
+    : s.paid ? `<span class="chip ok">${f.t==='i'?'Cobrado':'Pagado'} ${fdc(s.paid.date)}</span>`
+    : s.next ? `<span class="chip">Próximo ${fdc(s.next)}</span>` : '<span class="chip">Terminado</span>';
+  return `<div class="row brow">${tile(CI[f.cat]||'receipt', col(f.cat))}<span class="g"><span class="tt">${esc(f.name)}</span><br><span class="mu">${fxFreq(f)}${fxEnd(f, s.next)}${s.paid?(fromBank(s.paid)?' · Llegó del banco':' · Apuntado en el panel, aún sin cargo del banco')+(s.next && Math.abs(dd(s.paid.date, s.next)) > 10 ? ' · Próximo '+fdc(s.next) : ''):''}</span></span>${chip}<span class="amt ${f.t==='i'?'ok':''}">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`; };
 /* Fila de un pago variable: lo que lleva este mes frente a lo previsto. */
 const fxVarItem = f => { const v = fxVar(f, MN(new Date()));
   return `<div class="row brow">${tile(CI[f.cat]||'receipt', col(f.cat))}<span class="g"><span class="tt">${esc(f.name)}</span><br><span class="mu">${fxFreq(f)}${fxEnd(f)} · ${v.n} cargo${v.n===1?'':'s'} este mes</span></span><span class="chip ${v.s>=f.amt?'ok':''}">Llevas ${eur(v.s)}</span><span class="amt">≈ ${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`; };
@@ -41,8 +41,8 @@ function vFact(){
     + (cur.length ? `<div class="dh">Este mes</div>${by(cur, f => fxOcc(f, a, b)[0] || fxState(f).due)}` : '')
     + (rest.length ? `<div class="dh">Próximos</div>${by(rest, f => fxState(f).next)}` : '');
   const C = {
-    det: det.length && panel('fact','det',`${I('sparkles')} Detectados en el banco <span class="cnt">· se repiten cada mes</span>`, det.map(o => `<div class="row brow">${tile(CI[o.x.cat]||'receipt', col(o.x.cat))}<span class="g"><span class="tt">${esc(concept(o.x))}</span><br><span class="mu">${o.n} meses seguidos · Último ${fd(o.x.date)} · ${esc(o.x.cat)}</span></span><span class="amt">${eur(o.x.amt)}</span><button class="btn sm" data-a="fxa" data-i="${esc(o.k)}">Añadir</button><button class="btn sm ghost" data-a="fxi" data-i="${esc(o.k)}">Ignorar</button></div>`).join(''), 'wide'),
-    ing: ings.length && panel('fact','ing',`${I('wallet')} Ingresos`, by(ings, f => fxState(f).due) + `<div class="mu" style="margin-top:8px">En ${mes} quedan libres <b class="ok">${eur(ingm-tot)}</b> (ingresos ${eur(ingm)} − pagos ${eur(tot)})</div>`, 'wide'),
+    det: det.length && panel('fact','det',`${I('sparkles')} Detectados en el banco <span class="cnt">· se repiten cada mes</span>`, det.map(o => `<div class="row brow">${tile(CI[o.x.cat]||'receipt', col(o.x.cat))}<span class="g"><span class="tt">${esc(concept(o.x))}</span><br><span class="mu">${o.n} meses seguidos · Último ${fdc(o.x.date)} · ${esc(o.x.cat)}</span></span><span class="amt">${eur(o.x.amt)}</span><button class="btn sm" data-a="fxa" data-i="${esc(o.k)}">Añadir</button><button class="btn sm ghost" data-a="fxi" data-i="${esc(o.k)}">Ignorar</button></div>`).join(''), 'wide'),
+    ing: ings.length && panel('fact','ing',`${I('wallet')} Ingresos`, by(ings, f => fxState(f).due) + `<div class="mu" style="margin-top:8px">En ${mes} quedan libres <b class="${ingm-tot<0?'er':'ok'}">${eur(ingm-tot)}</b> (ingresos ${eur(ingm)} − pagos ${eur(tot)})</div>`, 'wide'),
     pag: panel('fact','pag',`${I('receipt')} Pagos <span class="cnt">· ${cap(mes)}: ${eur(tot)}</span>`, pays.length ? pag : empty('Sin pagos todavía.'), 'wide') };
   VIS.fact = ord('fact', ['det','ing','pag'].filter(k => C[k]));
   return `<div class="hdr"><div><h2>Facturas</h2><div class="sub help">Pagos e ingresos que se repiten. Se marcan como pagados solos cuando llega el cargo del banco; la app ya no apunta gastos por su cuenta.</div></div><div class="hact"><button class="btn" data-a="fxn">${I('plus')} Añadir</button></div></div>
