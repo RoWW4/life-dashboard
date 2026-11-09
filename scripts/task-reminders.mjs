@@ -6,6 +6,11 @@
 // La lanza Supabase cada 15 minutos (pg_cron, tarea «task-reminders»). Lo ya avisado se apunta en la tabla
 // task_reminders para no repetirlo.
 import { env, sb, uid, summary } from './eb.mjs';
+import { log, job, guard } from './log.mjs';
+
+// Registro y latido (ver scripts/log.mjs): cualquier error que corte la ejecución queda apuntado en ops_log y job_health.
+guard('task-reminders');
+await job('task-reminders', 'start');
 
 const TZ = 'Europe/Madrid', HOUR = 7, DEF_TM = '09:00', DAY = 864e5;
 const DOW = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
@@ -102,4 +107,6 @@ if (+P.hour >= 9) for (const d of docs) {
 await sb(`task_reminders?user_id=eq.${uid()}&sent_at=lt.${new Date(Date.now() - 60 * DAY).toISOString()}`, { method: 'DELETE' });
 // El registro de GitHub es público: solo qué tipo de aviso y cuántos, nunca títulos ni nombres.
 const cnt = out.reduce((m, s) => (m[s] = (m[s] || 0) + 1, m), {});
+await log('INFO', 'task-reminders', out.length ? `Avisos enviados: ${out.length}` : 'Nada que avisar', { func: 'main', detail: Object.entries(cnt).map(([s, n]) => `${s}: ${n}`).join(', ') });
+await job('task-reminders', 'ok');
 summary(out.length ? Object.entries(cnt).map(([s, n]) => `- ${s}: ${n}`).join('\n') : 'Nada que avisar.');

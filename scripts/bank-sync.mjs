@@ -2,13 +2,17 @@
 // El panel los recoge al abrirse, los clasifica y evita duplicados con fijos y facturas.
 import crypto from 'node:crypto';
 import { eb, sb, uid, getStatus, setStatus, summary, transient } from './eb.mjs';
+import { log, job, guard, redact } from './log.mjs';
+
+guard('bank-sync');
+await job('bank-sync', 'start');
 
 const DAYS = +(process.env.DAYS_BACK || 14);
 const FAILMAX = 3; // fallos pasajeros seguidos antes de dar la ejecución por fallida (y que GitHub mande correo)
 const day = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
 
-const st = await getStatus().catch(e => { summary('## ❌ ' + e.message); process.exit(process.env.SIN_CORREO === '1' ? 0 : 1); });
-if (!st || !st.session_id) { summary('Banco aún no conectado: ejecuta antes «Conectar banco».'); process.exit(0); }
+const st = await getStatus().catch(async e => { await log('ERROR', 'bank-sync', 'No se pudo leer el estado del banco en Supabase', { func: 'getStatus', err: e }); await job('bank-sync', 'fail', e.message); summary('## ❌ ' + redact(e.message)); process.exit(process.env.SIN_CORREO === '1' ? 0 : 1); });
+if (!st || !st.session_id) { await job('bank-sync', 'ok'); summary('Banco aún no conectado: ejecuta antes «Conectar banco».'); process.exit(0); }
 
 const diag = [];
 const accUrl = acc => `/accounts/${encodeURIComponent(acc)}`;
@@ -102,6 +106,8 @@ try {
   await sb(`bank_pending?user_id=eq.${uid()}`, { method: 'DELETE', prefer: 'return=minimal' });
   if (pend.size) await sb('bank_pending', { method: 'POST', body: [...pend.values()], prefer: 'return=minimal' });
   await setStatus({ last_sync: new Date().toISOString(), last_error: null, fail_count: 0, valid_until: (sess.access && sess.access.valid_until) || st.valid_until, ...(bal || {}) });
+  await log('INFO', 'bank-sync', 'Sincronización correcta', { func: 'main', detail: `${total} revisados, ${rows.size} nuevos, ${pend.size} pendientes${diag.length ? ', con consulta reducida' : ''}` });
+  await job('bank-sync', 'ok');
   summary(`## ✅ Sincronizado\n\n${total} movimientos revisados (${rows.size} nuevos) y ${pend.size} pendientes en ${accounts.length} cuenta(s). Los repetidos se ignoran.` +
     (bal ? `\n\nSaldo de la cuenta guardado (tipo ${bal.balance_type}).` : '\n\nEl banco no dio el saldo de la cuenta: se mantiene el último.') +
     (diag.length ? `\n\n### ⚠️ La consulta normal falló y se usó una más corta\n${diag.map(d => '- ' + d).join('\n')}` : ''));
@@ -109,8 +115,10 @@ try {
   // Fallo pasajero del banco: se apunta y la ejecución termina «bien» (sin correo) hasta que se repita FAILMAX veces.
   const soft = transient(e), fc = soft ? (st.fail_count || 0) + 1 : FAILMAX, quiet = soft && fc < FAILMAX;
   const msg = (String(e.message).slice(0, 300) + (e.rid ? ` · id ${e.rid}` : '') + (diag.length ? ' | ' + diag.join(' | ') : '')).slice(0, 1200);
-  await setStatus({ last_error: msg, fail_count: fc }).catch(() => {});
-  summary(`## ${quiet ? `⚠️ El banco no respondió (fallo ${fc} de ${FAILMAX} antes de avisar)` : '❌ Error al sincronizar'}\n\n\`\`\`\n${e.message}\n\`\`\`` +
+  await setStatus({ last_error: msg, fail_count: fc }).catch(e2 => log('ERROR', 'bank-sync', 'No se pudo guardar el error en bank_status', { func: 'setStatus', err: e2 }));
+  await log(quiet ? 'WARNING' : 'ERROR', 'bank-sync', quiet ? `El banco no respondió (fallo ${fc} de ${FAILMAX})` : 'Error al sincronizar', { func: 'main', err: e, detail: (e.rid ? 'id petición ' + e.rid : '') + (diag.length ? ' | ' + diag.join(' | ') : '') });
+  await job('bank-sync', 'fail', msg);
+  summary(`## ${quiet ? `⚠️ El banco no respondió (fallo ${fc} de ${FAILMAX} antes de avisar)` : '❌ Error al sincronizar'}\n\n\`\`\`\n${redact(e.message)}\n\`\`\`` +
     (e.rid ? `\nID de la petición: \`${e.rid}\`` : '') +
     (diag.length ? `\n\n### Diagnóstico\n${diag.map(d => '- ' + d).join('\n')}` : ''));
   // SIN_CORREO=1 (en bank-sync.yml): el fallo se guarda igual (el panel lo enseña), pero la ejecución acaba «bien» y GitHub no manda correo.

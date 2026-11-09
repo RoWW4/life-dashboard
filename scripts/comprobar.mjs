@@ -28,6 +28,10 @@ const cargados = [...html.matchAll(/src="(?!https?:)([^"?]+)/g)].map(m => m[1]),
 const faltan = cargados.filter(f => !shell.includes(`'${f}'`));
 faltan.length ? mal('Faltan en SHELL de sw.js: ' + faltan.join(', ')) : ok('Todos los archivos cargados están en SHELL');
 
+// 3b) Pruebas de los robots (tests/*.test.mjs, sin conexión)
+const pruebas = readdirSync('tests').filter(f => f.endsWith('.test.mjs')).map(f => join('tests', f));
+if (pruebas.length) { try { execFileSync(process.execPath, ['--test', ...pruebas], { stdio: 'pipe' }); ok(`Pruebas de los robots correctas (${pruebas.length} archivo/s)`); } catch (e) { mal('Pruebas de los robots:\n' + String(e.stdout || '').split('\n').filter(l => /^not ok|^# fail|Error/.test(l)).join('\n')); } }
+
 // 4) La app abre sin errores
 const tipos = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png' };
 const srv = createServer((q, r) => { try { const p = decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html'; r.writeHead(200, { 'content-type': tipos[extname(p)] || 'application/octet-stream' }); r.end(readFileSync(p)); } catch (e) { r.writeHead(404); r.end(); } });
