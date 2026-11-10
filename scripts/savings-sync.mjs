@@ -47,7 +47,7 @@ try {
   }
   // La primera vez, todo lo que deja el banco (90 días); después, los últimos 10 (por si alguno llega con retraso).
   const from = st.last_sync ? day(+(process.env.DAYS_BACK || 10)) : day(89);
-  const rows = new Map(), kinds = {};
+  const rows = new Map(), kinds = {}, fields = new Set(); // fields: qué campos traen los movimientos (solo nombres)
   let total = null, btype = '';
 
   for (const acc of accounts) {
@@ -60,7 +60,11 @@ try {
       const date = t.booking_date || t.value_date || t.transaction_date;
       if (!date) continue;
       const party = amount < 0 ? t.creditor && t.creditor.name : t.debtor && t.debtor.name;
-      const desc = [party, ...(t.remittance_information || [])].filter(Boolean).join(' · ').replace(/\s+/g, ' ').trim();
+      // Trade Republic deja vacíos el nombre y el concepto: el tipo de movimiento puede venir en la nota o en el código bancario.
+      const btc = t.bank_transaction_code || {};
+      const desc = [party, ...(t.remittance_information || []), t.note, btc.description, [btc.code, btc.sub_code].filter(Boolean).join('/')]
+        .filter(Boolean).join(' · ').replace(/\s+/g, ' ').trim();
+      for (const [k, v] of Object.entries(t)) if (v !== null && v !== '' && !(Array.isArray(v) && !v.length)) fields.add(k);
       let ref = t.entry_reference || t.transaction_id;
       if (!ref) { const b = `${date}|${amount}|${desc}`; seen[b] = (seen[b] || 0) + 1; ref = b + '|' + seen[b]; }
       const id = 's' + crypto.createHash('sha1').update(CONN + '|' + acc + '|' + ref).digest('hex').slice(0, 24);
@@ -82,7 +86,7 @@ try {
   });
   await setStatus({ last_sync: new Date().toISOString(), last_error: null, fail_count: 0, valid_until: (sess.access && sess.access.valid_until) || st.valid_until, ...(bal || {}) }, CONN);
   const k = Object.entries(kinds).map(([a, n]) => `${n} ${a}`).join(', ') || 'ninguno';
-  await log('INFO', 'savings-sync', 'Sincronización correcta', { func: 'main', detail: `${CONN}: ${rows.size} movimientos (${k})${bal ? '' : ', sin saldo'}` });
+  await log('INFO', 'savings-sync', 'Sincronización correcta', { func: 'main', detail: `${CONN}: ${rows.size} movimientos (${k})${bal ? '' : ', sin saldo'} · campos: ${[...fields].sort().join(',')}` });
   await job('savings-sync', 'ok');
   // En el resumen de GitHub (público) solo cuentas y tipos, nunca importes ni conceptos.
   summary(`## ✅ Ahorro sincronizado (${CONN})\n\n${rows.size} movimientos revisados desde ${from}: ${k}.` +
