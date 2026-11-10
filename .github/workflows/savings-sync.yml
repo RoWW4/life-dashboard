@@ -1,0 +1,34 @@
+name: Sincronizar ahorro
+
+# Saldo y movimientos de la cuenta de ahorro (conexión trade-republic). La lanza Supabase una vez al día (pg_cron,
+# tarea «savings-sync»: 13 6 * * * UTC ≈ 07:13 en invierno) llamando a la API de GitHub, como «Sincronizar banco».
+# Pausarla: select cron.alter_job((select jobid from cron.job where jobname = 'savings-sync'), active := false);
+# También se puede lanzar a mano (Run workflow).
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: savings-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10   # si algo se cuelga, GitHub la corta en vez de esperar 6 h
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Traer saldo y movimientos
+        run: node scripts/savings-sync.mjs
+        env:
+          SAV_CONN: trade-republic
+          EB_APP_ID: ${{ secrets.EB_APP_ID }}
+          EB_PRIVATE_KEY: ${{ secrets.EB_PRIVATE_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          LDB_USER_ID: ${{ secrets.LDB_USER_ID }}

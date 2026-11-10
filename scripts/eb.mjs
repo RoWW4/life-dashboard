@@ -73,13 +73,44 @@ export async function sb(path, { method = 'GET', body, prefer } = {}, tries = 2)
 
 export const uid = () => env('LDB_USER_ID');
 
-export async function getStatus() {
-  return (await sb(`bank_status?user_id=eq.${uid()}&select=*`))[0] || null;
+/* Conexiones con bancos (tabla bank_connections, una fila por conexión). purpose: gastos → Finanzas; ahorro → Inversiones.
+   Los movimientos de cada tipo van a tablas distintas (bank_tx / savings_tx), así que nunca se mezclan. */
+export const CONNECTIONS = {
+  'openbank': { aspsp: 'Openbank', country: 'ES', purpose: 'gastos' },
+  'trade-republic': { aspsp: 'Trade Republic', country: 'ES', purpose: 'ahorro' }
+};
+function conn(id) {
+  if (!CONNECTIONS[id]) throw new Error(`Conexión desconocida «${id}» (válidas: ${Object.keys(CONNECTIONS).join(', ')})`);
+  return CONNECTIONS[id];
 }
-export async function setStatus(fields) {
-  await sb('bank_status?on_conflict=user_id', {
-    method: 'POST', body: { user_id: uid(), ...fields }, prefer: 'resolution=merge-duplicates,return=minimal'
+
+export async function getStatus(id = 'openbank') {
+  conn(id);
+  return (await sb(`bank_connections?user_id=eq.${uid()}&id=eq.${encodeURIComponent(id)}&select=*`))[0] || null;
+}
+export async function setStatus(fields, id = 'openbank') {
+  const c = conn(id);
+  await sb('bank_connections?on_conflict=user_id,id', {
+    method: 'POST', body: { user_id: uid(), id, purpose: c.purpose, country: c.country, ...fields }, prefer: 'resolution=merge-duplicates,return=minimal'
   });
+}
+
+/* Saldo de una cuenta a partir de /balances: se prefiere el contable (el que enseña el banco) y, si no lo da, el disponible.
+   Devuelve { amount, type } o null. */
+export function pickBalance(balances = []) {
+  const pref = ['ITBD', 'CLBD', 'ITAV', 'CLAV', 'XPCD'];
+  const b = [...balances].sort((x, y) => (pref.indexOf(x.balance_type) + 1 || 99) - (pref.indexOf(y.balance_type) + 1 || 99))[0];
+  const amt = b && +(b.balance_amount && b.balance_amount.amount) * (b.credit_debit_indicator === 'DBIT' ? -1 : 1);
+  return b && Number.isFinite(amt) ? { amount: amt, type: b.balance_type || '' } : null;
+}
+
+/* Tipo de un movimiento de la cuenta de ahorro: los intereses (y la retención de impuestos sobre ellos) son «interes»;
+   el resto, dinero que se mete («aporte») o se saca («retirada»). */
+export function savKind(amount, desc = '') {
+  if (!amount) return 'otro';
+  if (amount > 0 && /inter[eé]s|interest|zins/i.test(desc)) return 'interes';
+  if (amount < 0 && /impuesto|retenci[oó]n|\btax|steuer/i.test(desc)) return 'interes';
+  return amount > 0 ? 'aporte' : 'retirada';
 }
 
 /* Escribe en el resumen visible de la ejecución de GitHub Actions. */

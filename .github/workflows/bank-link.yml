@@ -7,10 +7,14 @@ on:
         description: 'Déjalo VACÍO la primera vez. Después pega aquí el código que te muestra el panel.'
         required: false
         default: ''
-      bank:
-        description: 'Nombre del banco en Enable Banking (escribe «lista» para ver solo qué bancos hay, sin conectar nada)'
-        required: false
-        default: 'Openbank'
+      conexion:
+        description: 'Qué conectar: openbank (gastos), trade-republic (ahorro) o lista (solo ver qué bancos hay, sin conectar nada)'
+        type: choice
+        options:
+          - openbank
+          - trade-republic
+          - lista
+        default: 'openbank'
 
 permissions:
   contents: read
@@ -28,7 +32,7 @@ jobs:
         run: node scripts/bank-link.mjs
         env:
           EB_CODE: ${{ inputs.code }}
-          EB_BANK: ${{ inputs.bank }}
+          EB_CONN: ${{ inputs.conexion }}
           EB_APP_ID: ${{ secrets.EB_APP_ID }}
           EB_PRIVATE_KEY: ${{ secrets.EB_PRIVATE_KEY }}
           APP_URL: ${{ secrets.APP_URL }}

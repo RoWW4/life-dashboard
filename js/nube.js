@@ -9,6 +9,11 @@ let sb = null,
   PEND = [],
   syncTxt = '',
   cloudN = 0;
+/* Cuenta de ahorro sincronizada: conexión (bank_connections, purpose «ahorro»), saldos por día (savings_daily)
+   y movimientos (savings_tx). Solo se leen; en S.sav siguen los ajustes y los apuntes a mano. */
+let SAVC = null,
+  SAVD = [],
+  SAVT = [];
 /* Estado de los robots (job_health) e incidentes abiertos del vigilante de Supabase (ops_alerts). err = no se pudo leer. */
 let OPS = null,
   BANKERR = '';
@@ -317,13 +322,34 @@ async function pull() {
 async function pullBank() {
   // Cada consulta puede fallar por separado: se guarda el motivo (BANKERR) y se mantiene lo último que se sabía.
   const errs = [];
+  // Una fila por conexión: la de gastos (openbank) es BANK y la de ahorro es SAVC.
   const st = await sb
-    .from('bank_status')
-    .select('valid_until,last_sync,last_error,session_id,fail_count,balance,balance_at')
-    .eq('user_id', user.id)
-    .maybeSingle();
+    .from('bank_connections')
+    .select('id,purpose,aspsp,valid_until,last_sync,last_error,session_id,fail_count,balance,balance_at')
+    .eq('user_id', user.id);
+  let sc = false;
   if (st.error) errs.push('estado: ' + st.error.message);
-  else BANK = st.data || null;
+  else {
+    const cs = st.data || [];
+    BANK = cs.find(c => c.id === 'openbank') || null;
+    const nc = cs.find(c => c.purpose === 'ahorro' && c.session_id) || null;
+    sc = JSON.stringify(nc) !== JSON.stringify(SAVC);
+    SAVC = nc;
+  }
+  if (SAVC) {
+    const [sd, stx] = await Promise.all([
+      sb.from('savings_daily').select('day,balance').eq('conn', SAVC.id).order('day', { ascending: true }),
+      sb.from('savings_tx').select('id,booking_date,amount,kind').eq('conn', SAVC.id).order('booking_date', { ascending: true })
+    ]);
+    if (sd.error || stx.error) errs.push('ahorro: ' + (sd.error || stx.error).message);
+    else {
+      const nd = (sd.data || []).map(x => ({ d: x.day, bal: +x.balance })),
+        nt = (stx.data || []).map(x => ({ id: x.id, d: x.booking_date, amt: +x.amount, kind: x.kind }));
+      if (JSON.stringify(nd) !== JSON.stringify(SAVD) || JSON.stringify(nt) !== JSON.stringify(SAVT)) sc = true;
+      SAVD = nd;
+      SAVT = nt;
+    }
+  }
   const [jh, oa] = await Promise.all([
     sb.from('job_health').select('job,last_start,last_ok,last_error,last_error_at,fail_count,run_url'),
     sb.from('ops_alerts').select('key,title,detail,opened_at').eq('open', true)
@@ -373,7 +399,7 @@ async function pullBank() {
     bc = be !== BANKERR;
   BANKERR = be;
   if (be) logErr('nube/banco', new Error(be));
-  if (!rows.length) return pc || bc;
+  if (!rows.length) return pc || bc || sc;
   const r = ingest(
     rows.map(d => ({ id: d.id, date: d.booking_date, amt: +d.amount, desc: d.description || '' })),
     'bank'

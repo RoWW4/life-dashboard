@@ -532,12 +532,24 @@ function bankAlerts() {
         '#ff5d5d'
       ]);
   }
+  // Permiso de la cuenta de ahorro (Trade Republic da 90 días como máximo).
+  if (SAVC && SAVC.valid_until) {
+    const n = dayDiff(SAVC.valid_until.slice(0, 10));
+    if (n <= 14)
+      a.push([
+        SAVC.valid_until.slice(0, 10),
+        'piggy-bank',
+        `${n < 0 ? 'Ha caducado' : 'Caduca'} el permiso de ${SAVC.aspsp || 'la cuenta de ahorro'}: renuévalo con «Conectar banco» (conexión ${SAVC.id})`,
+        '#ff5d5d'
+      ]);
+  }
   // Un fallo suelto de Openbank no se avisa; solo si se repite (o si es un error real, que deja fail_count alto).
   // Incidentes del vigilante de Supabase (uno por pieza que no funciona). El del banco sustituye al aviso antiguo.
   const inc = (OPS && OPS.alerts) || [];
   if (BANK && BANK.last_error && (BANK.fail_count || 0) >= FAILMAX && !inc.some(x => x.key === 'banco'))
     a.push([TD(), 'landmark', 'La sincronización con el banco lleva varios fallos seguidos', '#ff5d5d']);
-  inc.forEach(x =>
+  // Los incidentes «permiso:…» ya salen arriba como aviso de caducidad.
+  inc.filter(x => !String(x.key).startsWith('permiso:')).forEach(x =>
     a.push([TD(), 'triangle-alert', `${x.title} no funciona bien (desde ${ago(x.opened_at)}) · Ajustes → Estado de los robots`, '#ff5d5d'])
   );
   // ¿Quién vigila al vigilante? Si lleva más de 3 h sin ejecutarse, se avisa aquí.

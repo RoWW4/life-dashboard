@@ -145,7 +145,7 @@ declare
   u    uuid := ldb_owner();
   tok  text := (select decrypted_secret from vault.decrypted_secrets where name = 'telegram_bot_token');
   chat text := (select decrypted_secret from vault.decrypted_secrets where name = 'telegram_chat_id');
-  r record; c record; a record; bad int; msg text;
+  r record; c record; a record; bad int; msg text; nm text;
   checks jsonb := '[]'::jsonb;
 begin
   perform ldb_job('vigilante', 'start');
@@ -164,16 +164,26 @@ begin
         case when bad > 0 then bad || ' llamadas a GitHub o Telegram con error en la última hora (¿token de GitHub caducado?).' end));
   end if;
 
-  -- Banco: 4 sincronizaciones al día; de noche pasan 10 h entre una y otra.
-  select * into r from bank_status where user_id = u;
-  if found and r.session_id is not null then
-    checks := checks || jsonb_build_object('key', 'banco', 'title', 'La sincronización del banco',
-      'failing', r.last_sync is null or r.last_sync < now() - interval '12 hours' or r.fail_count >= 3,
-      'detail', concat_ws(E'\n',
+  -- Cada conexión con un banco (bank_connections, 10/11/2026): gastos (Openbank, 4 veces al día; de noche pasan 10 h
+  -- entre una y otra) con 12 h de margen; ahorro (1 vez al día) con 30 h. La clave de Openbank sigue siendo «banco»;
+  -- las demás, «banco:<id>». Y «permiso:<id>» cuando faltan 7 días para que caduque el permiso.
+  for r in select * from bank_connections where user_id = u and session_id is not null order by id loop
+    nm := coalesce(r.aspsp, r.id);
+    checks := checks || jsonb_build_object('key', case when r.id = 'openbank' then 'banco' else 'banco:' || r.id end,
+      'title', case when r.id = 'openbank' then 'La sincronización del banco' else 'La sincronización de ' || nm end,
+      'failing', r.last_sync is null or r.last_sync < now() - case when r.purpose = 'ahorro' then interval '30 hours' else interval '12 hours' end or r.fail_count >= 3,
+      'detail', concat_ws(E'
+',
         'Última sincronización correcta: hace ' || ldb_ago(r.last_sync) || '.',
         case when r.fail_count > 0 then r.fail_count || ' fallos seguidos.' end,
         case when r.last_error is not null then 'Error: ' || left(ldb_redact(split_part(r.last_error, ' | ', 1)), 200) end));
-  end if;
+    if r.valid_until is not null then
+      checks := checks || jsonb_build_object('key', 'permiso:' || r.id, 'title', 'El permiso de ' || nm,
+        'failing', r.valid_until < now() + interval '7 days',
+        'detail', 'Caduca el ' || to_char(r.valid_until at time zone 'Europe/Madrid', 'DD/MM/YYYY') ||
+          '. Renuévalo con «Conectar banco» (conexión ' || r.id || ') y el código vacío.');
+    end if;
+  end loop;
 
   -- Salud (Google Health): se sincroniza cada hora.
   select * into r from health_status where user_id = u;
@@ -203,7 +213,7 @@ begin
         on conflict (key) do update set title = excluded.title, detail = excluded.detail, open = true, opened_at = now(),
           closed_at = null, notified_open = false, notified_close = true;
         insert into ops_log (user_id, level, source, process, func, event, detail)
-        values (u, 'ERROR', 'vigilante', c.key, 'ldb_watchdog', 'Incidente abierto: ' || c.title, c.detail);
+        values (u, case when c.key like 'permiso:%' then 'WARNING' else 'ERROR' end, 'vigilante', c.key, 'ldb_watchdog', 'Incidente abierto: ' || c.title, c.detail);
       else
         update ops_alerts set detail = c.detail where key = c.key;
       end if;
@@ -224,7 +234,11 @@ begin
       end if;
       exit;
     end if;
-    msg := case when a.open
+    msg := case
+      when a.key like 'permiso:%' and a.open then '⏳ Panel: caduca el permiso de ' || substr(a.title, 15) || '.' || E'
+' || coalesce(a.detail, '')
+      when a.key like 'permiso:%' then '✅ Panel: ' || a.title || ' ya está renovado.'
+      when a.open
       then '⚠️ Panel: ' || a.title || ' no funciona bien (desde ' || to_char(a.opened_at at time zone 'Europe/Madrid', 'DD/MM HH24:MI') || ').' || E'\n' || coalesce(a.detail, '')
       else '✅ Panel: ' || a.title || ' vuelve a funcionar (fallaba desde ' || to_char(a.opened_at at time zone 'Europe/Madrid', 'DD/MM HH24:MI') || ').' end;
     perform net.http_post(

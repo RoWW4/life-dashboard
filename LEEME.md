@@ -23,7 +23,8 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
 - Tablas en `supabase/schema.sql`:
   - `ldb_state`: todo el panel en un único JSON (columna `data`). Cada cambio lleva un `_ts` nuevo para que la app no lo sobrescriba.
   - `bank_tx` y `bank_pending`: movimientos del banco, ya confirmados y aún sin confirmar. Los escribe la sincronización y la app los recoge al abrirse.
-  - `bank_status`: estado de la conexión con el banco.
+  - `bank_connections`: una fila por conexión con un banco (`openbank` para Finanzas y `trade-republic` para la cuenta de ahorro de Inversiones): permiso, última sincronización, error y saldo. Ver `supabase/bancos.sql`.
+  - `savings_daily` y `savings_tx`: saldo diario y movimientos de la cuenta de ahorro (intereses, aportaciones y retiradas). Van aparte de `bank_tx`, así que nunca se mezclan con los gastos. La app los junta con los apuntes a mano de `S.sav` al mostrar Inversiones (`savSnaps` en `js/vistas/finanzas.js`).
   - `task_reminders`: avisos de Telegram ya mandados (para no repetirlos).
   - `wallet_log`: a qué hora trae Wallet cada movimiento (solo fechas y horas).
   - `ldb_state_hist`: copia automática de la versión anterior del panel antes de cada cambio (se guardan 30 días). Para recuperar datos, ver `DATOS.md`.
@@ -38,6 +39,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
   - `sync-wallet`: `17 5,9,13,17,21 * * *` (UTC), unas 06:17, 10:17, 14:17, 18:17 y 22:17 en invierno. **Desactivada desde el 04/11/2026.** Para volver a activarla: `select cron.alter_job(1, active := true);`.
   - `task-reminders`: `7,22,37,52 * * * *`.
   - `bank-sync`: `43 5,10,14,19 * * *` (UTC), desde el 10/11/2026.
+  - `savings-sync`: `13 6 * * *` (UTC), unas 07:13 en invierno.
   - `vigilante`: `41 * * * *` (ver «Vigilancia y registro de errores»).
 
 ### Vigilancia y registro de errores (desde el 10/11/2026)
@@ -64,6 +66,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
     - de Salud, 3 días antes;
     - de los documentos que caducan: 30 días antes (60 los de la carpeta Personal), 7 días antes, el mismo día y una vez por semana durante un mes si sigue caducado.
   - **Conectar banco** y **Sincronizar banco** (`bank-link.yml`, `bank-sync.yml`): la conexión directa con el banco por Enable Banking. Estuvo en pausa del 27/10 al 04/11/2026 porque el banco cortaba el permiso a las pocas horas; ahora vuelve a ser la vía principal (4 veces al día, lanzada por Supabase: tarea `bank-sync` de pg_cron, ver `supabase/cron.sql`). Si el permiso caduca: lanzar «Conectar banco» con el código vacío, entrar en el banco con el enlace que da y volver a lanzarlo pegando el código que muestra el panel. Para pausarla otra vez: `select cron.alter_job((select jobid from cron.job where jobname = 'bank-sync'), active := false);`.
+  - **Sincronizar ahorro** (`savings-sync.yml`): saldo del día y movimientos de los últimos 10 días (90 la primera vez) de la cuenta de ahorro de Trade Republic, una vez al día (tarea `savings-sync` de pg_cron). Trade Republic solo da la cuenta de efectivo y un permiso de 90 días como máximo: el vigilante avisa 7 días antes («⏳ caduca el permiso») y Inicio desde 14. Para renovarlo, «Conectar banco» con la conexión `trade-republic` y el código vacío, igual que con Openbank. «Conectar banco» pide ahora la **conexión** (`openbank`, `trade-republic` o `lista`) en vez del nombre del banco.
 - Secretos (Settings → Secrets and variables → Actions):
 
   | Nombre | Para qué |
@@ -114,7 +117,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
 | `scripts/google-health.gs`, `scripts/google-health-appsscript.json` | datos de Google Health para Salud (se pegan en Google Apps Script) |
 | `scripts/subir.mjs` | subir una versión en un paso (trae lo nuevo, sube la versión, comprueba, commit y push) |
 | `scripts/comprobar.mjs` | comprobación obligatoria antes de subir (la lanza `subir.mjs`) |
-| `scripts/bank-link.mjs`, `scripts/bank-sync.mjs`, `scripts/eb.mjs` | Enable Banking. `eb.mjs` también lo usan los demás scripts para hablar con Supabase |
+| `scripts/bank-link.mjs`, `scripts/bank-sync.mjs`, `scripts/savings-sync.mjs`, `scripts/eb.mjs` | Enable Banking. `eb.mjs` también lo usan los demás scripts para hablar con Supabase |
 | `.github/workflows/*.yml` | los robots de arriba |
 | `scripts/log.mjs` | registro común y latido de los robots (ver «Vigilancia y registro de errores») |
 | `scripts/telegram.mjs` | envío por Telegram de los robots (troceo, reintentos y message_id) |

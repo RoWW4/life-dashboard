@@ -22,7 +22,7 @@ export const FAKE = `window.supabase = { createClient: () => {
 
 export function cloud() {
   const db = { ldb_state: [{ user_id: 'u1', data: { tasks: [{ id: 'a', title: 'Prueba A', done: false }, { id: 'b', title: 'Prueba B', done: false }], _ts: 1 } }],
-    bank_tx: [], bank_status: [], bank_pending: [], job_health: [], ops_alerts: [], health_status: [], health_daily: [] };
+    bank_tx: [], bank_status: [], bank_connections: [], savings_daily: [], savings_tx: [], bank_pending: [], job_health: [], ops_alerts: [], health_status: [], health_daily: [] };
   const st = { db, down: false, calls: 0, barrier: 0, saves: 0, conflicts: 0 };
   st.handle = async (raw, who) => {
     const q = JSON.parse(raw); st.calls++;

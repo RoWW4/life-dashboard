@@ -21,7 +21,7 @@ async function run({ supa503 = 0 } = {}) {
         { status: 'BOOK', entry_reference: 'r1', booking_date: '2026-11-08', transaction_amount: { amount: '10.00', currency: 'EUR' }, credit_debit_indicator: 'DBIT', remittance_information: ['Prueba'] },
         { status: 'PDNG', transaction_date: '2026-11-09', transaction_amount: { amount: '3.00', currency: 'EUR' }, credit_debit_indicator: 'DBIT', remittance_information: ['Pendiente'] }] });
       if (u.includes('/balances')) return json(200, { balances: [] });
-      if (q.method === 'GET' && u.startsWith('/rest/v1/bank_status')) return json(200, [{ session_id: 'sesion', last_sync: '2026-11-01T00:00:00Z', fail_count: 0 }]);
+      if (q.method === 'GET' && u.startsWith('/rest/v1/bank_connections')) return json(200, [{ session_id: 'sesion', last_sync: '2026-11-01T00:00:00Z', fail_count: 0 }]);
       if (q.method === 'GET' && u.startsWith('/rest/v1/bank_tx')) { if (fails-- > 0) return json(503, { message: 'unavailable' }); return json(200, []); }
       json(q.method === 'POST' ? 201 : 204);
     });
@@ -42,7 +42,12 @@ test('las retenciones pendientes se guardan antes de quitar las viejas (la lista
   const del = calls.findIndex(c => c.m === 'DELETE' && c.u.startsWith('/rest/v1/bank_pending'));
   assert.ok(ins >= 0 && del > ins, 'primero se insertan, después se borran');
   assert.match(calls[del].u, /id=not\.in\.\(p[0-9a-f]+\)/, 'solo se borran las que ya no están');
-  assert.ok(calls.some(c => c.m === 'POST' && c.u.startsWith('/rest/v1/bank_tx')), 'el movimiento confirmado se guarda');
+  assert.match(calls[del].u, /conn=eq.openbank/, 'solo las de la conexión de gastos');
+  const tx = calls.find(c => c.m === 'POST' && c.u.startsWith('/rest/v1/bank_tx'));
+  assert.ok(tx, 'el movimiento confirmado se guarda');
+  assert.ok(tx.body.every(r => r.conn === 'openbank'), 'cada movimiento lleva su conexión');
+  const st = calls.filter(c => c.m === 'POST' && c.u.startsWith('/rest/v1/bank_connections'));
+  assert.ok(st.length && st.every(c => c.body.id === 'openbank' && c.body.purpose === 'gastos'), 'el estado se guarda en la fila openbank');
   const jobs = calls.filter(c => c.u === '/rest/v1/rpc/ldb_job').map(c => c.body.p_event);
   assert.deepEqual(jobs, ['start', 'ok']);
 });

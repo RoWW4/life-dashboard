@@ -1,16 +1,18 @@
 // Descarga los movimientos recientes de Enable Banking y los guarda en Supabase (bank_tx).
+// Solo la conexión de gastos (openbank); la cuenta de ahorro la sincroniza savings-sync.mjs en sus propias tablas.
 // El panel los recoge al abrirse, los clasifica y evita duplicados con fijos y facturas.
 import crypto from 'node:crypto';
-import { eb, sb, uid, getStatus, setStatus, summary, transient, FAILMAX } from './eb.mjs';
+import { eb, sb, uid, getStatus, setStatus, summary, transient, FAILMAX, pickBalance } from './eb.mjs';
 import { log, job, guard, redact } from './log.mjs';
 
 guard('bank-sync');
+const CONN = 'openbank';
 await job('bank-sync', 'start');
 
 const DAYS = +(process.env.DAYS_BACK || 14);
 const day = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
 
-const st = await getStatus().catch(async e => { await log('ERROR', 'bank-sync', 'No se pudo leer el estado del banco en Supabase', { func: 'getStatus', err: e }); await job('bank-sync', 'fail', e.message); summary('## ❌ ' + redact(e.message)); process.exit(process.env.SIN_CORREO === '1' ? 0 : 1); });
+const st = await getStatus(CONN).catch(async e => { await log('ERROR', 'bank-sync', 'No se pudo leer el estado del banco en Supabase', { func: 'getStatus', err: e }); await job('bank-sync', 'fail', e.message); summary('## ❌ ' + redact(e.message)); process.exit(process.env.SIN_CORREO === '1' ? 0 : 1); });
 if (!st || !st.session_id) { await job('bank-sync', 'ok'); summary('Banco aún no conectado: ejecuta antes «Conectar banco».'); process.exit(0); }
 
 const diag = [];
@@ -71,13 +73,13 @@ try {
       if (t.status && t.status !== 'BOOK') {
         if (t.status !== 'PDNG') continue;
         const pid = 'p' + crypto.createHash('sha1').update(`${acc}|${t.transaction_date || date}|${amount}|${desc}|${pend.size}`).digest('hex').slice(0, 24);
-        pend.set(pid, { id: pid, user_id: uid(), booking_date: t.transaction_date || date, amount: amount.toFixed(2), description: desc.slice(0, 300) });
+        pend.set(pid, { id: pid, user_id: uid(), conn: CONN, booking_date: t.transaction_date || date, amount: amount.toFixed(2), description: desc.slice(0, 300) });
         continue;
       }
       let ref = t.entry_reference || t.transaction_id;
       if (!ref) { const b = `${date}|${amount}|${desc}`; seen[b] = (seen[b] || 0) + 1; ref = b + '|' + seen[b]; }
       const id = 'a' + crypto.createHash('sha1').update(acc + '|' + ref).digest('hex').slice(0, 24);
-      rows.set(id, { id, user_id: uid(), account: acc.slice(-6), booking_date: date, amount: amount.toFixed(2), currency: (t.transaction_amount && t.transaction_amount.currency) || 'EUR', description: desc.slice(0, 300) });
+      rows.set(id, { id, user_id: uid(), conn: CONN, account: acc.slice(-6), booking_date: date, amount: amount.toFixed(2), currency: (t.transaction_amount && t.transaction_amount.currency) || 'EUR', description: desc.slice(0, 300) });
     }
   }
 
@@ -85,7 +87,7 @@ try {
   // que ya estaban guardados con el id antiguo (misma fecha, importe y concepto) no se vuelven a guardar.
   const key = r => `${r.booking_date}|${(+r.amount).toFixed(2)}|${r.description}`;
   const old = {}, total = rows.size;
-  for (const r of await sb(`bank_tx?user_id=eq.${uid()}&booking_date=gte.${from}&select=id,booking_date,amount,description`)) {
+  for (const r of await sb(`bank_tx?user_id=eq.${uid()}&conn=eq.${CONN}&booking_date=gte.${from}&select=id,booking_date,amount,description`)) {
     if (!rows.has(r.id)) old[key(r)] = (old[key(r)] || 0) + 1;
     else rows.delete(r.id); // ya guardado con este mismo id
   }
@@ -96,16 +98,14 @@ try {
   let bal = null;
   if (accounts[0]) try {
     const { balances = [] } = await eb(`${accUrl(accounts[0])}/balances`, {}, 1);
-    const pref = ['ITBD', 'CLBD', 'ITAV', 'CLAV', 'XPCD'];
-    const b = [...balances].sort((x, y) => (pref.indexOf(x.balance_type) + 1 || 99) - (pref.indexOf(y.balance_type) + 1 || 99))[0];
-    const amt = b && +(b.balance_amount && b.balance_amount.amount) * (b.credit_debit_indicator === 'DBIT' ? -1 : 1);
-    if (b && Number.isFinite(amt)) bal = { balance: amt.toFixed(2), balance_type: b.balance_type || '', balance_at: new Date().toISOString() };
+    const b = pickBalance(balances);
+    if (b) bal = { balance: b.amount.toFixed(2), balance_type: b.type, balance_at: new Date().toISOString() };
   } catch (e) { diag.push(`⚠️ Saldo (/balances): ${e.status ?? ''} ${(e.body || e.message).slice(0, 120)}`); }
   if (rows.size) await sb('bank_tx?on_conflict=id', { method: 'POST', body: [...rows.values()], prefer: 'resolution=ignore-duplicates,return=minimal' });
   // Pendientes: primero se guardan los nuevos y después se quitan los que ya no están (si algo falla, nunca queda la lista vacía).
   if (pend.size) await sb('bank_pending?on_conflict=id', { method: 'POST', body: [...pend.values()], prefer: 'resolution=merge-duplicates,return=minimal' });
-  await sb(`bank_pending?user_id=eq.${uid()}${pend.size ? `&id=not.in.(${[...pend.keys()].join(',')})` : ''}`, { method: 'DELETE', prefer: 'return=minimal' });
-  await setStatus({ last_sync: new Date().toISOString(), last_error: null, fail_count: 0, valid_until: (sess.access && sess.access.valid_until) || st.valid_until, ...(bal || {}) });
+  await sb(`bank_pending?user_id=eq.${uid()}&conn=eq.${CONN}${pend.size ? `&id=not.in.(${[...pend.keys()].join(',')})` : ''}`, { method: 'DELETE', prefer: 'return=minimal' });
+  await setStatus({ last_sync: new Date().toISOString(), last_error: null, fail_count: 0, valid_until: (sess.access && sess.access.valid_until) || st.valid_until, ...(bal || {}) }, CONN);
   await log('INFO', 'bank-sync', 'Sincronización correcta', { func: 'main', detail: `${total} revisados, ${rows.size} nuevos, ${pend.size} pendientes${diag.length ? ', con consulta reducida' : ''}` });
   await job('bank-sync', 'ok');
   summary(`## ✅ Sincronizado\n\n${total} movimientos revisados (${rows.size} nuevos) y ${pend.size} pendientes en ${accounts.length} cuenta(s). Los repetidos se ignoran.` +
@@ -115,7 +115,7 @@ try {
   // Fallo pasajero del banco: se apunta y la ejecución termina «bien» (sin correo) hasta que se repita FAILMAX veces.
   const soft = transient(e), fc = soft ? (st.fail_count || 0) + 1 : FAILMAX, quiet = soft && fc < FAILMAX;
   const msg = (String(e.message).slice(0, 300) + (e.rid ? ` · id ${e.rid}` : '') + (diag.length ? ' | ' + diag.join(' | ') : '')).slice(0, 1200);
-  await setStatus({ last_error: msg, fail_count: fc }).catch(e2 => log('ERROR', 'bank-sync', 'No se pudo guardar el error en bank_status', { func: 'setStatus', err: e2 }));
+  await setStatus({ last_error: msg, fail_count: fc }, CONN).catch(e2 => log('ERROR', 'bank-sync', 'No se pudo guardar el error en bank_connections', { func: 'setStatus', err: e2 }));
   await log(quiet ? 'WARNING' : 'ERROR', 'bank-sync', quiet ? `El banco no respondió (fallo ${fc} de ${FAILMAX})` : 'Error al sincronizar', { func: 'main', err: e, detail: (e.rid ? 'id petición ' + e.rid : '') + (diag.length ? ' | ' + diag.join(' | ') : '') });
   await job('bank-sync', 'fail', msg);
   summary(`## ${quiet ? `⚠️ El banco no respondió (fallo ${fc} de ${FAILMAX} antes de avisar)` : '❌ Error al sincronizar'}\n\n\`\`\`\n${redact(e.message)}\n\`\`\`` +

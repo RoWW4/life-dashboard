@@ -36,9 +36,33 @@ const money = v => `<span class="money">${v}</span>`;
 /* Estimación como la calcula la cuenta: interés diario (saldo × % anual / 365) que se acumula durante el mes;
    el día 1 se abona lo del mes anterior menos los impuestos (redondeados al céntimo). Se parte del último saldo real apuntado.
    El primer mes cuenta desde el día del primer apunte (apertura); los demás, desde el día 1. */
+/* Apuntes con los que se calcula Inversiones: los manuales anteriores al primer saldo automático (savings_daily) y,
+   desde ahí, el último saldo automático de cada mes (el del mes en curso es el más reciente). Las aportaciones y
+   retiradas que trae el banco (savings_tx) se suman al apunte siguiente; los intereses no, porque son lo ganado.
+   Si no hay apuntes a mano, se empieza por el primer saldo automático, que cuenta como aportado. Los automáticos llevan auto: true. */
+function savSnaps(manual = (S.sav && S.sav.snaps) || [], daily = SAVD, tx = SAVT) {
+  const M = [...manual].sort((a, b) => a.d.localeCompare(b.d));
+  if (!daily.length) return M;
+  const D = [...daily].sort((a, b) => a.d.localeCompare(b.d)),
+    a0 = D[0].d,
+    out = M.filter(x => x.d < a0),
+    last = {};
+  D.forEach(x => (last[x.d.slice(0, 7)] = x));
+  const moves = tx.filter(t => t.kind === 'aporte' || t.kind === 'retirada'),
+    L = Object.values(last);
+  // Sin apuntes a mano se empieza por el primer día automático (como si fuera la apertura).
+  if (!out.length && L[0] !== D[0]) L.unshift(D[0]);
+  let prev = out.length ? out[out.length - 1].d : null;
+  L.forEach(x => {
+    const dep = prev === null ? x.bal : moves.filter(t => t.d > prev && t.d <= x.d).reduce((a, t) => a + t.amt, 0);
+    out.push({ id: 'auto:' + x.d, d: x.d, bal: x.bal, dep: Math.round(dep * 100) / 100, auto: true });
+    prev = x.d;
+  });
+  return out;
+}
 function savStats() {
   const s = S.sav,
-    L = [...(s.snaps || [])].sort((a, b) => a.d.localeCompare(b.d));
+    L = savSnaps();
   if (!L.length) return null;
   const last = L[L.length - 1],
     dep = L.reduce((a, x) => a + (x.dep || 0), 0),
@@ -147,7 +171,7 @@ function savCard() {
     tax = s.tax ?? SAV_TAX;
   const body = st
     ? `<div class="savk">
-      <div class="bal"><span>Saldo hoy${st.est ? ' (estimado)' : ''}</span><b>${money(eur(st.now))}</b><em>Último saldo real apuntado: ${fd(st.last.d)}</em></div>
+      <div class="bal"><span>Saldo hoy${st.est ? ' (estimado)' : ''}</span><b>${money(eur(st.now))}</b><em>${st.last.auto ? 'Saldo del banco del' : 'Último saldo real apuntado:'} ${fd(st.last.d)}</em></div>
       <div class="up"><span>Ganado este mes</span><b>${money('+' + eur(st.acc))}</b><em>Se abona el ${fd(st.next)}</em><em>Total cobrado desde ${fd(st.L[0].d)}: ${money('+' + eur(st.gain))}</em></div>
       <div class="hi"><span>Rentabilidad anual</span><b>${pct(st.net * 100)}</b><em>${pct(s.rate)} bruto − ${tax} % impuestos</em></div>
       <div class="up"><span>En 12 meses</span><b>${money('+' + eur(st.y1 - st.now))}</b><em class="fin">Saldo final ≈ ${money(eur(st.y1))}</em></div>
@@ -170,17 +194,24 @@ function savCard() {
         .reverse()
         .map(
           x =>
-            `<div class="row"><span class="g">${fd(x.d)}${x.dep ? ` <span class="chip">${x.dep > 0 ? 'Aportación +' : 'Retirada −'}${money(eur(Math.abs(x.dep)))}</span>` : ''}</span><b class="amt">${money(eur(x.bal))}</b><button class="ib" data-a="savdel" data-i="${x.id}" aria-label="Eliminar apunte">${I('x')}</button></div>`
+            `<div class="row"><span class="g">${fd(x.d)}${x.dep ? ` <span class="chip">${x.dep > 0 ? 'Aportación +' : 'Retirada −'}${money(eur(Math.abs(x.dep)))}</span>` : ''}</span><b class="amt">${money(eur(x.bal))}</b>${x.auto ? `<span class="ib" title="Del banco">${I('landmark', 'sm')}</span>` : `<button class="ib" data-a="savdel" data-i="${x.id}" aria-label="Eliminar apunte">${I('x')}</button>`}</div>`
         ),
       2
     )}`
     : empty('Aún no hay apuntes.');
+  const auto = !!(SAVC && SAVD.length),
+    conn = SAVC
+      ? `<div class="mu" style="margin-bottom:10px">${I('landmark', 'sm')} Conectada con ${esc(SAVC.aspsp || 'el banco')} · última sincronización ${ago(SAVC.last_sync)}${SAVC.valid_until ? ` · permiso hasta ${fd(SAVC.valid_until.slice(0, 10))}` : ''}${SAVC.last_error && (SAVC.fail_count || 0) >= FAILMAX ? `<div class="er">Último error: ${esc(SAVC.last_error)}</div>` : ''}</div>`
+      : '';
   return panel(
     'inv',
     'ahorro',
     `${I('piggy-bank')} ${esc(s.name)} <span class="cnt">· Ahorro</span> <button class="ib" data-a="saveye" aria-label="${savShow ? 'Ocultar importes' : 'Mostrar importes'}" title="${savShow ? 'Ocultar importes' : 'Mostrar importes'}">${I(savShow ? 'eye-off' : 'eye')}</button><button class="ib" data-a="savcfg" aria-label="Editar cuenta">${I('pencil')}</button>`,
-    `<div class="${savShow ? '' : 'priv'}">${body}</div>` +
-      `<div class="f" style="margin:10px 0 0"><input id="sv1" type="date" value="${TD()}" aria-label="Fecha"><input id="sv2" inputmode="decimal" placeholder="Saldo real (€)"><input id="sv3" inputmode="decimal" placeholder="Metido (+) o sacado (−)" title="Opcional: dinero que metiste o sacaste ese día"><button class="btn" data-a="savadd">Apuntar saldo real</button></div>`,
+    conn +
+      `<div class="${savShow ? '' : 'priv'}">${body}</div>` +
+      (auto
+        ? '<div class="mu" style="margin-top:10px">El saldo y los movimientos llegan solos del banco una vez al día.</div>'
+        : `<div class="f" style="margin:10px 0 0"><input id="sv1" type="date" value="${TD()}" aria-label="Fecha"><input id="sv2" inputmode="decimal" placeholder="Saldo real (€)"><input id="sv3" inputmode="decimal" placeholder="Metido (+) o sacado (−)" title="Opcional: dinero que metiste o sacaste ese día"><button class="btn" data-a="savadd">Apuntar saldo real</button></div>`),
     'wide'
   );
 }

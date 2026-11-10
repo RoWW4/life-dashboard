@@ -7,6 +7,7 @@ import { spawn } from 'node:child_process';
 import { writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url'; // en Windows, «D:/…» no vale como import: hace falta file:///D:/…
 import { redact } from '../scripts/log.mjs';
 
 test('redact quita tokens, ids, IBAN, tarjetas, importes y correos', () => {
@@ -24,7 +25,7 @@ test('guard registra el error no controlado, marca el latido y sale con 1', asyn
   const srv = createServer((q, r) => { let b = ''; q.on('data', c => b += c); q.on('end', () => { got.push({ path: q.url, body: JSON.parse(b || 'null') }); r.writeHead(201); r.end(); }); });
   await new Promise(r => srv.listen(0, r));
   const dir = mkdtempSync(join(tmpdir(), 'ldb-log-')), f = join(dir, 'falla.mjs');
-  writeFileSync(f, `import { guard, job } from '${resolve('scripts/log.mjs').replace(/\\/g, '/')}';\nguard('prueba');\nawait job('prueba', 'start');\nthrow new Error('fallo de prueba con token=abcdefghijklmnop1234');\n`);
+  writeFileSync(f, `import { guard, job } from '${pathToFileURL(resolve('scripts/log.mjs')).href}';\nguard('prueba');\nawait job('prueba', 'start');\nthrow new Error('fallo de prueba con token=abcdefghijklmnop1234');\n`);
   const code = await new Promise(res => spawn(process.execPath, [f], { env: { ...process.env,
     SUPABASE_URL: `http://localhost:${srv.address().port}`, SUPABASE_SERVICE_KEY: 'clave-de-prueba', LDB_USER_ID: '', GITHUB_RUN_ID: '42', GITHUB_REPOSITORY: 'x/y' } }).on('exit', res));
   srv.close();
