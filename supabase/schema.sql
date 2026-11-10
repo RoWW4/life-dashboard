@@ -29,26 +29,9 @@ drop policy if exists "bank_tx leer propio" on public.bank_tx;
 create policy "bank_tx leer propio" on public.bank_tx
   for select using (auth.uid() = user_id);
 
--- 3) Estado de la conexión con el banco
-create table if not exists public.bank_status (
-  user_id     uuid primary key references auth.users on delete cascade,
-  aspsp       text,
-  session_id  text,
-  accounts    jsonb,
-  valid_until timestamptz,
-  last_sync   timestamptz,
-  last_error  text,
-  fail_count  int not null default 0         -- fallos seguidos del banco; vuelve a 0 al sincronizar bien
-);
-alter table public.bank_status add column if not exists fail_count int not null default 0;
--- Saldo real de la cuenta que da el banco en cada sincronización (Enable Banking) y cuándo se leyó
-alter table public.bank_status add column if not exists balance numeric(12,2);
-alter table public.bank_status add column if not exists balance_type text;
-alter table public.bank_status add column if not exists balance_at timestamptz;
-alter table public.bank_status enable row level security;
-drop policy if exists "bank_status leer propio" on public.bank_status;
-create policy "bank_status leer propio" on public.bank_status
-  for select using (auth.uid() = user_id);
+-- 3) Estado de la conexión con el banco: desde el 10/11/2026 está en bank_connections (una fila por conexión) y
+--    bank_status es una vista de solo lectura de la fila openbank para las versiones antiguas de la app.
+--    Todo eso está en supabase/bancos.sql (pegarlo después de este archivo).
 
 -- 3b) Movimientos aún sin confirmar (retenciones de tarjeta, bizums): el robot la rehace en cada sincronización
 create table if not exists public.bank_pending (
@@ -67,8 +50,8 @@ grant all on public.bank_pending to service_role;
 
 -- 4) Permisos de la Data API (necesarios si desactivaste "Automatically expose new tables"; inofensivos si no)
 grant select, insert, update, delete on public.ldb_state to authenticated;
-grant select on public.bank_tx, public.bank_status to authenticated;
-grant all on public.ldb_state, public.bank_tx, public.bank_status to service_role;
+grant select on public.bank_tx to authenticated;
+grant all on public.ldb_state, public.bank_tx to service_role;
 
 -- Avisos de tareas por Telegram ya mandados (los escribe el robot de GitHub con la service key; sin acceso desde el panel)
 create table if not exists public.task_reminders (

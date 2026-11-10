@@ -75,3 +75,15 @@ grant all on public.savings_tx to service_role;
 
 alter table public.bank_tx add column if not exists conn text not null default 'openbank';
 alter table public.bank_pending add column if not exists conn text not null default 'openbank';
+
+-- bank_status (la tabla de antes) se guardó como bank_status_old y ahora es una vista de solo lectura de la fila
+-- openbank, para las versiones antiguas de la app (10/11/2026). Solo se crea si bank_status no existe ya.
+do $$ begin
+  if to_regclass('public.bank_status') is null then
+    create view public.bank_status with (security_invoker = true) as
+      select user_id, aspsp, session_id, accounts, valid_until, last_sync, last_error, fail_count, balance, balance_type, balance_at
+      from public.bank_connections where id = 'openbank';
+  end if;
+end $$;
+revoke all on public.bank_status from anon, authenticated;
+grant select on public.bank_status to authenticated, service_role;

@@ -36,6 +36,23 @@ select cron.schedule('bank-sync', '43 5,10,14,19 * * *', $$
   where exists (select 1 from vault.decrypted_secrets where name = 'github_dispatch_token');
 $$);
 
+-- Cuenta de ahorro (Trade Republic por Enable Banking): lanza «Sincronizar ahorro» una vez al día (≈ 07:13 en invierno).
+-- Desde el 10/11/2026.
+select cron.schedule('savings-sync', '13 6 * * *', $
+  select net.http_post(
+    url := 'https://api.github.com/repos/RoWW4/life-dashboard/actions/workflows/savings-sync.yml/dispatches',
+    body := '{"ref":"main"}'::jsonb,
+    headers := jsonb_build_object(
+      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'github_dispatch_token'),
+      'Accept', 'application/vnd.github+json',
+      'X-GitHub-Api-Version', '2022-11-28',
+      'User-Agent', 'panel-rocio-supabase-cron',
+      'Content-Type', 'application/json'),
+    timeout_milliseconds := 10000
+  )
+  where exists (select 1 from vault.decrypted_secrets where name = 'github_dispatch_token');
+$);
+
 -- Wallet: desactivada desde el 04/11/2026 (el banco entra por Enable Banking). Reactivar: select cron.alter_job(1, active := true);
 select cron.schedule('sync-wallet', '17 5,9,13,17,21 * * *', $$
   select net.http_post(

@@ -13,7 +13,7 @@ Cuando te pida añadir, cambiar o consultar tareas, recordatorios, cumpleaños, 
 ## Dónde están los datos
 - Conector de Supabase, proyecto `lvsjvdpxnuydtwajlvsv` (Life-dashboard).
 - Tabla `ldb_state`: una sola fila. La columna `data` (jsonb) contiene TODO el panel como un único objeto JSON.
-- No toques nunca las tablas `bank_tx`, `bank_pending`, `bank_status`, `task_reminders` , `wallet_log` ni `ldb_state_hist` (salvo para leerla al recuperar datos), ni nada de `auth`, `cron` o `vault`, ni la estructura de la base de datos. No borres filas ni tablas.
+- No toques nunca las tablas `bank_tx`, `bank_pending`, `bank_status` (y `bank_status_old`), `bank_connections`, `savings_daily`, `savings_tx`, `task_reminders` , `wallet_log` ni `ldb_state_hist` (salvo para leerla al recuperar datos), ni nada de `auth`, `cron` o `vault`, ni la estructura de la base de datos. No borres filas ni tablas.
 
 ## Reglas para cambiar datos
 0. **Nunca** sustituyas `data` entero ni pegues una copia: cambia solo la clave que toca con `jsonb_set`. Antes y después del cambio, saca el resumen por secciones (abajo) y comprueba que solo ha cambiado lo que querías.

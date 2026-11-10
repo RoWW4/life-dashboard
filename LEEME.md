@@ -23,7 +23,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
 - Tablas en `supabase/schema.sql`:
   - `ldb_state`: todo el panel en un único JSON (columna `data`). Cada cambio lleva un `_ts` nuevo para que la app no lo sobrescriba.
   - `bank_tx` y `bank_pending`: movimientos del banco, ya confirmados y aún sin confirmar. Los escribe la sincronización y la app los recoge al abrirse.
-  - `bank_connections`: una fila por conexión con un banco (`openbank` para Finanzas y `trade-republic` para la cuenta de ahorro de Inversiones): permiso, última sincronización, error y saldo. Ver `supabase/bancos.sql`.
+  - `bank_connections`: una fila por conexión con un banco (`openbank` para Finanzas y `trade-republic` para la cuenta de ahorro de Inversiones): permiso, última sincronización, error y saldo. Ver `supabase/bancos.sql`. `bank_status` es ahora una vista de solo lectura de la fila `openbank` (para versiones antiguas de la app); la tabla de antes quedó guardada como `bank_status_old`.
   - `savings_daily` y `savings_tx`: saldo diario y movimientos de la cuenta de ahorro (intereses, aportaciones y retiradas). Van aparte de `bank_tx`, así que nunca se mezclan con los gastos. La app los junta con los apuntes a mano de `S.sav` al mostrar Inversiones (`savSnaps` en `js/vistas/finanzas.js`).
   - `task_reminders`: avisos de Telegram ya mandados (para no repetirlos).
   - `wallet_log`: a qué hora trae Wallet cada movimiento (solo fechas y horas).
