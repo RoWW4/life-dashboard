@@ -37,6 +37,8 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
 - **Programador (pg_cron):** dos tareas que llaman a la API de GitHub para lanzar los workflows, con un token de GitHub guardado en Vault. Se crearon a mano en Supabase (no están en `schema.sql`):
   - `sync-wallet`: `17 5,9,13,17,21 * * *` (UTC), unas 06:17, 10:17, 14:17, 18:17 y 22:17 en invierno. **Desactivada desde el 04/11/2026.** Para volver a activarla: `select cron.alter_job(1, active := true);`.
   - `task-reminders`: `7,22,37,52 * * * *`.
+  - `bank-sync`: `43 5,10,14,19 * * *` (UTC), desde el 10/11/2026.
+  - `vigilante`: `41 * * * *` (ver «Vigilancia y registro de errores»).
 
 ### Vigilancia y registro de errores (desde el 10/11/2026)
 - **Registro común** (`ops_log`, 30 días): cada robot apunta lo que hace y sus errores con hora, nivel (INFO, WARNING, ERROR, CRITICAL), pieza, función y archivo:línea, ejecución de GitHub (`run_id` y enlace) y detalle **ya limpio** de tokens, identificadores de cuenta, IBAN, importes y correos (`scripts/log.mjs`). Para mirarlo: `select ts, level, source, event, detail, run_url from ops_log order by ts desc limit 50;`
@@ -61,7 +63,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
     - un resumen a las 7:00;
     - de Salud, 3 días antes;
     - de los documentos que caducan: 30 días antes (60 los de la carpeta Personal), 7 días antes, el mismo día y una vez por semana durante un mes si sigue caducado.
-  - **Conectar banco** y **Sincronizar banco** (`bank-link.yml`, `bank-sync.yml`): la conexión directa con el banco por Enable Banking. Estuvo en pausa del 27/10 al 04/11/2026 porque el banco cortaba el permiso a las pocas horas; ahora vuelve a ser la vía principal (4 veces al día, con el `schedule` de GitHub). Si el permiso caduca: lanzar «Conectar banco» con el código vacío, entrar en el banco con el enlace que da y volver a lanzarlo pegando el código que muestra el panel. Para pausarla otra vez, poner `#` delante del `schedule` de `bank-sync.yml`.
+  - **Conectar banco** y **Sincronizar banco** (`bank-link.yml`, `bank-sync.yml`): la conexión directa con el banco por Enable Banking. Estuvo en pausa del 27/10 al 04/11/2026 porque el banco cortaba el permiso a las pocas horas; ahora vuelve a ser la vía principal (4 veces al día, lanzada por Supabase: tarea `bank-sync` de pg_cron, ver `supabase/cron.sql`). Si el permiso caduca: lanzar «Conectar banco» con el código vacío, entrar en el banco con el enlace que da y volver a lanzarlo pegando el código que muestra el panel. Para pausarla otra vez: `select cron.alter_job((select jobid from cron.job where jobname = 'bank-sync'), active := false);`.
 - Secretos (Settings → Secrets and variables → Actions):
 
   | Nombre | Para qué |
