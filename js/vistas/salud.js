@@ -46,18 +46,23 @@ const hlPaint = () => { const e = document.getElementById('hlbox'); if (e) e.inn
 function hlOpen(){
   if (!sb || !user || Date.now() - hlT < 60000) return;
   hlT = Date.now();
-  hlLoad().then(() => { hlPaint(); if (HLS && HLS.sync_url && (!HLS.last_sync || Date.now() - new Date(HLS.last_sync) > HL_OLD)) hlSync(false); }).catch(() => {});
+  hlLoad().then(() => { hlPaint(); if (HLS && HLS.sync_url && (!HLS.last_sync || Date.now() - new Date(HLS.last_sync) > HL_OLD)) hlSync(false); }).catch(e => logErr('salud', e));
 }
 /* Avisa al script de Google para que sincronice ya y espera (hasta ~1 min) a que cambie la hora de la última sincronización. */
 async function hlSync(manual){
   if (hlSync.on) return;
   if (!HLS || !HLS.sync_url) { if (manual) toast('Falta instalar el programa de Google Health'); return; }
   hlSync.on = 1; hlPaint();
-  const antes = HLS.last_sync;
+  const antes = HLS.last_sync, errAntes = HLS.last_error;
   try {
-    await fetch(HLS.sync_url, {mode:'no-cors'}).catch(() => {});
-    for (let i = 0; i < 12; i++) { await new Promise(r => setTimeout(r, 5000)); await hlLoad(); if (HLS && HLS.last_sync !== antes) break; }
-    if (manual) toast(HLS && HLS.last_sync !== antes ? (HLS.last_error ? 'Sincronizado con avisos' : 'Datos de salud al día') : 'Google Health no ha respondido; prueba más tarde');
+    // La llamada va sin CORS (no se puede leer la respuesta): el resultado se sabe por health_status (hora o error nuevos).
+    let red = '';
+    await fetch(HLS.sync_url, {mode:'no-cors'}).catch(e => { red = e.message || 'sin conexión'; logErr('salud', e); });
+    for (let i = 0; i < 12 && !red; i++) { await new Promise(r => setTimeout(r, 5000)); await hlLoad(); if (HLS && (HLS.last_sync !== antes || HLS.last_error !== errAntes)) break; }
+    if (manual) toast(red ? 'No se pudo llamar a Google Health: ' + red
+      : HLS && HLS.last_sync !== antes ? (HLS.last_error ? 'Sincronizado con avisos: ' + String(HLS.last_error).slice(0, 90) : 'Datos de salud al día')
+      : HLS && HLS.last_error && HLS.last_error !== errAntes ? String(HLS.last_error).slice(0, 120)
+      : 'Google Health no ha respondido; prueba más tarde');
   } finally { hlSync.on = 0; hlPaint(); }
 }
 const hlH = m => m == null ? '—' : Math.floor(m/60) + ' h ' + String(m%60).padStart(2,'0');

@@ -17,7 +17,7 @@ function afterLoad(){
 (async function boot(){
   theme();
   $('#fabAdd').innerHTML = I('plus'); $('#fabMic').innerHTML = I('mic');
-  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(e => logErr('sw', e));
   let r = 'local';
   try { r = await cloudInit(); } catch(e) { setSync('⚠️ Sin sincronizar'); }
   if (r === 'login') { $('#nav').innerHTML = ''; $('.fabs').hidden = true; $('#m').innerHTML = vLogin(); $('#le').focus(); return; }

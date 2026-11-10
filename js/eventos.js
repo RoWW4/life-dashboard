@@ -57,7 +57,8 @@ document.addEventListener('touchmove', e => { if (!drag) return; e.preventDefaul
   if (t.clientY < 60) window.scrollBy(0,-12); else if (t.clientY > innerHeight-60) window.scrollBy(0,12); }, {passive:false});
 document.addEventListener('touchend', e => { lpOff(); if (!drag) return; const t = e.changedTouches[0], c = cardAt(t.clientX, t.clientY); document.querySelectorAll('.dragging,.dropto').forEach(x => x.classList.remove('dragging','dropto')); if (!dropOn(c)) drag = null; });
 document.addEventListener('touchcancel', () => { lpOff(); dragEnd(); });
-document.addEventListener('visibilitychange', async () => { if (document.visibilityState==='visible' && cloudOK && await pull()) render(); });
+// Al volver a la app se sincroniza, también si la última vez falló (antes solo si la nube iba bien).
+document.addEventListener('visibilitychange', async () => { if (document.visibilityState==='visible' && user && await pull()) render(); });
 window.addEventListener('online', async () => { if (user && await pull()) render(); });
 
 

@@ -13,7 +13,7 @@ const A = {
   xp: i => { exp[i] = !exp[i]; if (i==='tx') txRefresh(); else render(); },
   // Ancho del panel: pasa al siguiente (1/3 → 1/2 → 2/3 → completo → 1/3) partiendo del que tiene ahora en pantalla.
   sz: (i, b) => { const c = b.closest('.card'), now = +(getComputedStyle(c).gridColumnStart.match(/\d+/) || [12])[0], W = [4,6,8,12], n = W.find(w => w > now) || 4;
-    SZ[i] = n; try { localStorage.setItem('ldb-size', JSON.stringify(SZ)); } catch(e) {} render(); toast('Ancho del panel: ' + SZN[n]); },
+    SZ[i] = n; try { localStorage.setItem('ldb-size', JSON.stringify(SZ)); } catch(e) { logErr('almacenamiento', e, 'ancho'); } render(); toast('Ancho del panel: ' + SZN[n]); },
   cust: () => { cust = !cust; render(); },
   txm: () => { txN += matchMedia('(max-width:760px)').matches ? 10 : 40; txRefresh(); },
   cd: i => { if (view!=='fin') { view = 'fin'; finOff = 0; render(); } catDetail(i); },
@@ -115,7 +115,10 @@ const A = {
     user = data.user; $('#m').innerHTML = '<div class="loading">Sincronizando…</div>';
     // Al entrar con la cuenta manda siempre la nube: lo que hubiera en este navegador (p. ej. datos de prueba) no se sube.
     S._ts = 0; setBase(null); await pull(); afterLoad(); },
-  local: () => { try { localStorage.setItem('ldb-local','1'); } catch(e) {} setSync('📱 Solo este dispositivo'); afterLoad(); },
+  // Registro de errores de este dispositivo (Ajustes → Estado de los robots)
+  errcp: () => { const t = JSON.stringify(errLog(), null, 1); navigator.clipboard.writeText(t).then(() => toast('Errores copiados: pégalos en el chat con Claude')).catch(() => toast('No se pudo copiar')); },
+  errdel: () => { try { localStorage.removeItem(KERR); } catch(e) {} render(); toast('Lista de errores borrada'); },
+  local: () => { try { localStorage.setItem('ldb-local','1'); } catch(e) { logErr('almacenamiento', e, 'modo local'); } setSync('📱 Solo este dispositivo'); afterLoad(); },
   cloud: () => { try { localStorage.removeItem('ldb-local'); localStorage.removeItem(K); } catch(e) {} location.reload(); },
   logout: () => CF('¿Cerrar sesión? Los datos seguirán guardados en la nube.', async () => { await sb.auth.signOut(); location.reload(); })
 };

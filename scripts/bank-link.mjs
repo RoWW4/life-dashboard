@@ -3,6 +3,9 @@
 //   2) Con código  → crea la sesión y la guarda en Supabase (bank_status).
 import crypto from 'node:crypto';
 import { eb, env, setStatus, summary } from './eb.mjs';
+import { log, guard, redact } from './log.mjs';
+
+guard('bank-link');
 
 const code = (process.env.EB_CODE || '').trim();
 const bank = (process.env.EB_BANK || 'Openbank').trim();
@@ -41,6 +44,7 @@ try {
     summary(`## ✅ Banco conectado\n\n${accounts.length} cuenta(s) vinculada(s). Permiso válido hasta **${vu ? vu.slice(0, 10).split('-').reverse().join('/') : '—'}**.\n\nAhora ejecuta «Sincronizar banco» para traer los primeros movimientos (o espera a la próxima ejecución automática).`);
   }
 } catch (e) {
-  summary('## ❌ Error\n\n```\n' + e.message + '\n```');
+  await log('ERROR', 'bank-link', 'Error al conectar el banco', { func: 'main', err: e });
+  summary('## ❌ Error\n\n```\n' + redact(e.message) + '\n```');
   process.exit(1);
 }

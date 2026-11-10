@@ -3,6 +3,7 @@
 // Wallet hace la conexión con el banco por su cuenta; aquí solo se lee su API REST (requiere Premium).
 import crypto from 'node:crypto';
 import { env, sb, uid, getStatus, setStatus, summary } from './eb.mjs';
+import { log, redact } from './log.mjs';
 
 const API = 'https://rest.budgetbakers.com/wallet/v1/api';
 const DAYS = +(process.env.DAYS_BACK || 14);
@@ -30,8 +31,9 @@ async function telegram(text) {
   if (!tk || !chat) return;
   await fetch(`https://api.telegram.org/bot${tk.trim()}/sendMessage`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chat.trim(), text, disable_web_page_preview: true })
-  }).catch(() => {});
+    body: JSON.stringify({ chat_id: chat.trim(), text, disable_web_page_preview: true }), signal: AbortSignal.timeout(15000)
+  }).then(r => r.ok || log('ERROR', 'wallet-sync', 'Telegram rechazó un aviso', { func: 'telegram', detail: 'HTTP ' + r.status }))
+    .catch(e => log('ERROR', 'wallet-sync', 'No se pudo mandar un aviso por Telegram', { func: 'telegram', err: e }));
 }
 const eur = n => (+n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 const fd = s => s.split('-').reverse().join('/');
@@ -126,6 +128,6 @@ try {
   await setStatus({ last_error: String(e.message).slice(0, 1200), fail_count: fc }).catch(() => {});
   // Un solo aviso al llegar al límite de fallos seguidos (no uno por cada intento).
   if (!quiet && ((st && st.fail_count) || 0) < FAILMAX) await telegram(`⚠️ Banco: la sincronización con Wallet está fallando.\n${String(e.message).slice(0, 200)}\nRevisa en Wallet si hay que reconectar Openbank.`);
-  summary(`## ${quiet ? `⚠️ Wallet no respondió (fallo ${fc} de ${FAILMAX} antes de avisar)` : '❌ Error al sincronizar con Wallet'}\n\n\`\`\`\n${e.message}\n\`\`\``);
+  summary(`## ${quiet ? `⚠️ Wallet no respondió (fallo ${fc} de ${FAILMAX} antes de avisar)` : '❌ Error al sincronizar con Wallet'}\n\n\`\`\`\n${redact(e.message)}\n\`\`\``);
   process.exit(quiet ? 0 : 1);
 }

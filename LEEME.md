@@ -38,6 +38,14 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
   - `sync-wallet`: `17 5,9,13,17,21 * * *` (UTC), unas 06:17, 10:17, 14:17, 18:17 y 22:17 en invierno. **Desactivada desde el 04/11/2026.** Para volver a activarla: `select cron.alter_job(1, active := true);`.
   - `task-reminders`: `7,22,37,52 * * * *`.
 
+### Vigilancia y registro de errores (desde el 10/11/2026)
+- **Registro común** (`ops_log`, 30 días): cada robot apunta lo que hace y sus errores con hora, nivel (INFO, WARNING, ERROR, CRITICAL), pieza, función y archivo:línea, ejecución de GitHub (`run_id` y enlace) y detalle **ya limpio** de tokens, identificadores de cuenta, IBAN, importes y correos (`scripts/log.mjs`). Para mirarlo: `select ts, level, source, event, detail, run_url from ops_log order by ts desc limit 50;`
+- **Latido** (`job_health`): cada robot apunta cuándo empezó, cuándo acabó bien y su último error (`ldb_job` desde GitHub, `ldb_job_user` desde los Apps Script).
+- **Vigilante** (`ldb_watchdog`, pg_cron «vigilante» cada hora): comprueba avisos (cada 15 min), banco (12 h), Salud (3 h) y bot de documentos (2 h). Si algo falla, abre un incidente en `ops_alerts` y avisa **una vez** por Telegram; cuando se arregla, avisa otra vez. Los avisos salen directos de Supabase, con los secretos de Vault `telegram_bot_token` y `telegram_chat_id`; sin ellos, los incidentes se ven igual en el panel.
+- **En el panel:** los incidentes salen en «Lo más importante» de Mi día, y el detalle en **Ajustes → Estado de los robots**, junto con los errores de la app en ese dispositivo (los últimos 50, se pueden copiar).
+- SQL: `supabase/observabilidad.sql` (tablas y funciones) y `supabase/cron.sql` (todas las tareas programadas, sin el token).
+- Pruebas: `tests/*.test.mjs` (`node --test tests/`), sin conexión; las pasa `scripts/comprobar.mjs` antes de cada subida. Incluyen la sincronización con dos dispositivos.
+
 ### GitHub (la app y los robots)
 - La app se publica con GitHub Pages desde la rama `main`. El repositorio es público: en el código no hay datos ni secretos, solo la clave pública de Supabase (`config.js`).
 - Workflows (`.github/workflows/`):
@@ -100,6 +108,9 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
 | `scripts/comprobar.mjs` | comprobación obligatoria antes de subir (la lanza `subir.mjs`) |
 | `scripts/bank-link.mjs`, `scripts/bank-sync.mjs`, `scripts/eb.mjs` | Enable Banking. `eb.mjs` también lo usan los demás scripts para hablar con Supabase |
 | `.github/workflows/*.yml` | los robots de arriba |
+| `scripts/log.mjs` | registro común y latido de los robots (ver «Vigilancia y registro de errores») |
+| `supabase/observabilidad.sql`, `supabase/cron.sql` | registro, vigilante y tareas programadas de Supabase |
+| `tests/` | pruebas sin conexión (robots y sincronización con dos dispositivos) |
 | `CLAUDE.md`, `PENDIENTES.md` | cómo trabaja Claude y qué queda por hacer (lo hecho: `git log`) |
 | `HISTORIAL.md`, `HISTORIAL-antiguo.md` | historial antiguo, hasta el 01/11/2026 (ya no se actualiza) |
 | `DATOS.md` | cómo cambiar los datos del panel en Supabase (formato de cada lista) |

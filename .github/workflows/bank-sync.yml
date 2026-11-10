@@ -24,6 +24,7 @@ permissions:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 15   # si algo se cuelga, GitHub la corta en vez de esperar 6 h
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

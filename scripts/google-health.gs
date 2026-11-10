@@ -171,8 +171,9 @@ function leerYGuardar(token, desde, hasta) {
 }
 function sincronizar() {
   const lock = LockService.getScriptLock(); if (!lock.tryLock(30000)) return 'ocupado';
+  let token = null;
   try {
-    const hoy = dia(new Date()), token = entrar();
+    const hoy = dia(new Date()); token = entrar();
     const avisos = leerYGuardar(token, sumar(hoy, -(DIAS - 1)), sumar(hoy, 1));
     let url = ''; try { url = urlApp() || ''; } catch (e) {}
     if (/\/dev$/.test(url)) url = '';
@@ -181,6 +182,12 @@ function sincronizar() {
     guardar(token, 'health_status', [estado], 'user_id');
     if (avisos.length) console.warn(avisos.join('\n'));
     return avisos.length ? 'con avisos' : 'ok';
+  } catch (e) {
+    // Si falla todo (permiso de Google caducado, Google caído…), el panel lo ve igualmente en Salud y el vigilante avisa.
+    // Si ni siquiera se pudo entrar en el panel, no se puede apuntar: el vigilante lo detecta porque no llegan datos nuevos.
+    try { if (token) guardar(token, 'health_status', [{ last_error: ('Error: ' + e.message).slice(0, 500) }], 'user_id'); }
+    catch (e2) { console.warn('no se pudo apuntar el error en el panel: ' + e2.message); }
+    throw e;
   } finally { lock.releaseLock(); }
 }
 /** Ejecutar UNA vez desde el editor: trae el histórico de Google Health (por defecto el último año) en tramos de 14 días. */

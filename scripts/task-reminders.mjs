@@ -24,12 +24,34 @@ const today = `${P.year}-${P.month}-${P.day}`, nowL = Date.UTC(+P.year, P.month 
 const at = (d, tm) => { const [y, m, dd] = d.split('-'), [h, mi] = tm.split(':'); return Date.UTC(+y, m - 1, +dd, +h, +mi); };
 const iso = t => new Date(t).toISOString().slice(0, 10);
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* Envía por Telegram. Los mensajes de más de 4.000 caracteres se parten por líneas. Si Telegram pide esperar (429)
+   o falla la red o el servidor, se reintenta hasta 2 veces. Devuelve los message_id de Telegram (para la trazabilidad). */
 async function telegram(text) {
-  const r = await fetch(`https://api.telegram.org/bot${env('TELEGRAM_TOKEN')}/sendMessage`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: env('TELEGRAM_CHAT_ID'), text, disable_web_page_preview: true })
-  });
-  if (!r.ok) throw new Error(`Telegram → ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  const parts = [];
+  for (const line of String(text).split('\n')) {
+    const last = parts.length ? parts[parts.length - 1] : null;
+    if (last !== null && (last + '\n' + line).length <= 4000) parts[parts.length - 1] = last + '\n' + line; else parts.push(line);
+  }
+  const ids = [];
+  for (const part of parts) {
+    for (let i = 0; ; i++) {
+      let r, j = {};
+      try {
+        r = await fetch(`${process.env.TELEGRAM_API || 'https://api.telegram.org'}/bot${env('TELEGRAM_TOKEN')}/sendMessage`, { // TELEGRAM_API solo en las pruebas
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(15000),
+          body: JSON.stringify({ chat_id: env('TELEGRAM_CHAT_ID'), text: part.slice(0, 4096), disable_web_page_preview: true })
+        });
+        j = await r.json().catch(() => ({}));
+      } catch (e) { r = { ok: false, status: 0 }; j = { description: 'Fallo de red: ' + e.message }; }
+      if (r.ok && j.ok !== false) { ids.push(j.result && j.result.message_id); break; }
+      const wait = r.status === 429 ? Math.min(+((j.parameters || {}).retry_after) || 5, 30) : (r.status === 0 || r.status >= 500) ? 5 : 0;
+      if (wait && i < 2) { await sleep(wait * 1000); continue; }
+      throw Object.assign(new Error(`Telegram → ${r.status}: ${String(j.description || '').slice(0, 200)}`), { status: r.status });
+    }
+  }
+  return ids;
 }
 
 const row = (await sb(`ldb_state?user_id=eq.${uid()}&select=data`))[0];
@@ -37,17 +59,42 @@ const tasks = ((row && row.data && row.data.tasks) || []).filter(t => !t.done &&
 const sent = new Set((await sb(`task_reminders?user_id=eq.${uid()}&select=key`)).map(r => r.key));
 const out = [];
 const mark = key => sb('task_reminders', { method: 'POST', body: { user_id: uid(), key }, prefer: 'resolution=ignore-duplicates,return=minimal' });
+const fails = [], msgIds = [];
+
+/* Manda un aviso y lo apunta como enviado. Si un aviso falla, se registra el motivo y se sigue con los demás:
+   como no queda apuntado, se vuelve a intentar en la siguiente pasada. El apunte se reintenta para no repetir avisos. */
+async function send(key, text, kind) {
+  let ids;
+  try { ids = await telegram(text); }
+  catch (e) { fails.push(e.message); await log('ERROR', 'task-reminders', `No se pudo mandar un aviso (${kind})`, { process: kind, func: 'telegram', err: e }); return false; }
+  for (let i = 1; ; i++) {
+    try { await mark(key); break; }
+    catch (e) {
+      if (i < 3) { await sleep(2000); continue; }
+      await log('CRITICAL', 'task-reminders', 'Aviso mandado pero sin apuntar: puede repetirse', { process: kind, func: 'mark', err: e, detail: 'message_id ' + ids.join(',') });
+      break;
+    }
+  }
+  out.push(kind); msgIds.push(...ids);
+  return true;
+}
+/* Un aviso cuya hora ya pasó sin que se mandara (por ejemplo, si GitHub no ejecutó los robots): se registra una vez. */
+async function lost(key, kind, why) {
+  if (sent.has('lost:' + key)) return;
+  await log('WARNING', 'task-reminders', `Aviso no enviado a tiempo (${kind})`, { process: kind, func: 'lost', detail: why });
+  await mark('lost:' + key).catch(e => log('ERROR', 'task-reminders', 'No se pudo apuntar un aviso perdido', { func: 'lost', err: e }));
+}
 
 // 0) Aviso elegido en la tarea (t.rem = 'AAAA-MM-DDTHH:MM', hora de España): se manda en cuanto llega la hora
 //    (si la ejecución se retrasa, hasta 6 h después). Sustituye al aviso de 1 día antes.
 const REM = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 for (const t of ((row && row.data && row.data.tasks) || []).filter(t => !t.done && t.title && REM.test(t.rem || ''))) {
   const w = at(t.rem.slice(0, 10), t.rem.slice(11, 16)), key = `tr:${t.id}:${t.rem}`;
-  if (w > nowL || nowL - w > 6 * 36e5 || sent.has(key)) continue;
+  if (w > nowL || sent.has(key)) continue;
+  if (nowL - w > 6 * 36e5) { if (nowL - w < 7 * DAY) await lost(key, 'Aviso elegido', 'pasaron más de 6 h desde la hora elegida'); continue; }
   const hm = /^\d{1,2}:\d{2}$/.test(t.tm || '') ? t.tm : '', due = /^\d{4}-\d{2}-\d{2}$/.test(t.due || '') ? t.due : '';
   const cuando = !due ? '' : (due === today ? 'hoy' : due === iso(nowL + DAY) ? 'mañana' : `el ${DOW[new Date(at(due, '12:00')).getUTCDay()]} ${fd(due)}`) + (hm ? ' a las ' + hm : '');
-  await telegram(`🔔 ${t.title}${cuando ? ' · ' + cuando : ''}`);
-  await mark(key); out.push('Aviso elegido');
+  await send(key, `🔔 ${t.title}${cuando ? ' · ' + cuando : ''}`, 'Aviso elegido');
 }
 
 // 1) Aviso 24 h antes (o en cuanto se crea, si ya falta menos). Las tareas sin hora cuentan como a las 9:00.
@@ -56,8 +103,7 @@ for (const t of tasks.filter(t => /^\d{4}-\d{2}-\d{2}$/.test(t.due) && !REM.test
   const w = at(t.due, tm), key = `tk:${t.id}:${t.due}T${tm}`;
   if (w <= nowL || w - nowL > DAY || sent.has(key)) continue;
   const cuando = t.due === today ? 'Hoy' : t.due === iso(nowL + DAY) ? 'Mañana' : `El ${DOW[new Date(w).getUTCDay()]} ${fd(t.due)}`;
-  await telegram(`${t.area === 'Cumpleaños' ? '🎂' : '⏰'} ${cuando}${hm ? ' a las ' + hm : ''}: ${t.title}`);
-  await mark(key); out.push('Aviso de tarea');
+  await send(key, `${t.area === 'Cumpleaños' ? '🎂' : '⏰'} ${cuando}${hm ? ' a las ' + hm : ''}: ${t.title}`, 'Aviso de tarea');
 }
 
 // 2) Resumen de la mañana (desde las 7:00 hasta mediodía, una vez al día).
@@ -69,9 +115,9 @@ if (+P.hour >= HOUR && +P.hour < 12 && !sent.has(sk)) {
   const L = [];
   if (hoy.length) L.push(`☀️ Hoy, ${DOW[new Date(nowL).getUTCDay()]} ${fd(today)}:`, ...hoy.map(li));
   if (atr.length) L.push(...(L.length ? [''] : []), '⚠️ Atrasadas:', ...atr.map(t => `${li(t)} (desde ${fd(t.due)})`));
-  if (L.length) { await telegram(L.join('\n')); out.push(`Resumen: ${hoy.length} hoy, ${atr.length} atrasadas`); }
-  await mark(sk);
-}
+  if (L.length) await send(sk, L.join('\n'), 'Resumen');
+  else await mark(sk).catch(e => log('ERROR', 'task-reminders', 'No se pudo apuntar el resumen', { func: 'mark', err: e }));
+} else if (+P.hour >= 12 && !sent.has(sk)) await lost(sk, 'Resumen', 'no hubo ninguna pasada correcta entre las 7:00 y las 12:00');
 
 // 3) Sección Salud: aviso 3 días antes del próximo inicio previsto (desde las 9:00). Mismo cálculo que js/vistas/salud.js.
 const sal = row && row.data && row.data.salud;
@@ -81,8 +127,7 @@ if (sal && Array.isArray(sal.ini) && sal.ini.length && +P.hour >= 9) {
   const avg = gaps.length ? Math.round(gaps.reduce((a, g) => a + g, 0) / gaps.length) : (sal.len || 28);
   const next = iso(Date.parse(L[L.length - 1]) + avg * DAY), left = dd(next, today), key = 'sal:' + next;
   if (left >= 0 && left <= 3 && !sent.has(key)) {
-    await telegram(`🩺 Salud: el próximo inicio previsto es el ${DOW[new Date(next).getUTCDay()]} ${fd(next)} (${left === 0 ? 'hoy' : left === 1 ? 'mañana' : 'en ' + left + ' días'}).`);
-    await mark(key); out.push('Aviso de seguimiento');
+    await send(key, `🩺 Salud: el próximo inicio previsto es el ${DOW[new Date(next).getUTCDay()]} ${fd(next)} (${left === 0 ? 'hoy' : left === 1 ? 'mañana' : 'en ' + left + ' días'}).`, 'Aviso de seguimiento');
   }
 }
 
@@ -97,16 +142,18 @@ if (+P.hour >= 9) for (const d of docs) {
   const key = `doc:${d.id || d.name}:${d.exp}:${st}`;
   if (sent.has(key)) continue;
   const fecha = `${DOW[new Date(d.exp).getUTCDay()]} ${d.exp.split('-').reverse().join('/')}`;
-  await telegram(left > 0 ? `📄 «${d.name}» caduca el ${fecha} (en ${left} día${left === 1 ? '' : 's'}).`
+  await send(key, left > 0 ? `📄 «${d.name}» caduca el ${fecha} (en ${left} día${left === 1 ? '' : 's'}).`
     : left === 0 ? `📄 «${d.name}» caduca hoy.`
-    : `📄 «${d.name}» caducó el ${fecha} (hace ${-left} días). Cuando lo renueves, cambia la fecha en el panel.`);
-  await mark(key); out.push('Aviso de documento');
+    : `📄 «${d.name}» caducó el ${fecha} (hace ${-left} días). Cuando lo renueves, cambia la fecha en el panel.`, 'Aviso de documento');
 }
 
 // Limpieza: lo avisado hace más de 60 días ya no hace falta.
 await sb(`task_reminders?user_id=eq.${uid()}&sent_at=lt.${new Date(Date.now() - 60 * DAY).toISOString()}`, { method: 'DELETE' });
 // El registro de GitHub es público: solo qué tipo de aviso y cuántos, nunca títulos ni nombres.
 const cnt = out.reduce((m, s) => (m[s] = (m[s] || 0) + 1, m), {});
-await log('INFO', 'task-reminders', out.length ? `Avisos enviados: ${out.length}` : 'Nada que avisar', { func: 'main', detail: Object.entries(cnt).map(([s, n]) => `${s}: ${n}`).join(', ') });
-await job('task-reminders', 'ok');
-summary(out.length ? Object.entries(cnt).map(([s, n]) => `- ${s}: ${n}`).join('\n') : 'Nada que avisar.');
+await log(fails.length ? 'ERROR' : 'INFO', 'task-reminders', fails.length ? `Pasada con ${fails.length} aviso(s) sin mandar` : out.length ? `Avisos enviados: ${out.length}` : 'Nada que avisar',
+  { func: 'main', detail: [Object.entries(cnt).map(([s, n]) => `${s}: ${n}`).join(', '), msgIds.length ? 'message_id ' + msgIds.join(',') : ''].filter(Boolean).join(' · ') });
+// Si algún aviso falla, el latido queda en «fallo» con el motivo (el vigilante avisa si se repite), pero la ejecución
+// acaba bien: así GitHub no manda un correo cada 15 minutos.
+await job('task-reminders', fails.length ? 'fail' : 'ok', fails.length ? fails.join(' | ') : undefined);
+summary((out.length ? Object.entries(cnt).map(([s, n]) => `- ${s}: ${n}`).join('\n') : 'Nada que avisar.') + (fails.length ? `\n\n⚠️ ${fails.length} aviso(s) sin mandar: se reintentan en la siguiente pasada.` : ''));

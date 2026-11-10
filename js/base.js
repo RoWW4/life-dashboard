@@ -6,6 +6,28 @@
 const CFG = window.LDB_CONFIG || {};
 const K = 'ldb-v1';
 const APP = 'Panel de Rocío';
+const VER = ((document.currentScript && document.currentScript.src.match(/[?&]v=(\d+)/)) || [])[1] || '';
+
+/* ---------- registro de errores de este dispositivo ----------
+   Los últimos 50 errores (hora, dónde, mensaje, pila, sección y versión) se guardan en el dispositivo y se ven y copian
+   en Ajustes → Estado de los robots. Así un fallo de un botón o de la sincronización no desaparece sin dejar rastro. */
+const KERR = 'ldb-errlog';
+const errLog = () => { try { return JSON.parse(localStorage.getItem(KERR) || '[]') || []; } catch(e) { return []; } };
+function logErr(where, e, extra){
+  const m = String((e && (e.message || e.error_description)) || e || 'error desconocido').slice(0, 300);
+  try { console.error('[panel] ' + where + ': ' + m, e); } catch(x) {}
+  try {
+    const L = errLog(), v = typeof view === 'string' ? view : '', t = new Date().toISOString();
+    // El mismo error repetido (p. ej. un reintento de sincronización) no llena la lista: se cuenta en el último.
+    if (L[0] && L[0].w === where && L[0].m === m) { L[0].n = (L[0].n || 1) + 1; L[0].t = t; }
+    else L.unshift({t, w:where, m, s:String((e && e.stack) || '').split('\n').slice(0,6).join('\n').slice(0,800), x:String(extra||'').slice(0,200), v:VER, view:v});
+    localStorage.setItem(KERR, JSON.stringify(L.slice(0, 50)));
+  } catch(x) {} // sin espacio en el dispositivo: ya ha quedado en la consola
+}
+/* Errores que nadie captura (un botón que falla, una promesa sin catch): se apuntan y se avisa, como mucho uno cada 10 s. */
+function errToast(){ const n = Date.now(); if (n - (errToast.t||0) < 1e4) return; errToast.t = n; try { toast('⚠️ Algo ha fallado. El detalle está en Ajustes → Estado de los robots'); } catch(x) {} }
+window.addEventListener('error', e => { if (!e.error && !e.message) return; logErr('global', e.error || e.message, `${String(e.filename||'').split('/').pop()}:${e.lineno||0}:${e.colno||0}`); errToast(); });
+window.addEventListener('unhandledrejection', e => { logErr('promesa', e.reason); errToast(); });
 /* Los iconos son nombres de Lucide (ver icons.js) */
 const CATS = ['Vivienda','Alimentación','Transporte','Restaurantes','Ocio','Suscripciones','Salud','Mascotas','Compras','Viajes','Préstamos','Otros','Traspasos','Nómina'];
 /* Traspasos: dinero que mueves entre tus propias cuentas. Se ve en la lista pero no cuenta como gasto ni ingreso. */
@@ -25,7 +47,7 @@ const DCOL = {Personal:'#0099ff',Coche:'#f5a524',Hogar:'#38bdf8',Salud:'#f472b6'
 const DIA = ['imp','cal'];
 /* Orden inicial de los paneles movibles de cada sección (cada uno se puede reordenar y se guarda en S.order). */
 const FIN = ['gasto','sinc','mov','reglas'];
-const AJ = [['Personalizar',['midia','apar','fest','dict']], ['Dinero',['dinero','bank']], ['Cuenta y datos',['cuenta','copias','avz']]];
+const AJ = [['Personalizar',['midia','apar','fest','dict']], ['Dinero',['dinero','bank']], ['Cuenta y datos',['cuenta','robots','copias','avz']]];
 /* Grupo de cada panel de Ajustes: el de serie, o al que se haya arrastrado (S.order.ajusg, «panel:Grupo»). */
 const ajGrp = k => { const m = ((S.order||{}).ajusg||[]).find(x => x.split(':')[0]===k); const g = m && m.slice(k.length+1); return g && AJ.some(([n]) => n===g) ? g : (AJ.find(([,ks]) => ks.includes(k))||[])[0]; };
 const SEC = [['dia','house','Mi día','Hoy'],['tareas','list-checks','Tareas','Tareas'],['compra','shopping-cart','Compra','Compra'],['fin','wallet','Finanzas','Finanzas'],['fact','receipt','Facturas','Facturas'],['docs','folder-open','Documentos','Docs'],['inv','trending-up','Inversiones','Inversión'],['salud','heart-pulse','Salud','Salud'],['ajus','settings','Ajustes','Ajustes']];

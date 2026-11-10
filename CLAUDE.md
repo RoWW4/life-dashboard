@@ -39,3 +39,4 @@ En ningún archivo del repositorio (código, comentarios, ejemplos, `PENDIENTES.
 
 Archivo nuevo: añadirlo en `index.html` (en su sitio) y en `SHELL` de `sw.js`. El número de versión lo sube `subir.mjs`.
 Cómo está montado todo (Supabase, robots, Wallet, Telegram): `LEEME.md`, solo si hace falta.
+Si algo falla: primero `ops_log`, `job_health` y `ops_alerts` en Supabase (ver «Vigilancia y registro de errores» en `LEEME.md`). El vigilante está autorizado por Rocío (09/11/2026).

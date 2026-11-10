@@ -103,7 +103,7 @@ const pend = () => ({t:S.tasks.filter(t => !t.done && t.due && dayDiff(t.due)<=0
    La imagen propia no se sube a ningún sitio.
    Se ve en la portada de Mi día o, si se elige, detrás de toda la app. La imagen se guarda reducida en este navegador. */
 const BG = (() => { try { return JSON.parse(localStorage.getItem('ldb-bg')) || {k:'planet', all:false}; } catch(e) { return {k:'planet', all:false}; } })();
-const bgSave = () => { try { localStorage.setItem('ldb-bg', JSON.stringify(BG)); } catch(e) {} };
+const bgSave = () => { try { localStorage.setItem('ldb-bg', JSON.stringify(BG)); } catch(e) { logErr('almacenamiento', e, 'fondo'); } };
 const bgImg = () => { try { return localStorage.getItem('ldb-bgimg') || ''; } catch(e) { return ''; } };
 function bgApply(){
   const b = document.body, r = document.documentElement, img = BG.k==='img' ? bgImg() : BG.k==='planet' ? 'img/fondo-planeta.jpg' : '', on = BG.k==='stars' || !!img;
@@ -178,9 +178,9 @@ function holLoad(y){
   try { const c = JSON.parse(localStorage.getItem('ldb-hol-'+y)); if (Array.isArray(c) && c.length) { HOL[y] = c; return; } } catch(e) {}
   fetch('https://date.nager.at/api/v3/PublicHolidays/'+y+'/ES').then(r => r.ok ? r.json() : []).then(a => {
     HOL[y] = a.filter(h => (h.types||[]).includes('Public')).map(h => ({d:h.date, n:h.localName, c:h.counties||null}));
-    try { localStorage.setItem('ldb-hol-'+y, JSON.stringify(HOL[y])); } catch(e) {}
+    try { localStorage.setItem('ldb-hol-'+y, JSON.stringify(HOL[y])); } catch(e) { logErr('almacenamiento', e, 'festivos'); }
     if ($('#nav').innerHTML) render();   // no repintar encima de la pantalla de inicio de sesión
-  }).catch(() => {});
+  }).catch(e => logErr('festivos', e));
 }
 /* Festivos que la comunidad pasa al lunes por caer en domingo (date.nager.at no los trae). Sale del decreto de cada año:
    añadir aquí los del año nuevo cuando se publiquen. */
@@ -212,7 +212,13 @@ function bankAlerts(){
   const a = [];
   if (BANK && BANK.valid_until) { const n = dayDiff(BANK.valid_until.slice(0,10)); if (n <= 14) a.push([BANK.valid_until.slice(0,10), 'landmark', `${n<0?'Ha caducado':'Caduca'} el permiso del banco: renuévalo (guía, paso 6)`, '#ff5d5d']); }
   // Un fallo suelto de Openbank no se avisa; solo si se repite (o si es un error real, que deja fail_count alto).
-  if (BANK && BANK.last_error && (BANK.fail_count||0) >= FAILMAX) a.push([TD(), 'landmark', 'La sincronización con el banco lleva varios fallos seguidos', '#ff5d5d']);
+  // Incidentes del vigilante de Supabase (uno por pieza que no funciona). El del banco sustituye al aviso antiguo.
+  const inc = (OPS && OPS.alerts) || [];
+  if (BANK && BANK.last_error && (BANK.fail_count||0) >= FAILMAX && !inc.some(x => x.key==='banco')) a.push([TD(), 'landmark', 'La sincronización con el banco lleva varios fallos seguidos', '#ff5d5d']);
+  inc.forEach(x => a.push([TD(), 'triangle-alert', `${x.title} no funciona bien (desde ${ago(x.opened_at)}) · Ajustes → Estado de los robots`, '#ff5d5d']));
+  // ¿Quién vigila al vigilante? Si lleva más de 3 h sin ejecutarse, se avisa aquí.
+  const w = OPS && OPS.jobs.find(j => j.job==='vigilante');
+  if (w && Date.now() - new Date(w.last_ok || 0) > 3*36e5) a.push([TD(), 'triangle-alert', `El vigilante de errores no se ejecuta (último: ${ago(w.last_ok)})`, '#ff5d5d']);
   return a;
 }
 

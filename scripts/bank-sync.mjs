@@ -103,14 +103,15 @@ try {
     if (b && Number.isFinite(amt)) bal = { balance: amt.toFixed(2), balance_type: b.balance_type || '', balance_at: new Date().toISOString() };
   } catch (e) { diag.push(`⚠️ Saldo (/balances): ${e.status ?? ''} ${(e.body || e.message).slice(0, 120)}`); }
   if (rows.size) await sb('bank_tx?on_conflict=id', { method: 'POST', body: [...rows.values()], prefer: 'resolution=ignore-duplicates,return=minimal' });
-  await sb(`bank_pending?user_id=eq.${uid()}`, { method: 'DELETE', prefer: 'return=minimal' });
-  if (pend.size) await sb('bank_pending', { method: 'POST', body: [...pend.values()], prefer: 'return=minimal' });
+  // Pendientes: primero se guardan los nuevos y después se quitan los que ya no están (si algo falla, nunca queda la lista vacía).
+  if (pend.size) await sb('bank_pending?on_conflict=id', { method: 'POST', body: [...pend.values()], prefer: 'resolution=merge-duplicates,return=minimal' });
+  await sb(`bank_pending?user_id=eq.${uid()}${pend.size ? `&id=not.in.(${[...pend.keys()].join(',')})` : ''}`, { method: 'DELETE', prefer: 'return=minimal' });
   await setStatus({ last_sync: new Date().toISOString(), last_error: null, fail_count: 0, valid_until: (sess.access && sess.access.valid_until) || st.valid_until, ...(bal || {}) });
   await log('INFO', 'bank-sync', 'Sincronización correcta', { func: 'main', detail: `${total} revisados, ${rows.size} nuevos, ${pend.size} pendientes${diag.length ? ', con consulta reducida' : ''}` });
   await job('bank-sync', 'ok');
   summary(`## ✅ Sincronizado\n\n${total} movimientos revisados (${rows.size} nuevos) y ${pend.size} pendientes en ${accounts.length} cuenta(s). Los repetidos se ignoran.` +
     (bal ? `\n\nSaldo de la cuenta guardado (tipo ${bal.balance_type}).` : '\n\nEl banco no dio el saldo de la cuenta: se mantiene el último.') +
-    (diag.length ? `\n\n### ⚠️ La consulta normal falló y se usó una más corta\n${diag.map(d => '- ' + d).join('\n')}` : ''));
+    (diag.length ? `\n\n### ⚠️ La consulta normal falló y se usó una más corta\n${diag.map(d => '- ' + redact(d)).join('\n')}` : ''));
 } catch (e) {
   // Fallo pasajero del banco: se apunta y la ejecución termina «bien» (sin correo) hasta que se repita FAILMAX veces.
   const soft = transient(e), fc = soft ? (st.fail_count || 0) + 1 : FAILMAX, quiet = soft && fc < FAILMAX;
@@ -120,7 +121,7 @@ try {
   await job('bank-sync', 'fail', msg);
   summary(`## ${quiet ? `⚠️ El banco no respondió (fallo ${fc} de ${FAILMAX} antes de avisar)` : '❌ Error al sincronizar'}\n\n\`\`\`\n${redact(e.message)}\n\`\`\`` +
     (e.rid ? `\nID de la petición: \`${e.rid}\`` : '') +
-    (diag.length ? `\n\n### Diagnóstico\n${diag.map(d => '- ' + d).join('\n')}` : ''));
+    (diag.length ? `\n\n### Diagnóstico\n${diag.map(d => '- ' + redact(d)).join('\n')}` : ''));
   // SIN_CORREO=1 (en bank-sync.yml): el fallo se guarda igual (el panel lo enseña), pero la ejecución acaba «bien» y GitHub no manda correo.
   process.exit(quiet || process.env.SIN_CORREO === '1' ? 0 : 1);
 }

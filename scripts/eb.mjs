@@ -3,7 +3,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 
-const API = 'https://api.enablebanking.com';
+const API = process.env.EB_API || 'https://api.enablebanking.com'; // EB_API solo en las pruebas
 
 export function env(k) {
   const v = process.env[k];
@@ -30,14 +30,15 @@ export async function eb(path, { method = 'GET', body } = {}, tries = 2) {
     r = await fetch(API + path, {
       method,
       headers: { Authorization: 'Bearer ' + jwt(), 'Content-Type': 'application/json' },
-      body: body ? JSON.stringify(body) : undefined
+      body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(30000) // una llamada colgada no bloquea la sincronización: a los 30 s cuenta como fallo de red
     });
     t = await r.text();
   } catch (e) { r = { ok: false, status: 0, headers: new Headers() }; t = 'Fallo de red: ' + e.message; }
   if (!r.ok) {
     const err = new Error(`Enable Banking ${method} ${path.split('?')[0]} → ${r.status}: ${t.slice(0, 300)}`);
     // Identificador de la petición: es lo que pide el soporte de Enable Banking para buscarla.
-    err.status = r.status; err.body = t;
+    err.status = r.status; err.body = t; err.service = 'enable-banking';
     err.rid = ['x-request-id', 'request-id', 'x-correlation-id', 'traceparent'].map(h => r.headers.get(h)).find(Boolean) || '';
     if (tries > 1 && transient(err)) {
       await new Promise(res => setTimeout(res, 45000));
@@ -48,14 +49,22 @@ export async function eb(path, { method = 'GET', body } = {}, tries = 2) {
   return t ? JSON.parse(t) : {};
 }
 
-export async function sb(path, { method = 'GET', body, prefer } = {}) {
+/* Supabase: 20 s como máximo por llamada y un reintento si es un fallo de red o del servidor (5xx).
+   El error lleva status y service, para no confundir un fallo de Supabase con uno del banco. */
+export async function sb(path, { method = 'GET', body, prefer } = {}, tries = 2) {
   const url = env('SUPABASE_URL').replace(/\/$/, ''), key = env('SUPABASE_SERVICE_KEY');
   const headers = { apikey: key, 'Content-Type': 'application/json' };
   if (key.startsWith('eyJ')) headers.Authorization = 'Bearer ' + key; // clave service_role clásica (JWT)
   if (prefer) headers.Prefer = prefer;
-  const r = await fetch(url + '/rest/v1/' + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
-  const t = await r.text();
-  if (!r.ok) throw new Error(`Supabase ${method} ${path.split('?')[0]} → ${r.status}: ${t.slice(0, 300)}`);
+  let r, t;
+  try {
+    r = await fetch(url + '/rest/v1/' + path, { method, headers, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(20000) });
+    t = await r.text();
+  } catch (e) { r = { ok: false, status: 0 }; t = 'Fallo de red: ' + e.message; }
+  if (!r.ok) {
+    if (tries > 1 && (r.status === 0 || r.status >= 500)) { await new Promise(res => setTimeout(res, 3000)); return sb(path, { method, body, prefer }, tries - 1); }
+    throw Object.assign(new Error(`Supabase ${method} ${path.split('?')[0]} → ${r.status}: ${t.slice(0, 300)}`), { status: r.status, service: 'supabase' });
+  }
   return t ? JSON.parse(t) : null;
 }
 

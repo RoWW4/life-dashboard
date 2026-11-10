@@ -26,11 +26,12 @@ const P = () => PropertiesService.getScriptProperties();
 const prop = k => { const v = P().getProperty(k); if (!v) throw new Error('Falta la propiedad del script ' + k); return v.trim(); };
 
 /* ---------- Telegram ---------- */
+let fallo = ''; // último fallo de esta ejecución: se manda al panel con el latido (ver latido())
 function tg(metodo, datos) {
   const r = UrlFetchApp.fetch('https://api.telegram.org/bot' + prop('TELEGRAM_TOKEN') + '/' + metodo, {
     method: 'post', contentType: 'application/json', payload: JSON.stringify(datos || {}), muteHttpExceptions: true });
-  const j = JSON.parse(r.getContentText());
-  if (!j.ok) console.warn(metodo + ': ' + r.getContentText());
+  let j; try { j = JSON.parse(r.getContentText()); } catch (e) { j = { ok: false, description: 'respuesta no válida (HTTP ' + r.getResponseCode() + ')' }; }
+  if (!j.ok) { console.warn(metodo + ': ' + r.getContentText().slice(0, 300)); fallo = 'Telegram ' + metodo + ': ' + (j.description || r.getResponseCode()); }
   return j.result;
 }
 const decir = (texto, extra) => tg('sendMessage', Object.assign({ chat_id: prop('CHAT_ID'), text: texto, disable_web_page_preview: true }, extra || {}));
@@ -64,9 +65,33 @@ function revisar() {
       if (u.update_id < offset) continue;
       P().setProperty('OFFSET', String(u.update_id + 1));   // antes de procesar: nunca se repite un mensaje
       console.log('update ' + u.update_id + ': ' + (u.callback_query ? 'botón ' + u.callback_query.data : u.message ? (u.message.document ? 'archivo' : u.message.photo ? 'foto' : 'texto') : '?'));
-      try { atender(u); } catch (e) { console.error(e); decir('⚠️ No he podido terminar: ' + e.message + '\nVuelve a intentarlo o mándalo otra vez.'); }
+      try { atender(u); } catch (e) { console.error(e); fallo = 'atender: ' + e.message; decir('⚠️ No he podido terminar: ' + e.message + '\nVuelve a intentarlo o mándalo otra vez.'); }
     }
-  } finally { lock.releaseLock(); }
+  } catch (e) { console.error(e); fallo = 'revisar: ' + e.message; }
+  finally { lock.releaseLock(); }
+  latido();
+}
+
+/* Latido para el vigilante del panel (job_health «docs-bot»): «funciono» cada 30 min, o el fallo en cuanto lo hay
+   (como mucho uno cada 10 min). Si el bot deja de dar señal 2 h, el vigilante avisa por Telegram. */
+function latido() {
+  const ahora = Date.now(), ok = +(P().getProperty('LATIDO_OK') || 0), ko = +(P().getProperty('LATIDO_FALLO') || 0);
+  try {
+    if (fallo) {
+      if (ahora - ko < 10 * 60e3) return;
+      P().setProperties({ LATIDO_FALLO: String(ahora), LATIDO_ESTADO: 'fail' });
+      estadoPanel('fail', fallo);
+    } else if (ahora - ok >= 30 * 60e3 || P().getProperty('LATIDO_ESTADO') === 'fail') {
+      P().setProperties({ LATIDO_OK: String(ahora), LATIDO_ESTADO: 'ok' });
+      estadoPanel('ok');
+    }
+  } catch (e) { console.warn('latido: ' + e.message); }
+}
+function estadoPanel(evento, error) {
+  const r = UrlFetchApp.fetch(SB_URL + '/rest/v1/rpc/ldb_job_user', {
+    method: 'post', contentType: 'application/json', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tokenPanel() },
+    payload: JSON.stringify({ p_job: 'docs-bot', p_event: evento, p_error: error ? String(error).slice(0, 900) : null }), muteHttpExceptions: true });
+  if (r.getResponseCode() >= 300) throw new Error('ldb_job_user → ' + r.getResponseCode() + ' ' + r.getContentText().slice(0, 200));
 }
 
 function atender(u) {
@@ -147,12 +172,21 @@ function terminar() {
   guardarLote(null);
   decir(`✅ Guardado «${l.name}» en ${l.cat}${l.files.length > 1 ? ' (' + l.files.length + ' archivos)' : ''}${l.exp ? ' · te aviso antes del ' + l.exp.split('-').reverse().join('/') : ''}.\nYa está en Documentos del panel.\n${url}`);
 }
-function anadirAlPanel(name, cat, url, exp) {
+/* Sesión del panel: se guarda 50 min en la caché del script para no entrar en cada latido. */
+function tokenPanel() {
+  const c = CacheService.getScriptCache(), t = c.get('TOKEN_PANEL');
+  if (t) return t;
   const login = UrlFetchApp.fetch(SB_URL + '/auth/v1/token?grant_type=password', {
     method: 'post', contentType: 'application/json', headers: { apikey: SB_KEY },
     payload: JSON.stringify({ email: prop('EMAIL'), password: prop('PASSWORD') }), muteHttpExceptions: true });
-  if (login.getResponseCode() !== 200) throw new Error('no he podido entrar en el panel (el archivo sí está en Drive: ' + url + ')');
+  if (login.getResponseCode() !== 200) throw new Error('no he podido entrar en el panel (HTTP ' + login.getResponseCode() + ')');
   const token = JSON.parse(login.getContentText()).access_token;
+  c.put('TOKEN_PANEL', token, 3000);
+  return token;
+}
+function anadirAlPanel(name, cat, url, exp) {
+  let token;
+  try { token = tokenPanel(); } catch (e) { throw new Error(e.message + ' (el archivo sí está en Drive: ' + url + ')'); }
   const r = UrlFetchApp.fetch(SB_URL + '/rest/v1/rpc/ldb_add_doc', {
     method: 'post', contentType: 'application/json', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token },
     payload: JSON.stringify({ p_name: name, p_cat: cat, p_url: url.replace(/\?.*$/, ''), p_exp: exp }), muteHttpExceptions: true });

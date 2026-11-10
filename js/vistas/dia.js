@@ -35,8 +35,8 @@ function wxDia(j){
 function wxLoad(){
   const c = wxCache(); if (!S.wx || S.wxOff || (c && c.d.daily.precipitation_sum && Date.now()-c.t < WXMIN) || wxLoad.on) return; wxLoad.on = 1;
   fetch(`https://api.open-meteo.com/v1/forecast?latitude=${S.wx.lat}&longitude=${S.wx.lon}&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum&timezone=auto&forecast_days=4&models=ecmwf_ifs025`)
-    .then(r => r.ok ? r.json() : Promise.reject()).then(d => { try { localStorage.setItem(WX, JSON.stringify({k:S.wx.lat+','+S.wx.lon, t:Date.now(), d})); } catch(e) {}
-      const e = document.getElementById('hwx'); if (e) e.innerHTML = wxHTML(); }).catch(() => {}).finally(() => { wxLoad.on = 0; });
+    .then(r => r.ok ? r.json() : Promise.reject(new Error('Open-Meteo → ' + r.status))).then(d => { try { localStorage.setItem(WX, JSON.stringify({k:S.wx.lat+','+S.wx.lon, t:Date.now(), d})); } catch(e) { logErr('almacenamiento', e, 'tiempo'); }
+      const e = document.getElementById('hwx'); if (e) e.innerHTML = wxHTML(); }).catch(e => logErr('tiempo', e)).finally(() => { wxLoad.on = 0; });
 }
 setInterval(() => { if (document.getElementById('hwx')) wxLoad(); }, 5*60*1000);
 function vDia(){

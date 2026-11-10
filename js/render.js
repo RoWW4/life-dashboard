@@ -18,7 +18,7 @@ function render(){
   if (!V_[view]) view = 'dia';
   $('#m').innerHTML = V_[view]();
   render.last = view;
-  try { sessionStorage.setItem('ldb-view', view); } catch(e) {}
+  try { sessionStorage.setItem('ldb-view', view); } catch(e) { logErr('almacenamiento', e, 'sección'); }
   // Cada tarjeta lleva siempre su asa (arrastrar) y sus flechas ↑↓; si la sección solo tiene una, no se enseñan.
   // «cust» queda solo para ordenar los documentos a mano de Mi día.
   document.body.classList.toggle('cust', cust);
