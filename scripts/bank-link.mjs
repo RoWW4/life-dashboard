@@ -40,9 +40,13 @@ try {
     const a = found.find(x => x.name.toLowerCase() === bank.toLowerCase()) || found[0];
     const secs = Math.min(a.maximum_consent_validity || 90 * 86400, 180 * 86400);
     const validUntil = new Date(Date.now() + secs * 1000 - 3600e3).toISOString();
+    // Con IBAN (secreto de GitHub), permiso solo para esa cuenta: saldo y movimientos. Sin él, para todas las cuentas.
+    const iban = C.ibanEnv ? (process.env[C.ibanEnv] || '').replace(/\s+/g, '').toUpperCase() : '';
+    if (C.ibanEnv && !iban) summary(`> ⚠️ Falta el secreto **${C.ibanEnv}** (IBAN de la cuenta): se pide permiso para todas las cuentas, y este banco puede dejarlo sin ninguna.\n`);
+    const access = iban ? { accounts: [{ iban }], balances: true, transactions: true, valid_until: validUntil } : { valid_until: validUntil };
     const r = await eb('/auth', {
       method: 'POST',
-      body: { access: { valid_until: validUntil }, aspsp: { name: a.name, country: C.country }, state: crypto.randomUUID(), redirect_url: env('APP_URL'), psu_type: 'personal' }
+      body: { access, aspsp: { name: a.name, country: C.country }, state: crypto.randomUUID(), redirect_url: env('APP_URL'), psu_type: 'personal' }
     });
     await setStatus({ aspsp: a.name }, id);
     summary([

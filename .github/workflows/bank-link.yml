@@ -33,6 +33,7 @@ jobs:
         env:
           EB_CODE: ${{ inputs.code }}
           EB_CONN: ${{ inputs.conexion }}
+          TR_IBAN: ${{ secrets.TR_IBAN }}   # IBAN de la cuenta de Trade Republic (solo para la conexión trade-republic)
           EB_APP_ID: ${{ secrets.EB_APP_ID }}
           EB_PRIVATE_KEY: ${{ secrets.EB_PRIVATE_KEY }}
           APP_URL: ${{ secrets.APP_URL }}

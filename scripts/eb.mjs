@@ -77,7 +77,9 @@ export const uid = () => env('LDB_USER_ID');
    Los movimientos de cada tipo van a tablas distintas (bank_tx / savings_tx), así que nunca se mezclan. */
 export const CONNECTIONS = {
   'openbank': { aspsp: 'Openbank', country: 'ES', purpose: 'gastos' },
-  'trade-republic': { aspsp: 'Trade Republic', country: 'ES', purpose: 'ahorro' }
+  // Trade Republic con el permiso de «todas las cuentas» deja la sesión sin ninguna cuenta: se pide para una cuenta
+  // concreta con su IBAN, que está en el secreto TR_IBAN de GitHub (nunca en el código).
+  'trade-republic': { aspsp: 'Trade Republic', country: 'ES', purpose: 'ahorro', ibanEnv: 'TR_IBAN' }
 };
 function conn(id) {
   if (!CONNECTIONS[id]) throw new Error(`Conexión desconocida «${id}» (válidas: ${Object.keys(CONNECTIONS).join(', ')})`);
