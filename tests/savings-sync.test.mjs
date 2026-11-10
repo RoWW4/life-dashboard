@@ -15,14 +15,14 @@ import { savKind } from '../scripts/eb.mjs';
 const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
 const PEM = privateKey.export({ type: 'pkcs8', format: 'pem' });
 
-async function run({ status = [{ session_id: 'sesion', last_sync: null, fail_count: 0 }], txErr = false } = {}) {
+async function run({ status = [{ session_id: 'sesion', last_sync: null, fail_count: 0 }], txErr = false, noAcc = false } = {}) {
   const calls = [];
   const srv = createServer((q, r) => {
     let b = ''; q.on('data', c => b += c); q.on('end', () => {
       calls.push({ m: q.method, u: decodeURIComponent(q.url), body: b ? JSON.parse(b) : null });
       const json = (code, v) => { r.writeHead(code, { 'content-type': 'application/json' }); r.end(v === undefined ? '' : JSON.stringify(v)); };
       const u = q.url;
-      if (u.startsWith('/sessions/')) return json(200, { status: 'AUTHORIZED', accounts: ['cuenta-ahorro'], access: { valid_until: '2027-02-01T00:00:00Z' } });
+      if (u.startsWith('/sessions/')) return json(200, { status: 'AUTHORIZED', accounts: noAcc ? [] : ['cuenta-ahorro'], access: { valid_until: '2027-02-01T00:00:00Z' } });
       if (u.includes('/transactions')) {
         if (txErr) return json(400, { error: 'WRONG_REQUEST_PARAMETERS' });
         return json(200, { transactions: [
@@ -73,6 +73,15 @@ test('si el banco falla, el robot apunta el error y termina bien (avisa el vigil
   assert.equal(st.body.fail_count, 2);
   assert.ok(st.body.last_error);
   assert.deepEqual(calls.filter(c => c.u === '/rest/v1/rpc/ldb_job').map(c => c.body.p_event), ['start', 'fail']);
+});
+
+test('si el permiso no trae ninguna cuenta, es un fallo con diagnóstico (sin datos sensibles)', async () => {
+  const { code, calls, sum } = await run({ noAcc: true });
+  assert.equal(code, 0);
+  const st = calls.find(c => c.m === 'POST' && c.u.startsWith('/rest/v1/bank_connections'));
+  assert.match(st.body.last_error, /ninguna cuenta/);
+  assert.deepEqual(calls.filter(c => c.u === '/rest/v1/rpc/ldb_job').map(c => c.body.p_event), ['start', 'fail']);
+  assert.ok(sum.includes('accounts[0]'), 'el resumen dice qué devolvió el banco');
 });
 
 test('sin conexión de ahorro no hace nada y termina bien', async () => {

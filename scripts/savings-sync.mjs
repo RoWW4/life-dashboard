@@ -39,6 +39,12 @@ try {
   const sess = await eb('/sessions/' + st.session_id);
   if (sess.status && sess.status !== 'AUTHORIZED') throw new Error(`El permiso no está activo (estado ${sess.status}). Renuévalo con «Conectar banco».`);
   const accounts = (sess.accounts || st.accounts || []).map(x => (typeof x === 'string' ? x : x.uid)).filter(Boolean);
+  // Sin cuentas no hay nada que traer: es un fallo (el vigilante debe enterarse). Se apunta qué devolvió el banco,
+  // solo nombres de campos y recuentos, para saber por qué (p. ej. no se eligió ninguna cuenta al dar el permiso).
+  if (!accounts.length) {
+    const shape = Object.entries(sess).map(([k, v]) => `${k}${Array.isArray(v) ? `[${v.length}]` : v && typeof v === 'object' ? `{${Object.keys(v).join(',')}}` : ''}`).join(' ');
+    throw Object.assign(new Error(`El banco no ha dado ninguna cuenta con este permiso (estado ${sess.status || '—'}). Vuelve a conectarlo con «Conectar banco» y elige la cuenta al aprobarlo.`), { detail: 'Respuesta de /sessions: ' + shape });
+  }
   // La primera vez, todo lo que deja el banco (90 días); después, los últimos 10 (por si alguno llega con retraso).
   const from = st.last_sync ? day(+(process.env.DAYS_BACK || 10)) : day(89);
   const rows = new Map(), kinds = {};
@@ -85,8 +91,8 @@ try {
   const fc = (st.fail_count || 0) + 1, soft = transient(e) && fc < FAILMAX;
   const msg = (String(e.message).slice(0, 300) + (e.rid ? ` · id ${e.rid}` : '')).slice(0, 1200);
   await setStatus({ last_error: msg, fail_count: fc }, CONN).catch(e2 => log('ERROR', 'savings-sync', 'No se pudo guardar el error en bank_connections', { func: 'setStatus', err: e2 }));
-  await log(soft ? 'WARNING' : 'ERROR', 'savings-sync', soft ? `El banco no respondió (fallo ${fc} de ${FAILMAX})` : 'Error al sincronizar el ahorro', { func: 'main', err: e, detail: e.rid ? 'id petición ' + e.rid : '' });
+  await log(soft ? 'WARNING' : 'ERROR', 'savings-sync', soft ? `El banco no respondió (fallo ${fc} de ${FAILMAX})` : 'Error al sincronizar el ahorro', { func: 'main', err: e, detail: [e.rid && 'id petición ' + e.rid, e.detail].filter(Boolean).join(' · ') });
   await job('savings-sync', 'fail', msg);
-  summary(`## ${soft ? '⚠️ El banco no respondió' : '❌ Error al sincronizar el ahorro'}\n\n\`\`\`\n${redact(e.message)}\n\`\`\`` + (e.rid ? `\nID de la petición: \`${e.rid}\`` : ''));
+  summary(`## ${soft ? '⚠️ El banco no respondió' : '❌ Error al sincronizar el ahorro'}\n\n\`\`\`\n${redact(e.message)}\n\`\`\`` + (e.rid ? `\nID de la petición: \`${e.rid}\`` : '') + (e.detail ? `\n\n${redact(e.detail)}` : ''));
   process.exit(0);
 }
