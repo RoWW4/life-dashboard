@@ -98,9 +98,11 @@ function savStats() {
     est = pay.some(p => p.d <= td),
     next = addM(m1(td), 1),
     days = dd(td, L[0].d);
-  // Interés neto que se va generando este mes (se cobrará el día 1 del siguiente)
+  // Interés que se va generando este mes, como lo enseña el banco: bruto y por días ya terminados (hasta ayer).
+  // accG = bruto; acc = neto (lo que se cobrará el día 1 del siguiente, ya sin impuestos).
   const from = td.slice(0, 7) === st0.slice(0, 7) ? st0 : m1(td),
-    acc = ((now * rate) / 365) * (dd(td, from) + 1) * (1 - tx);
+    accG = ((now * rate) / 365) * Math.max(0, dd(td, from)),
+    acc = accG * (1 - tx);
   const proj = pay.filter(p => p.d > td).slice(0, 12);
   const y1 = at(addM(td, 12));
   return {
@@ -110,6 +112,7 @@ function savStats() {
     now,
     est,
     acc,
+    accG,
     next,
     gain: now - dep,
     net,
@@ -172,7 +175,7 @@ function savCard() {
   const body = st
     ? `<div class="savk">
       <div class="bal"><span>Saldo hoy${st.est ? ' (estimado)' : ''}</span><b>${money(eur(st.now))}</b><em>${st.last.auto ? 'Saldo del banco del' : 'Último saldo real apuntado:'} ${fd(st.last.d)}</em></div>
-      <div class="up"><span>Ganado este mes</span><b>${money('+' + eur(st.acc))}</b><em>Se abona el ${fd(st.next)}</em><em>Total cobrado desde ${fd(st.L[0].d)}: ${money('+' + eur(st.gain))}</em></div>
+      <div class="up"><span>Ganado este mes</span><b>${money('+' + eur(st.accG))}</b><em>Bruto hasta ayer · ≈ ${money(eur(st.acc))} netos el ${fd(st.next)}</em><em>Total cobrado desde ${fd(st.L[0].d)}: ${money('+' + eur(st.gain))}</em></div>
       <div class="hi"><span>Rentabilidad anual</span><b>${pct(st.net * 100)}</b><em>${pct(s.rate)} bruto − ${tax} % impuestos</em></div>
       <div class="up"><span>En 12 meses</span><b>${money('+' + eur(st.y1 - st.now))}</b><em class="fin">Saldo final ≈ ${money(eur(st.y1))}</em></div>
     </div>
