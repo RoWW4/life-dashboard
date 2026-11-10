@@ -99,6 +99,15 @@ test('clasificación de los movimientos de ahorro', () => {
   assert.equal(savKind(-50, 'Transferencia'), 'retirada');
   assert.equal(savKind(-50, 'Intereses'), 'retirada', 'una salida no es interés aunque lo diga');
   assert.equal(savKind(0, ''), 'otro');
+  // Sin texto (como Trade Republic): por fecha e importe frente al saldo.
+  const ctx = date => ({ date, balance: 5000 });
+  assert.equal(savKind(9.5, '', ctx('2026-12-01')), 'interes', 'abono pequeño el día 1');
+  assert.equal(savKind(-0.4, '', ctx('2026-12-01')), 'interes', 'retención pequeña el día 1');
+  assert.equal(savKind(9.5, '', ctx('2026-12-02')), 'interes', 'o el día 2');
+  assert.equal(savKind(2000, '', ctx('2026-12-01')), 'aporte', 'una aportación grande el día 1 no es interés');
+  assert.equal(savKind(-50, '', ctx('2026-12-01')), 'retirada', 'una retirada normal el día 1 tampoco');
+  assert.equal(savKind(9.5, '', ctx('2026-12-07')), 'aporte', 'otro día no es interés');
+  assert.equal(savKind(9.5, '', { date: '2026-12-01', balance: 0 }), 'aporte', 'sin saldo no se adivina');
 });
 
 // savSnaps tal cual está en la app (se extrae de js/vistas/finanzas.js).

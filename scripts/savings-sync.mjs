@@ -52,6 +52,10 @@ try {
 
   for (const acc of accounts) {
     const seen = {};
+    // Primero el saldo: sin textos del banco, la clasificación compara cada importe con él (savKind).
+    const { balances = [] } = await eb(`${accUrl(acc)}/balances`);
+    const b = pickBalance(balances);
+    if (b) { total = (total || 0) + b.amount; btype = btype || b.type; }
     for (const t of await fetchTx(acc, { date_from: from })) {
       if (t.status && t.status !== 'BOOK') continue; // solo lo ya confirmado
       const raw = +(t.transaction_amount && t.transaction_amount.amount);
@@ -68,13 +72,10 @@ try {
       let ref = t.entry_reference || t.transaction_id;
       if (!ref) { const b = `${date}|${amount}|${desc}`; seen[b] = (seen[b] || 0) + 1; ref = b + '|' + seen[b]; }
       const id = 's' + crypto.createHash('sha1').update(CONN + '|' + acc + '|' + ref).digest('hex').slice(0, 24);
-      const kind = savKind(amount, desc);
+      const kind = savKind(amount, desc, { date, balance: b ? b.amount : 0 });
       kinds[kind] = (kinds[kind] || 0) + 1;
       rows.set(id, { id, user_id: uid(), conn: CONN, booking_date: date, amount: amount.toFixed(2), description: desc.slice(0, 300), kind });
     }
-    const { balances = [] } = await eb(`${accUrl(acc)}/balances`);
-    const b = pickBalance(balances);
-    if (b) { total = (total || 0) + b.amount; btype = btype || b.type; }
   }
 
   // merge-duplicates: si se mejora la clasificación, los ya guardados se corrigen en la siguiente sincronización.

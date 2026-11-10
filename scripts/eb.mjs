@@ -107,11 +107,19 @@ export function pickBalance(balances = []) {
 }
 
 /* Tipo de un movimiento de la cuenta de ahorro: los intereses (y la retención de impuestos sobre ellos) son «interes»;
-   el resto, dinero que se mete («aporte») o se saca («retirada»). */
-export function savKind(amount, desc = '') {
+   el resto, dinero que se mete («aporte») o se saca («retirada»).
+   Si el banco no da ningún texto (Trade Republic solo da fecha e importe), se decide por fecha e importe: los intereses
+   se abonan el día 1 y son poca cosa al lado del saldo. Una entrada en los días 1 o 2 de hasta el 0,6 % del saldo es
+   interés (cubre hasta ~7 % anual) y una salida de hasta el 0,2 %, su retención. Una aportación o retirada muy pequeña
+   justo esos días se tomaría por interés; se puede corregir con un apunte a mano. */
+export function savKind(amount, desc = '', { date = '', balance = 0 } = {}) {
   if (!amount) return 'otro';
   if (amount > 0 && /inter[eé]s|interest|zins/i.test(desc)) return 'interes';
   if (amount < 0 && /impuesto|retenci[oó]n|\btax|steuer/i.test(desc)) return 'interes';
+  if (!desc && balance > 0 && /^\d{4}-\d{2}-0[12]$/.test(date)) {
+    const r = Math.abs(amount) / balance;
+    if ((amount > 0 && r <= 0.006) || (amount < 0 && r <= 0.002)) return 'interes';
+  }
   return amount > 0 ? 'aporte' : 'retirada';
 }
 
