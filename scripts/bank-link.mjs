@@ -44,6 +44,12 @@ try {
     summary(`## ✅ Banco conectado\n\n${accounts.length} cuenta(s) vinculada(s). Permiso válido hasta **${vu ? vu.slice(0, 10).split('-').reverse().join('/') : '—'}**.\n\nAhora ejecuta «Sincronizar banco» para traer los primeros movimientos (o espera a la próxima ejecución automática).`);
   }
 } catch (e) {
+  // Cada código del banco sirve una sola vez: si se lanza otra vez con el mismo, el banco ya quedó conectado antes.
+  if (code && /ALREADY_AUTHORIZED/.test(e.body || e.message)) {
+    await log('INFO', 'bank-link', 'Código ya usado: el banco ya estaba conectado', { func: 'main' });
+    summary('## ✅ Este código ya se había usado\n\nEl banco quedó conectado en la ejecución anterior con este mismo código. No hace falta repetirlo.\n\nSi aun así quieres renovar el permiso, empieza de nuevo con el campo **code** vacío.');
+    process.exit(0);
+  }
   await log('ERROR', 'bank-link', 'Error al conectar el banco', { func: 'main', err: e });
   summary('## ❌ Error\n\n```\n' + redact(e.message) + '\n```');
   process.exit(1);

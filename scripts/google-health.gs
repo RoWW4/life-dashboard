@@ -136,13 +136,22 @@ function pulso(desde, hasta) {
 }
 
 /* ---------- Supabase ---------- */
-function entrar() {
-  const r = UrlFetchApp.fetch(SB_URL + '/auth/v1/token?grant_type=password', {
-    method: 'post', contentType: 'application/json', headers: { apikey: SB_KEY },
-    payload: JSON.stringify({ email: prop('EMAIL'), password: prop('PASSWORD') }), muteHttpExceptions: true });
-  if (r.getResponseCode() !== 200) throw new Error('no he podido entrar en el panel (revisa EMAIL y PASSWORD)');
-  return JSON.parse(r.getContentText()).access_token;
+/* Sesión del panel: se renueva con el token de renovación guardado (REFRESH_PANEL), sin volver a usar la contraseña ni
+   abrir sesiones nuevas cada vez. Solo si no hay o ya no vale, se entra con EMAIL y PASSWORD (y se guarda el nuevo). */
+function pedirSesion(tipo, datos) {
+  return UrlFetchApp.fetch(SB_URL + '/auth/v1/token?grant_type=' + tipo, {
+    method: 'post', contentType: 'application/json', headers: { apikey: SB_KEY }, payload: JSON.stringify(datos), muteHttpExceptions: true });
 }
+function sesionPanel() {
+  const rt = P().getProperty('REFRESH_PANEL');
+  let r = rt ? pedirSesion('refresh_token', { refresh_token: rt }) : null;
+  if (!r || r.getResponseCode() !== 200) r = pedirSesion('password', { email: prop('EMAIL'), password: prop('PASSWORD') });
+  if (r.getResponseCode() !== 200) throw new Error('no he podido entrar en el panel (HTTP ' + r.getResponseCode() + '; revisa EMAIL y PASSWORD)');
+  const j = JSON.parse(r.getContentText());
+  if (j.refresh_token) P().setProperty('REFRESH_PANEL', j.refresh_token);
+  return j.access_token;
+}
+const entrar = sesionPanel;
 function guardar(token, tabla, filas, clave) {
   const r = UrlFetchApp.fetch(SB_URL + '/rest/v1/' + tabla + '?on_conflict=' + clave, {
     method: 'post', contentType: 'application/json', muteHttpExceptions: true,

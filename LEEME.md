@@ -46,6 +46,12 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
 - SQL: `supabase/observabilidad.sql` (tablas y funciones) y `supabase/cron.sql` (todas las tareas programadas, sin el token).
 - Pruebas: `tests/*.test.mjs` (`node --test tests/`), sin conexión; las pasa `scripts/comprobar.mjs` antes de cada subida. Incluyen la sincronización con dos dispositivos.
 
+### Seguridad (10/11/2026)
+- **Cerrar sesión** sube antes lo pendiente y borra la copia del panel de ese dispositivo (todo lo que empieza por `ldb-`). Si no se puede subir, no cierra la sesión ni borra nada.
+- **CSP** en `index.html`: la página solo carga código y se conecta a los servicios que usa (Supabase, Open-Meteo, festivos, Google Health, cdnjs y jsdelivr). Si se añade un servicio nuevo, hay que añadirlo ahí; lo que se bloquee queda en Ajustes → Estado de los robots.
+- **Apps Script**: guardan su sesión en la propiedad `REFRESH_PANEL` y la renuevan sin usar la contraseña; solo si falla vuelven a entrar con `EMAIL` y `PASSWORD`.
+- Las funciones de los robots y del vigilante solo trabajan con la cuenta dueña (`ldb_owner()`); las altas nuevas están desactivadas en Supabase.
+
 ### GitHub (la app y los robots)
 - La app se publica con GitHub Pages desde la rama `main`. El repositorio es público: en el código no hay datos ni secretos, solo la clave pública de Supabase (`config.js`).
 - Workflows (`.github/workflows/`):

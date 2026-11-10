@@ -70,13 +70,21 @@ create policy "ops_alerts leer propio" on public.ops_alerts for select using (au
 grant select on public.ops_alerts to authenticated;
 grant all on public.ops_alerts to service_role;
 
+-- 0) La dueña del panel es la primera cuenta creada (las altas nuevas están desactivadas). Los robots y el vigilante
+--    solo trabajan con ella, aunque algún día existiera otra cuenta.
+create or replace function public.ldb_owner() returns uuid
+language sql stable security definer set search_path = public, auth as $$
+  select id from auth.users order by created_at limit 1
+$$;
+revoke all on function public.ldb_owner() from public, anon, authenticated;
+
 -- 4) Latido: start | ok | fail, en una sola llamada (atómica)
 create or replace function public.ldb_job(p_job text, p_event text, p_error text default null, p_run_id text default null, p_run_url text default null)
 returns void language plpgsql security definer set search_path = public as $$
 begin
   if p_event not in ('start','ok','fail') then raise exception 'ldb_job: evento no válido %', p_event; end if;
   insert into job_health as j (job, user_id, last_start, last_ok, last_error, last_error_at, fail_count, run_id, run_url, updated_at)
-  values (p_job, (select user_id from ldb_state limit 1),
+  values (p_job, ldb_owner(),
           case when p_event = 'start' then now() end,
           case when p_event = 'ok' then now() end,
           case when p_event = 'fail' then left(p_error, 1000) end,
@@ -100,7 +108,7 @@ grant execute on function public.ldb_job(text, text, text, text, text) to servic
 create or replace function public.ldb_job_user(p_job text, p_event text, p_error text default null)
 returns void language plpgsql security definer set search_path = public as $$
 begin
-  if auth.uid() is null or not exists (select 1 from ldb_state where user_id = auth.uid()) then raise exception 'ldb_job_user: sin panel'; end if;
+  if auth.uid() is null or auth.uid() is distinct from ldb_owner() then raise exception 'ldb_job_user: solo la dueña del panel'; end if;
   if p_job not in ('docs-bot', 'health') then raise exception 'ldb_job_user: robot no válido %', p_job; end if;
   perform ldb_job(p_job, p_event, ldb_redact(p_error));
   if p_event = 'fail' then
@@ -134,7 +142,7 @@ revoke all on function public.ldb_redact(text) from anon;
 create or replace function public.ldb_watchdog() returns void
 language plpgsql security definer set search_path = public as $$
 declare
-  u    uuid := (select user_id from ldb_state limit 1);
+  u    uuid := ldb_owner();
   tok  text := (select decrypted_secret from vault.decrypted_secrets where name = 'telegram_bot_token');
   chat text := (select decrypted_secret from vault.decrypted_secrets where name = 'telegram_chat_id');
   r record; c record; a record; bad int; msg text;

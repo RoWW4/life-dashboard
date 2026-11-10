@@ -172,15 +172,26 @@ function terminar() {
   guardarLote(null);
   decir(`✅ Guardado «${l.name}» en ${l.cat}${l.files.length > 1 ? ' (' + l.files.length + ' archivos)' : ''}${l.exp ? ' · te aviso antes del ' + l.exp.split('-').reverse().join('/') : ''}.\nYa está en Documentos del panel.\n${url}`);
 }
-/* Sesión del panel: se guarda 50 min en la caché del script para no entrar en cada latido. */
+/* Sesión del panel: se renueva con el token de renovación guardado (REFRESH_PANEL), sin volver a usar la contraseña ni
+   abrir sesiones nuevas cada vez. Solo si no hay o ya no vale, se entra con EMAIL y PASSWORD (y se guarda el nuevo). */
+function pedirSesion(tipo, datos) {
+  return UrlFetchApp.fetch(SB_URL + '/auth/v1/token?grant_type=' + tipo, {
+    method: 'post', contentType: 'application/json', headers: { apikey: SB_KEY }, payload: JSON.stringify(datos), muteHttpExceptions: true });
+}
+function sesionPanel() {
+  const rt = P().getProperty('REFRESH_PANEL');
+  let r = rt ? pedirSesion('refresh_token', { refresh_token: rt }) : null;
+  if (!r || r.getResponseCode() !== 200) r = pedirSesion('password', { email: prop('EMAIL'), password: prop('PASSWORD') });
+  if (r.getResponseCode() !== 200) throw new Error('no he podido entrar en el panel (HTTP ' + r.getResponseCode() + '; revisa EMAIL y PASSWORD)');
+  const j = JSON.parse(r.getContentText());
+  if (j.refresh_token) P().setProperty('REFRESH_PANEL', j.refresh_token);
+  return j.access_token;
+}
+/* El acceso dura 1 h: se guarda 50 min en la caché del script para no pedirlo en cada latido. */
 function tokenPanel() {
   const c = CacheService.getScriptCache(), t = c.get('TOKEN_PANEL');
   if (t) return t;
-  const login = UrlFetchApp.fetch(SB_URL + '/auth/v1/token?grant_type=password', {
-    method: 'post', contentType: 'application/json', headers: { apikey: SB_KEY },
-    payload: JSON.stringify({ email: prop('EMAIL'), password: prop('PASSWORD') }), muteHttpExceptions: true });
-  if (login.getResponseCode() !== 200) throw new Error('no he podido entrar en el panel (HTTP ' + login.getResponseCode() + ')');
-  const token = JSON.parse(login.getContentText()).access_token;
+  const token = sesionPanel();
   c.put('TOKEN_PANEL', token, 3000);
   return token;
 }

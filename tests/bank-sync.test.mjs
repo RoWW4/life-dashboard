@@ -53,3 +53,18 @@ test('un fallo momentáneo de Supabase (503) se reintenta y la sincronización t
   assert.equal(calls.filter(c => c.m === 'GET' && c.u.startsWith('/rest/v1/bank_tx')).length, 2);
   assert.deepEqual(calls.filter(c => c.u === '/rest/v1/rpc/ldb_job').map(c => c.body.p_event), ['start', 'ok']);
 });
+
+test('«Conectar banco» con un código ya usado explica que el banco ya está conectado (sin error)', async () => {
+  const { mkdtempSync, readFileSync } = await import('node:fs'), { tmpdir } = await import('node:os'), { join } = await import('node:path');
+  const srv = createServer((q, r) => { let b = ''; q.on('data', c => b += c); q.on('end', () => {
+    if (q.url.startsWith('/sessions')) { r.writeHead(422, { 'content-type': 'application/json' }); return r.end('{"code":422,"message":"Session is already authorized","error":"ALREADY_AUTHORIZED","detail":null}'); }
+    r.writeHead(201); r.end(); }); });
+  await new Promise(r => srv.listen(0, r));
+  const url = `http://localhost:${srv.address().port}`, sum = join(mkdtempSync(join(tmpdir(), 'ldb-')), 'resumen.md');
+  const code = await new Promise(res => spawn(process.execPath, ['scripts/bank-link.mjs'], { env: { ...process.env,
+    EB_API: url, EB_APP_ID: 'app', EB_PRIVATE_KEY: PEM, EB_CODE: 'codigo-de-prueba', SUPABASE_URL: url, SUPABASE_SERVICE_KEY: 'clave-de-prueba',
+    LDB_USER_ID: '00000000-0000-0000-0000-000000000000', GITHUB_STEP_SUMMARY: sum } }).on('exit', res));
+  srv.close();
+  assert.equal(code, 0, 'no sale como error');
+  assert.match(readFileSync(sum, 'utf8'), /ya se había usado/);
+});

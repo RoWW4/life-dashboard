@@ -28,6 +28,8 @@ function logErr(where, e, extra){
 function errToast(){ const n = Date.now(); if (n - (errToast.t||0) < 1e4) return; errToast.t = n; try { toast('⚠️ Algo ha fallado. El detalle está en Ajustes → Estado de los robots'); } catch(x) {} }
 window.addEventListener('error', e => { if (!e.error && !e.message) return; logErr('global', e.error || e.message, `${String(e.filename||'').split('/').pop()}:${e.lineno||0}:${e.colno||0}`); errToast(); });
 window.addEventListener('unhandledrejection', e => { logErr('promesa', e.reason); errToast(); });
+// Algo bloqueado por la protección CSP de index.html (p. ej. un servicio nuevo que falta añadir): queda apuntado.
+document.addEventListener('securitypolicyviolation', e => logErr('seguridad', `Bloqueado ${e.blockedURI || 'contenido en línea'} (${e.effectiveDirective || e.violatedDirective})`));
 /* Los iconos son nombres de Lucide (ver icons.js) */
 const CATS = ['Vivienda','Alimentación','Transporte','Restaurantes','Ocio','Suscripciones','Salud','Mascotas','Compras','Viajes','Préstamos','Otros','Traspasos','Nómina'];
 /* Traspasos: dinero que mueves entre tus propias cuentas. Se ve en la lista pero no cuenta como gasto ni ingreso. */

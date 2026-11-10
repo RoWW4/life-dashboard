@@ -120,6 +120,19 @@ const A = {
   errdel: () => { try { localStorage.removeItem(KERR); } catch(e) {} render(); toast('Lista de errores borrada'); },
   local: () => { try { localStorage.setItem('ldb-local','1'); } catch(e) { logErr('almacenamiento', e, 'modo local'); } setSync('📱 Solo este dispositivo'); afterLoad(); },
   cloud: () => { try { localStorage.removeItem('ldb-local'); localStorage.removeItem(K); } catch(e) {} location.reload(); },
-  logout: () => CF('¿Cerrar sesión? Los datos seguirán guardados en la nube.', async () => { await sb.auth.signOut(); location.reload(); })
+  // Al cerrar sesión se borra la copia de este dispositivo (los datos siguen en la nube), para que no quede nada tuyo
+  // en un ordenador ajeno. Antes se sube lo pendiente; si no se puede, no se borra nada y se avisa.
+  logout: () => CF('¿Cerrar sesión? Tus datos siguen en la nube y se borran de este dispositivo.', async () => {
+    setSync('Subiendo lo pendiente…');
+    for (let i = 0; i < 6 && cloudOK && (dirty() || pushT || pushing); i++) {
+      if (!pushing) { clearTimeout(pushT); pushT = 0; await push(); }
+      if (dirty() || pushT || pushing) await new Promise(r => setTimeout(r, 700));
+    }
+    if (!cloudOK || dirty()) return CF('Hay cambios que aún no están en la nube. Para no perderlos, no se ha cerrado la sesión: vuelve a intentarlo cuando haya conexión.', () => {}, undefined, true);
+    await sb.auth.signOut();
+    try { Object.keys(localStorage).filter(k => k.startsWith('ldb-')).forEach(k => localStorage.removeItem(k)); sessionStorage.clear(); }
+    catch(e) { logErr('almacenamiento', e, 'cerrar sesión'); }
+    location.reload();
+  })
 };
 

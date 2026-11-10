@@ -6,6 +6,10 @@
 <title>Panel de Rocío</title>
 <meta name="description" content="Mi panel de vida: tareas, compra, finanzas, facturas y documentos.">
 <meta name="theme-color" content="#0c0d0f">
+<!-- Seguridad (CSP): la página solo puede cargar código y conectarse a los servicios que usa el panel. Si algo se bloquea,
+     queda en Ajustes → Estado de los robots. Al añadir un servicio nuevo, hay que añadirlo aquí. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://lvsjvdpxnuydtwajlvsv.supabase.co wss://lvsjvdpxnuydtwajlvsv.supabase.co https://api.open-meteo.com https://geocoding-api.open-meteo.com https://date.nager.at https://script.google.com https://script.googleusercontent.com https://cdnjs.cloudflare.com; worker-src 'self' blob: https://cdnjs.cloudflare.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -16,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
-<link rel="stylesheet" href="styles.css?v=103">
+<link rel="stylesheet" href="styles.css?v=104">
 </head>
 <body>
 <div class="app">
@@ -31,26 +35,26 @@
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha256-hZaWX+kY5lZgChtWjToWj1wNPSKmAIhrtvRKZVXbAec=" crossorigin="anonymous"></script>
-<script src="icons.js?v=103"></script>
+<script src="icons.js?v=104"></script>
 <!-- La app está repartida en js/ (ver CLAUDE.md). El orden importa: cada archivo usa lo de los anteriores. -->
-<script src="js/base.js?v=103"></script>
-<script src="js/estado.js?v=103"></script>
-<script src="js/facturas-calculo.js?v=103"></script>
-<script src="js/nube.js?v=103"></script>
-<script src="js/banco.js?v=103"></script>
-<script src="js/interfaz.js?v=103"></script>
-<script src="js/vistas/dia.js?v=103"></script>
-<script src="js/vistas/tareas.js?v=103"></script>
-<script src="js/vistas/compra.js?v=103"></script>
-<script src="js/vistas/finanzas.js?v=103"></script>
-<script src="js/vistas/facturas.js?v=103"></script>
-<script src="js/vistas/salud.js?v=103"></script>
-<script src="js/vistas/ajustes.js?v=103"></script>
-<script src="js/render.js?v=103"></script>
-<script src="js/formularios.js?v=103"></script>
-<script src="js/voz.js?v=103"></script>
-<script src="js/acciones.js?v=103"></script>
-<script src="js/eventos.js?v=103"></script>
-<script src="js/arranque.js?v=103"></script>
+<script src="js/base.js?v=104"></script>
+<script src="js/estado.js?v=104"></script>
+<script src="js/facturas-calculo.js?v=104"></script>
+<script src="js/nube.js?v=104"></script>
+<script src="js/banco.js?v=104"></script>
+<script src="js/interfaz.js?v=104"></script>
+<script src="js/vistas/dia.js?v=104"></script>
+<script src="js/vistas/tareas.js?v=104"></script>
+<script src="js/vistas/compra.js?v=104"></script>
+<script src="js/vistas/finanzas.js?v=104"></script>
+<script src="js/vistas/facturas.js?v=104"></script>
+<script src="js/vistas/salud.js?v=104"></script>
+<script src="js/vistas/ajustes.js?v=104"></script>
+<script src="js/render.js?v=104"></script>
+<script src="js/formularios.js?v=104"></script>
+<script src="js/voz.js?v=104"></script>
+<script src="js/acciones.js?v=104"></script>
+<script src="js/eventos.js?v=104"></script>
+<script src="js/arranque.js?v=104"></script>
 </body>
 </html>

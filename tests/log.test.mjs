@@ -12,8 +12,8 @@ import { redact } from '../scripts/log.mjs';
 test('redact quita tokens, ids, IBAN, tarjetas, importes y correos', () => {
   const s = redact('bot123456:AAH_abcdefghijklmnopqrstuvwxyz Bearer abcdefghijklmnop12345 ' +
     '/accounts/3f2a9c1e-5b7d-4e8a-9c21-7d4e5f6a8b90 ES91 2100 0418 4502 0005 1332 4111 1111 1111 1111 ' +
-    '-45,90 € 12.50 EUR ana@example.com ?code=xyz123&state=abc eyJhbGciOiJIUzI1.eyJzdWIiOiIxMjM0.abcdefghijk');
-  for (const bad of ['AAH_abc', 'abcdefghijklmnop12345', '3f2a9c1e', 'ES91', '4111', '45,90', '12.50', 'ana@', 'xyz123', 'eyJhbGci'])
+    '-45,90 € 12.50 EUR prueba@example.com ?code=xyz123&state=abc eyJhbGciOiJIUzI1.eyJzdWIiOiIxMjM0.abcdefghijk');
+  for (const bad of ['AAH_abc', 'abcdefghijklmnop12345', '3f2a9c1e', 'ES91', '4111', '45,90', '12.50', 'prueba@', 'xyz123', 'eyJhbGci'])
     assert.ok(!s.includes(bad), `sigue apareciendo «${bad}» en: ${s}`);
   assert.equal(redact('Error interacting with ASPSP'), 'Error interacting with ASPSP');
 });
