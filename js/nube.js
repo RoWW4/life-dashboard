@@ -102,10 +102,21 @@ async function push(force){
     // 2) Protección: no vaciar secciones ni perder muchos datos sin confirmar.
     if (!force && tooSmall()) { setSync('⚠️ Sin subir'); const ls = lostSecs(); return CF(ls.length ? `En este dispositivo está vacío lo que en la nube tiene datos: ${ls.join(', ')}. ¿Subirlo y borrar eso de la nube?` : `Este dispositivo tiene muchos menos datos que la nube (${nItems(S)} frente a ${cloudN} elementos). ¿Subirlos y sustituir los de la nube?`, () => push(true)); }
     // 3) Se sube una copia fija (si se edita mientras sube, ese cambio se subirá en la siguiente vuelta).
-    const snap = JSON.parse(JSON.stringify(S));
-    const { error } = await sb.from('ldb_state').upsert({user_id:user.id, data: force ? {...snap, _force:true} : snap, updated_at:new Date().toISOString()});
+    const snap = JSON.parse(JSON.stringify(S)), data = force ? {...snap, _force:true} : snap;
+    // 4) Solo se guarda si la nube sigue en la versión que se acaba de leer (ldb_save). Si otro dispositivo guardó justo
+    //    entre medias, se vuelve a leer y juntar (paso 1) en vez de pisar su cambio.
+    let { data: res, error } = await sb.rpc('ldb_save', { p_data: data, p_base: remote ? (remote._ts || 0) : null });
+    if (error && (error.code === 'PGRST202' || /ldb_save/.test(error.message||'') && /find|exist/i.test(error.message||''))) {
+      logErr('nube/push', error, 'sin ldb_save: se guarda como antes'); // por si la función no está en la base de datos
+      ({ error } = await sb.from('ldb_state').upsert({user_id:user.id, data, updated_at:new Date().toISOString()})); res = { ok: !error };
+    }
     if (error && /ldb_guard/.test(error.message||'')) { setSync('⚠️ Sin subir'); return CF('La nube no ha aceptado el cambio porque vaciaría una sección o borraría muchos datos. ¿Seguro que quieres hacerlo?', () => push(true)); }
     if (error) throw error;
+    if (!res || !res.ok) {
+      if ((push.cf = (push.cf || 0) + 1) <= 5) { setSync('Guardando…'); clearTimeout(pushT); pushT = setTimeout(push, 150 + Math.random() * 350); return; }
+      push.cf = 0; throw new Error('La nube cambió varias veces seguidas mientras se guardaba');
+    }
+    push.cf = 0;
     setBase(snap); cloudN = nItems(snap); cloudSec = Object.keys(SECS).filter(k => secOn(snap,k)); if (dirty() && cloudOK && !pushT) pushT = setTimeout(push, 900);
     syncOK();
   } catch(e) { syncFail('push', e); }

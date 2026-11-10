@@ -215,3 +215,23 @@ create policy "health_status propio" on public.health_status
 alter table public.health_daily add column if not exists awake_min int, add column if not exists light_min int, add column if not exists deep_min int, add column if not exists rem_min int, add column if not exists bed_at timestamptz, add column if not exists wake_at timestamptz;
 grant select, insert, update on public.health_daily, public.health_status to authenticated;
 grant all on public.health_daily, public.health_status to service_role;
+
+-- Guardado sin pisar cambios (10/11/2026): la app guarda con ldb_save y solo se acepta si la nube sigue en la versión
+-- que leyó el dispositivo (p_base = su _ts). Si otro dispositivo guardó entre medias, devuelve ok=false y la app vuelve a
+-- leer, junta los cambios (merge3) y guarda. Los triggers de guardia e historial siguen actuando igual.
+create or replace function public.ldb_save(p_data jsonb, p_base numeric)
+returns jsonb language plpgsql security invoker set search_path = public as $$
+declare n int;
+begin
+  if auth.uid() is null then raise exception 'ldb_save: sin sesión'; end if;
+  update ldb_state set data = p_data, updated_at = now()
+   where user_id = auth.uid() and coalesce((data->>'_ts')::numeric, 0) = coalesce(p_base, -1);
+  get diagnostics n = row_count;
+  if n = 1 then return jsonb_build_object('ok', true); end if;
+  if exists (select 1 from ldb_state where user_id = auth.uid()) then return jsonb_build_object('ok', false); end if;
+  insert into ldb_state (user_id, data) values (auth.uid(), p_data) on conflict (user_id) do nothing;
+  get diagnostics n = row_count;
+  return jsonb_build_object('ok', n = 1);
+end $$;
+revoke all on function public.ldb_save(jsonb, numeric) from public, anon;
+grant execute on function public.ldb_save(jsonb, numeric) to authenticated;

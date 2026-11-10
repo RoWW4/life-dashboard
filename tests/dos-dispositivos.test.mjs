@@ -19,17 +19,24 @@ const FAKE = `window.supabase = { createClient: () => {
       maybeSingle(){ q.single = true; return b; }, upsert(body){ q.op = 'upsert'; q.body = body; return b; },
       then(ok, ko){ return call(q).then(ok, ko); } };
     return b; };
-  return { from, auth: { getSession: async () => ({ data: { session: { user: { id: 'u1', email: 'prueba@example.com' } } } }),
+  const rpc = (name, args) => ({ then(ok, ko){ return call({ op: 'rpc', name, args }).then(ok, ko); } });
+  return { from, rpc, auth: { getSession: async () => ({ data: { session: { user: { id: 'u1', email: 'prueba@example.com' } } } }),
     signInWithPassword: async () => ({}), signOut: async () => ({}) } };
 } };`;
 
 function cloud() {
   const db = { ldb_state: [{ user_id: 'u1', data: { tasks: [{ id: 'a', title: 'Prueba A', done: false }, { id: 'b', title: 'Prueba B', done: false }], _ts: 1 } }],
     bank_tx: [], bank_status: [], bank_pending: [], job_health: [], ops_alerts: [], health_status: [], health_daily: [] };
-  const st = { db, down: false, calls: 0 };
-  st.handle = (raw, who) => {
+  const st = { db, down: false, calls: 0, delay: 0, saves: 0, conflicts: 0 };
+  st.handle = async (raw, who) => {
     const q = JSON.parse(raw); st.calls++;
+    if (st.delay && q.table === 'ldb_state') await new Promise(r => setTimeout(r, st.delay)); // lectura lenta: los dos leen antes de que nadie guarde
     if (st.down) return JSON.stringify({ data: null, error: { message: 'TypeError: Failed to fetch' } });
+    if (q.op === 'rpc' && q.name === 'ldb_save') { // como en Supabase: solo guarda si la nube sigue en la versión leída
+      const row = db.ldb_state.find(r => r.user_id === 'u1'), data = { ...q.args.p_data }; delete data._force;
+      if (row ? (row.data._ts || 0) === q.args.p_base : q.args.p_base === null) { row ? (row.data = data) : db.ldb_state.push({ user_id: 'u1', data }); st.saves++; return JSON.stringify({ data: { ok: true }, error: null }); }
+      st.conflicts++; return JSON.stringify({ data: { ok: false }, error: null });
+    }
     const t = db[q.table] || [];
     if (q.op === 'upsert') {
       const i = t.findIndex(r => r.user_id === q.body.user_id), row = { ...q.body, data: { ...q.body.data } };
@@ -102,7 +109,17 @@ test('dos dispositivos: los cambios de cada uno se juntan y nada se pierde, tamb
     await A.waitForFunction(() => cloudOK === true && !pushT && !pushing && /Sincronizado/.test(syncTxt), null, { timeout: 20000 });
     assert.equal(ids(), 'a,b,x1,x2,x3,x4,x5');
 
-    // 5) Un error no controlado (un botón que falla) queda registrado con su origen.
+    // 5) Los dos guardan en el mismo instante: ninguno pisa al otro (la nube rechaza el segundo y este vuelve a juntar).
+    st.delay = 300; const c0 = st.conflicts;
+    // Los dos suben a la vez (sin esperar el retraso normal de guardar) y la lectura de la nube tarda: los dos leen la
+    // misma versión antes de que ninguno guarde, que es justo el caso en que antes uno pisaba al otro.
+    const now = (pg, id) => pg.evaluate(id => { S.tasks.push({ id, title: 'Prueba ' + id, done: false }); S._ts = Date.now(); return push(); }, id);
+    await Promise.all([now(A, 'y1'), now(B, 'y2')]);
+    await idle(A); await idle(B); st.delay = 0;
+    assert.ok(st.conflicts > c0, 'la nube detecta el choque');
+    assert.equal(ids(), 'a,b,x1,x2,x3,x4,x5,y1,y2', 'se guardan los cambios de los dos');
+
+    // 6) Un error no controlado (un botón que falla) queda registrado con su origen.
     await A.evaluate(() => setTimeout(() => { throw new Error('fallo de prueba'); }, 0));
     await A.waitForFunction(() => errLog().some(e => e.w === 'global' && /fallo de prueba/.test(e.m)), null, { timeout: 5000 });
     assert.deepEqual(errs.filter(m => !/fallo de prueba/.test(m)), [], 'la app no da otros errores');
