@@ -11,6 +11,18 @@ const code = (process.env.EB_CODE || '').trim();
 const bank = (process.env.EB_BANK || 'Openbank').trim();
 
 try {
+  // «lista» en el campo bank: solo consulta qué bancos ofrece Enable Banking (España y Alemania), sin conectar ni cambiar nada.
+  if (!code && /^(lista|\?)$/i.test(bank)) {
+    const out = [];
+    for (const c of ['ES', 'DE']) {
+      const { aspsps = [] } = await eb(`/aspsps?country=${c}&psu_type=personal`);
+      const tr = aspsps.filter(a => /trade\s*republic/i.test(a.name)).map(a => a.name);
+      out.push(`${c}: ${aspsps.length} bancos · Trade Republic: ${tr.length ? tr.join(', ') : 'no'}`);
+      summary(`## Bancos de ${c} en Enable Banking (${aspsps.length})\n\n${aspsps.map(a => '- ' + a.name).join('\n')}\n`);
+    }
+    await log('INFO', 'bank-link', 'Lista de bancos consultada', { func: 'lista', detail: out.join(' | ') });
+    process.exit(0);
+  }
   if (!code) {
     const { aspsps = [] } = await eb('/aspsps?country=ES&psu_type=personal');
     const found = aspsps.filter(a => a.name.toLowerCase().includes(bank.toLowerCase()));

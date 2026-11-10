@@ -8,7 +8,7 @@ on:
         required: false
         default: ''
       bank:
-        description: 'Nombre del banco en Enable Banking'
+        description: 'Nombre del banco en Enable Banking (escribe «lista» para ver solo qué bancos hay, sin conectar nada)'
         required: false
         default: 'Openbank'
 
