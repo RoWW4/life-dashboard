@@ -175,7 +175,7 @@ function savCard() {
   const body = st
     ? `<div class="savk">
       <div class="bal"><span>Saldo hoy${st.est ? ' (estimado)' : ''}</span><b>${money(eur(st.now))}</b><em>${st.last.auto ? 'Saldo del banco del' : 'Último saldo real apuntado:'} ${fd(st.last.d)}</em></div>
-      <div class="up"><span>Ganado este mes</span><b>${money('+' + eur(st.accG))}</b><em>Bruto hasta ayer · ≈ ${money(eur(st.acc))} netos el ${fd(st.next)}</em><em>Total cobrado desde ${fd(st.L[0].d)}: ${money('+' + eur(st.gain))}</em></div>
+      <div class="up"><span>Ganado este mes</span><b>${money('+' + eur(st.acc))}</b><em>Neto hasta ayer · se abona el ${fd(st.next)}</em><em>${money(eur(st.accG))} brutos (lo que enseña el banco)</em><em>Total cobrado desde ${fd(st.L[0].d)}: ${money('+' + eur(st.gain))}</em></div>
       <div class="hi"><span>Rentabilidad anual</span><b>${pct(st.net * 100)}</b><em>${pct(s.rate)} bruto − ${tax} % impuestos</em></div>
       <div class="up"><span>En 12 meses</span><b>${money('+' + eur(st.y1 - st.now))}</b><em class="fin">Saldo final ≈ ${money(eur(st.y1))}</em></div>
     </div>
