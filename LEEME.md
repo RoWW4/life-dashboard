@@ -117,6 +117,8 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
 | `scripts/bank-link.mjs`, `scripts/bank-sync.mjs`, `scripts/eb.mjs` | Enable Banking. `eb.mjs` también lo usan los demás scripts para hablar con Supabase |
 | `.github/workflows/*.yml` | los robots de arriba |
 | `scripts/log.mjs` | registro común y latido de los robots (ver «Vigilancia y registro de errores») |
+| `scripts/telegram.mjs` | envío por Telegram de los robots (troceo, reintentos y message_id) |
+| `js/salud-calculo.js` | previsión de Salud, compartida por la app y el robot de avisos |
 | `supabase/observabilidad.sql`, `supabase/cron.sql` | registro, vigilante y tareas programadas de Supabase |
 | `tests/` | pruebas sin conexión (robots y sincronización con dos dispositivos) |
 | `CLAUDE.md`, `PENDIENTES.md` | cómo trabaja Claude y qué queda por hacer (lo hecho: `git log`) |

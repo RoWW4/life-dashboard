@@ -1,14 +1,13 @@
 // Descarga los movimientos recientes de Enable Banking y los guarda en Supabase (bank_tx).
 // El panel los recoge al abrirse, los clasifica y evita duplicados con fijos y facturas.
 import crypto from 'node:crypto';
-import { eb, sb, uid, getStatus, setStatus, summary, transient } from './eb.mjs';
+import { eb, sb, uid, getStatus, setStatus, summary, transient, FAILMAX } from './eb.mjs';
 import { log, job, guard, redact } from './log.mjs';
 
 guard('bank-sync');
 await job('bank-sync', 'start');
 
 const DAYS = +(process.env.DAYS_BACK || 14);
-const FAILMAX = 3; // fallos pasajeros seguidos antes de dar la ejecución por fallida (y que GitHub mande correo)
 const day = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
 
 const st = await getStatus().catch(async e => { await log('ERROR', 'bank-sync', 'No se pudo leer el estado del banco en Supabase', { func: 'getStatus', err: e }); await job('bank-sync', 'fail', e.message); summary('## ❌ ' + redact(e.message)); process.exit(process.env.SIN_CORREO === '1' ? 0 : 1); });

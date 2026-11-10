@@ -7,6 +7,12 @@
 // task_reminders para no repetirlo.
 import { env, sb, uid, summary } from './eb.mjs';
 import { log, job, guard } from './log.mjs';
+import { telegram } from './telegram.mjs';
+import vm from 'node:vm';
+import { readFileSync } from 'node:fs';
+
+// Previsión de Salud: el mismo archivo que usa la app (js/salud-calculo.js), para que los avisos coincidan con lo que se ve.
+const SAL = vm.runInNewContext(readFileSync(new URL('../js/salud-calculo.js', import.meta.url), 'utf8') + '\n;({ salPrevision });');
 
 // Registro y latido (ver scripts/log.mjs): cualquier error que corte la ejecución queda apuntado en ops_log y job_health.
 guard('task-reminders');
@@ -25,35 +31,6 @@ const at = (d, tm) => { const [y, m, dd] = d.split('-'), [h, mi] = tm.split(':')
 const iso = t => new Date(t).toISOString().slice(0, 10);
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-/* Envía por Telegram. Los mensajes de más de 4.000 caracteres se parten por líneas. Si Telegram pide esperar (429)
-   o falla la red o el servidor, se reintenta hasta 2 veces. Devuelve los message_id de Telegram (para la trazabilidad). */
-async function telegram(text) {
-  const parts = [];
-  for (const line of String(text).split('\n')) {
-    const last = parts.length ? parts[parts.length - 1] : null;
-    if (last !== null && (last + '\n' + line).length <= 4000) parts[parts.length - 1] = last + '\n' + line; else parts.push(line);
-  }
-  const ids = [];
-  for (const part of parts) {
-    for (let i = 0; ; i++) {
-      let r, j = {};
-      try {
-        r = await fetch(`${process.env.TELEGRAM_API || 'https://api.telegram.org'}/bot${env('TELEGRAM_TOKEN')}/sendMessage`, { // TELEGRAM_API solo en las pruebas
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(15000),
-          body: JSON.stringify({ chat_id: env('TELEGRAM_CHAT_ID'), text: part.slice(0, 4096), disable_web_page_preview: true })
-        });
-        j = await r.json().catch(() => ({}));
-      } catch (e) { r = { ok: false, status: 0 }; j = { description: 'Fallo de red: ' + e.message }; }
-      if (r.ok && j.ok !== false) { ids.push(j.result && j.result.message_id); break; }
-      const wait = r.status === 429 ? Math.min(+((j.parameters || {}).retry_after) || 5, 30) : (r.status === 0 || r.status >= 500) ? 5 : 0;
-      if (wait && i < 2) { await sleep(wait * 1000); continue; }
-      throw Object.assign(new Error(`Telegram → ${r.status}: ${String(j.description || '').slice(0, 200)}`), { status: r.status });
-    }
-  }
-  return ids;
-}
-
 const row = (await sb(`ldb_state?user_id=eq.${uid()}&select=data`))[0];
 const tasks = ((row && row.data && row.data.tasks) || []).filter(t => !t.done && t.due && t.title);
 const sent = new Set((await sb(`task_reminders?user_id=eq.${uid()}&select=key`)).map(r => r.key));
@@ -119,13 +96,11 @@ if (+P.hour >= HOUR && +P.hour < 12 && !sent.has(sk)) {
   else await mark(sk).catch(e => log('ERROR', 'task-reminders', 'No se pudo apuntar el resumen', { func: 'mark', err: e }));
 } else if (+P.hour >= 12 && !sent.has(sk)) await lost(sk, 'Resumen', 'no hubo ninguna pasada correcta entre las 7:00 y las 12:00');
 
-// 3) Sección Salud: aviso 3 días antes del próximo inicio previsto (desde las 9:00). Mismo cálculo que js/vistas/salud.js.
+// 3) Sección Salud: aviso 3 días antes del próximo inicio previsto (desde las 9:00). El cálculo es el mismo archivo que usa la app.
 const sal = row && row.data && row.data.salud;
 if (sal && Array.isArray(sal.ini) && sal.ini.length && +P.hour >= 9) {
-  const L = [...new Set(sal.ini)].sort(), dd = (a, b) => Math.round((Date.parse(a) - Date.parse(b)) / DAY);
-  const gaps = L.slice(1).map((d, i) => dd(d, L[i])).filter(g => g >= 15 && g <= 60).slice(-6);
-  const avg = gaps.length ? Math.round(gaps.reduce((a, g) => a + g, 0) / gaps.length) : (sal.len || 28);
-  const next = iso(Date.parse(L[L.length - 1]) + avg * DAY), left = dd(next, today), key = 'sal:' + next;
+  const { avg, next } = SAL.salPrevision(sal.ini, sal.len), dd = (a, b) => Math.round((Date.parse(a) - Date.parse(b)) / DAY);
+  const left = dd(next, today), key = 'sal:' + next;
   if (left >= 0 && left <= 3 && !sent.has(key)) {
     await send(key, `🩺 Salud: el próximo inicio previsto es el ${DOW[new Date(next).getUTCDay()]} ${fd(next)} (${left === 0 ? 'hoy' : left === 1 ? 'mañana' : 'en ' + left + ' días'}).`, 'Aviso de seguimiento');
   }

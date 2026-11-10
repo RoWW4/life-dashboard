@@ -27,6 +27,7 @@ En ningún archivo del repositorio (código, comentarios, ejemplos, `PENDIENTES.
 - `js/base.js` · constantes, categorías y utilidades (fechas, euros…)
 - `js/estado.js` · el objeto `S` y migraciones
 - `js/facturas-calculo.js` · cálculos de Facturas (cobros previstos, estado, enlace con el banco)
+- `js/salud-calculo.js` · previsión de Salud (la usa también el robot de avisos: un solo cálculo para los dos)
 - `js/nube.js` · sincronización con Supabase
 - `js/banco.js` · clasificar, limpiar e importar movimientos del banco
 - `js/interfaz.js` · piezas comunes (ventanas, avisos, dictado, iconos, filas, calendario, gráfico de gasto)
@@ -38,5 +39,6 @@ En ningún archivo del repositorio (código, comentarios, ejemplos, `PENDIENTES.
 - `js/eventos.js` y `js/arranque.js` · eventos y arranque
 
 Archivo nuevo: añadirlo en `index.html` (en su sitio) y en `SHELL` de `sw.js`. El número de versión lo sube `subir.mjs`.
+El código de `js/` está formateado con Prettier (`.prettierrc.json`); si está instalado, `prettier --write "js/**/*.js"` antes de subir.
 Cómo está montado todo (Supabase, robots, Wallet, Telegram): `LEEME.md`, solo si hace falta.
 Si algo falla: primero `ops_log`, `job_health` y `ops_alerts` en Supabase (ver «Vigilancia y registro de errores» en `LEEME.md`). El vigilante está autorizado por Rocío (09/11/2026).

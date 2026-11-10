@@ -21,6 +21,9 @@ function jwt() {
   return head + '.' + body + '.' + sig;
 }
 
+/* Fallos pasajeros seguidos antes de dar una sincronización por fallida. La app usa el mismo número (FAILMAX en js/base.js). */
+export const FAILMAX = 3;
+
 /* Errores del banco que suelen ser momentáneos: no merecen correo de GitHub a la primera. */
 export const transient = e => e.status === 0 || e.status === 429 || e.status >= 500 || /ASPSP_(ERROR|TIMEOUT|RATE_LIMIT)/.test(e.body || '');
 

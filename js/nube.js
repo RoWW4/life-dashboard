@@ -1,91 +1,194 @@
 'use strict';
 /* Sincronización con Supabase (estado del panel y movimientos que deja el robot del banco). */
 /* ---------- nube (Supabase) ---------- */
-let sb = null, user = null, cloudOK = false, pushT = 0, BANK = null, PEND = [], syncTxt = '', cloudN = 0;
+let sb = null,
+  user = null,
+  cloudOK = false,
+  pushT = 0,
+  BANK = null,
+  PEND = [],
+  syncTxt = '',
+  cloudN = 0;
 /* Estado de los robots (job_health) e incidentes abiertos del vigilante de Supabase (ops_alerts). err = no se pudo leer. */
-let OPS = null, BANKERR = '';
+let OPS = null,
+  BANKERR = '';
 /* Fallos de sincronización: se reintenta solo, cada vez más espaciado (5 s, 15 s, 30 s, 1 min, 2 min y luego cada 5 min). */
-let syncErr = '', syncErrAt = '', retryN = 0, retryT = 0, pushing = false; // pushing: hay una subida en marcha
+let syncErr = '',
+  syncErrAt = '',
+  retryN = 0,
+  retryT = 0,
+  pushing = false; // pushing: hay una subida en marcha
 const RETRY = [5, 15, 30, 60, 120, 300];
-function syncOK(){ retryN = 0; syncErr = ''; clearTimeout(retryT); retryT = 0; setSync('☁️ Sincronizado'); }
-function syncFail(where, e){
-  syncErr = String((e && e.message) || e || 'error desconocido').slice(0, 200); syncErrAt = new Date().toISOString();
+function syncOK() {
+  retryN = 0;
+  syncErr = '';
+  clearTimeout(retryT);
+  retryT = 0;
+  setSync('☁️ Sincronizado');
+}
+function syncFail(where, e) {
+  syncErr = String((e && e.message) || e || 'error desconocido').slice(0, 200);
+  syncErrAt = new Date().toISOString();
   logErr('nube/' + where, e);
   const s = RETRY[Math.min(retryN++, RETRY.length - 1)];
-  setSync(`⚠️ ${dirty() ? 'Cambios sin subir' : 'Sin sincronizar'} · se reintenta en ${s < 60 ? s + ' s' : s/60 + ' min'}`);
-  if (retryN === 3 && dirty()) toast('⚠️ No se pueden subir tus cambios a la nube. Están guardados en este dispositivo y se reintenta solo.');
+  setSync(`⚠️ ${dirty() ? 'Cambios sin subir' : 'Sin sincronizar'} · se reintenta en ${s < 60 ? s + ' s' : s / 60 + ' min'}`);
+  if (retryN === 3 && dirty())
+    toast('⚠️ No se pueden subir tus cambios a la nube. Están guardados en este dispositivo y se reintenta solo.');
   clearTimeout(retryT);
   // Si falló la subida, se reintenta la subida (pushT marca que hay una pendiente, así pull no la pisa); si no, se vuelve a traer.
-  if (where === 'push' && cloudOK) { clearTimeout(pushT); pushT = setTimeout(push, s*1000); }
-  else retryT = setTimeout(async () => { retryT = 0; if (await pull()) render(); }, s*1000);
+  if (where === 'push' && cloudOK) {
+    clearTimeout(pushT);
+    pushT = setTimeout(push, s * 1000);
+  } else
+    retryT = setTimeout(async () => {
+      retryT = 0;
+      if (await pull()) render();
+    }, s * 1000);
 }
 const cloudCfg = () => !!(CFG.supabaseUrl && CFG.supabaseAnonKey);
-const localMode = () => { try { return localStorage.getItem('ldb-local')==='1'; } catch(e) { return false; } };
+const localMode = () => {
+  try {
+    return localStorage.getItem('ldb-local') === '1';
+  } catch (e) {
+    return false;
+  }
+};
 // El estado sale en el menú y en Ajustes (los dos con id syncst): se actualizan ambos.
-function setSync(t){ syncTxt = t; document.querySelectorAll('[id=syncst]').forEach(e => { e.textContent = t; }); }
+function setSync(t) {
+  syncTxt = t;
+  document.querySelectorAll('[id=syncst]').forEach(e => {
+    e.textContent = t;
+  });
+}
 
 /* Protección: no se sube a la nube una versión con menos de la mitad de elementos que la de la nube (p. ej. un
    navegador con datos de prueba o vacío), salvo que se confirme. cloudN = elementos de la última versión vista en la nube. */
-const nItems = d => ['tasks','tx','fixed','docs','shop'].reduce((a,k) => a + (Array.isArray(d&&d[k]) ? d[k].length : 0), 0);
+const nItems = d => ['tasks', 'tx', 'fixed', 'docs', 'shop'].reduce((a, k) => a + (Array.isArray(d && d[k]) ? d[k].length : 0), 0);
 /* Además, ninguna sección con datos en la nube puede quedarse vacía sin confirmar (Inversiones, festivos, vacaciones, salud, reglas…). La compra no cuenta: se vacía a menudo. */
-const SECS = {tasks:'Tareas', tx:'Movimientos', fixed:'Facturas', docs:'Documentos', rules:'Reglas', periods:'Vacaciones', localHol:'Festivos', sav:'Inversiones', salud:'Salud'};
-const secOn = (d,k) => { const v = d && d[k]; return k==='sav' ? !!(v && (v.snaps||[]).length) : k==='salud' ? !!(v && (v.ini||[]).length) : Array.isArray(v) && v.length > 0; };
+const SECS = {
+  tasks: 'Tareas',
+  tx: 'Movimientos',
+  fixed: 'Facturas',
+  docs: 'Documentos',
+  rules: 'Reglas',
+  periods: 'Vacaciones',
+  localHol: 'Festivos',
+  sav: 'Inversiones',
+  salud: 'Salud'
+};
+const secOn = (d, k) => {
+  const v = d && d[k];
+  return k === 'sav' ? !!(v && (v.snaps || []).length) : k === 'salud' ? !!(v && (v.ini || []).length) : Array.isArray(v) && v.length > 0;
+};
 let cloudSec = [];
-const lostSecs = () => cloudSec.filter(k => !secOn(S,k)).map(k => SECS[k]);
-const tooSmall = () => (cloudN >= 10 && nItems(S) < cloudN/2) || lostSecs().length > 0;
+const lostSecs = () => cloudSec.filter(k => !secOn(S, k)).map(k => SECS[k]);
+const tooSmall = () => (cloudN >= 10 && nItems(S) < cloudN / 2) || lostSecs().length > 0;
 
-function save(){
+function save() {
   S._ts = Date.now();
-  try { localStorage.setItem(K, JSON.stringify(S)); } catch(e) { toast('No se pudo guardar en este dispositivo'); }
-  if (cloudOK) { clearTimeout(pushT); setSync('Guardando…'); pushT = setTimeout(push, 900); }
+  try {
+    localStorage.setItem(K, JSON.stringify(S));
+  } catch (e) {
+    toast('No se pudo guardar en este dispositivo');
+  }
+  if (cloudOK) {
+    clearTimeout(pushT);
+    setSync('Guardando…');
+    pushT = setTimeout(push, 900);
+  }
 }
 /* Para no pisar cambios hechos en otro dispositivo (o directamente en Supabase):
    BASE = última versión de la nube con la que este dispositivo estaba al día (se guarda en el dispositivo).
    Antes de subir se mira la nube: si cambió desde BASE, se juntan los cambios de los dos lados (merge3) en vez de sustituir. */
 const KB = 'ldb-base';
-let BASE = (() => { try { return JSON.parse(localStorage.getItem(KB)); } catch(e) { return null; } })();
+let BASE = (() => {
+  try {
+    return JSON.parse(localStorage.getItem(KB));
+  } catch (e) {
+    return null;
+  }
+})();
 /* BASE se guarda como copia aparte: si compartiera listas con S (p. ej. tras S = normalize(remote)), al añadir algo a S
    también «aparecería» en BASE, y al juntar con la nube se tomaría por borrado en el otro dispositivo y se perdería. */
-const setBase = d => { BASE = d ? JSON.parse(JSON.stringify(d)) : d; try { localStorage.setItem(KB, JSON.stringify(d)); } catch(e) { logErr('almacenamiento', e, 'versión base'); } };
-const dirty = () => !BASE || (S._ts||0) !== (BASE._ts||0);
+const setBase = d => {
+  BASE = d ? JSON.parse(JSON.stringify(d)) : d;
+  try {
+    localStorage.setItem(KB, JSON.stringify(d));
+  } catch (e) {
+    logErr('almacenamiento', e, 'versión base');
+  }
+};
+const dirty = () => !BASE || (S._ts || 0) !== (BASE._ts || 0);
 /* JSON con las claves ordenadas: Supabase (jsonb) devuelve las claves en otro orden. */
-const cj = v => JSON.stringify(v, (k,x) => x && typeof x==='object' && !Array.isArray(x) ? Object.keys(x).sort().reduce((o,y) => (o[y] = x[y], o), {}) : x);
-const isObj = v => !!v && typeof v==='object' && !Array.isArray(v);
+const cj = v =>
+  JSON.stringify(v, (k, x) =>
+    x && typeof x === 'object' && !Array.isArray(x)
+      ? Object.keys(x)
+          .sort()
+          .reduce((o, y) => ((o[y] = x[y]), o), {})
+      : x
+  );
+const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
 /* Junta tres versiones: b (la común), m (este dispositivo) y t (la nube). Lo que solo cambió un lado se queda;
    en las listas se compara elemento a elemento (por id, o por contenido si no tienen id); si los dos cambiaron lo mismo, gana este dispositivo. */
-function merge3(b, m, t){
+function merge3(b, m, t) {
   if (cj(m) === cj(b)) return t;
   if (cj(t) === cj(b) || cj(t) === cj(m)) return m;
   if (Array.isArray(m) && Array.isArray(t)) return mergeArr(Array.isArray(b) ? b : [], m, t);
   if (isObj(m) && isObj(t)) {
-    const bb = isObj(b) ? b : {}, o = {};
+    const bb = isObj(b) ? b : {},
+      o = {};
     new Set([...Object.keys(t), ...Object.keys(m)]).forEach(k => {
-      const v = k in m ? (k in t ? merge3(bb[k], m[k], t[k]) : (k in bb && cj(m[k]) === cj(bb[k]) ? undefined : m[k]))
-                       : (k in bb && cj(t[k]) === cj(bb[k]) ? undefined : t[k]);
+      const v =
+        k in m
+          ? k in t
+            ? merge3(bb[k], m[k], t[k])
+            : k in bb && cj(m[k]) === cj(bb[k])
+              ? undefined
+              : m[k]
+          : k in bb && cj(t[k]) === cj(bb[k])
+            ? undefined
+            : t[k];
       if (v !== undefined) o[k] = v;
     });
     return o;
   }
   return m;
 }
-function mergeArr(b, m, t){
-  const all = [...b, ...m, ...t], byId = all.length > 0 && all.every(x => isObj(x) && x.id != null),
-    key = x => byId ? 'i:'+x.id : cj(x), map = a => new Map(a.map(x => [key(x), x])), B = map(b), M = map(m), T = map(t), out = [];
-  t.forEach(x => { const k = key(x);
+function mergeArr(b, m, t) {
+  const all = [...b, ...m, ...t],
+    byId = all.length > 0 && all.every(x => isObj(x) && x.id != null),
+    key = x => (byId ? 'i:' + x.id : cj(x)),
+    map = a => new Map(a.map(x => [key(x), x])),
+    B = map(b),
+    M = map(m),
+    T = map(t),
+    out = [];
+  t.forEach(x => {
+    const k = key(x);
     if (M.has(k)) out.push(B.has(k) ? merge3(B.get(k), M.get(k), x) : M.get(k));
-    else if (!(B.has(k) && cj(B.get(k)) === cj(x))) out.push(x); });          // borrado aquí y sin tocar en la nube → fuera
-  m.forEach(x => { const k = key(x); if (T.has(k)) return;
-    if (!(B.has(k) && cj(B.get(k)) === cj(x))) out.push(x); });               // nuevo aquí, o cambiado aquí aunque la nube lo borrara
+    else if (!(B.has(k) && cj(B.get(k)) === cj(x))) out.push(x);
+  }); // borrado aquí y sin tocar en la nube → fuera
+  m.forEach(x => {
+    const k = key(x);
+    if (T.has(k)) return;
+    if (!(B.has(k) && cj(B.get(k)) === cj(x))) out.push(x);
+  }); // nuevo aquí, o cambiado aquí aunque la nube lo borrara
   return out;
 }
 /* Junta lo de este dispositivo con la versión de la nube y lo deja guardado en el dispositivo. */
-function mergeInto(remote){
+function mergeInto(remote) {
   const before = cj(S);
-  S = normalize(merge3(BASE || {}, S, remote)); S._ts = Math.max(Date.now(), (remote._ts||0) + 1);
-  try { localStorage.setItem(K, JSON.stringify(S)); } catch(e) { logErr('almacenamiento', e, 'datos juntados'); }
+  S = normalize(merge3(BASE || {}, S, remote));
+  S._ts = Math.max(Date.now(), (remote._ts || 0) + 1);
+  try {
+    localStorage.setItem(K, JSON.stringify(S));
+  } catch (e) {
+    logErr('almacenamiento', e, 'datos juntados');
+  }
   return cj(S) !== before;
 }
-async function push(force){
+async function push(force) {
   pushT = 0;
   if (!sb || !user || !cloudOK) return;
   pushing = true;
@@ -95,36 +198,79 @@ async function push(force){
     if (cur.error) throw cur.error;
     const remote = cur.data && cur.data.data;
     if (remote) {
-      cloudN = nItems(remote); cloudSec = Object.keys(SECS).filter(k => secOn(remote,k));
-      if ((remote._ts||0) === (S._ts||0)) { setBase(remote); syncOK(); return; }
-      if (!BASE || (remote._ts||0) !== (BASE._ts||0)) { mergeInto(remote); render(); toast('Había cambios de otro dispositivo: se han juntado con los tuyos'); }
+      cloudN = nItems(remote);
+      cloudSec = Object.keys(SECS).filter(k => secOn(remote, k));
+      if ((remote._ts || 0) === (S._ts || 0)) {
+        setBase(remote);
+        syncOK();
+        return;
+      }
+      if (!BASE || (remote._ts || 0) !== (BASE._ts || 0)) {
+        mergeInto(remote);
+        render();
+        toast('Había cambios de otro dispositivo: se han juntado con los tuyos');
+      }
     }
     // 2) Protección: no vaciar secciones ni perder muchos datos sin confirmar.
-    if (!force && tooSmall()) { setSync('⚠️ Sin subir'); const ls = lostSecs(); return CF(ls.length ? `En este dispositivo está vacío lo que en la nube tiene datos: ${ls.join(', ')}. ¿Subirlo y borrar eso de la nube?` : `Este dispositivo tiene muchos menos datos que la nube (${nItems(S)} frente a ${cloudN} elementos). ¿Subirlos y sustituir los de la nube?`, () => push(true)); }
+    if (!force && tooSmall()) {
+      setSync('⚠️ Sin subir');
+      const ls = lostSecs();
+      return CF(
+        ls.length
+          ? `En este dispositivo está vacío lo que en la nube tiene datos: ${ls.join(', ')}. ¿Subirlo y borrar eso de la nube?`
+          : `Este dispositivo tiene muchos menos datos que la nube (${nItems(S)} frente a ${cloudN} elementos). ¿Subirlos y sustituir los de la nube?`,
+        () => push(true)
+      );
+    }
     // 3) Se sube una copia fija (si se edita mientras sube, ese cambio se subirá en la siguiente vuelta).
-    const snap = JSON.parse(JSON.stringify(S)), data = force ? {...snap, _force:true} : snap;
+    const snap = JSON.parse(JSON.stringify(S)),
+      data = force ? { ...snap, _force: true } : snap;
     // 4) Solo se guarda si la nube sigue en la versión que se acaba de leer (ldb_save). Si otro dispositivo guardó justo
     //    entre medias, se vuelve a leer y juntar (paso 1) en vez de pisar su cambio.
-    let { data: res, error } = await sb.rpc('ldb_save', { p_data: data, p_base: remote ? (remote._ts || 0) : null });
-    if (error && (error.code === 'PGRST202' || /ldb_save/.test(error.message||'') && /find|exist/i.test(error.message||''))) {
+    let { data: res, error } = await sb.rpc('ldb_save', { p_data: data, p_base: remote ? remote._ts || 0 : null });
+    if (error && (error.code === 'PGRST202' || (/ldb_save/.test(error.message || '') && /find|exist/i.test(error.message || '')))) {
       logErr('nube/push', error, 'sin ldb_save: se guarda como antes'); // por si la función no está en la base de datos
-      ({ error } = await sb.from('ldb_state').upsert({user_id:user.id, data, updated_at:new Date().toISOString()})); res = { ok: !error };
+      ({ error } = await sb.from('ldb_state').upsert({ user_id: user.id, data, updated_at: new Date().toISOString() }));
+      res = { ok: !error };
     }
-    if (error && /ldb_guard/.test(error.message||'')) { setSync('⚠️ Sin subir'); return CF('La nube no ha aceptado el cambio porque vaciaría una sección o borraría muchos datos. ¿Seguro que quieres hacerlo?', () => push(true)); }
+    if (error && /ldb_guard/.test(error.message || '')) {
+      setSync('⚠️ Sin subir');
+      return CF('La nube no ha aceptado el cambio porque vaciaría una sección o borraría muchos datos. ¿Seguro que quieres hacerlo?', () =>
+        push(true)
+      );
+    }
     if (error) throw error;
     if (!res || !res.ok) {
-      if ((push.cf = (push.cf || 0) + 1) <= 5) { setSync('Guardando…'); clearTimeout(pushT); pushT = setTimeout(push, 150 + Math.random() * 350); return; }
-      push.cf = 0; throw new Error('La nube cambió varias veces seguidas mientras se guardaba');
+      if ((push.cf = (push.cf || 0) + 1) <= 5) {
+        setSync('Guardando…');
+        clearTimeout(pushT);
+        pushT = setTimeout(push, 150 + Math.random() * 350);
+        return;
+      }
+      push.cf = 0;
+      throw new Error('La nube cambió varias veces seguidas mientras se guardaba');
     }
     push.cf = 0;
-    setBase(snap); cloudN = nItems(snap); cloudSec = Object.keys(SECS).filter(k => secOn(snap,k)); if (dirty() && cloudOK && !pushT) pushT = setTimeout(push, 900);
+    setBase(snap);
+    cloudN = nItems(snap);
+    cloudSec = Object.keys(SECS).filter(k => secOn(snap, k));
+    if (dirty() && cloudOK && !pushT) pushT = setTimeout(push, 900);
     syncOK();
-  } catch(e) { syncFail('push', e); }
-  finally { pushing = false; }
+  } catch (e) {
+    syncFail('push', e);
+  } finally {
+    pushing = false;
+  }
 }
-async function cloudInit(){
-  if (!cloudCfg() || localMode()) { setSync('📱 Solo este dispositivo'); return 'local'; }
-  if (!window.supabase) { setSync('⚠️ Sin conexión'); return 'offline'; }
+async function cloudInit() {
+  if (!cloudCfg() || localMode()) {
+    setSync('📱 Solo este dispositivo');
+    return 'local';
+  }
+  if (!window.supabase) {
+    setSync('⚠️ Sin conexión');
+    return 'offline';
+  }
   sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
   const { data } = await sb.auth.getSession();
   if (!data.session) return 'login';
@@ -134,55 +280,107 @@ async function cloudInit(){
 }
 /* Trae el estado de la nube. Si este dispositivo no tiene cambios sin subir, se queda con la nube;
    si los tiene, push() los junta con lo de la nube y sube el resultado. */
-async function pull(){
+async function pull() {
   if (!sb || !user || pushT) return false;
   try {
     const { data, error } = await sb.from('ldb_state').select('data').eq('user_id', user.id).maybeSingle();
     if (error) throw error;
-    const remote = data && data.data; let changed = false;
-    if (remote) { cloudN = nItems(remote); cloudSec = Object.keys(SECS).filter(k => secOn(remote,k)); }
-    const wasOK = cloudOK; cloudOK = true;
+    const remote = data && data.data;
+    let changed = false;
+    if (remote) {
+      cloudN = nItems(remote);
+      cloudSec = Object.keys(SECS).filter(k => secOn(remote, k));
+    }
+    const wasOK = cloudOK;
+    cloudOK = true;
     if (!remote) await push();
-    else if ((remote._ts||0) === (S._ts||0)) setBase(remote);
-    else if (!dirty() || (!BASE && (remote._ts||0) > (S._ts||0))) { S = normalize(remote); localStorage.setItem(K, JSON.stringify(S)); setBase(remote); changed = true; }
-    else { await push(); changed = true; }
+    else if ((remote._ts || 0) === (S._ts || 0)) setBase(remote);
+    else if (!dirty() || (!BASE && (remote._ts || 0) > (S._ts || 0))) {
+      S = normalize(remote);
+      localStorage.setItem(K, JSON.stringify(S));
+      setBase(remote);
+      changed = true;
+    } else {
+      await push();
+      changed = true;
+    }
     if (await pullBank()) changed = true;
     if (!pushT && !pushing) syncOK(); // si hay una subida pendiente o en marcha, su estado manda
     return changed || !wasOK;
-  } catch(e) { cloudOK = false; syncFail('pull', e); return false; }
+  } catch (e) {
+    cloudOK = false;
+    syncFail('pull', e);
+    return false;
+  }
 }
 /* Movimientos que el robot diario ha dejado en bank_tx y aún no hemos incorporado. */
-async function pullBank(){
+async function pullBank() {
   // Cada consulta puede fallar por separado: se guarda el motivo (BANKERR) y se mantiene lo último que se sabía.
   const errs = [];
-  const st = await sb.from('bank_status').select('valid_until,last_sync,last_error,session_id,fail_count,balance,balance_at').eq('user_id', user.id).maybeSingle();
-  if (st.error) errs.push('estado: ' + st.error.message); else BANK = st.data || null;
-  const [jh, oa] = await Promise.all([sb.from('job_health').select('job,last_start,last_ok,last_error,last_error_at,fail_count,run_url'),
-    sb.from('ops_alerts').select('key,title,detail,opened_at').eq('open', true)]);
-  OPS = { jobs: jh.data || (OPS && OPS.jobs) || [], alerts: oa.data || (OPS && OPS.alerts) || [], err: (jh.error || oa.error || {}).message || '' };
+  const st = await sb
+    .from('bank_status')
+    .select('valid_until,last_sync,last_error,session_id,fail_count,balance,balance_at')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (st.error) errs.push('estado: ' + st.error.message);
+  else BANK = st.data || null;
+  const [jh, oa] = await Promise.all([
+    sb.from('job_health').select('job,last_start,last_ok,last_error,last_error_at,fail_count,run_url'),
+    sb.from('ops_alerts').select('key,title,detail,opened_at').eq('open', true)
+  ]);
+  OPS = {
+    jobs: jh.data || (OPS && OPS.jobs) || [],
+    alerts: oa.data || (OPS && OPS.alerts) || [],
+    err: (jh.error || oa.error || {}).message || ''
+  };
   // Retenciones y bizums que el banco aún no ha confirmado: se muestran aparte y no se guardan en S.tx.
-  const pd = await sb.from('bank_pending').select('id,booking_date,amount,description').order('booking_date',{ascending:false});
+  const pd = await sb.from('bank_pending').select('id,booking_date,amount,description').order('booking_date', { ascending: false });
   if (pd.error) errs.push('pendientes: ' + pd.error.message);
-  const np = pd.error ? PEND : (pd.data||[]).map(p => ({...p, amount:+p.amount})), pc = JSON.stringify(np) !== JSON.stringify(PEND); PEND = np;
+  const np = pd.error ? PEND : (pd.data || []).map(p => ({ ...p, amount: +p.amount })),
+    pc = JSON.stringify(np) !== JSON.stringify(PEND);
+  PEND = np;
   // Movimientos que el robot ha dejado en bank_tx y aún no hemos incorporado, de 1000 en 1000. Los de una misma
   // sincronización comparten la hora de creación, así que se desempata por id para no saltarse ni repetir ninguno.
-  const rows = []; let after = S.bankLast || '', afterId = S.bankLastId || '';
+  const rows = [];
+  let after = S.bankLast || '',
+    afterId = S.bankLastId || '';
   for (let i = 0; i < 20; i++) {
-    let q = sb.from('bank_tx').select('id,booking_date,amount,description,created_at').order('created_at',{ascending:true}).order('id',{ascending:true}).limit(1000);
+    let q = sb
+      .from('bank_tx')
+      .select('id,booking_date,amount,description,created_at')
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .limit(1000);
     if (after) q = afterId ? q.or(`created_at.gt."${after}",and(created_at.eq."${after}",id.gt."${afterId}")`) : q.gt('created_at', after);
     const { data, error } = await q;
     // Red de seguridad: si la consulta con desempate fallara, se vuelve a la de antes (solo por hora) y queda apuntado.
-    if (error && afterId) { logErr('nube/banco', error, 'consulta con desempate'); afterId = ''; i--; continue; }
-    if (error) { errs.push('movimientos: ' + error.message); break; }
-    rows.push(...(data||[]));
+    if (error && afterId) {
+      logErr('nube/banco', error, 'consulta con desempate');
+      afterId = '';
+      i--;
+      continue;
+    }
+    if (error) {
+      errs.push('movimientos: ' + error.message);
+      break;
+    }
+    rows.push(...(data || []));
     if (!data || data.length < 1000) break;
-    after = data[data.length-1].created_at; afterId = data[data.length-1].id;
+    after = data[data.length - 1].created_at;
+    afterId = data[data.length - 1].id;
   }
-  const be = errs.join(' · '), bc = be !== BANKERR; BANKERR = be;
+  const be = errs.join(' · '),
+    bc = be !== BANKERR;
+  BANKERR = be;
   if (be) logErr('nube/banco', new Error(be));
   if (!rows.length) return pc || bc;
-  const r = ingest(rows.map(d => ({id:d.id, date:d.booking_date, amt:+d.amount, desc:d.description||''})), 'bank');
-  S.bankLast = rows[rows.length-1].created_at; S.bankLastId = rows[rows.length-1].id; save();
+  const r = ingest(
+    rows.map(d => ({ id: d.id, date: d.booking_date, amt: +d.amount, desc: d.description || '' })),
+    'bank'
+  );
+  S.bankLast = rows[rows.length - 1].created_at;
+  S.bankLastId = rows[rows.length - 1].id;
+  save();
   if (r.add || r.link) toast(`🏦 Banco: ${r.add} nuevos · ${r.link} enlazados con fijos o facturas`);
   return true;
 }

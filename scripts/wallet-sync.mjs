@@ -2,12 +2,12 @@
 // (bank_tx), igual que hacía la sincronización de Enable Banking: el panel los recoge al abrirse.
 // Wallet hace la conexión con el banco por su cuenta; aquí solo se lee su API REST (requiere Premium).
 import crypto from 'node:crypto';
-import { env, sb, uid, getStatus, setStatus, summary } from './eb.mjs';
+import { env, sb, uid, getStatus, setStatus, summary, FAILMAX } from './eb.mjs';
 import { log, redact } from './log.mjs';
+import { telegram as sendTelegram } from './telegram.mjs';
 
 const API = 'https://rest.budgetbakers.com/wallet/v1/api';
 const DAYS = +(process.env.DAYS_BACK || 14);
-const FAILMAX = 3; // fallos pasajeros seguidos antes de dar la ejecución por fallida (y que GitHub mande correo)
 const day = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
 
 let lastChange = null; // cabecera X-Last-Data-Change-At de la API: último cambio de datos en Wallet
@@ -25,15 +25,10 @@ async function wallet(path, params = {}) {
   }
   return JSON.parse(t);
 }
-/* Aviso por Telegram (opcional): solo si están los secretos TELEGRAM_TOKEN y TELEGRAM_CHAT_ID. */
+/* Aviso por Telegram (opcional): solo si están los secretos TELEGRAM_TOKEN y TELEGRAM_CHAT_ID. Un fallo se registra y no para la sincronización. */
 async function telegram(text) {
-  const tk = process.env.TELEGRAM_TOKEN, chat = process.env.TELEGRAM_CHAT_ID;
-  if (!tk || !chat) return;
-  await fetch(`https://api.telegram.org/bot${tk.trim()}/sendMessage`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chat.trim(), text, disable_web_page_preview: true }), signal: AbortSignal.timeout(15000)
-  }).then(r => r.ok || log('ERROR', 'wallet-sync', 'Telegram rechazó un aviso', { func: 'telegram', detail: 'HTTP ' + r.status }))
-    .catch(e => log('ERROR', 'wallet-sync', 'No se pudo mandar un aviso por Telegram', { func: 'telegram', err: e }));
+  if (!process.env.TELEGRAM_TOKEN || !process.env.TELEGRAM_CHAT_ID) return;
+  try { await sendTelegram(text); } catch (e) { await log('ERROR', 'wallet-sync', 'No se pudo mandar un aviso por Telegram', { func: 'telegram', err: e }); }
 }
 const eur = n => (+n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 const fd = s => s.split('-').reverse().join('/');
