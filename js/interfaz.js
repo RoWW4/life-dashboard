@@ -591,7 +591,7 @@ function togMoney() {
   toast(showMoney ? 'Importes visibles' : 'Importes ocultos');
 }
 const eyeBtn = (c = 'ib') =>
-  `<button class="${c}" data-a="money" aria-label="${showMoney ? 'Ocultar importes' : 'Mostrar importes'}" title="${showMoney ? 'Ocultar importes' : 'Mostrar importes'}" aria-pressed="${!showMoney}">${I(showMoney ? 'eye-off' : 'eye')}</button>`;
+  `<button class="${c}" data-a="money" aria-label="${showMoney ? 'Ocultar importes' : 'Mostrar importes'}" title="${showMoney ? 'Ocultar importes' : 'Mostrar importes'}" aria-pressed="${!showMoney}">${I(showMoney ? 'eye' : 'eye-off')}</button>`;
 const MONEY_RE = /[−+-]?\s?\d[\d.  ]*(?:,\d+)?[\s  ]?€/g;
 function wrapMoney(root) {
   if (!root) return;

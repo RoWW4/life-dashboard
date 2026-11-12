@@ -216,7 +216,7 @@ function savCard() {
   return panel(
     'inv',
     'ahorro',
-    `${I('piggy-bank')} ${esc(s.name)} <span class="cnt">· Ahorro</span> <button class="ib" data-a="money" aria-label="${showMoney ? 'Ocultar importes' : 'Mostrar importes'}" title="${showMoney ? 'Ocultar importes' : 'Mostrar importes'}">${I(showMoney ? 'eye-off' : 'eye')}</button><button class="ib" data-a="savcfg" aria-label="Editar cuenta">${I('pencil')}</button>`,
+    `${I('piggy-bank')} ${esc(s.name)} <span class="cnt">· Ahorro</span> <button class="ib" data-a="money" aria-label="${showMoney ? 'Ocultar importes' : 'Mostrar importes'}" title="${showMoney ? 'Ocultar importes' : 'Mostrar importes'}">${I(showMoney ? 'eye' : 'eye-off')}</button><button class="ib" data-a="savcfg" aria-label="Editar cuenta">${I('pencil')}</button>`,
     conn +
       `<div class="${showMoney ? '' : 'priv'}">${body}</div>` +
       (auto
@@ -481,7 +481,7 @@ function acctBal() {
 }
 function acctHTML() {
   const b = acctBal(),
-    eye = `<button class="ib" data-a="money" aria-label="${showMoney ? 'Ocultar saldo' : 'Mostrar saldo'}" title="${showMoney ? 'Ocultar saldo' : 'Mostrar saldo'}">${I(showMoney ? 'eye-off' : 'eye')}</button>`;
+    eye = `<button class="ib" data-a="money" aria-label="${showMoney ? 'Ocultar saldo' : 'Mostrar saldo'}" title="${showMoney ? 'Ocultar saldo' : 'Mostrar saldo'}">${I(showMoney ? 'eye' : 'eye-off')}</button>`;
   return (
     `<div class="acct ${showMoney ? '' : 'priv'}"><div class="k">${I('landmark')} Saldo de la cuenta <span class="bk">(Openbank)</span>${eye}<button class="ib" data-a="accedit" aria-label="Cambiar saldo" title="Cambiar saldo a mano">${I('pencil')}</button></div>` +
     (b.v === null
