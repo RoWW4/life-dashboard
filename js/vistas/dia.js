@@ -168,7 +168,7 @@ function vDia() {
                 `<div class="row">${ti ? `<input type="checkbox" class="ck" data-a="tt" data-i="${ti}" aria-label="Completar «${esc(t)}»">` : ''}${tile(n, c)}${ti ? `<button class="link" data-a="et" data-i="${ti}"><span class="tt">${esc(t)}</span></button>` : `<span class="g">${esc(t)}</span>`}${when(d)}</div>`
             )
             .join('')
-        : `<div class="gempty">${GATOS}<p><b>¡Todo hecho!</b> Nada urgente para hoy ni mañana.</p></div>`,
+        : empty('Nada urgente para hoy ni mañana.'),
       'hl dimp'
     ),
     cal: panel(

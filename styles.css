@@ -874,24 +874,6 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 @media (pointer: coarse){.hd{-webkit-touch-callout:none;touch-action:none}}
 /* Mientras carga, el menú vacío no se enseña (se veía la barra inferior sin iconos). */
 #nav:empty{visibility:hidden}
-/* Gatitos pixelados («Lo más importante» vacío, plantilla tplGatos de index.html) */
-.gatos{width:min(300px,78vw);height:auto;image-rendering:pixelated;overflow:visible;box-sizing:border-box;padding:14px 18px 10px;border-radius:18px;background:#fbf3e6;box-shadow:0 0 0 4px color-mix(in srgb,#fbf3e6 35%,transparent),0 18px 40px -18px rgba(0,0,0,.6)}
-.gatos .psh{fill:#e6dccb}
-/* Animación «a saltitos» (steps), como un videojuego antiguo: cola arriba/abajo, parpadeo, saltito y corazón que sube */
-.gatos .tb{opacity:0}
-.gatos .ta{animation:pcola 1.2s steps(1) infinite}
-.gatos .tb{animation:pcola 1.2s steps(1) infinite reverse}
-.gatos .tuxedo .ta,.gatos .tuxedo .tb{animation-delay:-.6s}
-.gatos .blink{opacity:0;animation:pojos 3.6s steps(1) infinite}
-.gatos .tuxedo .blink{animation-delay:-1.4s}
-.gatos .pcat{animation:psalto 2.4s steps(1) infinite}
-.gatos .tuxedo{animation-delay:-1.2s}
-.gatos .pheart{animation:pcorazon 2.4s steps(6) infinite}
-@keyframes pcola{0%{opacity:1}50%{opacity:0}}
-@keyframes pojos{0%{opacity:0}92%{opacity:1}97%{opacity:0}}
-@keyframes psalto{0%{transform:translateY(0)}10%{transform:translateY(-1px)}20%{transform:translateY(0)}}
-@keyframes pcorazon{0%{transform:translateY(2px);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translateY(-4px);opacity:0}}
-@media (prefers-reduced-motion: reduce){.gatos *{animation:none!important}}
 .fabs[hidden]{display:none!important}
 /* Desplegable propio en pantallas táctiles (interfaz.js, ddOpen) */
 .dd{position:fixed;z-index:80;overflow:auto;overscroll-behavior:contain;padding:6px;border-radius:14px;background:var(--el);border:1px solid var(--bd2);box-shadow:var(--sh2);animation:ddin .14s ease-out;transform-origin:top}
@@ -917,10 +899,6 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .swbg.l.hit{background:var(--ac);color:#fff}
 /* Confeti (interfaz.js) */
 .confeti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:200}
-/* «Lo más importante» sin nada: los gatitos de la pantalla de carga en pequeño */
-.gempty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0 4px;text-align:center;color:var(--mu);font-size:14px}
-.gempty b{color:var(--tx)}
-.gatos.mini{width:170px;padding:8px 10px 5px;border-radius:12px;box-shadow:none}
 .card h3 .movadd .i{color:currentColor;width:14px;height:14px}
 /* Compra: más usadas */
 .shq{margin-top:14px;padding-top:12px;border-top:1px solid var(--sep)}

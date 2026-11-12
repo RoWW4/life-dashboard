@@ -28,11 +28,6 @@ function afterLoad() {
     toast('El banco no autorizó la conexión: ' + q.get('error'));
   }
 }
-/* Gatitos pixelados (plantilla de index.html) para «Lo más importante» vacío en Mi día. */
-const GATOS = (() => {
-  const t = document.getElementById('tplGatos');
-  return t ? t.innerHTML.replace('class="gatos"', 'class="gatos mini"') : '';
-})();
 (async function boot() {
   theme();
   $('#fabAdd').innerHTML = I('plus');
