@@ -28,6 +28,34 @@ function afterLoad() {
     toast('El banco no autorizó la conexión: ' + q.get('error'));
   }
 }
+/* Pantalla de carga (index.html, .boot): frases que van cambiando hasta que se pinta el panel. */
+(() => {
+  const F = [
+    'Contando céntimos…',
+    'Despertando al banco…',
+    'Poniendo las tareas en fila…',
+    'Buscando el ticket perdido…',
+    'Regando las metas de ahorro…',
+    'Alineando los planetas…',
+    'Peinando los gráficos…',
+    'Preguntando al tiempo…',
+    'Los gatos están revisando tus gastos…',
+    'Afilando las uñas…',
+    'Buscando un sitio al sol…',
+    'Persiguiendo el puntero…',
+    'Casi, casi…'
+  ];
+  let i = Math.floor(Math.random() * (F.length - 1));
+  const t = setInterval(() => {
+    const e = document.getElementById('bootTxt');
+    if (!e) return clearInterval(t);
+    i = (i + 1) % F.length;
+    e.classList.remove('bootin');
+    void e.offsetWidth;
+    e.textContent = F[i];
+    e.classList.add('bootin');
+  }, 1400);
+})();
 (async function boot() {
   theme();
   $('#fabAdd').innerHTML = I('plus');
