@@ -79,8 +79,8 @@ document.addEventListener('securitypolicyviolation', e =>
 );
 /* Los iconos son nombres de Lucide (ver icons.js) */
 const CATS = [
-  'Vivienda',
-  'Alimentación',
+  'Hogar',
+  'Supermercado',
   'Transporte',
   'Restaurantes',
   'Ocio',
@@ -93,7 +93,7 @@ const CATS = [
   'Otros',
   'Traspasos',
   'Nómina'
-];
+].sort((a, b) => a.localeCompare(b, 'es')); // en orden alfabético en todos los desplegables
 /* Traspasos: dinero que mueves entre tus propias cuentas. Se ve en la lista pero no cuenta como gasto ni ingreso. */
 const NOCNT = 'Traspasos',
   EXMIN = 300,
@@ -102,8 +102,8 @@ const NOCNT = 'Traspasos',
 const ICATS = ['Nómina', 'Otros', 'Traspasos', ...CATS.filter(c => !['Nómina', 'Otros', 'Traspasos'].includes(c))];
 const CI = {
   Traspasos: 'arrow-left-right',
-  Vivienda: 'house',
-  Alimentación: 'shopping-basket',
+  Hogar: 'house',
+  Supermercado: 'shopping-basket',
   Transporte: 'fuel',
   Restaurantes: 'utensils',
   Ocio: 'clapperboard',
@@ -118,8 +118,8 @@ const CI = {
 };
 const PAL = {
   Traspasos: '#64748b',
-  Vivienda: '#0099ff',
-  Alimentación: '#2fcf7a',
+  Hogar: '#0099ff',
+  Supermercado: '#2fcf7a',
   Transporte: '#f5a524',
   Restaurantes: '#ff6b6b',
   Ocio: '#a78bfa',
@@ -250,7 +250,7 @@ const KWC = [
   ['Préstamos', [' prestamo', ' financiacion']],
   ['Mascotas', [' veterinari', ' kiwoko', ' tiendanimal', ' zooplus', ' mascota', ' piensos', ' animalia']],
   [
-    'Vivienda',
+    'Hogar',
     [
       ' alquiler',
       ' comunidad de prop',
@@ -297,7 +297,7 @@ const KWC = [
     ]
   ],
   [
-    'Alimentación',
+    'Supermercado',
     [
       ' mercadona',
       ' carrefour',

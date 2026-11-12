@@ -238,7 +238,7 @@ function rulesCard() {
       ),
       3
     )}
-  <div class="f" style="margin:10px 0 0"><input id="r1" placeholder="Palabra (ej. mercadona)"><select id="r2">${opts(CATS, 'Alimentación')}</select><button class="btn" data-a="ar">Añadir</button></div>`
+  <div class="f" style="margin:10px 0 0"><input id="r1" placeholder="Palabra (ej. mercadona)"><select id="r2">${opts(CATS, 'Supermercado')}</select><button class="btn" data-a="ar">Añadir</button></div>`
   );
 }
 /* Mes que se está viendo en Finanzas y utilidades del desglose */
@@ -519,7 +519,7 @@ function goalsCard() {
   const rows = L.map(g => {
     const st = goalSt(g),
       p = g.obj > 0 ? Math.min(100, (g.amt / g.obj) * 100) : 0,
-      when = g.d ? cap(mLabel(g.d)) : 'Sin fecha';
+      when = g.d ? cap(mLabel(g.d)) : '';
     return `<div class="goal${st.t === 'Conseguida' ? ' done' : ''}" style="--gc:${g.c || 'var(--ac)'}"><div class="gt"><button class="link g" data-a="goaled" data-i="${g.id}" title="Editar meta"><b>${esc(g.n)}</b></button><span class="chip ${st.k}">${st.t}</span><button class="ib" data-a="goalmv" data-i="${g.id}" aria-label="Apartar o sacar dinero de «${esc(g.n)}»" title="Apartar o sacar">${I('arrow-left-right')}</button></div><div class="gbar" role="img" aria-label="${Math.round(p)} % de la meta"><i style="width:${p.toFixed(1)}%"></i></div><div class="gd"><span>${eur(g.amt)} de ${eur(g.obj)} · ${Math.round(p)} %</span><span>${when}${st.mo ? ' · aparta ' + eur(Math.ceil(st.mo)) + '/mes' : ''}</span></div></div>`;
   });
   return panel(

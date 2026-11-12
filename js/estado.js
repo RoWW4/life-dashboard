@@ -102,6 +102,19 @@ function seed() {
       if (x.cat === 'Suscripciones') x.cat = classify(x.desc, x.t);
     })
   );
+  // Categorías renombradas: Vivienda → Hogar y Alimentación → Supermercado (movimientos, partes de un gasto dividido,
+  // reglas y facturas). Siempre, no solo una vez: así se corrige también lo que guarde otro dispositivo con la versión anterior.
+  const REN = { Vivienda: 'Hogar', Alimentación: 'Supermercado' },
+    ren = o => {
+      if (Array.isArray(o)) o.forEach(ren);
+      else if (o && typeof o === 'object')
+        for (const k in o)
+          if (k === 'cat' && REN[o[k]]) {
+            o[k] = REN[o[k]];
+            c++;
+          } else if (o[k] && typeof o[k] === 'object') ren(o[k]);
+    };
+  ren([S.tx, S.rules, S.fixed]);
   // La carpeta de documentos «Identidad» pasa a llamarse «Personal» (como en Drive y en el bot).
   once('doc-personal-v1', () =>
     S.docs.forEach(d => {

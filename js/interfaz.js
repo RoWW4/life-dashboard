@@ -635,3 +635,84 @@ document.addEventListener(
   },
   true
 );
+
+/* ---------- Desplegables en el móvil ----------
+   En pantallas táctiles, los <select> abren una lista pequeña justo debajo (o encima, si no cabe) en vez de la ventana
+   a pantalla completa del sistema. Al elegir, se cambia el valor del select y se lanza «change», así todo lo demás funciona igual. */
+const TOUCH = matchMedia('(pointer: coarse)').matches;
+let ddEl = null;
+function ddClose() {
+  if (!ddEl) return;
+  ddEl.remove();
+  ddEl = null;
+}
+function ddOpen(sel) {
+  ddClose();
+  const r = sel.getBoundingClientRect(),
+    opts = [...sel.options].filter(o => !o.hidden),
+    d = document.createElement('div');
+  d.className = 'dd';
+  d.setAttribute('role', 'listbox');
+  d.innerHTML = opts
+    .map(
+      o =>
+        `<button type="button" role="option" data-v="${esc(o.value)}" aria-selected="${o.selected}"${o.disabled ? ' disabled' : ''}>${esc(o.textContent)}${o.selected ? I('check', 'sm') : ''}</button>`
+    )
+    .join('');
+  document.body.appendChild(d);
+  const w = Math.max(r.width, 200),
+    left = Math.min(Math.max(8, r.left), innerWidth - w - 8),
+    nv = $('#nav').getBoundingClientRect(),
+    floor = nv.top > innerHeight / 2 ? nv.top : innerHeight, // en el móvil, sin tapar la barra de abajo
+    below = floor - r.bottom - 12,
+    above = r.top - 12,
+    up = below < 220 && above > below,
+    mh = Math.min(340, Math.max(140, up ? above : below));
+  Object.assign(d.style, { left: left + 'px', width: w + 'px', maxHeight: mh + 'px' });
+  if (up) d.style.bottom = innerHeight - r.top + 6 + 'px';
+  else d.style.top = r.bottom + 6 + 'px';
+  if (up) d.classList.add('up');
+  const on = d.querySelector('[aria-selected=true]');
+  if (on) d.scrollTop = on.offsetTop - mh / 2 + on.offsetHeight / 2;
+  d.addEventListener('click', e => {
+    const b = e.target.closest('button[data-v]');
+    if (!b) return;
+    ddClose();
+    if (sel.value !== b.dataset.v) {
+      sel.value = b.dataset.v;
+      sel.dispatchEvent(new Event('input', { bubbles: true }));
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+  ddEl = d;
+}
+if (TOUCH) {
+  // Se corta el toque en el select (sin él, el sistema abre su ventana) y se abre la lista propia al levantar el dedo.
+  let ddT = null;
+  document.addEventListener(
+    'touchstart',
+    e => {
+      const s = e.target.closest && e.target.closest('select');
+      if (ddEl && !ddEl.contains(e.target)) ddClose();
+      if (!s || s.multiple || s.disabled) return (ddT = null);
+      e.preventDefault();
+      ddT = { s, x: e.touches[0].clientX, y: e.touches[0].clientY };
+    },
+    { passive: false, capture: true }
+  );
+  document.addEventListener(
+    'touchend',
+    e => {
+      if (!ddT) return;
+      const t = e.changedTouches[0],
+        { s, x, y } = ddT;
+      ddT = null;
+      if (Math.abs(t.clientX - x) + Math.abs(t.clientY - y) < 12) ddOpen(s);
+    },
+    true
+  );
+  document.addEventListener('mousedown', e => e.target.closest && e.target.closest('select') && e.preventDefault(), true);
+  document.addEventListener('scroll', e => ddEl && !ddEl.contains(e.target) && ddClose(), true);
+  addEventListener('resize', ddClose);
+  document.addEventListener('keydown', e => e.key === 'Escape' && ddClose());
+}
