@@ -350,14 +350,20 @@ const A = {
   savcfg: () => {
     const s = S.sav || { name: 'Cuenta de ahorro', rate: 3, tax: SAV_TAX, snaps: [] };
     const o = modal(
-      `<h3>Cuenta de ahorro</h3><div class="fs"><label>Nombre<input id="sc1" value="${esc(s.name)}"></label><div class="two"><label>Interés anual (%)<input id="sc2" inputmode="decimal" value="${String(s.rate).replace('.', ',')}"></label><label>Impuestos sobre intereses (%)<input id="sc3" inputmode="decimal" value="${s.tax ?? SAV_TAX}"></label></div><div class="mu">En España los intereses tributan al 19 % (hasta 6.000 € al año).</div></div><div class="acts">${S.sav ? '<button class="btn ghost danger" id="fdel">Quitar</button>' : ''}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`
+      `<h3>Cuenta de ahorro</h3><div class="fs"><label>Nombre<input id="sc1" value="${esc(s.name)}"></label><div class="two"><label>Interés anual (%)<input id="sc2" inputmode="decimal" value="${String(s.rate).replace('.', ',')}"></label><label>Impuestos sobre intereses (%)<input id="sc3" inputmode="decimal" value="${s.tax ?? SAV_TAX}"></label></div><div class="mu">En España los intereses tributan al 19 % (hasta 6.000 € al año).</div><div class="two"><label>Nuevo interés (%)<input id="sc4" inputmode="decimal" placeholder="Si el banco lo cambia" value="${s.rate2 != null ? String(s.rate2).replace('.', ',') : ''}"></label><label>A partir del<input id="sc5" type="date" value="${s.from2 || ''}"></label></div></div><div class="acts">${S.sav ? '<button class="btn ghost danger" id="fdel">Quitar</button>' : ''}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`
     );
     o.querySelector('#ok').onclick = () => {
       const n = o.querySelector('#sc1').value.trim(),
         r = pnum(o.querySelector('#sc2').value),
-        t = pnum(o.querySelector('#sc3').value);
+        t = pnum(o.querySelector('#sc3').value),
+        v2 = o.querySelector('#sc4').value.trim(),
+        r2 = v2 ? pnum(v2) : null,
+        f2 = o.querySelector('#sc5').value;
       if (!n || !(r >= 0) || !(t >= 0)) return toast('Revisa nombre, interés e impuestos');
+      if (v2 && (!(r2 >= 0) || !f2)) return toast('Pon el nuevo interés y la fecha desde la que se aplica');
       S.sav = { ...s, name: n, rate: r, tax: t };
+      if (v2) Object.assign(S.sav, { rate2: r2, from2: f2 });
+      else (delete S.sav.rate2, delete S.sav.from2);
       o.remove();
       ch();
     };

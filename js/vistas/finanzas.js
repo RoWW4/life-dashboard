@@ -26,6 +26,7 @@ function bankCard(v) {
 }
 /* Cuenta de ahorro (p. ej. una cuenta remunerada): aparte de los gastos, solo para consultar.
    S.sav = {name, rate (% anual bruto), tax (% de impuestos sobre intereses), snaps:[{id, d, bal, dep}]}
+   y, si el banco avisa de un cambio, rate2 (% nuevo) y from2 (fecha desde la que se aplica).
    Cada apunte es el saldo en una fecha; dep = dinero que metiste (+) o sacaste (−) ese día.
    Lo ganado es el saldo menos lo aportado, así que los intereses netos salen solos. */
 const SAV_TAX = 19;
@@ -60,6 +61,14 @@ function savSnaps(manual = (S.sav && S.sav.snaps) || [], daily = SAVD, tx = SAVT
   });
   return out;
 }
+/* % anual bruto que se aplica un día concreto (el nuevo desde from2, si lo hay). */
+const savRate = (s, d) => (s.rate2 != null && s.from2 && d >= s.from2 ? s.rate2 : s.rate || 0) / 100;
+/* Suma de los tipos diarios (rate/365) de n días seguidos desde d: interés bruto = saldo × esto. */
+const savDays = (s, d, n) => {
+  let t = 0;
+  for (let i = 0; i < n; i++) t += savRate(s, addD(d, i)) / 365;
+  return t;
+};
 function savStats() {
   const s = S.sav,
     L = savSnaps();
@@ -67,7 +76,7 @@ function savStats() {
   const last = L[L.length - 1],
     dep = L.reduce((a, x) => a + (x.dep || 0), 0),
     td = TD();
-  const rate = (s.rate || 0) / 100,
+  const rate = savRate(s, TD()),
     tx = (s.tax ?? SAV_TAX) / 100,
     net = rate * (1 - tx),
     m1 = d => d.slice(0, 8) + '01',
@@ -82,7 +91,7 @@ function savStats() {
     for (let k = 0; k < 400 && pay.length < 30; k++) {
       const nd = addM(m1(from), 1),
         days = dim(from) - +from.slice(8) + 1,
-        g = r2(((bal * rate) / 365) * days),
+        g = r2(bal * savDays(s, from, days)),
         n = r2(g - r2(g * tx));
       bal = r2(bal + n);
       pay.push({ d: nd, bal, int: n });
@@ -101,7 +110,7 @@ function savStats() {
   // Interés que se va generando este mes, como lo enseña el banco: bruto y por días ya terminados (hasta ayer).
   // accG = bruto; acc = neto (lo que se cobrará el día 1 del siguiente, ya sin impuestos).
   const from = td.slice(0, 7) === st0.slice(0, 7) ? st0 : m1(td),
-    accG = ((now * rate) / 365) * Math.max(0, dd(td, from)),
+    accG = now * savDays(s, from, Math.max(0, dd(td, from))),
     acc = accG * (1 - tx);
   const proj = pay.filter(p => p.d > td).slice(0, 12);
   const y1 = at(addM(td, 12));
@@ -176,7 +185,7 @@ function savCard() {
     ? `<div class="savk">
       <div class="bal"><span>Saldo hoy${st.est ? ' (estimado)' : ''}</span><b>${money(eur(st.now))}</b><em>${st.last.auto ? 'Saldo del banco del' : 'Último saldo real apuntado:'} ${fd(st.last.d)}</em></div>
       <div class="up"><span>Ganado este mes</span><b>${money('+' + eur(st.acc))}</b><em>Neto hasta ayer · se abona el ${fd(st.next)}</em><em>${money(eur(st.accG))} brutos (lo que enseña el banco)</em><em>Total cobrado desde ${fd(st.L[0].d)}: ${money('+' + eur(st.gain))}</em></div>
-      <div class="hi"><span>Rentabilidad anual</span><b>${pct(st.net * 100)}</b><em>${pct(s.rate)} bruto − ${tax} % impuestos</em></div>
+      <div class="hi"><span>Rentabilidad anual</span><b>${pct(st.net * 100)}</b><em>${pct(savRate(s, TD()) * 100)} bruto − ${tax} % impuestos</em>${s.rate2 != null && s.from2 > TD() ? `<em>Desde el ${fd(s.from2)}: ${pct(s.rate2)} bruto</em>` : ''}</div>
       <div class="up"><span>En 12 meses</span><b>${money('+' + eur(st.y1 - st.now))}</b><em class="fin">Saldo final ≈ ${money(eur(st.y1))}</em></div>
     </div>
     ${savChart(st)}
