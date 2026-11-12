@@ -1,5 +1,5 @@
 // Service worker: permite abrir el panel sin conexión (red primero, caché si falla).
-const C = 'ldb-shell-v110';
+const C = 'ldb-shell-v111';
 const SHELL = ['./', 'index.html', 'styles.css', 'icons.js', 'config.js', 'js/base.js', 'js/estado.js', 'js/facturas-calculo.js', 'js/salud-calculo.js', 'js/nube.js', 'js/banco.js', 'js/interfaz.js', 'js/vistas/dia.js', 'js/vistas/tareas.js', 'js/vistas/compra.js', 'js/vistas/finanzas.js', 'js/vistas/facturas.js', 'js/vistas/salud.js', 'js/vistas/ajustes.js', 'js/render.js', 'js/formularios.js', 'js/voz.js', 'js/acciones.js', 'js/eventos.js', 'js/arranque.js', 'img/fondo-planeta.jpg', 'manifest.webmanifest', 'icons/icon-192.png'];
 
 self.addEventListener('install', e => {
@@ -12,16 +12,13 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-/* Compartir al panel (share_target del manifest): el móvil manda aquí lo compartido (título, texto, enlace y archivos).
+/* Compartir al panel (share_target del manifest): el móvil manda aquí lo compartido (título, texto y enlace).
    Se guarda un momento en la caché SH y se abre el panel con ?compartir=1, que pregunta qué es (shareOpen en formularios.js). */
 const SH = 'ldb-share';
 async function recibir(req) {
   const f = await req.formData(),
     c = await caches.open(SH);
-  await Promise.all((await c.keys()).map(k => c.delete(k)));
-  const files = f.getAll('files').filter(x => x && x.size);
-  await Promise.all(files.map((x, i) => c.put('share/f' + i, new Response(x, { headers: { 'content-type': x.type || 'application/octet-stream' } }))));
-  const meta = { title: f.get('title') || '', text: f.get('text') || '', url: f.get('url') || '', files: files.map((x, i) => ({ k: 'share/f' + i, name: x.name || 'archivo', type: x.type || '', size: x.size })) };
+  const meta = { title: f.get('title') || '', text: f.get('text') || '', url: f.get('url') || '' };
   await c.put('share/meta', new Response(JSON.stringify(meta), { headers: { 'content-type': 'application/json' } }));
   return Response.redirect('./?compartir=1', 303);
 }

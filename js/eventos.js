@@ -168,7 +168,20 @@ const cardAt = (x, y) => {
   return el && el.closest && el.closest('.card[data-k]');
 };
 // Hay que mantener pulsada el asa un segundo (vibra un poco) para mover: así deslizar para hacer scroll no mueve paneles sin querer.
-let lp = null;
+let lp = null,
+  dragY = null;
+// Mientras se arrastra con el dedo cerca del borde de arriba o de abajo, la página se desplaza sola (aunque el dedo no se mueva).
+const autoScroll = () => {
+  if (!drag || dragY === null) return;
+  const e = 90;
+  if (dragY < e) window.scrollBy(0, -Math.ceil((e - dragY) / 6));
+  else if (dragY > innerHeight - e) window.scrollBy(0, Math.ceil((dragY - innerHeight + e) / 6));
+  requestAnimationFrame(autoScroll);
+};
+const reordOff = () => {
+  dragY = null;
+  document.body.classList.remove('reord');
+};
 const lpOff = () => {
   if (lp) clearTimeout(lp.t);
   lp = null;
@@ -188,6 +201,13 @@ document.addEventListener(
         lp = null;
         drag = { v: c.dataset.v, k: c.dataset.k };
         c.classList.add('dragging');
+        // Las tarjetas se encogen a solo su título mientras se arrastra, así caben todas en la pantalla
+        // (si no, para llegar a una lejana había que pasar por encima de las largas, como Movimientos).
+        document.body.classList.add('reord');
+        const r = c.getBoundingClientRect();
+        window.scrollBy(0, r.top + r.height / 2 - t.clientY);
+        dragY = t.clientY;
+        autoScroll();
         try {
           navigator.vibrate && navigator.vibrate(20);
         } catch (x) {}
@@ -218,8 +238,7 @@ document.addEventListener(
       c = cardAt(t.clientX, t.clientY);
     document.querySelectorAll('.dropto').forEach(x => x !== c && x.classList.remove('dropto'));
     if (c && c.dataset.v === drag.v && c.dataset.k !== drag.k) c.classList.add('dropto');
-    if (t.clientY < 60) window.scrollBy(0, -12);
-    else if (t.clientY > innerHeight - 60) window.scrollBy(0, 12);
+    dragY = t.clientY;
   },
   { passive: false }
 );
@@ -229,10 +248,12 @@ document.addEventListener('touchend', e => {
   const t = e.changedTouches[0],
     c = cardAt(t.clientX, t.clientY);
   document.querySelectorAll('.dragging,.dropto').forEach(x => x.classList.remove('dragging', 'dropto'));
+  reordOff();
   if (!dropOn(c)) drag = null;
 });
 document.addEventListener('touchcancel', () => {
   lpOff();
+  reordOff();
   dragEnd();
 });
 // Al volver a la app se sincroniza, también si la última vez falló (antes solo si la nube iba bien).

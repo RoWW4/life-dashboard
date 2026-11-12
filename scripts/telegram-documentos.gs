@@ -204,37 +204,6 @@ function anadirAlPanel(name, cat, url, exp) {
   if (r.getResponseCode() !== 200) throw new Error('no he podido añadirlo al panel (el archivo sí está en Drive: ' + url + '): ' + r.getContentText());
 }
 
-/* ---------- Compartir al panel (aplicación web) ----------
-   El panel manda aquí los archivos compartidos desde el móvil: {token, name, cat, exp, files:[{name, type, data (base64)}]}.
-   Solo vale la sesión del panel de la cuenta EMAIL (se comprueba el token con Supabase). Se guarda igual que lo del bot.
-   Publicar: Implementar → Nueva implementación → Aplicación web · Ejecutar como: yo · Acceso: cualquier usuario.
-   La dirección (…/exec) se pega una vez en el panel, la primera vez que se comparte un documento. */
-function doPost(e) {
-  const salida = o => ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
-  try {
-    const q = JSON.parse(e.postData.contents);
-    const r = UrlFetchApp.fetch(SB_URL + '/auth/v1/user', { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + q.token }, muteHttpExceptions: true });
-    if (r.getResponseCode() !== 200) throw new Error('la sesión del panel no vale: vuelve a iniciar sesión');
-    if (String(JSON.parse(r.getContentText()).email || '').toLowerCase() !== prop('EMAIL').toLowerCase()) throw new Error('esta cuenta no puede guardar documentos');
-    const name = String(q.name || '').trim().slice(0, 120), files = (q.files || []).slice(0, MAX_ARCHIVOS),
-      cat = ORDEN.indexOf(q.cat) >= 0 ? q.cat : 'Otros', exp = /^\d{4}-\d{2}-\d{2}$/.test(q.exp || '') ? q.exp : '';
-    if (!name || !files.length) throw new Error('faltan el nombre o el archivo');
-    const blobs = files.map(f => Utilities.newBlob(Utilities.base64Decode(f.data), f.type || 'application/octet-stream', f.name));
-    const destino = carpetaDe(cat);
-    let url;
-    if (blobs.length === 1) url = destino.createFile(blobs[0].setName(name + ext(files[0].name))).getUrl();
-    else {
-      const sub = destino.createFolder(name);
-      blobs.forEach((b, i) => sub.createFile(b.setName(name + ' (' + (i + 1) + ')' + ext(files[i].name))));
-      url = sub.getUrl();
-    }
-    anadirAlPanel(name, cat, url, exp);
-    return salida({ ok: true, url: url });
-  } catch (err) {
-    return salida({ ok: false, error: String((err && err.message) || err) });
-  }
-}
-
 /** Ejecutar UNA vez: comprueba las propiedades, deja el bot en modo «preguntar cada minuto» y manda un mensaje de prueba. */
 function instalar() {
   ['TELEGRAM_TOKEN', 'CHAT_ID', 'EMAIL', 'PASSWORD', 'DOCS_FOLDER'].forEach(prop);

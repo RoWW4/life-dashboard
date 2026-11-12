@@ -671,27 +671,18 @@ function goalMove(g) {
 }
 
 /* ---------- Compartir al panel ----------
-   El móvil (Android, con el panel instalado) manda lo compartido al service worker (sw.js), que lo guarda en la caché
-   «ldb-share» y abre el panel con ?compartir=1. Aquí se lee y se pregunta qué es: documento, gasto, tarea, compra o enlace.
-   Los documentos se suben a Drive con el robot de documentos (doPost de scripts/telegram-documentos.gs); su dirección va en S.docsUrl. */
-const DOCS_URL_RE = /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/;
+   El móvil (Android, con el panel instalado) manda lo compartido (título, texto y enlace) al service worker (sw.js), que lo guarda
+   en la caché «ldb-share» y abre el panel con ?compartir=1. Aquí se lee y se pregunta qué es: tarea, compra, enlace o gasto.
+   Las fotos y los PDF no: los documentos se guardan con el bot de Telegram. */
 async function shareRead() {
   if (!('caches' in window)) return null;
   const c = await caches.open('ldb-share'),
     r = await c.match('share/meta');
   if (!r) return null;
   const m = await r.json();
-  m.blobs = await Promise.all(m.files.map(async f => ((await c.match(f.k)) || new Response('')).blob()));
   await Promise.all((await c.keys()).map(k => c.delete(k)));
   return m;
 }
-const b64 = blob =>
-  new Promise((ok, ko) => {
-    const r = new FileReader();
-    r.onload = () => ok(String(r.result).split(',')[1] || '');
-    r.onerror = () => ko(r.error);
-    r.readAsDataURL(blob);
-  });
 async function shareOpen() {
   let m;
   try {
@@ -709,62 +700,31 @@ async function shareOpen() {
       .split(/\n+/)
       .map(x => x.replace(/^[\s•\-*·\d.)]+/, '').trim())
       .filter(Boolean),
-    first = lines[0] || '',
-    files = m.files.map((f, i) => ({ ...f, blob: m.blobs[i] })),
-    hasF = files.length > 0,
-    big = files.reduce((s, f) => s + f.size, 0) > 15 * 1024 * 1024,
-    stem = hasF
-      ? files[0].name
-          .replace(/\.[^.]+$/, '')
-          .replace(/[_-]+/g, ' ')
-          .trim()
-      : '';
-  const OPT = hasF
-    ? [
-        ['doc', 'file-text', 'Documento'],
-        ['gasto', 'wallet', 'Gasto']
-      ]
-    : [
-        ['tarea', 'list-checks', 'Tarea'],
-        ['compra', 'shopping-cart', 'Compra'],
-        ...(urlIn ? [['enlace', 'link', 'Enlace']] : []),
-        ['gasto', 'wallet', 'Gasto']
-      ];
-  const what = hasF
-    ? files
-        .map(
-          f =>
-            `<div class="shf">${I(/pdf/.test(f.type) ? 'file-text' : 'upload')}<span>${esc(f.name)}</span><em>${(f.size / 1048576).toFixed(1).replace('.', ',')} MB</em></div>`
-        )
-        .join('')
-    : `<div class="shtx">${esc(txt || urlIn).replace(/\n/g, '<br>')}${txt && urlIn ? `<br><span class="mu">${esc(urlIn)}</span>` : ''}</div>`;
+    first = lines[0] || '';
+  if (!txt && !urlIn) return toast('Solo se pueden compartir textos y enlaces; los documentos, por el bot de Telegram');
+  const OPT = [
+    ['tarea', 'list-checks', 'Tarea'],
+    ['compra', 'shopping-cart', 'Compra'],
+    ...(urlIn ? [['enlace', 'link', 'Enlace']] : []),
+    ['gasto', 'wallet', 'Gasto']
+  ];
   const o = modal(
-    `<h3>${I('inbox')} Compartido con el panel</h3>${what}<div class="mu" style="margin:12px 0 6px">¿Qué es?</div><div class="seg shseg">${OPT.map(([k, ic, n], i) => `<button class="${i ? '' : 'on'}" data-k="${k}">${I(ic, 'sm')} ${n}</button>`).join('')}</div><div id="shb" class="fs" style="margin-top:12px"></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`
+    `<h3>${I('inbox')} Compartido con el panel</h3><div class="shtx">${esc(txt || urlIn).replace(/\n/g, '<br>')}${txt && urlIn ? `<br><span class="mu">${esc(urlIn)}</span>` : ''}</div><div class="mu" style="margin:12px 0 6px">¿Qué es?</div><div class="seg shseg">${OPT.map(([k, ic, n], i) => `<button class="${i ? '' : 'on'}" data-k="${k}">${I(ic, 'sm')} ${n}</button>`).join('')}</div><div id="shb" class="fs" style="margin-top:12px"></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Seguir</button></div>`
   );
   let k = OPT[0][0];
   const body = o.querySelector('#shb'),
-    okb = o.querySelector('#ok'),
-    v = i => (o.querySelector(i) || {}).value || '';
+    okb = o.querySelector('#ok');
   const draw = () => {
     okb.textContent = {
-      doc: 'Guardar en Documentos',
       gasto: 'Seguir con el gasto',
       tarea: 'Seguir con la tarea',
       compra: 'Añadir a la compra',
       enlace: 'Seguir con el enlace'
     }[k];
-    if (k === 'doc')
-      body.innerHTML =
-        `<label>Nombre<input id="sh1" value="${esc(m.title || stem)}"></label><div class="two"><label>Carpeta<select id="sh2">${opts(DC, 'Otros')}</select></label><label>Vence (opcional)<input id="sh3" type="date"></label></div>` +
-        (S.docsUrl
-          ? ''
-          : `<label>Dirección del robot de documentos<input id="sh4" inputmode="url" placeholder="https://script.google.com/macros/s/…/exec"></label><div class="mu">Solo la primera vez. Sale al publicar el robot como aplicación web (ver LEEME, «Compartir al panel»).</div>`) +
-        (big ? '<div class="er">Pesa más de 15 MB: mándalo mejor por el bot de Telegram.</div>' : '') +
-        (files.length > 1 ? `<div class="mu">Los ${files.length} archivos se guardan juntos como un documento.</div>` : '');
-    else if (k === 'compra')
-      body.innerHTML = `<div class="mu">Una cosa por línea. Quita las que no quieras.</div>${(lines.length ? lines : [first]).map((x, i) => `<label class="shck"><input type="checkbox" class="ck" data-l="${i}" checked> <span>${esc(x)}</span></label>`).join('')}`;
-    else
-      body.innerHTML = `<div class="mu">${k === 'gasto' ? 'Se abre la ventana de nuevo movimiento con lo que se pueda rellenar.' : k === 'tarea' ? 'Se abre la ventana de nueva tarea' + (urlIn ? ', con el enlace en sus notas.' : '.') : 'Se guarda en Documentos con el enlace y queda fijado en Mi día.'}</div>`;
+    body.innerHTML =
+      k === 'compra'
+        ? `<div class="mu">Una cosa por línea. Quita las que no quieras.</div>${(lines.length ? lines : [first || urlIn]).map((x, i) => `<label class="shck"><input type="checkbox" class="ck" data-l="${i}" checked> <span>${esc(x)}</span></label>`).join('')}`
+        : `<div class="mu">${k === 'gasto' ? 'Se abre la ventana de nuevo movimiento con lo que se pueda rellenar.' : k === 'tarea' ? 'Se abre la ventana de nueva tarea' + (urlIn ? ', con el enlace en sus notas.' : '.') : 'Se guarda en Documentos con el enlace y queda fijado en Mi día.'}</div>`;
   };
   o.querySelectorAll('.shseg button').forEach(b =>
     b.addEventListener('click', () => {
@@ -774,7 +734,7 @@ async function shareOpen() {
     })
   );
   draw();
-  okb.onclick = async () => {
+  okb.onclick = () => {
     if (k === 'gasto') {
       o.remove();
       txForm();
@@ -788,10 +748,7 @@ async function shareOpen() {
     }
     if (k === 'tarea') {
       o.remove();
-      return taskForm(null, {
-        title: (first || m.title || urlIn).slice(0, 120),
-        ...(urlIn ? { notes: [{ id: id(), at: TD(), tx: urlIn }] } : {})
-      });
+      return taskForm(null, { title: (first || urlIn).slice(0, 120), ...(urlIn ? { notes: [{ id: id(), at: TD(), tx: urlIn }] } : {}) });
     }
     if (k === 'enlace') {
       o.remove();
@@ -799,46 +756,13 @@ async function shareOpen() {
       try {
         h = new URL(urlIn).hostname.replace(/^www\./, '');
       } catch (e) {}
-      return docForm(null, { name: (m.title || first || h).slice(0, 120), url: urlIn });
+      return docForm(null, { name: (first || h).slice(0, 120), url: urlIn });
     }
-    if (k === 'compra') {
-      const L = (lines.length ? lines : [first]).filter((_, i) => (o.querySelector(`[data-l="${i}"]`) || {}).checked);
-      if (!L.length) return toast('No hay nada marcado');
-      L.forEach(x => S.shop.push({ id: id(), name: cap(x.slice(0, 80)), qty: 1, price: 0, done: false }));
-      o.remove();
-      ch();
-      return toast(`🛒 ${L.length} cosa${L.length === 1 ? '' : 's'} en la compra`);
-    }
-    // Documento: se sube al robot de documentos (Apps Script), que lo guarda en Drive y lo añade a Documentos.
-    const name = v('#sh1').trim(),
-      cat = v('#sh2'),
-      exp = v('#sh3'),
-      u = S.docsUrl || v('#sh4').trim();
-    if (!name) return toast('Ponle un nombre');
-    if (!DOCS_URL_RE.test(u)) return toast('Pega la dirección del robot (termina en /exec)');
-    if (big) return toast('Pesa demasiado: mándalo por Telegram');
-    if (!sb || !user) return toast('Inicia sesión para guardar documentos');
-    okb.disabled = true;
-    okb.textContent = 'Subiendo…';
-    try {
-      const ses = (await sb.auth.getSession()).data.session;
-      if (!ses) throw new Error('Inicia sesión otra vez en el panel');
-      const enc = await Promise.all(files.map(async f => ({ name: f.name, type: f.type, data: await b64(f.blob) })));
-      const r = await fetch(u, { method: 'POST', body: JSON.stringify({ token: ses.access_token, name, cat, exp, files: enc }) }),
-        j = await r.json();
-      if (!j.ok) throw new Error(j.error || 'el robot no ha podido guardarlo');
-      if (!S.docsUrl) {
-        S.docsUrl = u;
-        save();
-      }
-      o.remove();
-      toast('📄 Guardado en Documentos (' + cat + ')');
-      if (await pull()) render();
-    } catch (e) {
-      logErr('compartir', e, 'subir documento');
-      okb.disabled = false;
-      okb.textContent = 'Reintentar';
-      toast('No se ha podido guardar: ' + (e.message || e));
-    }
+    const L = (lines.length ? lines : [first || urlIn]).filter((_, i) => (o.querySelector(`[data-l="${i}"]`) || {}).checked);
+    if (!L.length) return toast('No hay nada marcado');
+    L.forEach(x => S.shop.push({ id: id(), name: cap(x.slice(0, 80)), qty: 1, price: 0, done: false }));
+    o.remove();
+    ch();
+    toast(`🛒 ${L.length} cosa${L.length === 1 ? '' : 's'} en la compra`);
   };
 }

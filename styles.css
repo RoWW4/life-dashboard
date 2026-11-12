@@ -854,8 +854,6 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .gcols button[aria-checked=true]{box-shadow:0 0 0 2px var(--el),0 0 0 4px var(--gc)}
 .gcols button:focus-visible{outline:2px solid var(--ac);outline-offset:3px}
 /* ---------- Compartir al panel (ventana de formularios.js) ---------- */
-.shf{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:var(--card2);margin-bottom:6px;font-size:14px;min-width:0}
-.shf span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.shf em{font-style:normal;color:var(--mu);font-size:12px}
 .shtx{padding:10px 12px;border-radius:12px;background:var(--card2);font-size:14px;max-height:160px;overflow:auto;overflow-wrap:anywhere}
 .shseg{flex-wrap:wrap}
 .shck{display:flex;align-items:center;gap:10px;font-size:14px;padding:4px 0}
@@ -866,3 +864,7 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .card.hl::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:2px;pointer-events:none;background:conic-gradient(from var(--lb),#ff4d4d,#ffb020,#3ccf82,#2f9bff,#9b4dff,#ff4d4d);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);animation:lbspin 6s linear infinite}
 @keyframes lbspin{to{--lb:360deg}}
 @media (prefers-reduced-motion: reduce){.card.hl::before{animation:none}}
+/* Móvil: al mantener pulsada el asa de una tarjeta para moverla, todas se quedan solo con su título (eventos.js, body.reord) */
+.reord #m .card>:not(h3){display:none!important}
+.reord #m .card{padding-top:12px;padding-bottom:12px}
+.reord #m .card h3{margin:0}
