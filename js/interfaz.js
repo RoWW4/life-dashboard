@@ -571,10 +571,11 @@ function bankAlerts() {
 
 /* ---------- Ojo general: ocultar importes ----------
    Con los importes ocultos (body.priv), toda cifra en euros de la sección se envuelve en <span class="money"> y se difumina.
-   Tocar una cifra difuminada la enseña solo a ella (el primer toque no hace nada más). Se recuerda en cada dispositivo. */
+   Tocar una cifra difuminada la enseña solo a ella (el primer toque no hace nada más). Se recuerda en cada dispositivo.
+   Por defecto los importes se ven (clave nueva «ldb-money2» para que todos los dispositivos empiecen así). */
 let showMoney = (() => {
   try {
-    return localStorage.getItem('ldb-money') === '1';
+    return localStorage.getItem('ldb-money2') !== '0';
   } catch (e) {
     return false;
   }
@@ -582,7 +583,7 @@ let showMoney = (() => {
 function togMoney() {
   showMoney = !showMoney;
   try {
-    localStorage.setItem('ldb-money', showMoney ? '1' : '0');
+    localStorage.setItem('ldb-money2', showMoney ? '1' : '0');
   } catch (e) {
     logErr('almacenamiento', e, 'ojo');
   }
