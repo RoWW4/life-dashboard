@@ -457,6 +457,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
   .badge{position:absolute;top:2px;left:calc(50% + 5px);min-width:16px;height:16px;font-size:9.5px;padding:0 4px}
   .ajb{display:grid;position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px;z-index:5}
   .ajb.eyeb{right:60px}
+  main>.hdr{padding-right:96px}main>.hdr .hact{margin-right:-96px;width:calc(100% + 96px)}
   main{padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(160px + env(safe-area-inset-bottom,0px))}
   h2{font-size:23px}.hdr{margin-bottom:18px}
   .fabs{right:16px;bottom:calc(80px + env(safe-area-inset-bottom,0px))}
@@ -906,3 +907,23 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .dd button[disabled]{color:var(--dis)}
 .dd .i{width:16px;height:16px}
 @keyframes ddin{from{opacity:0;transform:scaleY(.94)}}
+/* Finanzas: botón de añadir dentro del título de Movimientos */
+.card h3 .movadd{margin-left:10px;padding:4px 11px;font-size:12.5px;vertical-align:middle}
+/* Ajustes: «Borrar todo» plegado */
+.danger-z summary{cursor:pointer;color:var(--mu);font-size:13.5px;font-weight:500}
+.danger-z[open] summary{color:var(--er)}
+/* Tareas: deslizar con el dedo (eventos.js) */
+.row.swiping{position:relative;z-index:1;background:var(--card);touch-action:none}
+.swbg{position:absolute;left:0;right:0;z-index:0;display:flex;align-items:center;padding:0 16px;border-radius:12px;font-size:13.5px;font-weight:600;transition:background .15s,color .15s}
+.swbg span{display:inline-flex;align-items:center;gap:6px}
+.swbg.r{justify-content:flex-start;background:var(--oks);color:var(--ok)}
+.swbg.l{justify-content:flex-end;background:var(--acs);color:var(--ac2)}
+.swbg.r.hit{background:var(--ok);color:#fff}
+.swbg.l.hit{background:var(--ac);color:#fff}
+/* Confeti (interfaz.js) */
+.confeti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:200}
+/* «Lo más importante» sin nada: los gatitos de la pantalla de carga en pequeño */
+.gempty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0 4px;text-align:center;color:var(--mu);font-size:14px}
+.gempty b{color:var(--tx)}
+.gatos.mini{width:170px;padding:8px 10px 5px;border-radius:12px;box-shadow:none}
+.card h3 .movadd .i{color:currentColor;width:14px;height:14px}

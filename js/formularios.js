@@ -632,8 +632,10 @@ function goalForm(g) {
     if (!nm) return toast('Ponle un nombre');
     if (!(obj > 0)) return toast('Indica cuánto quieres juntar');
     if (!(amt >= 0)) return toast('Revisa lo apartado');
+    const was = !n && g.amt >= g.obj;
     if (n) S.goals.push({ id: id(), n: nm, obj, amt, d, c, c0: TD(), a0: amt });
     else Object.assign(g, { n: nm, obj, amt, d, c });
+    if (!n && !was && amt >= obj) setTimeout(confeti, 150);
     o.remove();
     ch();
     toast(n ? '🎯 Meta creada' : 'Guardado');
@@ -669,6 +671,7 @@ function goalMove(g) {
     o.remove();
     ch();
     toast(!was && g.amt >= g.obj ? '🎉 ¡Meta conseguida!' : sg > 0 ? 'Apartado' : 'Sacado');
+    if (!was && g.amt >= g.obj) setTimeout(confeti, 150);
   };
   o.querySelector('#fm1').focus();
 }

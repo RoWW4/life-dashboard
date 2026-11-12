@@ -716,3 +716,77 @@ if (TOUCH) {
   addEventListener('resize', ddClose);
   document.addEventListener('keydown', e => e.key === 'Escape' && ddClose());
 }
+
+/* ---------- Confeti ----------
+   Al completar todas las tareas de hoy (y las atrasadas) o al conseguir una meta de ahorro. Un lienzo encima de todo
+   que se quita solo; con «reducir movimiento» no sale. */
+function confeti() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cv = document.createElement('canvas'),
+    x = cv.getContext('2d'),
+    dpr = devicePixelRatio || 1,
+    W = innerWidth,
+    H = innerHeight,
+    C = ['#2f9bff', '#3ccf82', '#f2b13d', '#ff6b8a', '#9b6dff', '#22c3b4', '#ff7a59'];
+  cv.className = 'confeti';
+  cv.width = W * dpr;
+  cv.height = H * dpr;
+  x.scale(dpr, dpr);
+  document.body.appendChild(cv);
+  const P = Array.from({ length: 140 }, (_, i) => ({
+    x: W / 2 + (Math.random() - 0.5) * 80,
+    y: H * 0.35,
+    vx: (Math.random() - 0.5) * 13,
+    vy: -Math.random() * 13 - 4,
+    r: Math.random() * Math.PI,
+    vr: (Math.random() - 0.5) * 0.4,
+    w: 6 + Math.random() * 6,
+    h: 4 + Math.random() * 5,
+    c: C[i % C.length]
+  }));
+  const t0 = performance.now();
+  const step = t => {
+    x.clearRect(0, 0, W, H);
+    P.forEach(p => {
+      p.vy += 0.32;
+      p.vx *= 0.99;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.r += p.vr;
+      x.save();
+      x.translate(p.x, p.y);
+      x.rotate(p.r);
+      x.fillStyle = p.c;
+      x.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      x.restore();
+    });
+    if (t - t0 < 2600) requestAnimationFrame(step);
+    else cv.remove();
+  };
+  requestAnimationFrame(step);
+}
+
+/* ---------- Cifras que suben ----------
+   Al abrir Finanzas o Inversiones, los importes grandes cuentan desde 0 hasta su valor (unas décimas de segundo). */
+function countUp() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('#m :is(.kpi .v, .acct b, .savk b, .gx .big) .money').forEach(el => {
+    const tx = el.textContent,
+      m = tx.match(/(\d[\d.]*)(?:,(\d+))?/);
+    if (!m) return;
+    const v = parseFloat(m[1].replace(/\./g, '') + '.' + (m[2] || '0')),
+      dec = (m[2] || '').length,
+      f = new Intl.NumberFormat('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: 'always' }),
+      t0 = performance.now(),
+      D = 700;
+    if (!(v > 0)) return;
+    const step = t => {
+      if (!el.isConnected) return;
+      const k = Math.min(1, (t - t0) / D),
+        e = 1 - Math.pow(1 - k, 3);
+      el.textContent = k < 1 ? tx.replace(m[0], f.format(v * e)) : tx;
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}

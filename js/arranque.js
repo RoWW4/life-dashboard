@@ -28,6 +28,11 @@ function afterLoad() {
     toast('El banco no autorizó la conexión: ' + q.get('error'));
   }
 }
+/* Los gatitos de la pantalla de carga se guardan para «Lo más importante» vacío en Mi día (antes de que se pinte el panel). */
+const GATOS = (() => {
+  const g = document.querySelector('.gatos');
+  return g ? g.outerHTML.replace('class="gatos"', 'class="gatos mini"') : '';
+})();
 /* Pantalla de carga (index.html, .boot): frases que van cambiando hasta que se pinta el panel. */
 (() => {
   const F = [

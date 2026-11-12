@@ -147,7 +147,7 @@ function vAjus() {
         'ajus',
         'avz',
         `${I('eraser')} Avanzado`,
-        `<div class="f" style="margin:0"><button class="btn ghost danger" style="flex:none" data-a="rs">Borrar todo</button></div><div class="mu" style="margin-top:10px">Borra todos los datos del panel, también los de la nube. No se puede deshacer.</div>`
+        `<details class="danger-z"><summary>Opciones peligrosas</summary><div class="mu" style="margin:8px 0 10px">Borra todos los datos del panel, también los de la nube. No se puede deshacer.</div><button class="btn ghost danger" data-a="rs">Borrar todo</button></details>`
       )
     };
     VIS.ajus = ord(

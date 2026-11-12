@@ -114,6 +114,9 @@ const A = {
   tt: i => {
     const t = S.tasks.find(x => x.id === i);
     t.done = !t.done;
+    // Confeti si con esta ya no queda nada para hoy (ni atrasado).
+    const td = TD();
+    if (t.done && t.due && t.due <= td && !S.tasks.some(x => !x.done && x.due && x.due <= td)) setTimeout(confeti, 150);
     if (t.done) t.doneAt = TD();
     else delete t.doneAt;
     if (t.done && t.rep && t.due) {

@@ -544,7 +544,7 @@ function vFin() {
     cur = m === MN(now),
     ps = spent(pm, cur ? now.getDate() : 31);
   const ml = mLabel(m);
-  return `<div class="hdr finh"><div><h2>Finanzas</h2><div class="sub help">${user && BANK && BANK.session_id ? `${I('landmark', 'sm')} Conectado al banco · ${ago(BANK.last_sync)}` : 'Movimientos manuales, fijos e importados'}</div></div><div class="hact"><button class="btn ghost sm ico" data-a="fm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b style="min-width:130px;text-align:center">${ml}</b><button class="btn ghost sm ico" data-a="fm" data-i="1" aria-label="Mes siguiente" ${finOff >= 0 ? 'disabled style="opacity:.4"' : ''}>${I('chevron-right')}</button><button class="btn" data-a="nx">${I('plus')} Movimiento</button></div></div>
+  return `<div class="hdr finh"><div><h2>Finanzas</h2><div class="sub help">${user && BANK && BANK.session_id ? `${I('landmark', 'sm')} Conectado al banco · ${ago(BANK.last_sync)}` : 'Movimientos manuales, fijos e importados'}</div></div><div class="hact"><button class="btn ghost sm ico" data-a="fm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b style="min-width:130px;text-align:center">${ml}</b><button class="btn ghost sm ico" data-a="fm" data-i="1" aria-label="Mes siguiente" ${finOff >= 0 ? 'disabled style="opacity:.4"' : ''}>${I('chevron-right')}</button></div></div>
   <div class="fintop">${acctHTML()}
   <div class="kpis">
     <div class="kpi" style="--c:var(--ok)"><span class="k"><span class="hico">${I('arrow-up-right')}</span>Ingresos</span><span class="v ok">${eur(inc)}</span><span class="d">${incL.length} movimiento${incL.length === 1 ? '' : 's'}</span></div>
@@ -558,7 +558,7 @@ function vFin() {
       mov: panel(
         'fin',
         'mov',
-        `${I('list-checks')} Movimientos`,
+        `${I('list-checks')} Movimientos <button class="btn sm movadd" data-a="nx" aria-label="Añadir movimiento" title="Añadir movimiento">${I('plus', 'sm')} Añadir</button>`,
         `<span id="txcard"></span>
     <div class="txf"><input id="txq" class="in" type="search" placeholder="Buscar concepto, nota o importe…" value="${esc(txf.q)}" aria-label="Buscar en movimientos"><select class="in" data-a="txfc" aria-label="Categoría"><option value="">Todas las categorías</option>${CATS.map(c => `<option ${txf.cat === c ? 'selected' : ''}>${c}</option>`).join('')}</select><select class="in" data-a="txfp" aria-label="Periodo">${(() => {
       const ms = [...new Set([...Array(3)].map((_, j) => MN(new Date(now.getFullYear(), now.getMonth() - j, 1))).concat(m))]

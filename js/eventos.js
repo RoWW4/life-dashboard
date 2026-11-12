@@ -313,3 +313,90 @@ document.addEventListener(
   },
   { passive: true }
 );
+
+/* Móvil: deslizar una tarea. A la derecha, se marca como hecha (o pendiente, si ya lo estaba); a la izquierda, pasa a mañana.
+   Mientras se desliza, detrás de la fila se ve qué va a pasar; al pasar el umbral se resalta y vibra. Si se suelta antes, vuelve a su sitio. */
+let tsw = null;
+const TSW = 90;
+document.addEventListener(
+  'touchstart',
+  e => {
+    tsw = null;
+    if (e.touches.length !== 1 || !TOUCH) return;
+    const ck = e.target.closest && e.target.closest('#m .row');
+    const c = ck && ck.querySelector('input.ck[data-a=tt]');
+    if (!c || e.target.closest('input,select,textarea,.hd')) return;
+    tsw = { row: ck, id: c.dataset.i, done: c.checked, x: e.touches[0].clientX, y: e.touches[0].clientY, on: false, dx: 0, hit: false };
+  },
+  { passive: true }
+);
+document.addEventListener(
+  'touchmove',
+  e => {
+    if (!tsw || drag) return;
+    const t = e.touches[0],
+      dx = t.clientX - tsw.x,
+      dy = t.clientY - tsw.y;
+    if (!tsw.on) {
+      if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) return (tsw = null); // es scroll
+      if (Math.abs(dx) < 12) return;
+      tsw.on = true;
+      sw = null; // que no cambie de sección
+      const r = tsw.row,
+        p = r.parentElement,
+        bg = document.createElement('div');
+      if (getComputedStyle(p).position === 'static') p.style.position = 'relative';
+      bg.className = 'swbg';
+      Object.assign(bg.style, { top: r.offsetTop + 'px', height: r.offsetHeight + 'px' });
+      p.insertBefore(bg, r);
+      r.classList.add('swiping');
+      tsw.bg = bg;
+    }
+    e.preventDefault();
+    const left = dx < 0;
+    if (left && tsw.done) return; // una tarea hecha no se pospone
+    tsw.dx = dx;
+    const hit = Math.abs(dx) >= TSW;
+    tsw.row.style.transform = `translateX(${dx}px)`;
+    tsw.bg.className = 'swbg ' + (left ? 'l' : 'r') + (hit ? ' hit' : '');
+    tsw.bg.innerHTML = left
+      ? `<span>Pasar a mañana ${I('chevron-right')}</span>`
+      : `<span>${I(tsw.done ? 'refresh-cw' : 'check')} ${tsw.done ? 'Marcar pendiente' : 'Hecha'}</span>`;
+    if (hit !== tsw.hit) {
+      tsw.hit = hit;
+      if (hit)
+        try {
+          navigator.vibrate && navigator.vibrate(12);
+        } catch (x) {}
+    }
+  },
+  { passive: false }
+);
+const tswEnd = () => {
+  const s = tsw;
+  tsw = null;
+  if (!s || !s.on) return;
+  const r = s.row,
+    go = Math.abs(s.dx) >= TSW;
+  r.style.transition = 'transform .2s ease';
+  r.style.transform = go ? `translateX(${s.dx > 0 ? '100%' : '-100%'})` : '';
+  setTimeout(() => {
+    s.bg.remove();
+    r.classList.remove('swiping');
+    r.style.transition = r.style.transform = '';
+    if (!go) return;
+    if (s.dx > 0) A.tt(s.id);
+    else taskTomorrow(s.id);
+  }, 200);
+};
+document.addEventListener('touchend', tswEnd);
+document.addEventListener('touchcancel', tswEnd);
+function taskTomorrow(i) {
+  const t = S.tasks.find(x => x.id === i);
+  if (!t) return;
+  const nd = addD(TD(), 1);
+  if (t.rem && t.due) t.rem = addD(nd, dd(t.rem.slice(0, 10), t.due)) + t.rem.slice(10);
+  t.due = nd;
+  ch();
+  toast('➡️ «' + t.title + '» pasa a mañana');
+}

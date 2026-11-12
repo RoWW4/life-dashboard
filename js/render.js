@@ -48,6 +48,7 @@ function render() {
   document.body.classList.toggle('cust', cust);
   document.body.classList.toggle('solo', (VIS[view] || []).length < 2);
   masonry();
+  if (!same && (view === 'fin' || view === 'inv')) requestAnimationFrame(countUp); // después de envolver las cifras (wrapMoney)
   if (!same) window.scrollTo(0, 0);
   else window.scrollTo(0, y);
 }
