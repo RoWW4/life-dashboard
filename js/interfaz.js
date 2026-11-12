@@ -549,12 +549,86 @@ function bankAlerts() {
   if (BANK && BANK.last_error && (BANK.fail_count || 0) >= FAILMAX && !inc.some(x => x.key === 'banco'))
     a.push([TD(), 'landmark', 'La sincronización con el banco lleva varios fallos seguidos', '#ff5d5d']);
   // Los incidentes «permiso:…» ya salen arriba como aviso de caducidad.
-  inc.filter(x => !String(x.key).startsWith('permiso:')).forEach(x =>
-    a.push([TD(), 'triangle-alert', `${x.title} no funciona bien (desde ${ago(x.opened_at)}) · Ajustes → Estado de los robots`, '#ff5d5d'])
-  );
+  inc
+    .filter(x => !String(x.key).startsWith('permiso:'))
+    .forEach(x =>
+      a.push([
+        TD(),
+        'triangle-alert',
+        `${x.title} no funciona bien (desde ${ago(x.opened_at)}) · Ajustes → Estado de los robots`,
+        '#ff5d5d'
+      ])
+    );
   // ¿Quién vigila al vigilante? Si lleva más de 3 h sin ejecutarse, se avisa aquí.
   const w = OPS && OPS.jobs.find(j => j.job === 'vigilante');
   if (w && Date.now() - new Date(w.last_ok || 0) > 3 * 36e5)
     a.push([TD(), 'triangle-alert', `El vigilante de errores no se ejecuta (último: ${ago(w.last_ok)})`, '#ff5d5d']);
   return a;
 }
+
+/* ---------- Ojo general: ocultar importes ----------
+   Con los importes ocultos (body.priv), toda cifra en euros de la sección se envuelve en <span class="money"> y se difumina.
+   Tocar una cifra difuminada la enseña solo a ella (el primer toque no hace nada más). Se recuerda en cada dispositivo. */
+let showMoney = (() => {
+  try {
+    return localStorage.getItem('ldb-money') === '1';
+  } catch (e) {
+    return false;
+  }
+})();
+function togMoney() {
+  showMoney = !showMoney;
+  try {
+    localStorage.setItem('ldb-money', showMoney ? '1' : '0');
+  } catch (e) {
+    logErr('almacenamiento', e, 'ojo');
+  }
+  render();
+  toast(showMoney ? 'Importes visibles' : 'Importes ocultos');
+}
+const eyeBtn = (c = 'ib') =>
+  `<button class="${c}" data-a="money" aria-label="${showMoney ? 'Ocultar importes' : 'Mostrar importes'}" title="${showMoney ? 'Ocultar importes' : 'Mostrar importes'}" aria-pressed="${!showMoney}">${I(showMoney ? 'eye-off' : 'eye')}</button>`;
+const MONEY_RE = /[−+-]?\s?\d[\d.  ]*(?:,\d+)?[\s  ]?€/g;
+function wrapMoney(root) {
+  if (!root) return;
+  if (root.nodeType === 3) root = root.parentNode;
+  if (!root || root.nodeType !== 1 || root.closest('.money, svg, .ov')) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: n =>
+        n.nodeValue.includes('€') && !n.parentElement.closest('.money, svg, script, style, textarea, option, .ov')
+          ? NodeFilter.FILTER_ACCEPT
+          : NodeFilter.FILTER_REJECT
+    }),
+    L = [];
+  while (w.nextNode()) L.push(w.currentNode);
+  L.forEach(n => {
+    const s = n.nodeValue,
+      f = document.createDocumentFragment();
+    let i = 0;
+    s.replace(MONEY_RE, (m, at) => {
+      if (at > i) f.append(s.slice(i, at));
+      const e = document.createElement('span');
+      e.className = 'money';
+      e.textContent = m;
+      f.append(e);
+      i = at + m.length;
+    });
+    if (!i) return;
+    if (i < s.length) f.append(s.slice(i));
+    n.replaceWith(f);
+  });
+}
+// Todo lo que se pinta en la sección (también los trozos que cambian sin repintar, como la lista de movimientos) pasa por aquí.
+new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(wrapMoney))).observe($('#m'), { childList: true, subtree: true });
+document.addEventListener(
+  'click',
+  e => {
+    if (showMoney) return;
+    const m = e.target.closest && e.target.closest('.priv .money:not(.peek)');
+    if (!m) return;
+    e.preventDefault();
+    e.stopPropagation();
+    m.classList.add('peek');
+  },
+  true
+);

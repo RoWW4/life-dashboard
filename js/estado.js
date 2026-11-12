@@ -25,6 +25,7 @@ const def = () => ({
   bankLast: '',
   gacct: '',
   sav: null,
+  goals: [],
   bar: null,
   _ts: 0
 });
@@ -43,7 +44,8 @@ function normalize(o) {
     'fixes',
     'localHol',
     'periods',
-    'bankSeen'
+    'bankSeen',
+    'goals'
   ])
     if (!Array.isArray(s[k])) s[k] = [];
   if (!s.order || typeof s.order !== 'object') s.order = {};

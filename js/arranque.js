@@ -8,7 +8,10 @@ function afterLoad() {
   render();
   // Vuelta desde el banco (Enable Banking redirige aquí con ?code=…)
   const q = new URLSearchParams(location.search);
-  if (q.get('code')) {
+  if (q.get('compartir')) {
+    history.replaceState(null, '', location.pathname);
+    shareOpen();
+  } else if (q.get('code')) {
     const code = q.get('code');
     history.replaceState(null, '', location.pathname);
     const o = modal(

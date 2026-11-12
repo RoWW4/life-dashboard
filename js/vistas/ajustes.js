@@ -190,7 +190,12 @@ function robotsCard() {
   const row = j => {
     const bad =
       (j.fail_count || 0) > 0 ||
-      inc.some(x => (x.key === 'avisos' && j.job === 'task-reminders') || (x.key === 'banco' && j.job === 'bank-sync') || (x.key.startsWith('banco:') && j.job === 'savings-sync'));
+      inc.some(
+        x =>
+          (x.key === 'avisos' && j.job === 'task-reminders') ||
+          (x.key === 'banco' && j.job === 'bank-sync') ||
+          (x.key.startsWith('banco:') && j.job === 'savings-sync')
+      );
     return (
       `<div class="row"><span class="g">${esc(ROBOTS[j.job] || j.job)}<em class="mu">${j.last_ok ? 'Funcionó bien ' + ago(j.last_ok) : 'Todavía no ha funcionado bien'}${j.fail_count ? ` · ${j.fail_count} fallo${j.fail_count > 1 ? 's' : ''} seguido${j.fail_count > 1 ? 's' : ''}` : ''}</em></span><span class="chip ${bad ? 'er' : 'ok'}">${bad ? 'Con fallos' : 'Funciona'}</span></div>` +
       (j.last_error

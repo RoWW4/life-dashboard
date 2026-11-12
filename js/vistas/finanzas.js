@@ -30,8 +30,6 @@ function bankCard(v) {
    Cada apunte es el saldo en una fecha; dep = dinero que metiste (+) o sacaste (−) ese día.
    Lo ganado es el saldo menos lo aportado, así que los intereses netos salen solos. */
 const SAV_TAX = 19;
-let savShow = false; // los importes de ahorro salen difuminados hasta pulsar el ojo (no se guarda)
-let accShow = false; // igual con el saldo de la cuenta en Finanzas
 const pct = n => n.toFixed(2).replace('.', ',').replace(/,?0+$/, '') + ' %';
 const money = v => `<span class="money">${v}</span>`;
 /* Estimación como la calcula la cuenta: interés diario (saldo × % anual / 365) que se acumula durante el mes;
@@ -218,9 +216,9 @@ function savCard() {
   return panel(
     'inv',
     'ahorro',
-    `${I('piggy-bank')} ${esc(s.name)} <span class="cnt">· Ahorro</span> <button class="ib" data-a="saveye" aria-label="${savShow ? 'Ocultar importes' : 'Mostrar importes'}" title="${savShow ? 'Ocultar importes' : 'Mostrar importes'}">${I(savShow ? 'eye-off' : 'eye')}</button><button class="ib" data-a="savcfg" aria-label="Editar cuenta">${I('pencil')}</button>`,
+    `${I('piggy-bank')} ${esc(s.name)} <span class="cnt">· Ahorro</span> <button class="ib" data-a="money" aria-label="${showMoney ? 'Ocultar importes' : 'Mostrar importes'}" title="${showMoney ? 'Ocultar importes' : 'Mostrar importes'}">${I(showMoney ? 'eye-off' : 'eye')}</button><button class="ib" data-a="savcfg" aria-label="Editar cuenta">${I('pencil')}</button>`,
     conn +
-      `<div class="${savShow ? '' : 'priv'}">${body}</div>` +
+      `<div class="${showMoney ? '' : 'priv'}">${body}</div>` +
       (auto
         ? '<div class="mu" style="margin-top:10px">El saldo y los movimientos llegan solos del banco una vez al día.</div>'
         : `<div class="f" style="margin:10px 0 0"><input id="sv1" type="date" value="${TD()}" aria-label="Fecha"><input id="sv2" inputmode="decimal" placeholder="Saldo real (€)"><input id="sv3" inputmode="decimal" placeholder="Metido (+) o sacado (−)" title="Opcional: dinero que metiste o sacaste ese día"><button class="btn" data-a="savadd">Apuntar saldo real</button></div>`),
@@ -466,23 +464,72 @@ function sincCard() {
 
 /* Saldo de la cuenta: S.acct = {bal, d, seen, t}. Se apunta solo al importar el extracto de la cuenta (PDF o .xls) o a mano con el lápiz
    (t = cuándo). Si la sincronización con el banco ha traído un saldo real más nuevo (BANK.balance), se enseña ese tal cual. */
-function acctHTML() {
+/* Saldo de hoy de la cuenta: {v, bank, d}; v = null si aún no hay ninguno. Lo usan la tarjeta del saldo y las metas de ahorro. */
+function acctBal() {
   // Al saldo apuntado se le suman los movimientos de la cuenta que han llegado al panel después (banco o importados), sin la prepago ni los apuntes a mano.
   // Solo los de fecha posterior al saldo: los de ese mismo día o antes ya están dentro de él aunque lleguen más tarde.
-  const a = S.acct,
-    later = new Set(a && a.seen != null ? S.bankSeen.slice(a.seen) : []),
-    nx = a ? S.tx.filter(x => (x.bank || x.xls) && !x.card && later.has(x.bank || x.xls) && x.date > a.d) : [],
-    now = a ? Math.round((a.bal + nx.reduce((s, x) => s + (x.t === 'i' ? x.amt : -x.amt), 0)) * 100) / 100 : 0,
-    eye = `<button class="ib" data-a="acceye" aria-label="${accShow ? 'Ocultar saldo' : 'Mostrar saldo'}" title="${accShow ? 'Ocultar saldo' : 'Mostrar saldo'}">${I(accShow ? 'eye-off' : 'eye')}</button>`;
-  const bk = BANK && BANK.balance != null && BANK.balance_at && (!a || !a.t || new Date(BANK.balance_at).getTime() > a.t);
-  if (bk)
-    return `<div class="acct ${accShow ? '' : 'priv'}"><div class="k">${I('landmark')} Saldo de la cuenta <span class="bk">(Openbank)</span>${eye}<button class="ib" data-a="accedit" aria-label="Cambiar saldo" title="Cambiar saldo a mano">${I('pencil')}</button></div><b>${money(eur(+BANK.balance))}</b><span class="d">Del banco · ${ago(BANK.balance_at)}</span></div>`;
+  const a = S.acct;
+  if (BANK && BANK.balance != null && BANK.balance_at && (!a || !a.t || new Date(BANK.balance_at).getTime() > a.t))
+    return { v: +BANK.balance, bank: true, d: BANK.balance_at };
+  if (!a) return { v: null };
+  const later = new Set(a.seen != null ? S.bankSeen.slice(a.seen) : []),
+    nx = S.tx.filter(x => (x.bank || x.xls) && !x.card && later.has(x.bank || x.xls) && x.date > a.d);
+  return {
+    v: Math.round((a.bal + nx.reduce((s, x) => s + (x.t === 'i' ? x.amt : -x.amt), 0)) * 100) / 100,
+    d: nx.reduce((m, x) => (x.date > m ? x.date : m), a.d)
+  };
+}
+function acctHTML() {
+  const b = acctBal(),
+    eye = `<button class="ib" data-a="money" aria-label="${showMoney ? 'Ocultar saldo' : 'Mostrar saldo'}" title="${showMoney ? 'Ocultar saldo' : 'Mostrar saldo'}">${I(showMoney ? 'eye-off' : 'eye')}</button>`;
   return (
-    `<div class="acct ${accShow ? '' : 'priv'}"><div class="k">${I('landmark')} Saldo de la cuenta <span class="bk">(Openbank)</span>${eye}<button class="ib" data-a="accedit" aria-label="Cambiar saldo" title="Cambiar saldo a mano">${I('pencil')}</button></div>` +
-    (a
-      ? `<b>${money(eur(now))}</b><span class="d">Actualizado a ${fd(nx.reduce((m, x) => (x.date > m ? x.date : m), a.d))}</span>`
-      : `<b>—</b>`) +
+    `<div class="acct ${showMoney ? '' : 'priv'}"><div class="k">${I('landmark')} Saldo de la cuenta <span class="bk">(Openbank)</span>${eye}<button class="ib" data-a="accedit" aria-label="Cambiar saldo" title="Cambiar saldo a mano">${I('pencil')}</button></div>` +
+    (b.v === null
+      ? `<b>—</b>`
+      : `<b>${money(eur(b.v))}</b><span class="d">${b.bank ? 'Del banco · ' + ago(b.d) : 'Actualizado a ' + fd(b.d)}</span>`) +
     `</div>`
+  );
+}
+
+/* Metas de ahorro: el saldo de la cuenta se reparte en «huchas» con nombre (no se mueve dinero de verdad).
+   S.goals = [{id, n (nombre), obj (objetivo €), amt (apartado €), d ('AAAA-MM', mes objetivo; '' sin fecha), c (color), c0 (creada, AAAA-MM-DD), a0 (apartado al crearla)}].
+   Lo que no está en ninguna meta sale como «Sin asignar». Con fecha: cuánto apartar al mes y si vas bien
+   (lo apartado desde que se creó frente a lo que tocaría a estas alturas, en línea recta hasta la fecha). */
+const GCOL = ['#2f9bff', '#3ccf82', '#f2b13d', '#9b6dff', '#ee8fb6', '#22c3b4', '#ff7a59'];
+const mDiff = (a, b) => (+b.slice(0, 4) - +a.slice(0, 4)) * 12 + (+b.slice(5, 7) - +a.slice(5, 7));
+function goalSt(g) {
+  const td = TD(),
+    left = Math.max(0, g.obj - g.amt);
+  if (g.amt >= g.obj) return { k: 'ok', t: 'Conseguida', left, mo: 0 };
+  if (!g.d) return { k: 'mu', t: 'Sin fecha', left, mo: 0 };
+  const months = mDiff(td, g.d);
+  if (months < 0) return { k: 'er', t: 'Fecha pasada', left, mo: 0 };
+  const mo = left / Math.max(1, months),
+    tot = Math.max(1, mDiff(g.c0 || td, g.d)),
+    gone = Math.min(tot, Math.max(0, mDiff(g.c0 || td, td))),
+    a0 = g.a0 || 0,
+    want = a0 + ((g.obj - a0) * gone) / tot;
+  return g.amt + 0.5 >= want ? { k: 'ok', t: 'Vas bien', left, mo } : { k: 'wa', t: 'Te retrasas', left, mo };
+}
+function goalsCard() {
+  const L = S.goals,
+    b = acctBal(),
+    asg = L.reduce((s, g) => s + (+g.amt || 0), 0),
+    free = b.v === null ? null : Math.round((b.v - asg) * 100) / 100;
+  const rows = L.map(g => {
+    const st = goalSt(g),
+      p = g.obj > 0 ? Math.min(100, (g.amt / g.obj) * 100) : 0,
+      when = g.d ? cap(mLabel(g.d)) : 'Sin fecha';
+    return `<div class="goal${st.t === 'Conseguida' ? ' done' : ''}" style="--gc:${g.c || 'var(--ac)'}"><div class="gt"><button class="link g" data-a="goaled" data-i="${g.id}" title="Editar meta"><b>${esc(g.n)}</b></button><span class="chip ${st.k}">${st.t}</span><button class="ib" data-a="goalmv" data-i="${g.id}" aria-label="Apartar o sacar dinero de «${esc(g.n)}»" title="Apartar o sacar">${I('arrow-left-right')}</button></div><div class="gbar" role="img" aria-label="${Math.round(p)} % de la meta"><i style="width:${p.toFixed(1)}%"></i></div><div class="gd"><span>${eur(g.amt)} de ${eur(g.obj)} · ${Math.round(p)} %</span><span>${when}${st.mo ? ' · aparta ' + eur(Math.ceil(st.mo)) + '/mes' : ''}</span></div></div>`;
+  });
+  return panel(
+    'fin',
+    'metas',
+    `${I('target')} Metas de ahorro <span class="cnt">· ${L.length}</span>`,
+    (L.length
+      ? `<div class="goals">${rows.join('')}</div>`
+      : empty('Aún no hay metas. Crea una y apártale dinero del saldo de la cuenta.')) +
+      `<div class="gfoot">${free === null ? '<span class="mu">Sin saldo de la cuenta todavía</span>' : free < 0 ? `<span class="er">Has apartado ${eur(-free)} más de lo que hay en la cuenta</span>` : `<span class="mu">Sin asignar: <b>${eur(free)}</b> de ${eur(b.v)}</span>`}<button class="btn sm" data-a="goaladd">${I('plus', 'sm')} Meta</button></div>`
   );
 }
 
@@ -538,7 +585,8 @@ function vFin() {
         'wide'
       ),
       reglas: rulesCard(),
-      sinc: sincCard()
+      sinc: sincCard(),
+      metas: goalsCard()
     };
     // La tarjeta del banco (última sincronización…) solo está en Ajustes.
     VIS.fin = ord(

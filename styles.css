@@ -426,6 +426,12 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 /* Privacidad: importes difuminados hasta pulsar el ojo */
 /* Importe oculto: difuminado fuerte, proporcional al tamaño de la cifra, para que no se pueda leer */
 .priv .money{filter:blur(.32em);user-select:none}
+/* Ojo general (render.js / interfaz.js): con body.priv se difuminan todas las cifras; tocar una la enseña solo a ella */
+.priv .money:not(.peek){cursor:pointer}
+.priv .money.peek{filter:none;user-select:auto}
+.brand .bn{flex:1;min-width:0}
+.brand .eyeg{color:var(--mu);margin-right:-4px}
+.brand .eyeg .i{width:17px;height:17px}
 .acct{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh);margin-bottom:12px;display:flex;flex-direction:column;gap:4px}
 .acct .k{font-size:13px;font-weight:500;color:var(--mu);display:flex;align-items:center;gap:6px}
 .acct .k .i{width:15px;height:15px;color:var(--mu)}
@@ -450,6 +456,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
   .nv:hover{background:none}.nv.on:hover{background:var(--acs)}.nv.on .badge{background:var(--ac)}
   .badge{position:absolute;top:2px;left:calc(50% + 5px);min-width:16px;height:16px;font-size:9.5px;padding:0 4px}
   .ajb{display:grid;position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px;z-index:5}
+  .ajb.eyeb{right:60px}
   main{padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(160px + env(safe-area-inset-bottom,0px))}
   h2{font-size:23px}.hdr{margin-bottom:18px}
   .fabs{right:16px;bottom:calc(80px + env(safe-area-inset-bottom,0px))}
@@ -830,3 +837,32 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 @media(min-width:761px) and (max-width:1180px){.savk{grid-template-columns:1fr 1fr}}
 /* Lo marcado como oculto (hidden) no se ve nunca, aunque otra regla le dé display (p. ej. los campos de Facturas que no tocan) */
 [hidden]{display:none!important}
+/* ---------- Metas de ahorro (Finanzas) ---------- */
+.goals{display:flex;flex-direction:column;gap:14px}
+.goal{display:flex;flex-direction:column;gap:6px}
+.goal .gt{display:flex;align-items:center;gap:8px}
+.goal .gt .g{flex:1;min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.goal .gt .ib{margin:-6px -6px -6px 0}
+.gbar{height:9px;border-radius:99px;background:color-mix(in srgb,var(--mu) 18%,transparent);overflow:hidden}
+.gbar i{display:block;height:100%;border-radius:99px;background:var(--gc);transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.goal.done .gbar i{background:linear-gradient(90deg,var(--gc),color-mix(in srgb,var(--gc) 55%,#fff))}
+.gd{display:flex;justify-content:space-between;gap:4px 10px;flex-wrap:wrap;font-size:12.5px;color:var(--mu);font-variant-numeric:tabular-nums}
+.gfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--sep);font-size:13.5px}
+.gfoot b{color:var(--tx)}
+.gcols{display:flex;gap:8px;flex-wrap:wrap}
+.gcols button{all:unset;cursor:pointer;width:26px;height:26px;border-radius:50%;background:var(--gc);box-shadow:inset 0 0 0 2px color-mix(in srgb,#000 12%,transparent)}
+.gcols button[aria-checked=true]{box-shadow:0 0 0 2px var(--el),0 0 0 4px var(--gc)}
+.gcols button:focus-visible{outline:2px solid var(--ac);outline-offset:3px}
+/* ---------- Compartir al panel (ventana de formularios.js) ---------- */
+.shf{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:var(--card2);margin-bottom:6px;font-size:14px;min-width:0}
+.shf span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.shf em{font-style:normal;color:var(--mu);font-size:12px}
+.shtx{padding:10px 12px;border-radius:12px;background:var(--card2);font-size:14px;max-height:160px;overflow:auto;overflow-wrap:anywhere}
+.shseg{flex-wrap:wrap}
+.shck{display:flex;align-items:center;gap:10px;font-size:14px;padding:4px 0}
+/* ---------- Borde de luz arcoíris en «Lo más importante» (.card.hl de Mi día) ----------
+   Solo el borde: un degradado cónico que gira, recortado con una máscara para que no tape el fondo de la tarjeta. */
+@property --lb{syntax:"<angle>";inherits:false;initial-value:0deg}
+.card.hl{position:relative;border-color:transparent}
+.card.hl::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:2px;pointer-events:none;background:conic-gradient(from var(--lb),#ff4d4d,#ffb020,#3ccf82,#2f9bff,#9b4dff,#ff4d4d);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);animation:lbspin 6s linear infinite}
+@keyframes lbspin{to{--lb:360deg}}
+@media (prefers-reduced-motion: reduce){.card.hl::before{animation:none}}

@@ -12,7 +12,7 @@ function nav() {
   const c = pend(),
     n = { tareas: c.t, compra: c.s, fact: c.b };
   $('#nav').innerHTML =
-    `<div class="brand"><span class="logo"><i><b></b><b></b><b></b><b></b></i></span>${APP}</div>` +
+    `<div class="brand"><span class="logo"><i><b></b><b></b><b></b><b></b></i></span><span class="bn">${APP}</span>${eyeBtn('ib eyeg')}</div>` +
     secs()
       .map(
         ([k, e, l, s]) =>
@@ -24,6 +24,9 @@ function nav() {
   const a = $('#ajb');
   a.innerHTML = I('settings');
   a.classList.toggle('on', view === 'ajus');
+  // Móvil: el ojo de los importes, a la izquierda de Ajustes.
+  $('#eyeb').outerHTML = eyeBtn('ajb eyeb').replace('<button ', '<button id="eyeb" ');
+  document.body.classList.toggle('priv', !showMoney);
 }
 function render() {
   theme();

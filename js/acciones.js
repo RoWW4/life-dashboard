@@ -347,6 +347,15 @@ const A = {
       String(S.budget || '')
     ),
   ef: i => fixedForm(S.fixed.find(x => x.id === i)),
+  goaladd: () => goalForm(),
+  goaled: i => {
+    const g = S.goals.find(x => x.id === i);
+    if (g) goalForm(g);
+  },
+  goalmv: i => {
+    const g = S.goals.find(x => x.id === i);
+    if (g) goalMove(g);
+  },
   savcfg: () => {
     const s = S.sav || { name: 'Cuenta de ahorro', rate: 3, tax: SAV_TAX, snaps: [] };
     const o = modal(
@@ -387,14 +396,7 @@ const A = {
     ch();
     toast('🐷 Saldo actualizado');
   },
-  saveye: () => {
-    savShow = !savShow;
-    render();
-  },
-  acceye: () => {
-    accShow = !accShow;
-    render();
-  },
+  money: togMoney,
   accedit: () =>
     CF(
       'Saldo actual de la cuenta (€)',
