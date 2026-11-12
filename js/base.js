@@ -81,7 +81,8 @@ document.addEventListener('securitypolicyviolation', e =>
 const CATS = [
   'Hogar',
   'Supermercado',
-  'Transporte',
+  'Coche',
+  'Personal',
   'Restaurantes',
   'Ocio',
   'Suscripciones',
@@ -99,12 +100,15 @@ const NOCNT = 'Traspasos',
   EXMIN = 300,
   DUPD = 3; // EXMIN: desde este importe un gasto ofrece marcarse como extraordinario · DUPD: días entre un gasto a mano y el del banco para avisar de duplicado
 /* Categorías de un ingreso: Nómina, Otros, Traspasos o una de gasto (= devolución: te devuelven parte de ese gasto, p. ej. un Bizum por una cena; resta de esa categoría y no cuenta como ingreso). */
+/* Categorías de gasto: todas menos Nómina (Traspasos sí: un traspaso a otra cuenta tuya sale como gasto que no cuenta). */
+const GCATS = CATS.filter(c => c !== 'Nómina');
 const ICATS = ['Nómina', 'Otros', 'Traspasos', ...CATS.filter(c => !['Nómina', 'Otros', 'Traspasos'].includes(c))];
 const CI = {
   Traspasos: 'arrow-left-right',
   Hogar: 'house',
   Supermercado: 'shopping-basket',
-  Transporte: 'fuel',
+  Coche: 'car',
+  Personal: 'user',
   Restaurantes: 'utensils',
   Ocio: 'clapperboard',
   Suscripciones: 'tv',
@@ -120,7 +124,8 @@ const PAL = {
   Traspasos: '#64748b',
   Hogar: '#0099ff',
   Supermercado: '#2fcf7a',
-  Transporte: '#f5a524',
+  Coche: '#f5a524',
+  Personal: '#14b8a6',
   Restaurantes: '#ff6b6b',
   Ocio: '#a78bfa',
   Suscripciones: '#22d3ee',
@@ -349,7 +354,7 @@ const KWC = [
     ]
   ],
   [
-    'Transporte',
+    'Coche',
     [
       ' repsol',
       ' e s ',
@@ -416,6 +421,10 @@ const KWC = [
       ' nintendo',
       ' museo'
     ]
+  ],
+  [
+    'Personal',
+    [' peluquer', ' barberia', ' estetica', ' perfumeria', ' druni', ' primor', ' sephora', ' douglas', ' manicura', ' depilacion']
   ],
   ['Viajes', [' hotel', ' booking', ' airbnb', ' ryanair', ' vueling', ' iberia', ' easyjet', ' aena', ' alsa ', ' blablacar', ' expedia']],
   [

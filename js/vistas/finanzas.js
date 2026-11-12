@@ -453,7 +453,7 @@ function sincCard() {
         L.map(
           x =>
             `<div class="row">${tile(CI.Otros || 'package', col('Otros'))}<span class="g">${esc(x.desc || 'Sin concepto')}<span class="meta"><span class="mu">${fd(x.date)}</span><select class="sel" data-a="txc" data-i="${x.id}" aria-label="Categoría">${opts(
-              CATS.filter(c => c !== 'Nómina'),
+              GCATS,
               x.cat
             )}</select><button class="chip" data-a="txk" data-i="${x.id}" title="Está bien en «Otros»: quitar de esta bandeja">Dejar en Otros</button><button class="chip" data-a="txen" data-i="${x.id}" title="Compra para otra persona que te paga en mano: no cuenta como gasto tuyo">${I('hand-coins', 'sm')} Encargo</button></span></span><span class="amt neg">−${eur(x.amt)}</span></div>`
         ),

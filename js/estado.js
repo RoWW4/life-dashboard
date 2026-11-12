@@ -102,9 +102,9 @@ function seed() {
       if (x.cat === 'Suscripciones') x.cat = classify(x.desc, x.t);
     })
   );
-  // Categorías renombradas: Vivienda → Hogar y Alimentación → Supermercado (movimientos, partes de un gasto dividido,
+  // Categorías renombradas: Vivienda → Hogar, Alimentación → Supermercado y Transporte → Coche (movimientos, partes de un gasto dividido,
   // reglas y facturas). Siempre, no solo una vez: así se corrige también lo que guarde otro dispositivo con la versión anterior.
-  const REN = { Vivienda: 'Hogar', Alimentación: 'Supermercado' },
+  const REN = { Vivienda: 'Hogar', Alimentación: 'Supermercado', Transporte: 'Coche' },
     ren = o => {
       if (Array.isArray(o)) o.forEach(ren);
       else if (o && typeof o === 'object')

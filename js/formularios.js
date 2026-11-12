@@ -119,7 +119,7 @@ function taskForm(t, pre) {
 }
 function txForm() {
   const o = modal(
-    `<h3>Nuevo movimiento</h3><div class="fs"><div class="seg" id="ftt"><button class="on" data-t="g">${I('arrow-down-left', 'sm')} Gasto</button><button data-t="i">${I('arrow-up-right', 'sm')} Ingreso</button></div><div class="two"><label>Importe (€)<input id="fx2" inputmode="decimal" placeholder="0,00"></label><label>Fecha<input id="fx4" type="date" value="${TD()}"></label></div><label>Descripción<input id="fx5" placeholder="Ej. Mercadona"></label><label>Categoría<select id="fx3">${opts(CATS, 'Otros')}</select></label><div class="mu" id="fxh" style="margin-top:-4px" hidden></div></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Añadir</button></div>`
+    `<h3>Nuevo movimiento</h3><div class="fs"><div class="seg" id="ftt"><button class="on" data-t="g">${I('arrow-down-left', 'sm')} Gasto</button><button data-t="i">${I('arrow-up-right', 'sm')} Ingreso</button></div><div class="two"><label>Importe (€)<input id="fx2" inputmode="decimal" placeholder="0,00"></label><label>Fecha<input id="fx4" type="date" value="${TD()}"></label></div><label>Descripción<input id="fx5" placeholder="Ej. Mercadona"></label><label>Categoría<select id="fx3">${opts(GCATS, 'Otros')}</select></label><div class="mu" id="fxh" style="margin-top:-4px" hidden></div></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Añadir</button></div>`
   );
   let t = 'g',
     touched = false;
@@ -139,7 +139,10 @@ function txForm() {
       (b.onclick = () => {
         t = b.dataset.t;
         o.querySelectorAll('#ftt button').forEach(x => x.classList.toggle('on', x === b));
-        if (!touched) o.querySelector('#fx3').value = t === 'i' ? 'Nómina' : classify(o.querySelector('#fx5').value);
+        const sc = o.querySelector('#fx3'),
+          v = sc.value;
+        sc.innerHTML = opts(t === 'i' ? ICATS : GCATS, v); // en un gasto no sale Nómina
+        if (!touched) sc.value = t === 'i' ? 'Nómina' : classify(o.querySelector('#fx5').value);
         hUpd();
       })
   );
@@ -179,7 +182,7 @@ function txEdit(x, dr) {
     sp = isSplit(x),
     d = { t: x.t, desc: x.desc || '', amt: (+x.amt).toFixed(2).replace('.', ','), date: x.date, cat: x.cat, note: x.note || '', ...dr },
     gi = d.t === 'g';
-  const cats = gi ? CATS.filter(c => c !== 'Nómina') : ICATS;
+  const cats = gi ? GCATS : ICATS;
   const o = modal(
     `<h3>Editar ${gi ? 'gasto' : 'ingreso'}</h3><div class="fs">${bk || sp ? '' : `<div class="seg" id="ext"><button class="${gi ? 'on' : ''}" data-t="g">${I('arrow-down-left', 'sm')} Gasto</button><button class="${gi ? '' : 'on'}" data-t="i">${I('arrow-up-right', 'sm')} Ingreso</button></div>`}<label>Descripción<input id="ex1" value="${esc(d.desc)}"></label><div class="two"><label>Importe (€)<input id="ex2" inputmode="decimal" value="${esc(d.amt)}" ${bk ? 'disabled' : ''}></label><label>Fecha<input id="ex3" type="date" value="${d.date}" ${bk ? 'disabled' : ''}></label></div>${bk ? `<div class="mu" style="margin-top:-4px">${I('landmark', 'sm')} Viene del banco: el importe, la fecha y el tipo no se pueden cambiar.</div>` : ''}${
       sp
@@ -280,7 +283,7 @@ function txEdit(x, dr) {
    La última parte es lo que falta hasta el total, así siempre cuadra. Se guarda en x.parts (ver isSplit en interfaz.js). */
 function splitForm(x) {
   const ENC = '__enc',
-    cats = CATS.filter(c => c !== 'Nómina'),
+    cats = GCATS,
     r2 = n => Math.round(n * 100) / 100;
   let P = isSplit(x)
     ? x.parts.map(p => ({ amt: (+p.amt).toFixed(2).replace('.', ','), cat: p.enc ? ENC : p.cat }))
