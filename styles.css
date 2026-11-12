@@ -927,3 +927,12 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .gempty b{color:var(--tx)}
 .gatos.mini{width:170px;padding:8px 10px 5px;border-radius:12px;box-shadow:none}
 .card h3 .movadd .i{color:currentColor;width:14px;height:14px}
+/* Compra: más usadas */
+.shq{margin-top:14px;padding-top:12px;border-top:1px solid var(--sep)}
+.shqh{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--mu);margin-bottom:8px}
+.shqh span{display:inline-flex;align-items:center;gap:6px}
+.shqh .link{margin-left:auto;font-size:12.5px;color:var(--ac2);font-weight:600}
+.shqc{display:flex;flex-wrap:wrap;gap:6px}
+.shqc .chip{cursor:pointer;font-size:13px;padding:6px 11px;display:inline-flex;align-items:center;gap:5px}
+.shqc .chip .i{color:var(--mu)}
+.shqc .chip.del{color:var(--er);background:var(--ers);box-shadow:none}.shqc .chip.del .i{color:var(--er)}

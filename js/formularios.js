@@ -766,7 +766,7 @@ async function shareOpen() {
     }
     const L = (lines.length ? lines : [first || urlIn]).filter((_, i) => (o.querySelector(`[data-l="${i}"]`) || {}).checked);
     if (!L.length) return toast('No hay nada marcado');
-    L.forEach(x => S.shop.push({ id: id(), name: cap(x.slice(0, 80)), qty: 1, price: 0, done: false }));
+    L.forEach(x => shopAdd(x.slice(0, 80)));
     o.remove();
     ch();
     toast(`🛒 ${L.length} cosa${L.length === 1 ? '' : 's'} en la compra`);

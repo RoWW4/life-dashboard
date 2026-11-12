@@ -145,9 +145,25 @@ const A = {
     }),
   as: () => {
     if (!V('s1')) return toast('Escribe un producto');
-    S.shop.push({ id: id(), name: cap(V('s1')), qty: Math.max(1, +V('s2') || 1), price: pnum(V('s3')) || 0, done: false });
+    shopAdd(V('s1'), Math.max(1, +V('s2') || 1), pnum(V('s3')) || 0);
     ch();
     $('#s1') && $('#s1').focus();
+  },
+  sq: i => {
+    const o = S.shopN[i];
+    if (!o) return;
+    if (shopQEdit) {
+      delete S.shopN[i];
+      return ch();
+    }
+    if (S.shop.some(x => !x.done && shopKey(x.name) === i)) return toast('Ya está en la lista');
+    shopAdd(o.n, 1, o.p || 0);
+    ch();
+    toast('🛒 ' + o.n + ' añadido');
+  },
+  sqe: () => {
+    shopQEdit = !shopQEdit;
+    render();
   },
   ts: i => {
     const s = S.shop.find(x => x.id === i);

@@ -26,6 +26,7 @@ const def = () => ({
   gacct: '',
   sav: null,
   goals: [],
+  shopN: {},
   bar: null,
   _ts: 0
 });
@@ -49,6 +50,7 @@ function normalize(o) {
   ])
     if (!Array.isArray(s[k])) s[k] = [];
   if (!s.order || typeof s.order !== 'object') s.order = {};
+  if (!s.shopN || typeof s.shopN !== 'object' || Array.isArray(s.shopN)) s.shopN = {};
   return s;
 }
 let S = normalize(
@@ -115,6 +117,14 @@ function seed() {
           } else if (o[k] && typeof o[k] === 'object') ren(o[k]);
     };
   ren([S.tx, S.rules, S.fixed]);
+  // «Más usadas» de la compra: se empieza con lo que ya hay en la lista.
+  once('shopN-v1', () =>
+    S.shop.forEach(x => {
+      const k = shopKey(x.name),
+        o = S.shopN[k] || { c: 0 };
+      S.shopN[k] = { n: x.name, c: o.c + 1, t: TD(), ...(x.price ? { p: x.price } : {}) };
+    })
+  );
   // La carpeta de documentos «Identidad» pasa a llamarse «Personal» (como en Drive y en el bot).
   once('doc-personal-v1', () =>
     S.docs.forEach(d => {

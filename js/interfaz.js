@@ -790,3 +790,16 @@ function countUp() {
     requestAnimationFrame(step);
   });
 }
+
+/* ---------- Lista de la compra: «más usadas» ----------
+   Cada producto que se añade (a mano, por voz o compartido) suma uno en S.shopN = {clave: {n, c (veces), t (última vez), p (precio)}}.
+   La sección Compra enseña las más usadas como botones para añadirlas de un toque. */
+const shopKey = n => String(n).trim().toLowerCase();
+function shopAdd(name, qty = 1, price = 0) {
+  name = cap(String(name).trim());
+  S.shop.push({ id: id(), name, qty, price, done: false });
+  const k = shopKey(name),
+    o = S.shopN[k] || { c: 0 },
+    p = price || o.p;
+  S.shopN[k] = { n: name, c: o.c + 1, t: TD(), ...(p ? { p } : {}) };
+}

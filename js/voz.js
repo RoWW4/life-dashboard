@@ -12,7 +12,7 @@ function addShop(txt) {
         q = m ? +m[1] || NW[m[1].toLowerCase()] : 1,
         name = cap(m ? m[2] : x);
       if (!S.shop.some(y => !y.done && y.name.toLowerCase() === name.toLowerCase())) {
-        S.shop.push({ id: id(), name, qty: q, price: 0, done: false });
+        shopAdd(name, q, 0);
         n++;
       }
     });
