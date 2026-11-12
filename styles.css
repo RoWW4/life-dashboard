@@ -872,11 +872,9 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .reord #m .card h3{margin:0}
 /* Asa en pantallas táctiles: sin menú ni selección al dejarla pulsada */
 @media (pointer: coarse){.hd{-webkit-touch-callout:none;touch-action:none}}
-/* ---------- Pantalla de carga (index.html) ----------
-   Dos gatitos pixelados sentados mirándose (mueven la cola, parpadean y dan saltitos, con un corazón entre ellos) y abajo van cambiando frases (arranque.js).
-   Mientras carga, el menú vacío no se enseña (antes se veía la barra inferior sin iconos). */
+/* Mientras carga, el menú vacío no se enseña (se veía la barra inferior sin iconos). */
 #nav:empty{visibility:hidden}
-.boot{min-height:70vh;min-height:70dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;color:var(--mu);text-align:center}
+/* Gatitos pixelados («Lo más importante» vacío, plantilla tplGatos de index.html) */
 .gatos{width:min(300px,78vw);height:auto;image-rendering:pixelated;overflow:visible;box-sizing:border-box;padding:14px 18px 10px;border-radius:18px;background:#fbf3e6;box-shadow:0 0 0 4px color-mix(in srgb,#fbf3e6 35%,transparent),0 18px 40px -18px rgba(0,0,0,.6)}
 .gatos .psh{fill:#e6dccb}
 /* Animación «a saltitos» (steps), como un videojuego antiguo: cola arriba/abajo, parpadeo, saltito y corazón que sube */
@@ -893,10 +891,7 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 @keyframes pojos{0%{opacity:0}92%{opacity:1}97%{opacity:0}}
 @keyframes psalto{0%{transform:translateY(0)}10%{transform:translateY(-1px)}20%{transform:translateY(0)}}
 @keyframes pcorazon{0%{transform:translateY(2px);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translateY(-4px);opacity:0}}
-#bootTxt{margin:0;font:11px/1.8 'Press Start 2P',ui-monospace,monospace;letter-spacing:.02em;min-height:1.8em;padding:0 16px}
-#bootTxt.bootin{animation:bootp .35s ease}
-@keyframes bootp{from{opacity:0;transform:translateY(6px)}}
-@media (prefers-reduced-motion: reduce){.gatos *,#bootTxt.bootin{animation:none!important}}
+@media (prefers-reduced-motion: reduce){.gatos *{animation:none!important}}
 .fabs[hidden]{display:none!important}
 /* Desplegable propio en pantallas táctiles (interfaz.js, ddOpen) */
 .dd{position:fixed;z-index:80;overflow:auto;overscroll-behavior:contain;padding:6px;border-radius:14px;background:var(--el);border:1px solid var(--bd2);box-shadow:var(--sh2);animation:ddin .14s ease-out;transform-origin:top}
