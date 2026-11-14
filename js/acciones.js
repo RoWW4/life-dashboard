@@ -17,16 +17,10 @@ const A = {
     window.scrollTo(0, 0);
   },
   ckm: () => carKmForm(),
-  cfu: i => carFuelForm(i ? carS().fuel.find(f => f.id === i) : null),
   cvis: i => carVisForm(i ? carS().vis.find(v => v.id === i) : null),
   cmt: i => carMtForm(i ? carS().mt.find(x => x.id === i) : null),
   cinf: () => carInfoForm(),
   ccdoc: () => docForm(null, { cat: 'Coche' }),
-  ccp: i =>
-    navigator.clipboard
-      .writeText(i)
-      .then(() => toast('Copiado'))
-      .catch(() => toast('No se pudo copiar')),
   sd: i => {
     selD = i;
     render();

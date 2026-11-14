@@ -827,40 +827,14 @@ function carKmForm() {
   };
   o.querySelector('#ck1').focus();
 }
-/* Repostaje: km y litros para el consumo. El gasto llega del banco; el importe aquí solo da el precio por litro. */
-function carFuelForm(f) {
-  const n = !f,
-    c = carS();
-  f = f || { d: TD(), km: '', l: '', amt: '', full: true };
-  const o = modal(
-    `<h3>${n ? 'Repostaje' : 'Editar repostaje'}</h3><div class="fs"><div class="two"><label>Fecha<input id="cf1" type="date" value="${f.d}"></label><label>Km del coche<input id="cf2" inputmode="numeric" value="${hasN(f.km) ? kmf(f.km) : ''}" placeholder="Ej. 48.215"></label></div><div class="two"><label>Litros<input id="cf3" inputmode="decimal" value="${carNum(f.l)}" placeholder="0,0"></label><label>Importe (opcional)<input id="cf4" inputmode="decimal" value="${carNum(f.amt)}" placeholder="0,00"></label></div><div class="mu">El gasto ya llega del banco: el importe solo sirve para el precio por litro. Con km y litros de dos repostajes sale el consumo.</div></div><div class="acts">${n ? '' : '<button class="btn ghost danger" id="fdel">Eliminar</button>'}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">${n ? 'Añadir' : 'Guardar'}</button></div>`
-  );
-  o.querySelector('#ok').onclick = () => {
-    const v = k => o.querySelector(k).value.trim(),
-      x = {
-        d: v('#cf1') || TD(),
-        km: v('#cf2') ? Math.round(pnum(v('#cf2'))) : '',
-        l: v('#cf3') ? pnum(v('#cf3')) : '',
-        amt: v('#cf4') ? pnum(v('#cf4')) : ''
-      };
-    if (!hasN(x.km) && !hasN(x.l)) return toast('Indica al menos los km o los litros');
-    if ([x.km, x.l, x.amt].some(y => y !== '' && !(y > 0))) return toast('Revisa los números');
-    if (n) c.fuel.push({ id: id(), ...x });
-    else Object.assign(f, x);
-    o.remove();
-    ch();
-    toast(n ? 'Repostaje apuntado' : 'Guardado');
-  };
-  if (!n) o.querySelector('#fdel').onclick = () => carDel(o, c.fuel, f, 'este repostaje');
-  o.querySelector('#cf2').focus();
-}
-/* Visita al taller: qué se hizo, km, importe y qué mantenimientos quedan hechos (su «última vez» pasa a ser esta visita). */
+/* Lo que se le hizo al coche: título, detalle (una cosa por línea), km, taller e importe, y qué mantenimientos quedan hechos
+   (su «última vez» pasa a ser esta). */
 function carVisForm(v) {
   const n = !v,
     c = carS();
-  v = v || { d: TD(), km: '', what: '', where: '', amt: '', note: '', mt: [] };
+  v = v || { d: TD(), km: '', what: '', det: '', where: '', amt: '', mt: [] };
   const o = modal(
-    `<h3>${n ? 'Visita al taller' : 'Editar visita'}</h3><div class="fs"><label>Qué se hizo<input id="cv1" value="${esc(v.what)}" placeholder="Ej. Revisión anual, cambio de ruedas…"></label><div class="two"><label>Fecha<input id="cv2" type="date" value="${v.d}"></label><label>Km del coche<input id="cv3" inputmode="numeric" value="${hasN(v.km) ? kmf(v.km) : ''}" placeholder="Ej. 48.215"></label></div><div class="two"><label>Taller<input id="cv4" value="${esc(v.where)}" placeholder="Opcional"></label><label>Importe<input id="cv5" inputmode="decimal" value="${carNum(v.amt)}" placeholder="Opcional"></label></div><label>Nota<input id="cv6" value="${esc(v.note)}" placeholder="Opcional"></label>${c.mt.length ? `<div><div class="mu" style="margin-bottom:6px">¿Qué mantenimientos quedan hechos?</div>${c.mt.map(x => `<label class="chk"><input type="checkbox" class="ck" data-m="${esc(x.id)}" ${(v.mt || []).includes(x.id) ? 'checked' : ''}> ${esc(x.n)}</label>`).join('')}</div>` : ''}</div><div class="acts">${n ? '' : '<button class="btn ghost danger" id="fdel">Eliminar</button>'}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">${n ? 'Añadir' : 'Guardar'}</button></div>`
+    `<h3>${n ? 'Mantenimiento hecho' : 'Editar'}</h3><div class="fs"><label>Qué fue<input id="cv1" value="${esc(v.what)}" placeholder="Ej. Revisión anual, cambio de ruedas…"></label><label>Detalle (una cosa por línea)<textarea id="cv6" rows="4" placeholder="Cambio de aceite&#10;Filtro de aire&#10;…">${esc(v.det || v.note || '')}</textarea></label><div class="two"><label>Fecha<input id="cv2" type="date" value="${v.d}"></label><label>Km del coche<input id="cv3" inputmode="numeric" value="${hasN(v.km) ? kmf(v.km) : ''}" placeholder="Ej. 48.215"></label></div><div class="two"><label>Taller<input id="cv4" value="${esc(v.where)}" placeholder="Opcional"></label><label>Importe<input id="cv5" inputmode="decimal" value="${carNum(v.amt)}" placeholder="Opcional"></label></div>${c.mt.length ? `<div><div class="mu" style="margin-bottom:6px">¿Qué mantenimientos quedan hechos?</div>${c.mt.map(x => `<label class="chk"><input type="checkbox" class="ck" data-m="${esc(x.id)}" ${(v.mt || []).includes(x.id) ? 'checked' : ''}> ${esc(x.n)}</label>`).join('')}</div>` : ''}</div><div class="acts">${n ? '' : '<button class="btn ghost danger" id="fdel">Eliminar</button>'}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">${n ? 'Añadir' : 'Guardar'}</button></div>`
   );
   o.querySelector('#ok').onclick = () => {
     const g = k => o.querySelector(k).value.trim(),
@@ -870,7 +844,7 @@ function carVisForm(v) {
         km: g('#cv3') ? Math.round(pnum(g('#cv3'))) : '',
         where: g('#cv4'),
         amt: g('#cv5') ? pnum(g('#cv5')) : '',
-        note: g('#cv6'),
+        det: o.querySelector('#cv6').value.trim(),
         mt: [...o.querySelectorAll('[data-m]')].filter(b => b.checked).map(b => b.dataset.m)
       };
     if (!x.what && !x.mt.length) return toast('Indica qué se hizo');
@@ -881,7 +855,10 @@ function carVisForm(v) {
         .join(', ');
     if ([x.km, x.amt].some(y => y !== '' && !(y > 0))) return toast('Revisa los números');
     if (n) c.vis.push({ id: id(), ...x });
-    else Object.assign(v, x);
+    else {
+      delete v.note;
+      Object.assign(v, x);
+    }
     // Los mantenimientos marcados toman esta visita como última vez (si es más reciente que la que tenían).
     c.mt
       .filter(m => x.mt.includes(m.id) && (!m.ld || m.ld <= x.d))
@@ -892,9 +869,9 @@ function carVisForm(v) {
       });
     o.remove();
     ch();
-    toast(n ? 'Visita apuntada' : 'Guardado');
+    toast(n ? 'Apuntado' : 'Guardado');
   };
-  if (!n) o.querySelector('#fdel').onclick = () => carDel(o, c.vis, v, 'esta visita');
+  if (!n) o.querySelector('#fdel').onclick = () => carDel(o, c.vis, v, 'esto del historial');
   o.querySelector('#cv1').focus();
 }
 /* Mantenimiento: cada cuánto (km, meses o los dos) y la última vez; o una próxima fecha fija (p. ej. la primera ITV). */
