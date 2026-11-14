@@ -1012,15 +1012,10 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 @media(min-width:761px){.carh{max-width:520px}}
 .cdot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--dis)}
 .cdot.er{background:var(--er)}.cdot.wa{background:var(--wa)}.cdot.ok{background:var(--ok)}
-.cgm{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
-.cgm>div:first-child{display:flex;flex-direction:column}
-/* Cuándo toca cada mantenimiento: nombre y estado arriba, barra de lo que va gastado y la regla debajo */
-.cmt{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:6px;width:100%;padding:11px 0;border-bottom:1px solid var(--sep)}
-.cmt:last-of-type{border-bottom:0}
-.cmt:hover .cmth b{color:var(--ac2)}.cmt:focus-visible{outline:2px solid var(--ac);border-radius:6px}
-.cmth{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.cmth b{font-weight:600}
-.cmt .mu{font-size:12.5px}
+.cgnav{display:flex;align-items:center;gap:6px;margin:-4px 0 6px}
+.cgnav b{flex:1;text-align:center;font-weight:600}
+.cgnav .ib:disabled{opacity:.3;cursor:default}
+.cgm{display:flex;align-items:baseline;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;padding:6px 0 14px;margin-bottom:4px;border-bottom:1px solid var(--sep)}
 /* Historial por año: una línea por visita; al tocarla se despliega el detalle */
 .cyh{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
 .cvis{border-bottom:1px solid var(--sep)}

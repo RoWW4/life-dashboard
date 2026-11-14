@@ -3,7 +3,8 @@
    lo gastado (de los movimientos con categoría Coche), historial del taller por año y ficha en texto.
    Datos en S.car: info (ficha), km (lecturas de km), mt (mantenimientos: cada cuánto y la última vez), vis (visitas al taller).
    Los gastos no se apuntan aquí: salen de Finanzas, así no se cuentan dos veces. */
-let carTab = 'res';
+let carTab = 'res',
+  carOff = 0; // mes de Gastos: 0 = el actual, -1 = el anterior…
 const CARC = '#f5a524';
 /* Mantenimientos de partida (con id fijo: si dos dispositivos los crean a la vez, se juntan en uno). */
 const CAR_MT0 = [
@@ -77,13 +78,6 @@ function carMt(x, K) {
             : fdc(nd);
   return { lvl, due: due || TD(), p, pill, nd, nk, kL, dL, kd };
 }
-const carRule = x =>
-  [
-    x.km ? 'Cada ' + kmf(x.km) + ' km' : '',
-    x.m ? (x.km ? 'o ' : 'Cada ') + (+x.m % 12 ? x.m + ' meses' : +x.m / 12 + (+x.m === 12 ? ' año' : ' años')) : ''
-  ]
-    .filter(Boolean)
-    .join(' ') || (x.nd ? 'Fecha fija' : 'Sin periodo');
 /* Lo próximo: mantenimientos con datos, pagos de Facturas con categoría Coche (seguro, impuesto…) y documentos de la carpeta Coche que vencen. */
 function carNext(c = carR(), K = carKm(c)) {
   const LV = { er: 0, wa: 1, ok: 2 };
@@ -127,6 +121,20 @@ const carWarn = () => (S.car ? carNext().filter(o => o.k === 'mt' && o.lvl === '
 /* Gastos: los movimientos con categoría Coche (también las partes de un gasto dividido; las devoluciones restan). */
 const carTx = () => TXP().filter(x => x.cat === 'Coche' && gAmt(x));
 
+/* Edad del coche desde la matriculación (vale fecha o solo mes): «3 años y 10 meses». */
+const carAge = r => {
+  if (!r) return '';
+  const a = new Date(r.length === 7 ? r + '-01T00:00' : r + 'T00:00'),
+    n = new Date();
+  let mm = (n.getFullYear() - a.getFullYear()) * 12 + n.getMonth() - a.getMonth() - (n.getDate() < a.getDate() ? 1 : 0);
+  if (mm < 0) return '';
+  const yy = Math.floor(mm / 12);
+  mm %= 12;
+  return (
+    [yy ? yy + (yy === 1 ? ' año' : ' años') : '', mm ? mm + (mm === 1 ? ' mes' : ' meses') : ''].filter(Boolean).join(' y ') ||
+    'menos de un mes'
+  );
+};
 /* ---------- pantalla ---------- */
 const carPill = (lvl, t) => `<span class="chip ${lvl === 'no' ? '' : lvl}">${esc(t)}</span>`;
 const carMtSub = (x, s) => {
@@ -144,11 +152,6 @@ const carNextRow = o => {
           : `data-a="ed" data-i="${o.doc.id}"`,
     sub = o.k === 'mt' ? carMtSub(o.x, o.s) : esc(o.sub);
   return `<div class="row"><span class="cdot ${o.lvl}"></span><button class="link" ${act}><span class="g"><span class="tt">${esc(o.n)}</span><br><span class="mu">${sub}</span></span></button>${carPill(o.lvl, o.pill)}</div>`;
-};
-const carMtRow = (x, K) => {
-  const s = carMt(x, K),
-    last = [x.ld ? fdc(x.ld) : '', hasN(x.lk) ? kmf(x.lk) + ' km' : ''].filter(Boolean).join(' a ');
-  return `<button class="cmt" data-a="cmt" data-i="${esc(x.id)}"><span class="cmth"><b>${esc(x.n)}</b>${carPill(s.lvl, s.pill)}</span>${s.lvl === 'no' ? '' : `<span class="bar"><div style="width:${Math.round(s.p * 100)}%;background:var(--${s.lvl})"></div></span>`}<span class="mu">${esc(carRule(x))}${last ? ' · Última: ' + esc(last) : ''}${s.lvl === 'no' ? ' · Toca para apuntar la última vez' : ' · ' + carMtSub(x, s)}</span></button>`;
 };
 /* Visita del historial: una línea; al tocarla se abre el detalle (lo que se hizo, taller, importe). */
 const carVisRow = v => {
@@ -182,9 +185,12 @@ function vCoche() {
   if (carTab === 'res') {
     const T = carTx(),
       sum = L => L.reduce((a, x) => a + gAmt(x), 0),
-      TM = T.filter(x => mon(x.date) === m).sort((a, b) => b.date.localeCompare(a.date)),
+      md = new Date(new Date().getFullYear(), new Date().getMonth() + carOff, 1),
+      gm = MN(md),
+      gy = gm.slice(0, 4),
+      TM = T.filter(x => mon(x.date) === gm).sort((a, b) => b.date.localeCompare(a.date)),
       nx = carNext(c, K),
-      mes = cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date()));
+      mes = cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(md)) + (gy === y ? '' : ' ' + gy);
     top = `<section class="carh" aria-label="Kilómetros"><div class="carhm"><span class="eyb">${I('gauge', 'sm')} Kilómetros</span>${
       K.cur !== null
         ? `<b>${kmf(K.cur)} <small>km</small></b><span class="carhs">Apuntado ${rel(K.d)}</span>`
@@ -195,14 +201,15 @@ function vCoche() {
         'coche',
         'prox',
         `${I('calendar-clock')} Lo próximo`,
-        nx.length ? fold('car-prox', nx.map(carNextRow), 5) : empty('Nada a la vista. Apunta la última ITV y revisión en Mantenimiento.'),
+        (nx.length ? fold('car-prox', nx.map(carNextRow), 5) : empty('Nada a la vista.')) +
+          `<button class="morebtn" data-a="cmt" data-i="">${I('plus')} Añadir fecha</button>`,
         'hl'
       ),
       gasto: panel(
         'coche',
         'gasto',
         `${I('wallet')} Gastos`,
-        `<div class="cgm"><div><span class="mu">${mes}</span><b class="big">${eur(sum(TM))}</b></div><div class="mu">En ${y}: ${eur(sum(T.filter(x => x.date.slice(0, 4) === y)))}</div></div>` +
+        `<div class="cgnav"><button class="ib" data-a="cgm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b>${mes}</b><button class="ib" data-a="cgm" data-i="1" aria-label="Mes siguiente" ${carOff ? '' : 'disabled'}>${I('chevron-right')}</button></div><div class="cgm"><b class="big">${eur(sum(TM))}</b><span class="mu">En ${gy}: ${eur(sum(T.filter(x => x.date.slice(0, 4) === gy)))}</span></div>` +
           (TM.length
             ? fold(
                 'car-mov',
@@ -210,31 +217,20 @@ function vCoche() {
                   x =>
                     `<div class="row">${tile('car', CARC)}<button class="link" data-a="etx" data-i="${x.id}"><span class="g"><span class="tt">${esc(x.desc || x.cat)}</span><br><span class="mu">${fdc(x.date)}${x.of ? ' · parte de un gasto dividido' : ''}</span></span></button><span class="amt ${gAmt(x) < 0 ? 'ok' : ''}">${gAmt(x) < 0 ? '+' : ''}${eur(Math.abs(gAmt(x)))}</span></div>`
                 ),
-                4
+                6
               )
-            : empty('Sin gastos del coche este mes.')) +
+            : empty('Sin gastos del coche en ' + mes.toLowerCase() + '.')) +
           `<div class="mu" style="margin-top:8px">Salen solos de los movimientos con categoría Coche.</div>`
       )
     };
   } else if (carTab === 'tal') {
-    const LV = { er: 0, wa: 1, ok: 2, no: 3 },
-      V = [...c.vis].sort((a, b) => b.d.localeCompare(a.d)),
+    const V = [...c.vis].sort((a, b) => b.d.localeCompare(a.d)),
       Y = [...new Set(V.map(v => v.d.slice(0, 4)))];
     C = {
-      mt: panel(
-        'coche',
-        'mt',
-        `${I('calendar-clock')} Cuándo toca`,
-        c.mt
-          .map(x => [carMt(x, K), x])
-          .sort((a, b) => LV[a[0].lvl] - LV[b[0].lvl] || a[0].due.localeCompare(b[0].due))
-          .map(([, x]) => carMtRow(x, K))
-          .join('') + `<button class="morebtn" data-a="cmt" data-i="">${I('plus')} Añadir otro</button>`
-      ),
       vis: panel(
         'coche',
         'vis',
-        `${I('wrench')} Historial`,
+        `${I('wrench')} Historial de mantenimiento`,
         (V.length
           ? Y.map(yy => {
               const L = V.filter(v => v.d.slice(0, 4) === yy),
@@ -252,22 +248,38 @@ function vCoche() {
       R = (k, v, tel) =>
         v ? `<dt>${k}</dt><dd>${tel ? `<a href="tel:${esc(String(v).replace(/[^\d+]/g, ''))}">${esc(v)}</a>` : esc(v)}</dd>` : '',
       grp = (t, rows) => (rows.join('') ? `<div class="dh">${t}</div><dl class="ckv">${rows.join('')}</dl>` : '');
-    const body =
-      grp('Vehículo', [
-        R('Modelo', i.model),
-        R('Matrícula', i.plate),
-        R('Bastidor', i.vin),
-        R('Matriculado', i.reg ? MS[+i.reg.slice(5, 7)] + ' ' + i.reg.slice(0, 4) : ''),
-        R('Combustible', i.fuelT),
-        R('Etiqueta DGT', i.dgt)
-      ]) +
-      grp('Seguro', [R('Compañía', i.ins), R('Póliza', i.pol), R('Asistencia', i.asis, 1), R('Renueva', segD ? fdc(segD) : '')]) +
-      grp('Para el taller', [R('Neumáticos', i.tyr), R('Presión', i.pre), R('Aceite', i.oil), R('Notas', i.notes)]);
+    const age = carAge(i.reg),
+      body =
+        grp('Vehículo', [
+          R('Marca y modelo', i.model),
+          R('Versión', i.ver),
+          R('Matrícula', i.plate),
+          R('Bastidor (VIN)', i.vin),
+          R('Matriculado', i.reg ? fd(i.reg) + (age ? ' · ' + age : '') : ''),
+          R('Comprado', i.buy ? fd(i.buy) : '')
+        ]) +
+        grp('Motor', [
+          R('Combustible', i.fuelT),
+          R('Motor', i.eng),
+          R('Potencia', i.pw),
+          R('Cambio', i.gear),
+          R('Etiqueta DGT', i.dgt),
+          R('Batería', i.bat),
+          R('Neumáticos', i.tyr),
+          R('Aceite', i.oil)
+        ]) +
+        grp('Seguro', [
+          R('Compañía', [i.ins, i.pol ? 'póliza ' + i.pol : ''].filter(Boolean).join(' · ')),
+          R('Renueva', segD ? fdc(segD) : ''),
+          R('Asistencia', i.asis, 1),
+          R('Agente', i.agent)
+        ]) +
+        (i.notes ? `<div class="dh">Notas</div><div class="mu">${esc(i.notes)}</div>` : '');
     C = {
       fic: panel(
         'coche',
         'fic',
-        `${I('car')} ${esc(i.model || 'Mi coche')}`,
+        `${I('car')} ${esc([i.model, i.plate].filter(Boolean).join(' · ') || 'Mi coche')}`,
         (body || `<div class="mu">Sin datos todavía. Toca «Editar» para rellenar la ficha.</div>`) +
           `<div class="dh">Documentos</div><div class="cdocs">${D.map(d =>
             d.url
