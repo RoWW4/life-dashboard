@@ -148,6 +148,18 @@ const carAge = r => {
     'menos de un mes'
   );
 };
+/* Dibujo de un coche (de lado, genérico) para el panel de los km: a la derecha, difuminado hacia la izquierda. */
+const carArt = () =>
+  `<svg class="carart" viewBox="0 0 400 170" aria-hidden="true"><defs><linearGradient id="cab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6aa6ff"/><stop offset=".5" stop-color="#2b66d9"/><stop offset="1" stop-color="#173c8f"/></linearGradient><linearGradient id="caw" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a9cbff" stop-opacity=".5"/><stop offset=".45" stop-color="#0b1a33" stop-opacity=".92"/><stop offset="1" stop-color="#0b1a33"/></linearGradient></defs>` +
+  `<ellipse cx="200" cy="160" rx="175" ry="7" fill="#000" opacity=".4"/>` +
+  `<path d="M38 128 36 100Q36 80 44 72L68 42Q74 32 88 31L226 28Q242 28 252 37L292 66Q300 70 330 74L352 80Q366 84 366 98V124Q366 132 356 132H327A33 33 0 0 0 263 132H133A33 33 0 0 0 67 132H46Q38 132 38 128Z" fill="url(#cab)"/>` +
+  `<path d="M36 112H366V124Q366 132 356 132H327A33 33 0 0 0 263 132H133A33 33 0 0 0 67 132H46Q38 132 38 128Z" fill="#0c1220"/>` +
+  `<path d="M64 132A36 36 0 0 1 136 132M260 132A36 36 0 0 1 330 132" fill="none" stroke="#0c1220" stroke-width="9"/>` +
+  `<path d="M68 42Q74 32 88 31L226 28Q242 28 252 37L246 37Q240 34 226 34L88 37Q80 38 74 44Z" fill="#0c1220"/><path d="M94 27L220 24" stroke="#0c1220" stroke-width="3.5" stroke-linecap="round"/>` +
+  `<path d="M70 60L84 45Q88 40 96 40L168 38V63Z" fill="url(#caw)"/><path d="M176 38H230Q241 38 247 44L272 65H176Z" fill="url(#caw)"/>` +
+  `<path d="M172 40V112M60 82H352" stroke="#0e2554" stroke-opacity=".6" stroke-width="1.5"/><rect x="146" y="76" width="14" height="3" rx="1.5" fill="#cfe0ff" opacity=".6"/><rect x="240" y="76" width="14" height="3" rx="1.5" fill="#cfe0ff" opacity=".6"/><path d="M262 62h12q4 0 4 4v4h-14z" fill="#0c1220"/>` +
+  `<path d="M330 76 360 82 358 89 332 84Z" fill="#eaf2ff"/><path d="M40 72 54 70 52 83 39 85Z" fill="#ff4d5e"/>` +
+  `<circle cx="100" cy="132" r="28" fill="#0b0d12"/><circle cx="100" cy="132" r="18" fill="#2d3340"/><circle cx="100" cy="132" r="18" fill="none" stroke="#7d879b" stroke-width="2.5" stroke-dasharray="6 5.3"/><circle cx="100" cy="132" r="5" fill="#9aa3b5"/><circle cx="295" cy="132" r="28" fill="#0b0d12"/><circle cx="295" cy="132" r="18" fill="#2d3340"/><circle cx="295" cy="132" r="18" fill="none" stroke="#7d879b" stroke-width="2.5" stroke-dasharray="6 5.3"/><circle cx="295" cy="132" r="5" fill="#9aa3b5"/></svg>`;
 /* ---------- pantalla ---------- */
 const carPill = (lvl, t) => `<span class="chip ${lvl === 'no' ? '' : lvl}">${esc(t)}</span>`;
 const carMtSub = (x, s) => {
@@ -215,7 +227,7 @@ function vCoche() {
       TM = T.filter(x => mon(x.date) === gm).sort((a, b) => b.date.localeCompare(a.date)),
       nx = carNext(c, K),
       mes = cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(md)) + (gy === y ? '' : ' ' + gy);
-    top = `<section class="carh" aria-label="Kilómetros"><div class="carhm"><span class="eyb">${I('gauge', 'sm')} Kilómetros</span>${
+    top = `<section class="carh" aria-label="Kilómetros">${carArt()}<div class="carhm"><span class="eyb">${I('gauge', 'sm')} Kilómetros</span>${
       K.cur !== null
         ? `<b>${kmf(K.cur)} <small>km</small></b><span class="carhs">Apuntado ${rel(K.d)}</span>`
         : `<b class="carh0">Sin apuntar</b><span class="carhs">Toca el lápiz para poner los km del coche.</span>`
@@ -277,10 +289,14 @@ function vCoche() {
       segD = seg ? fxState(seg).next : '',
       R = (k, v, tel) =>
         v ? `<dt>${k}</dt><dd>${tel ? `<a href="tel:${esc(String(v).replace(/[^\d+]/g, ''))}">${esc(v)}</a>` : esc(v)}</dd>` : '',
-      grp = (t, rows) => (rows.join('') ? `<div class="dh">${t}</div><dl class="ckv">${rows.join('')}</dl>` : '');
+      // Cada grupo de la ficha en su cajita, con icono y color propios.
+      grp = (t, ic, co, rows) =>
+        rows.join('')
+          ? `<section class="ckg" style="--c:${co}"><div class="ckh">${tile(ic, co)}${t}</div><dl class="ckv">${rows.join('')}</dl></section>`
+          : '';
     const age = carAge(i.reg),
       body =
-        grp('Vehículo', [
+        grp('Vehículo', 'car', '#7aa7ff', [
           R('Marca y modelo', i.model),
           R('Versión', i.ver),
           R('Matrícula', i.plate),
@@ -288,7 +304,7 @@ function vCoche() {
           R('Matriculado', i.reg ? fd(i.reg) + (age ? ' · ' + age : '') : ''),
           R('Comprado', i.buy ? fd(i.buy) : '')
         ]) +
-        grp('Motor', [
+        grp('Motor', 'fuel', '#f5a524', [
           R('Combustible', i.fuelT),
           R('Motor', i.eng),
           R('Potencia', i.pw),
@@ -298,19 +314,21 @@ function vCoche() {
           R('Neumáticos', i.tyr),
           R('Aceite', i.oil)
         ]) +
-        grp('Seguro', [
+        grp('Seguro', 'shield-check', '#22c3b4', [
           R('Compañía', [i.ins, i.pol ? 'Póliza ' + i.pol : ''].filter(Boolean).join(' · ')),
           R('Renueva', segD ? fdc(segD) : ''),
           R('Asistencia', i.asis, 1),
           R('Agente', i.agent)
         ]) +
-        (i.notes ? `<div class="dh">Notas</div><div class="mu">${esc(i.notes)}</div>` : '');
+        (i.notes
+          ? `<section class="ckg" style="--c:#8d9099"><div class="ckh">${tile('file-text', '#8d9099')}Notas</div><div class="mu">${esc(i.notes)}</div></section>`
+          : '');
     C = {
       fic: panel(
         'coche',
         'fic',
         `${I('car')} ${esc([i.model, i.plate].filter(Boolean).join(' · ') || 'Mi coche')}`,
-        (body || `<div class="mu">Sin datos todavía. Toca «Editar» para rellenar la ficha.</div>`) +
+        (body ? `<div class="ckgs">${body}</div>` : `<div class="mu">Sin datos todavía. Toca «Editar» para rellenar la ficha.</div>`) +
           `<div class="dh">Documentos</div><div class="cdocs">${D.map(d =>
             d.url
               ? `<a class="qc" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer"><span class="qi" style="--c:${CARC}">${I('file-text')}</span>${esc(d.name)}</a>`

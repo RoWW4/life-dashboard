@@ -570,6 +570,13 @@ const A = {
     const t = wxDia(i);
     if (t) toast(t);
   },
+  nvo: i => {
+    const [k, v] = i.split(':'),
+      o = (S.navOff || ['compra']).filter(x => x !== k);
+    if (v === '1') o.push(k);
+    S.navOff = o;
+    ch();
+  },
   wxo: i => {
     if (i === '1') S.wxOff = true;
     else delete S.wxOff;

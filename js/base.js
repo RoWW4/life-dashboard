@@ -204,7 +204,7 @@ const DIA = ['imp', 'cal'];
 /* Orden inicial de los paneles movibles de cada sección (cada uno se puede reordenar y se guarda en S.order). */
 const FIN = ['gasto', 'sinc', 'metas', 'mov', 'reglas'];
 const AJ = [
-  ['Personalizar', ['midia', 'apar', 'fest', 'dict']],
+  ['Personalizar', ['midia', 'apar', 'menu', 'fest', 'dict']],
   ['Dinero', ['dinero', 'bank']],
   ['Cuenta y datos', ['cuenta', 'robots', 'copias', 'avz']]
 ];
@@ -232,7 +232,9 @@ const secs = () =>
     'nav',
     SEC.map(x => x[0])
   ).map(k => SEC.find(x => x[0] === k)); // secciones en el orden elegido (en el ordenador se arrastran en el menú)
-const tabs = () => secs().filter(x => x[0] !== 'ajus'); // barra del móvil: todas menos Ajustes, que va en el botón de arriba
+/* Secciones que no salen en el menú (Ajustes → Menú). De serie, Compra (se entra desde Mi día). La que está abierta sale siempre. */
+const navOff = k => k !== view && (S.navOff || ['compra']).includes(k);
+const tabs = () => secs().filter(x => x[0] !== 'ajus' && !navOff(x[0])); // barra del móvil: todas menos Ajustes, que va en el botón de arriba
 const MS = ['', 'ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 const KW = [
   [/cumplea/i, 'cake'],
