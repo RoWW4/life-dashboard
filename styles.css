@@ -967,3 +967,13 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 @media(max-width:760px){.hmoon{width:84px;height:84px;right:5%;top:58%}.whale{width:110px;top:22%}}
 @media (prefers-reduced-motion: reduce){.hbg *{animation:none!important}}
 @media(min-width:761px){.hmoon,.hbg-cielo .hmoon{right:auto;left:56%;width:110px;height:110px}.sol{right:auto;left:58%}.sky-dia .sol{top:18%}.sky-tarde .sol{top:34%}.sky-amanecer .sol,.sky-atardecer .sol{top:48%}}
+/* Portada de Mi día con más aire entre la fecha, el saludo y el tiempo */
+.hero .eyb{margin-bottom:14px}
+.hero h2{line-height:1.12}
+.hero .hwx{margin-top:22px}
+@media(max-width:760px){.hero{padding-top:30px;gap:24px}.hwx{row-gap:22px}}
+/* La luna se ve bien aunque sea una fase fina (creciente o menguante): más grande y con halo */
+.hmoon{filter:drop-shadow(0 0 22px rgba(255,248,220,.55)) drop-shadow(0 0 6px rgba(255,248,220,.6))}
+@media(max-width:760px){.hbg-cielo .hmoon,.hbg-luna .hmoon{width:104px;height:104px;right:4%;top:44%}}
+/* Ordenador: la luna y el sol arriba a la derecha, por encima del tiempo (antes chocaban con la temperatura) */
+@media(min-width:761px){.hmoon,.hbg-cielo .hmoon,.hbg-luna .hmoon{left:auto;right:3%;top:10px;transform:none;width:62px;height:62px}.sol,.sky-dia .sol,.sky-tarde .sol{left:auto;right:4%;top:16px}.sky-amanecer .sol,.sky-atardecer .sol{top:auto;bottom:34%;right:42%}}

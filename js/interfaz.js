@@ -322,7 +322,7 @@ function moonSVG(p) {
     d = wax
       ? `M${c} ${c - r} A${r} ${r} 0 0 1 ${c} ${c + r} A${rx.toFixed(1)} ${r} 0 0 ${gib ? 1 : 0} ${c} ${c - r}Z`
       : `M${c} ${c - r} A${r} ${r} 0 0 0 ${c} ${c + r} A${rx.toFixed(1)} ${r} 0 0 ${gib ? 0 : 1} ${c} ${c - r}Z`;
-  return `<svg class="hmoon" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="mg" cx="40%" cy="38%"><stop offset="0" stop-color="#fffbea"/><stop offset="1" stop-color="#dcd6c4"/></radialGradient></defs><circle cx="${c}" cy="${c}" r="${r}" fill="rgba(255,255,255,.07)"/><path d="${d}" fill="url(#mg)"/><circle cx="38" cy="40" r="5" fill="rgba(120,110,90,.18)"/><circle cx="58" cy="60" r="7" fill="rgba(120,110,90,.14)"/><circle cx="60" cy="34" r="3.5" fill="rgba(120,110,90,.16)"/></svg>`;
+  return `<svg class="hmoon" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="mg" cx="40%" cy="38%"><stop offset="0" stop-color="#fffbea"/><stop offset="1" stop-color="#dcd6c4"/></radialGradient></defs><circle cx="${c}" cy="${c}" r="${r}" fill="rgba(200,215,255,.13)"/><path d="${d}" fill="url(#mg)"/><circle cx="38" cy="40" r="5" fill="rgba(120,110,90,.18)"/><circle cx="58" cy="60" r="7" fill="rgba(120,110,90,.14)"/><circle cx="60" cy="34" r="3.5" fill="rgba(120,110,90,.16)"/></svg>`;
 }
 const twinkles = n =>
   Array.from({ length: n }, (_, i) => {
