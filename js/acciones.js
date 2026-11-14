@@ -14,6 +14,37 @@ const A = {
     selD = i;
     render();
   },
+  dm: i => dayMenu(i),
+  dmt: i => taskForm(null, { due: i }),
+  dmc: i => taskForm(null, { area: 'Cumpleaños', rep: 'Anual', due: i }),
+  dmv: i => vacForm(i),
+  dmh: i =>
+    CF(
+      'Nombre del festivo',
+      n => {
+        if (!(n = (n || '').trim())) return toast('Indica el nombre');
+        S.localHol = S.localHol.filter(h => h.d !== i);
+        S.localHol.push({ d: i, n });
+        ch();
+        toast('Festivo apuntado');
+      },
+      'Fiesta local'
+    ),
+  dms: i => {
+    document.querySelectorAll('.ov').forEach(o => o.remove());
+    const s = (S.salud = S.salud || { ini: [], len: SAL_LEN });
+    if (s.ini.includes(i)) {
+      s.ini = s.ini.filter(d => d !== i);
+      ch();
+      return toast('Quitado');
+    }
+    if (i > TD()) return toast('La fecha no puede ser futura');
+    s.ini.push(i);
+    s.ini.sort();
+    selD = i;
+    ch();
+    toast('Apuntado: se marcan ' + salStats().dur + ' días');
+  },
   pm: i => {
     cm = new Date(cm.getFullYear(), cm.getMonth() + +i, 1);
     render();

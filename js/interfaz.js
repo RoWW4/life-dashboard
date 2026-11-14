@@ -400,9 +400,9 @@ const SZN = { 4: '1/3', 6: '1/2', 8: '2/3', 12: 'completo' };
    y cortaba el del panel (eventos.js, mantener pulsado 1 s), así que las tarjetas no se encogían ni se podían mover. */
 const NATIVE_DRAG = !matchMedia('(pointer: coarse)').matches;
 /* Panel movible: título a la izquierda; a la derecha, el botón del ancho y el asa para arrastrarlo. */
-const panel = (v, k, title, inner, cls = '') => {
+const panel = (v, k, title, inner, cls = '', st = '') => {
   const z = SZ[v + ':' + k];
-  return `<div class="card ${cls}${z ? ' sz' + z : ''}" data-v="${v}" data-k="${esc(k)}"><h3><span class="t">${title}</span><span class="pa"><button class="ib szb" data-a="sz" data-i="${esc(v + ':' + k)}" title="Ancho del panel${z ? ': ' + SZN[z] : ''} (toca para cambiarlo)" aria-label="Cambiar el ancho del panel">${I('move-horizontal')}</button><span class="hd" draggable="${NATIVE_DRAG}" title="Mantén pulsado y arrastra para mover">${I('grip-vertical')}</span></span></h3>${inner}</div>`;
+  return `<div class="card ${cls}${z ? ' sz' + z : ''}" data-v="${v}" data-k="${esc(k)}"${st ? ` style="${st}"` : ''}><h3><span class="t">${title}</span><span class="pa"><button class="ib szb" data-a="sz" data-i="${esc(v + ':' + k)}" title="Ancho del panel${z ? ': ' + SZN[z] : ''} (toca para cambiarlo)" aria-label="Cambiar el ancho del panel">${I('move-horizontal')}</button><span class="hd" draggable="${NATIVE_DRAG}" title="Mantén pulsado y arrastra para mover">${I('grip-vertical')}</span></span></h3>${inner}</div>`;
 };
 /* Muestra las n primeras filas y un botón para desplegar el resto (estado por panel, no se guarda). */
 const fold = (k, rows, n) => {
@@ -597,7 +597,7 @@ function calHTML() {
     vl = perOn(sd);
   const sl = sm.has(sd) ? `<div class="row">${tile('heart-pulse', 'var(--rose)')}<span class="g">${sTip(sd)}</span></div>` : '';
   const day = hl.map(holRow).join('') + sl + vl.map(perRow).join('') + dl.map(taskRow).join('');
-  return `<div class="calh"><button class="ib" data-a="pm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b>${cap(new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(cm))}</b><button class="ib" data-a="pm" data-i="1" aria-label="Mes siguiente">${I('chevron-right')}</button></div><div class="cal">${c}</div><div class="calk"><span><i class="kh"></i>Festivo</span><span><i class="kv"></i>Vacaciones</span>${sm.size ? '<span><i class="ksp"></i>Salud</span>' : ''}<span><i class="kt"></i>Tareas</span><span><i class="kbd"></i>Cumpleaños</span></div>${isT && !day ? '' : `<div class="dh">${isT ? 'Hoy' : rel(sd)} · ${fd(sd)}</div>${day || empty('Nada este día.')}`}`;
+  return `<div class="calh"><button class="ib" data-a="pm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b>${cap(new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(cm))}</b><button class="ib" data-a="pm" data-i="1" aria-label="Mes siguiente">${I('chevron-right')}</button></div><div class="cal">${c}</div><div class="calk"><span><i class="kh"></i>Festivo</span><span><i class="kv"></i>Vacaciones</span>${sm.size ? '<span><i class="ksp"></i>Salud</span>' : ''}<span><i class="kt"></i>Tareas</span><span><i class="kbd"></i>Cumpleaños</span></div><div class="dh dhx"><span>${isT ? 'Hoy' : rel(sd)} · ${fd(sd)}</span><button class="btn ghost sm" data-a="dm" data-i="${sd}">${I('plus', 'sm')} Añadir</button></div>${day || (isT ? '' : empty('Nada este día.'))}`;
 }
 function bankAlerts() {
   const a = [];

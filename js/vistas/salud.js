@@ -176,7 +176,7 @@ function hlHTML() {
       const r = by[d] || {},
         h = r.steps ? Math.max(3, (r.steps / mx) * 100) : 0,
         ok = r.steps >= HL_PASOS;
-      return `<div class="hlb${d === td ? ' on' : ''}${ok ? ' ok' : ''}${hlSel === d ? ' sel' : ''}" data-a="hlb" data-i="${d}" role="button" tabindex="0" aria-label="${fd(d)}: ${hlN(r.steps)} pasos" title="${fd(d)} · ${hlN(r.steps)} pasos · ${hlN(r.kcal)} kcal · sueño ${hlH(r.sleep_min)}"><small>${r.steps ? (r.steps >= 1000 ? (r.steps / 1000).toFixed(1).replace('.', ',') + 'k' : r.steps) : ''}</small><div class="tr"><i style="height:${h.toFixed(1)}%"></i></div><em>${d === td ? 'Hoy' : wd.format(new Date(d + 'T12:00')).replace('.', '')}</em><span class="hlz">${r.sleep_min != null ? hlHm(r.sleep_min) : '–'}</span></div>`;
+      return `<div class="hlb${d === td ? ' on' : ''}${ok ? ' ok' : ''}${hlSel === d ? ' pk' : ''}" data-a="hlb" data-i="${d}" role="button" tabindex="0" aria-label="${fd(d)}: ${hlN(r.steps)} pasos" title="${fd(d)} · ${hlN(r.steps)} pasos · ${hlN(r.kcal)} kcal · sueño ${hlH(r.sleep_min)}"><small>${r.steps ? (r.steps >= 1000 ? (r.steps / 1000).toFixed(1).replace('.', ',') + 'k' : r.steps) : ''}</small><div class="tr"><i style="height:${h.toFixed(1)}%"></i></div><em>${d === td ? 'Hoy' : wd.format(new Date(d + 'T12:00')).replace('.', '')}</em><span class="hlz">${r.sleep_min != null ? hlHm(r.sleep_min) : '–'}</span></div>`;
     })
     .join('');
   // Dato del día tocado (como en el histórico).
@@ -194,7 +194,7 @@ function hlHTML() {
         `${hlKpi(HLC.pulso, 'heart-pulse', 'Pulso', rhrRow ? `${rhrRow.rhr}<small>ppm</small>` : '—', 'En reposo' + (rhrRow && rhrRow.day !== td ? ' · ' + fd(rhrRow.day) : ''))}</div>
     ${hlNoche(by[sleepDay])}
     <div class="hlw"><div class="hlwh"><b>Últimos 7 días</b><button class="btn ghost sm hlxb" data-a="hlx">${I('calendar-days', 'sm')} Histórico</button><span><i style="--c:${HLC.pasos}"></i>Pasos</span><span><i style="--c:${HLC.sueno}"></i>Sueño</span><button class="hlmb hlmeta" data-a="hlm" data-i="pasos" title="Cambiar el objetivo de pasos"><i></i>Objetivo ${hlN(HL_PASOS)}</button></div>
-    <div class="hlbars" role="group" aria-label="Pasos y horas de sueño de los últimos 7 días" style="--g:${((HL_PASOS / mx) * 100).toFixed(1)}%">${bars}<span class="hlgoal" aria-hidden="true"></span></div>${info}</div>`
+    <div class="hlbars${sel ? ' picked' : ''}" role="group" aria-label="Pasos y horas de sueño de los últimos 7 días" style="--g:${((HL_PASOS / mx) * 100).toFixed(1)}%">${bars}<span class="hlgoal" aria-hidden="true"></span></div>${info}</div>`
       : empty(
           HLS
             ? 'Google Health todavía no ha mandado datos.'

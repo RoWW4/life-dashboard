@@ -228,7 +228,56 @@ document.addEventListener(
 );
 document.addEventListener('contextmenu', e => {
   if (e.target.closest && e.target.closest('.hd')) e.preventDefault();
+  // Clic derecho (o mantener pulsado) en un día del calendario: menú para añadir algo ese día.
+  const c = e.target.closest && e.target.closest('.cal button[data-i]');
+  if (c) {
+    e.preventDefault();
+    if (calLp.done) return;
+    clearTimeout(calLp.t);
+    dayMenu(c.dataset.i);
+  }
 });
+// Móvil: mantener pulsado un día del calendario medio segundo abre su menú (y el toque que sigue no cuenta).
+const calLp = { t: null, done: false };
+document.addEventListener(
+  'touchstart',
+  e => {
+    clearTimeout(calLp.t);
+    calLp.done = false;
+    const c = e.target.closest && e.target.closest('.cal button[data-i]');
+    if (!c || e.touches.length > 1) return;
+    const t = e.touches[0];
+    calLp.x = t.clientX;
+    calLp.y = t.clientY;
+    calLp.t = setTimeout(() => {
+      calLp.done = true;
+      try {
+        navigator.vibrate && navigator.vibrate(20);
+      } catch (x) {}
+      dayMenu(c.dataset.i);
+    }, 500);
+  },
+  { passive: true }
+);
+document.addEventListener(
+  'touchmove',
+  e => {
+    const t = e.touches[0];
+    if (calLp.t && Math.abs(t.clientX - calLp.x) + Math.abs(t.clientY - calLp.y) > 10) clearTimeout(calLp.t);
+  },
+  { passive: true }
+);
+document.addEventListener('touchend', () => clearTimeout(calLp.t), { passive: true });
+document.addEventListener(
+  'click',
+  e => {
+    if (calLp.done && e.target.closest && e.target.closest('.cal button')) {
+      calLp.done = false;
+      e.stopPropagation();
+    }
+  },
+  true
+);
 document.addEventListener(
   'touchmove',
   e => {

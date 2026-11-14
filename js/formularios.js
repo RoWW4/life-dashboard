@@ -570,9 +570,10 @@ function addVac(name, from, to) {
   ch();
   toast('🌴 ' + name + (from === to ? ' · ' + dlabel(from) : ' · ' + fd(from) + ' → ' + fd(to)));
 }
-function vacForm() {
+function vacForm(d) {
+  d = d || TD();
   const o = modal(
-    `<h3>Vacaciones o días libres</h3><div class="fs"><label>Nombre<input id="fv1" value="Vacaciones"></label><div class="two"><label>Desde<input id="fv2" type="date" value="${TD()}"></label><label>Hasta<input id="fv3" type="date" value="${TD()}"></label></div><div class="mu">Para un solo día, pon la misma fecha en los dos. Se marcarán en verde en el calendario.</div></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Añadir</button></div>`
+    `<h3>Vacaciones o días libres</h3><div class="fs"><label>Nombre<input id="fv1" value="Vacaciones"></label><div class="two"><label>Desde<input id="fv2" type="date" value="${d}"></label><label>Hasta<input id="fv3" type="date" value="${d}"></label></div><div class="mu">Para un solo día, pon la misma fecha en los dos. Se marcarán en verde en el calendario.</div></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Añadir</button></div>`
   );
   const v = i => o.querySelector(i).value.trim(),
     a = o.querySelector('#fv2'),
@@ -586,6 +587,31 @@ function vacForm() {
     o.remove();
     addVac(v('#fv1'), v('#fv2'), v('#fv3'));
   };
+}
+/* Menú de un día del calendario (mantener pulsado, clic derecho o «Añadir» debajo del calendario). */
+function dayMenu(d) {
+  const ini = ((S.salud || {}).ini || []).includes(d),
+    fut = d > TD(),
+    o = (a, ic, c, t, sub, dis) =>
+      `<button class="dmo" data-a="${a}" data-i="${d}"${dis ? ' disabled' : ''}>${tile(ic, c)}<span>${t}<small>${sub}</small></span></button>`;
+  modal(
+    `<h3>${cap(rel(d))} · ${fd(d)}</h3><div class="dmenu">` +
+      o('dmt', 'list-checks', 'var(--ac)', 'Tarea', 'Algo que hacer ese día') +
+      o('dmc', 'cake', 'var(--bday)', 'Cumpleaños', 'Se repite cada año') +
+      (ini
+        ? o('dms', 'heart-pulse', 'var(--rose)', 'Quitar inicio de salud', 'Deja de marcar este día y los siguientes')
+        : o(
+            'dms',
+            'heart-pulse',
+            'var(--rose)',
+            'Inicio de salud',
+            fut ? 'Solo hoy o días pasados' : `Marca este día y los ${salStats().dur - 1} siguientes`,
+            fut
+          )) +
+      o('dmv', 'sun', '#2fcf7a', 'Vacaciones o día libre', 'Desde este día') +
+      o('dmh', 'sparkles', '#ff5d5d', 'Festivo local', 'Solo este día') +
+      `</div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button></div>`
+  );
 }
 function docForm(d, pre) {
   const n = !d;

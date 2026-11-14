@@ -249,7 +249,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .hlmeta{font-size:12px;gap:6px}.hlmeta i{width:14px;border-top:1.5px dashed #fbbf24}
 .hlb i{display:block;width:62%;max-width:30px;border-radius:8px;background:linear-gradient(180deg,#34d399,color-mix(in srgb,#34d399 35%,transparent));opacity:.55}
 .hlb.on i,.hlb.ok i{opacity:1}.hlb.on i{box-shadow:0 0 14px color-mix(in srgb,#34d399 55%,transparent)}
-.hlb{cursor:pointer;border-radius:10px}.hlb:focus-visible{outline:2px solid var(--ac);outline-offset:2px}.hlb.sel{background:color-mix(in srgb,#34d399 12%,transparent)}.hlb.sel i{opacity:1}
+.hlb{cursor:pointer;border-radius:10px}.hlb:focus-visible{outline:2px solid var(--ac);outline-offset:2px}.hlb{-webkit-tap-highlight-color:transparent}.hlbars.picked .hlb:not(.pk) i{opacity:.35}.hlb.pk i{opacity:1;box-shadow:0 0 12px color-mix(in srgb,#34d399 60%,transparent)}.hlb.pk em,.hlb.pk small{color:var(--tx);font-weight:600}
 .hlw .hlxi{margin-top:12px}
 .hlb em{font-style:normal;font-size:12px;color:var(--mu);text-transform:capitalize}.hlb.on em{color:var(--tx);font-weight:600}
 .hlz{font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;color:#a78bfa;background:color-mix(in srgb,#a78bfa 14%,transparent);padding:1px 6px;border-radius:9px}
@@ -323,6 +323,11 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .cal .wd{font-size:11px;color:var(--mu);font-weight:600;padding:2px 0 4px}
 .cal button{cursor:pointer;border:0;border-radius:9px;background:transparent;color:var(--tx);padding:6px 0 4px;min-height:42px;font-size:13px;font-variant-numeric:tabular-nums;display:flex;flex-direction:column;align-items:center;gap:3px;transition:background .15s}
 .cal button:hover{background:var(--hov)}
+.cal button{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.dhx{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px}.dhx .btn{text-transform:none;letter-spacing:0;padding:4px 10px;font-size:12px}
+.dmenu{display:flex;flex-direction:column;gap:2px;margin:6px 0 4px}
+.dmo{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:12px;padding:9px 8px;border-radius:var(--rs);transition:background .15s}.dmo:hover{background:var(--hov)}.dmo:focus-visible{outline:2px solid var(--ac)}
+.dmo>span:not(.ic){display:flex;flex-direction:column;font-weight:600;font-size:14px}.dmo .ic{width:36px;height:36px;border-radius:11px}.dmo .ic .i{width:18px;height:18px}.dmo small{font-weight:400;font-size:12px;color:var(--mu)}.dmo[disabled]{opacity:.45;cursor:default}
 .cal button:focus-visible{outline:2px solid var(--ac);outline-offset:0}
 .cal button.t{box-shadow:inset 0 0 0 1.5px var(--ac);color:var(--ac2);font-weight:700}
 .cal button.sel{background:var(--ac);color:#fff;font-weight:600}
@@ -456,6 +461,8 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
   nav.mini .nv.on .s{display:none}
   .brand,.navfoot{display:none}
   .nv[data-i=ajus]{display:none}
+  /* Compra no ocupa sitio en la barra (se entra desde el acceso rápido de Mi día); solo sale mientras estás en ella. */
+  .nv[data-i=compra]:not(.on){display:none}
   .nv{flex:1 1 0;flex-direction:column;justify-content:center;gap:1px;padding:8px 0;min-height:44px;align-items:center;font-size:10.5px;font-weight:600;border-radius:19px;position:relative;min-width:0;transition:flex-grow .25s,background .2s,color .2s}
   .nv .e{width:auto}.nv .e .i{width:21px;height:21px}.nv .l,.nv .s{display:none}
   .nv.on{flex-grow:1.55;background:var(--acs);box-shadow:none;color:var(--ac2);padding:6px 0 5px}.nv.on .e{color:var(--ac)}.nv.on .s{display:block;white-space:nowrap;line-height:1.1}
@@ -750,6 +757,7 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .hst .hk,.hst .hd2{color:var(--mu)}
 .hk{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:var(--tx2)}
 .hst .hk{color:var(--tx2)}
+.hst .hs{align-items:center;text-align:center}.hst .hk,.hst .hv{justify-content:center}.hst .hk{align-items:center}.hst .hd2{max-width:100%}
 .hico{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
 .hico .i{width:16px;height:16px}
 .hv{font-size:40px}
@@ -783,7 +791,7 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
   .hero{grid-template-columns:1fr;gap:18px}
   .hero h2{font-size:38px}
   .haside{justify-self:start}.haside .hwx{justify-content:flex-start}
-  .hst{gap:10px}.hk{flex-direction:column;align-items:flex-start;gap:7px}
+  .hst{gap:10px}.hk{flex-direction:column;align-items:center;gap:7px}
 }
 
 /* ---------- Rediseño de Finanzas ---------- */
@@ -910,10 +918,12 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .shq{margin-top:14px;padding-top:12px;border-top:1px solid var(--sep)}
 .shqh{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--mu);margin-bottom:8px}
 .shqh span{display:inline-flex;align-items:center;gap:6px}
-.shqh .link{margin-left:auto;font-size:12.5px;color:var(--ac2);font-weight:600}
+.shqh .link{flex:none;margin-left:auto;padding-left:12px;font-size:12.5px;color:var(--ac2);font-weight:600}
+.shqh span{color:var(--tx2)}.shqh span .i{color:#fbbf24;fill:#fbbf24;width:15px;height:15px;filter:drop-shadow(0 0 4px color-mix(in srgb,#fbbf24 50%,transparent))}
 .shqc{display:flex;flex-wrap:wrap;gap:6px}
 .shqc .chip{cursor:pointer;font-size:13px;padding:6px 11px;display:inline-flex;align-items:center;gap:5px}
-.shqc .chip .i{color:var(--mu)}
+.shqc .chip:not(.del){background:color-mix(in srgb,#34c77b 10%,var(--card2));box-shadow:inset 0 0 0 1px color-mix(in srgb,#34c77b 22%,transparent)}.shqc .chip:not(.del):hover{background:color-mix(in srgb,#34c77b 18%,var(--card2))}
+.shqc .chip>.i{color:#34c77b}
 .shqc .chip.del{color:var(--er);background:var(--ers);box-shadow:none}.shqc .chip.del .i{color:var(--er)}
 /* ---------- Animaciones al abrir una sección (render.js, #m.enter) ----------
    Tarjetas en cascada (--i = orden, 40 ms entre una y otra) y barras que se llenan desde cero. */
@@ -979,3 +989,5 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 @media(max-width:760px){.hbg-cielo .hmoon,.hbg-luna .hmoon{width:104px;height:104px;right:4%;top:44%}}
 /* Ordenador: la luna y el sol arriba a la derecha, por encima del tiempo (antes chocaban con la temperatura) */
 @media(min-width:761px){.hmoon,.hbg-cielo .hmoon,.hbg-luna .hmoon{left:auto;right:3%;top:10px;transform:none;width:62px;height:62px}.sol,.sky-dia .sol,.sky-tarde .sol{left:auto;right:4%;top:16px}.sky-amanecer .sol,.sky-atardecer .sol{top:auto;bottom:34%;right:42%}}
+/* Documentos: cada panel con el color de su categoría (borde y brillo suave). */
+.card.dcat{border-color:color-mix(in srgb,var(--c) 45%,var(--bd));box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 18%,transparent),0 0 22px -4px color-mix(in srgb,var(--c) 45%,transparent)}
