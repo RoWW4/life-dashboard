@@ -62,7 +62,11 @@ function vAjus() {
           )}</div></div><div class="row bgcfg"><span class="g">Fondo<em class="mu">Se elige en cada dispositivo; tu imagen no se sube a ningún sitio</em></span><div class="seg">${[
           ['none', 'Ninguno'],
           ['stars', 'Estrellas'],
-          ['planet', 'Planeta']
+          ['planet', 'Planeta'],
+          ['aurora', 'Aurora'],
+          ['luna', 'Luna de hoy'],
+          ['cielo', 'Cielo según la hora'],
+          ['ballena', 'Ballena']
         ]
           .map(([k, n]) => `<button class="${BG.k === k ? 'on' : ''}" data-a="bg" data-i="${k}">${n}</button>`)
           .join(

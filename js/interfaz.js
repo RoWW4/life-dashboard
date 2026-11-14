@@ -253,9 +253,9 @@ const pend = () => ({
    Se ve en la portada de Mi día o, si se elige, detrás de toda la app. La imagen se guarda reducida en este navegador. */
 const BG = (() => {
   try {
-    return JSON.parse(localStorage.getItem('ldb-bg')) || { k: 'planet', all: false };
+    return JSON.parse(localStorage.getItem('ldb-bg')) || { k: 'cielo', all: false };
   } catch (e) {
-    return { k: 'planet', all: false };
+    return { k: 'cielo', all: false };
   }
 })();
 const bgSave = () => {
@@ -272,14 +272,90 @@ const bgImg = () => {
     return '';
   }
 };
+/* Fondos hechos con código (sin fotos): se dibujan en la portada con heroBg(); el color de fondo va en --hbg. */
+const BGGEN = ['aurora', 'luna', 'cielo', 'ballena'];
+/* «Cielo»: el color cambia con el sol del día (amanecer, día, tarde, atardecer y noche con la luna de hoy).
+   La salida y la puesta del sol se calculan para la ciudad del tiempo (S.wx) o, si no hay, para Madrid. */
+function sunTimes(d = new Date()) {
+  const lat = (S.wx && +S.wx.lat) || 40.42,
+    lon = (S.wx && +S.wx.lon) || -3.7,
+    N = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 864e5),
+    g = ((2 * Math.PI) / 365) * (N - 1),
+    eq = 229.18 * (0.000075 + 0.001868 * Math.cos(g) - 0.032077 * Math.sin(g) - 0.014615 * Math.cos(2 * g) - 0.040849 * Math.sin(2 * g)),
+    dec = 0.006918 - 0.399912 * Math.cos(g) + 0.070257 * Math.sin(g) - 0.006758 * Math.cos(2 * g) + 0.000907 * Math.sin(2 * g),
+    rl = (lat * Math.PI) / 180,
+    ha = (Math.acos(Math.cos((90.833 * Math.PI) / 180) / (Math.cos(rl) * Math.cos(dec)) - Math.tan(rl) * Math.tan(dec)) * 180) / Math.PI,
+    tz = -d.getTimezoneOffset();
+  // En minutos desde las 0:00 de hoy (hora local)
+  return { rise: 720 - 4 * (lon + ha) - eq + tz, set: 720 - 4 * (lon - ha) - eq + tz };
+}
+const skyNow = () => {
+  const d = new Date(),
+    m = d.getHours() * 60 + d.getMinutes(),
+    { rise, set } = sunTimes(d);
+  return m >= rise - 30 && m < rise + 75
+    ? 'amanecer'
+    : m >= rise + 75 && m < set - 150
+      ? 'dia'
+      : m >= set - 150 && m < set - 30
+        ? 'tarde'
+        : m >= set - 30 && m < set + 45
+          ? 'atardecer'
+          : 'noche';
+};
+const SKY = {
+  amanecer: 'linear-gradient(180deg,#2b2f6b 0%,#8a4f8f 45%,#f08a6c 80%,#ffc58f 100%)',
+  dia: 'linear-gradient(180deg,#1f63c9 0%,#3d8be0 55%,#8cc4f2 100%)',
+  tarde: 'linear-gradient(180deg,#2457a8 0%,#4f86cf 45%,#9db8d8 75%,#f4c690 100%)',
+  atardecer: 'linear-gradient(180deg,#1d1f4f 0%,#6b2f6f 40%,#d9566b 75%,#ff9f5a 100%)',
+  noche: 'linear-gradient(180deg,#050a1f 0%,#0c1840 60%,#1a2a5e 100%)'
+};
+/* Fase de la luna de hoy (0 = nueva, 0,5 = llena), a partir de una luna nueva conocida (6/1/2000). */
+const moonPhase = () => ((((Date.now() - Date.UTC(2000, 0, 6, 18, 14)) / 864e5 / 29.530588853) % 1) + 1) % 1;
+function moonSVG(p) {
+  // Parte iluminada: medio círculo del lado de la luz y la línea de sombra como una elipse (más ancha cuanto más lejos de cuarto).
+  const r = 40,
+    c = 50,
+    rx = Math.abs(Math.cos(2 * Math.PI * p)) * r,
+    wax = p < 0.5,
+    gib = p > 0.25 && p < 0.75,
+    d = wax
+      ? `M${c} ${c - r} A${r} ${r} 0 0 1 ${c} ${c + r} A${rx.toFixed(1)} ${r} 0 0 ${gib ? 1 : 0} ${c} ${c - r}Z`
+      : `M${c} ${c - r} A${r} ${r} 0 0 0 ${c} ${c + r} A${rx.toFixed(1)} ${r} 0 0 ${gib ? 0 : 1} ${c} ${c - r}Z`;
+  return `<svg class="hmoon" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="mg" cx="40%" cy="38%"><stop offset="0" stop-color="#fffbea"/><stop offset="1" stop-color="#dcd6c4"/></radialGradient></defs><circle cx="${c}" cy="${c}" r="${r}" fill="rgba(255,255,255,.07)"/><path d="${d}" fill="url(#mg)"/><circle cx="38" cy="40" r="5" fill="rgba(120,110,90,.18)"/><circle cx="58" cy="60" r="7" fill="rgba(120,110,90,.14)"/><circle cx="60" cy="34" r="3.5" fill="rgba(120,110,90,.16)"/></svg>`;
+}
+const twinkles = n =>
+  Array.from({ length: n }, (_, i) => {
+    const x = (i * 37.7) % 100,
+      y = (i * 23.3 + (i % 3) * 11) % 70;
+    return `<i style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;--d:${((i * 0.73) % 4).toFixed(2)}s;--s:${1 + (i % 3) * 0.6}px"></i>`;
+  }).join('');
+/* Lo que se dibuja dentro de la portada de Mi día según el fondo elegido. */
+function heroBg() {
+  const k = BG.k;
+  if (!BGGEN.includes(k)) return '';
+  if (k === 'aurora') return `<div class="hbg hbg-aurora" aria-hidden="true"><span></span><span></span><span></span></div>`;
+  if (k === 'luna')
+    return `<div class="hbg hbg-luna" aria-hidden="true"><div class="tw">${twinkles(26)}</div>${moonSVG(moonPhase())}<b class="fugaz"></b></div>`;
+  if (k === 'ballena')
+    return `<div class="hbg hbg-ballena" aria-hidden="true"><div class="tw">${twinkles(18)}</div><svg class="whale" viewBox="0 0 130 56"><path d="M8 30C8 15 30 8 56 10c22 2 37 9 46 15l11-11c3-3 7-1 5 3l-6 12 9 9c2 3-1 6-4 4l-13-7c-10 7-29 13-52 12C25 46 8 41 8 30Z" fill="rgba(170,205,255,.34)"/><path d="M14 34c14 6 40 8 64 2" stroke="rgba(200,225,255,.25)" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="26" cy="25" r="2" fill="rgba(230,242,255,.7)"/></svg><div class="bub"><i></i><i></i><i></i></div></div>`;
+  const t = skyNow();
+  return `<div class="hbg hbg-cielo sky-${t}" aria-hidden="true">${t === 'noche' ? `<div class="tw">${twinkles(22)}</div>${moonSVG(moonPhase())}` : `<b class="sol"></b>`}<svg class="mnt" viewBox="0 0 400 120" preserveAspectRatio="none"><path d="M0 80 L60 50 L110 72 L170 30 L230 68 L290 42 L350 70 L400 52 V120 H0Z" fill="rgba(10,16,40,.28)"/><path d="M0 98 L50 78 L120 94 L190 66 L260 92 L330 74 L400 90 V120 H0Z" fill="rgba(8,12,32,.45)"/></svg></div>`;
+}
 function bgApply() {
   const b = document.body,
     r = document.documentElement,
     img = BG.k === 'img' ? bgImg() : BG.k === 'planet' ? 'img/fondo-planeta.jpg' : '',
-    on = BG.k === 'stars' || !!img;
+    gen = BGGEN.includes(BG.k),
+    on = BG.k === 'stars' || !!img || gen;
   b.classList.toggle('bg-on', on);
   b.classList.toggle('bg-all', on && !!BG.all);
   b.classList.toggle('bg-stars', on && BG.k === 'stars');
+  b.classList.toggle('bg-gen', gen);
+  [...b.classList].filter(c => c.startsWith('bgk-')).forEach(c => b.classList.remove(c));
+  if (gen) b.classList.add('bgk-' + BG.k);
+  if (BG.k === 'cielo') r.style.setProperty('--hbg', SKY[skyNow()]);
+  else r.style.removeProperty('--hbg');
   if (img) r.style.setProperty('--bgimg', `url("${img}")`);
   else r.style.removeProperty('--bgimg');
 }

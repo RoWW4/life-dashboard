@@ -913,3 +913,57 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .shqc .chip{cursor:pointer;font-size:13px;padding:6px 11px;display:inline-flex;align-items:center;gap:5px}
 .shqc .chip .i{color:var(--mu)}
 .shqc .chip.del{color:var(--er);background:var(--ers);box-shadow:none}.shqc .chip.del .i{color:var(--er)}
+/* ---------- Animaciones al abrir una sección (render.js, #m.enter) ----------
+   Tarjetas en cascada (--i = orden, 40 ms entre una y otra) y barras que se llenan desde cero. */
+.enter :is(.card,.kpi,.hs,.acct){animation:cardin .42s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
+.enter :is(.bar div,.kbar i,.gbar i,.hlp i){transform-origin:left;animation:barin .8s cubic-bezier(.2,.8,.2,1) .15s both}
+@keyframes cardin{from{opacity:0;transform:translateY(10px)}}
+@keyframes barin{from{transform:scaleX(0)}}
+/* Móvil: al pulsar, botones y filas se encogen un poco (como en las apps del teléfono) */
+@media (pointer: coarse){
+  :is(.btn,.chip,.hs,.nv,.qc,.ib,.fab,.ajb,.seg button,.kpi,.link){transition:transform .12s ease}
+  :is(.btn,.chip,.hs,.nv,.qc,.ib,.fab,.ajb,.seg button):active{transform:scale(.94)}
+  :is(.catrow,.row .link,.kpi):active{transform:scale(.98)}
+  .catrow{transition:transform .12s ease}
+}
+@media (prefers-reduced-motion: reduce){.enter :is(.card,.kpi,.hs,.acct,.bar div,.kbar i,.gbar i,.hlp i){animation:none}}
+/* ---------- Fondos hechos con código para la portada de Mi día (interfaz.js: heroBg, BGGEN) ---------- */
+.bgk-aurora{--hbg:linear-gradient(160deg,#080d26,#0e1740 60%,#0a1633)}
+.bgk-luna{--hbg:radial-gradient(120% 100% at 85% 0%,#22336b 0,#0c1436 50%,#050816 100%)}
+.bgk-ballena{--hbg:linear-gradient(180deg,#0b2550 0%,#081c40 55%,#04112a 100%)}
+.bg-on.bg-gen .hero{background:var(--hbg)}
+body.bg-all.bg-gen::before{background:var(--hbg)}
+.hbg{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+/* Aurora: tres manchas de luz difuminadas que se mueven muy despacio, con grano fino encima */
+.hbg-aurora span{position:absolute;width:70%;height:120%;border-radius:50%;filter:blur(60px);opacity:.75;animation:aur1 18s ease-in-out infinite alternate}
+.hbg-aurora span:nth-child(1){left:-10%;top:-40%;background:#2d6bff}
+.hbg-aurora span:nth-child(2){right:-15%;top:-30%;background:#8b3dff;animation-name:aur2;animation-duration:22s}
+.hbg-aurora span:nth-child(3){left:25%;bottom:-70%;background:#00b3a4;opacity:.55;animation-name:aur3;animation-duration:26s}
+.hbg-aurora::after{content:'';position:absolute;inset:0;opacity:.25;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+@keyframes aur1{to{transform:translate(18%,12%) scale(1.15)}}
+@keyframes aur2{to{transform:translate(-20%,15%) scale(.9)}}
+@keyframes aur3{to{transform:translate(-15%,-20%) scale(1.2)}}
+/* Estrellas que titilan (luna, ballena, cielo de noche) */
+.tw i{position:absolute;width:var(--s);height:var(--s);border-radius:50%;background:#fff;opacity:.35;animation:twk 3.6s ease-in-out infinite;animation-delay:var(--d)}
+@keyframes twk{50%{opacity:.95}}
+/* Luna de hoy, en su fase real, y alguna estrella fugaz de vez en cuando */
+.hmoon{position:absolute;right:7%;top:50%;width:120px;height:120px;transform:translateY(-50%);filter:drop-shadow(0 0 28px rgba(255,248,220,.35))}
+.fugaz{position:absolute;top:18%;left:20%;width:90px;height:1.5px;background:linear-gradient(90deg,rgba(255,255,255,0),#fff);border-radius:2px;opacity:0;transform:rotate(-18deg);animation:fugaz 9s ease-in 3s infinite}
+@keyframes fugaz{0%{opacity:0;transform:translate(0,0) rotate(-18deg)}3%{opacity:1}9%{opacity:0;transform:translate(220px,-70px) rotate(-18deg)}100%{opacity:0}}
+/* Ballena que nada despacio de un lado a otro, con burbujas */
+.whale{position:absolute;width:150px;top:30%;left:0;animation:nada 46s linear -18s infinite,flota 6s ease-in-out infinite}
+@keyframes nada{from{transform:translateX(calc(100vw + 40px))}to{transform:translateX(-200px)}}
+@keyframes flota{50%{margin-top:10px}}
+.bub i{position:absolute;bottom:-10px;width:6px;height:6px;border-radius:50%;border:1px solid rgba(200,225,255,.35);animation:burb 9s linear infinite}
+.bub i:nth-child(1){left:18%}.bub i:nth-child(2){left:52%;animation-delay:3s;width:4px;height:4px}.bub i:nth-child(3){left:80%;animation-delay:6s}
+@keyframes burb{to{transform:translateY(-320px);opacity:0}}
+/* Cielo según la hora: degradado (ver SKY en interfaz.js), sol o estrellas y dos capas de montañas */
+.mnt{position:absolute;left:0;right:0;bottom:0;width:100%;height:46%}
+.sol{position:absolute;right:9%;top:42%;width:58px;height:58px;border-radius:50%;background:radial-gradient(circle,#fff6d8 0,#ffd27a 55%,rgba(255,210,122,0) 72%);filter:blur(.5px)}
+.sky-dia .sol{background:radial-gradient(circle,#fffdf2 0,#fff1b8 50%,rgba(255,241,184,0) 72%)}
+.sky-dia .sol{top:24%}.sky-tarde .sol{top:40%;background:radial-gradient(circle,#fff8e0 0,#ffe09a 52%,rgba(255,224,154,0) 72%)}
+.sky-amanecer .sol,.sky-atardecer .sol{top:54%}
+.hbg-cielo .hmoon{top:34%;width:96px;height:96px}
+@media(max-width:760px){.hmoon{width:84px;height:84px;right:5%;top:58%}.whale{width:110px;top:22%}}
+@media (prefers-reduced-motion: reduce){.hbg *{animation:none!important}}
+@media(min-width:761px){.hmoon,.hbg-cielo .hmoon{right:auto;left:56%;width:110px;height:110px}.sol{right:auto;left:58%}.sky-dia .sol{top:18%}.sky-tarde .sol{top:34%}.sky-amanecer .sol,.sky-atardecer .sol{top:48%}}

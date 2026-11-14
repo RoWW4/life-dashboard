@@ -37,6 +37,14 @@ function render() {
   if (!same) cust = false;
   if (!V_[view]) view = 'dia';
   $('#m').innerHTML = V_[view]();
+  // Al cambiar de sección, las tarjetas entran en cascada y las barras crecen desde cero (clase .enter, solo un momento).
+  if (!same) {
+    const m = $('#m');
+    m.querySelectorAll('.card, .kpi, .hs, .acct').forEach((c, i) => c.style.setProperty('--i', Math.min(i, 10)));
+    m.classList.add('enter');
+    clearTimeout(render.ent);
+    render.ent = setTimeout(() => m.classList.remove('enter'), 1100);
+  }
   render.last = view;
   try {
     sessionStorage.setItem('ldb-view', view);

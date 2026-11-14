@@ -207,7 +207,7 @@ function vDia() {
     ${pins.length > 1 ? `<button class="qlk" data-a="cust">${cust ? 'Listo' : 'Ordenar'}</button>` : ''}${pins.length ? '' : `<button class="qlk" data-a="go" data-i="docs">${I('star', 'sm')} Marca documentos con la estrella para tenerlos aquí</button>`}
   </div>${cust && pins.length > 1 ? `<div class="card qord">${pinOrd()}</div>` : ''}`;
   setTimeout(wxLoad);
-  return `<section class="hero" aria-label="Resumen de hoy">
+  return `<section class="hero" aria-label="Resumen de hoy">${heroBg()}
     <div class="hmain"><div class="eyb">${cap(new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(now))}</div>
       <h2>${g}${S.name ? ', ' + esc(S.name) : ''}</h2></div>
     ${S.wxOff ? '' : `<div id="hwx" class="haside">${wxHTML()}</div>`}
