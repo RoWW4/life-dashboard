@@ -547,3 +547,11 @@ const ago = t => {
         ? 'hace ' + Math.round(m / 60) + ' h'
         : 'hace ' + Math.round(m / 1440) + ' d';
 };
+/* Icono según lo que se escribe: L = [[expresión, icono, color], …]; se compara sin tildes ni mayúsculas. El primero que encaja gana. */
+const pickIco = (L, n, def) => {
+  const k = String(n || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');
+  return L.find(([r]) => r.test(k)) || def;
+};

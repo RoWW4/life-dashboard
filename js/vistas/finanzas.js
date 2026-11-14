@@ -192,7 +192,7 @@ function savCard() {
       'savp',
       st.proj.map(
         p =>
-          `<div class="row"><span class="g">Abono ${fd(p.d)}</span><span class="amt ok">${money('+' + eur(p.int))}</span><b class="amt">${money(eur(p.bal))}</b></div>`
+          `<div class="row">${tile('calendar-clock', 'var(--ok)')}<span class="g">Abono ${fd(p.d)}</span><span class="amt ok">${money('+' + eur(p.int))}</span><b class="amt">${money(eur(p.bal))}</b></div>`
       ),
       3
     )}
@@ -204,7 +204,7 @@ function savCard() {
         .reverse()
         .map(
           x =>
-            `<div class="row"><span class="g">${fd(x.d)}${x.dep ? ` <span class="chip">${x.dep > 0 ? 'Aportación +' : 'Retirada −'}${money(eur(Math.abs(x.dep)))}</span>` : ''}</span><b class="amt">${money(eur(x.bal))}</b>${x.auto ? `<span class="ib" title="Del banco">${I('landmark', 'sm')}</span>` : `<button class="ib" data-a="savdel" data-i="${x.id}" aria-label="Eliminar apunte">${I('x')}</button>`}</div>`
+            `<div class="row">${x.dep ? tile(x.dep > 0 ? 'arrow-down-left' : 'arrow-up-right', x.dep > 0 ? 'var(--ok)' : 'var(--wa)') : tile(x.auto ? 'landmark' : 'pencil', 'var(--ac)')}<span class="g">${fd(x.d)}${x.dep ? ` <span class="chip">${x.dep > 0 ? 'Aportación +' : 'Retirada −'}${money(eur(Math.abs(x.dep)))}</span>` : ''}</span><b class="amt">${money(eur(x.bal))}</b>${x.auto ? `<span class="ib" title="Del banco">${I('landmark', 'sm')}</span>` : `<button class="ib" data-a="savdel" data-i="${x.id}" aria-label="Eliminar apunte">${I('x')}</button>`}</div>`
         ),
       2
     )}`
@@ -512,6 +512,27 @@ function goalSt(g) {
     want = a0 + ((g.obj - a0) * gone) / tot;
   return g.amt + 0.5 >= want ? { k: 'ok', t: 'Vas bien', left, mo } : { k: 'wa', t: 'Te retrasas', left, mo };
 }
+/* Icono de cada meta según su nombre (si no encaja ninguno, la diana). */
+const GOAL_IC = [
+  [/\b(viaje|vuelo|escapada|turismo)/, 'plane'],
+  [/\b(vacacion|playa|verano)/, 'tree-palm'],
+  [/\b(coche|auto|carnet|itv|seguro del coche)/, 'car'],
+  [/\b(moto|bici)/, 'bike'],
+  [/\b(casa|piso|hipoteca|entrada|alquiler|fianza|mudanza|hogar)/, 'house'],
+  [/\b(mueble|sofa|cocina|reforma|obra|decoracion)/, 'sofa'],
+  [/\b(emergencia|imprevisto|colchon|seguridad|fondo)/, 'umbrella'],
+  [/\b(regalo|navidad|reyes|cumple)/, 'gift'],
+  [/\b(boda|anillo|joya|aniversario)/, 'gem'],
+  [/\b(estudio|curso|master|universidad|formacion|oposicion|idioma)/, 'graduation-cap'],
+  [/\b(ordenador|portatil|pc|tablet|ipad)/, 'laptop'],
+  [/\b(movil|telefono|iphone)/, 'smartphone'],
+  [/\b(bebe|hijo|nacimiento)/, 'baby'],
+  [/\b(mascota|perro|gato|veterinario)/, 'paw-print'],
+  [/\b(salud|dentista|medico|gafas|tratamiento)/, 'heart-pulse'],
+  [/\b(gimnasio|deporte)/, 'dumbbell'],
+  [/\b(ahorro|hucha|inversion)/, 'piggy-bank'],
+  [/\b(deuda|prestamo|credito|tarjeta)/, 'credit-card']
+];
 function goalsCard() {
   const L = S.goals,
     b = acctBal(),
@@ -521,7 +542,7 @@ function goalsCard() {
     const st = goalSt(g),
       p = g.obj > 0 ? Math.min(100, (g.amt / g.obj) * 100) : 0,
       when = g.d ? cap(mLabel(g.d)) : '';
-    return `<div class="goal${st.t === 'Conseguida' ? ' done' : ''}" style="--gc:${g.c || 'var(--ac)'}"><div class="gt"><button class="link g" data-a="goaled" data-i="${g.id}" title="Editar meta"><b>${esc(g.n)}</b></button><span class="chip ${st.k}">${st.t}</span><button class="ib" data-a="goalmv" data-i="${g.id}" aria-label="Apartar o sacar dinero de «${esc(g.n)}»" title="Apartar o sacar">${I('arrow-left-right')}</button></div><div class="gbar" role="img" aria-label="${Math.round(p)} % de la meta"><i style="width:${p.toFixed(1)}%"></i></div><div class="gd"><span>${eur(g.amt)} de ${eur(g.obj)} · ${Math.round(p)} %</span><span>${when}${st.mo ? ' · aparta ' + eur(Math.ceil(st.mo)) + '/mes' : ''}</span></div></div>`;
+    return `<div class="goal${st.t === 'Conseguida' ? ' done' : ''}" style="--gc:${g.c || 'var(--ac)'}"><div class="gt">${tile(pickIco(GOAL_IC, g.n, [0, 'target'])[1], g.c || 'var(--ac)')}<button class="link g" data-a="goaled" data-i="${g.id}" title="Editar meta"><b>${esc(g.n)}</b></button><span class="chip ${st.k}">${st.t}</span><button class="ib" data-a="goalmv" data-i="${g.id}" aria-label="Apartar o sacar dinero de «${esc(g.n)}»" title="Apartar o sacar">${I('arrow-left-right')}</button></div><div class="gbar" role="img" aria-label="${Math.round(p)} % de la meta"><i style="width:${p.toFixed(1)}%"></i></div><div class="gd"><span>${eur(g.amt)} de ${eur(g.obj)} · ${Math.round(p)} %</span><span>${when}${st.mo ? ' · aparta ' + eur(Math.ceil(st.mo)) + '/mes' : ''}</span></div></div>`;
   });
   return panel(
     'fin',

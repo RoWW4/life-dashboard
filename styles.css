@@ -917,7 +917,7 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 /* Compra: más usadas */
 .shq{margin-top:14px;padding-top:12px;border-top:1px solid var(--sep)}
 .shqh{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--mu);margin-bottom:8px}
-.shqh span{display:inline-flex;align-items:center;gap:6px}
+.shqh span{display:inline-flex;align-items:center;gap:6px;line-height:1}.shqh span .i{vertical-align:0}.shqc .chip>span{display:inline-flex}
 .shqh .link{flex:none;margin-left:auto;padding-left:12px;font-size:12.5px;color:var(--ac2);font-weight:600}
 .shqh span{color:var(--tx2)}.shqh span .i{color:#fbbf24;fill:#fbbf24;width:15px;height:15px;filter:drop-shadow(0 0 4px color-mix(in srgb,#fbbf24 50%,transparent))}
 .shqc{display:flex;flex-wrap:wrap;gap:6px}

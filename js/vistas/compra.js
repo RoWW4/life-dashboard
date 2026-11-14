@@ -47,10 +47,7 @@ const SHOP_IC = [
   [/\b(panal|toallita|bebe|potito)/, 'baby', '#7aa7ff'],
   [/\b(pienso|perro|gato|arena|mascota|chuche perro)/, 'paw-print', '#c08457']
 ];
-const shopIco = n => {
-  const k = String(n).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-  return SHOP_IC.find(([r]) => r.test(k)) || [0, 'shopping-basket', '#34c77b'];
-};
+const shopIco = n => pickIco(SHOP_IC, n, [0, 'shopping-basket', '#34c77b']);
 let shopQEdit = false; // «Quitar» en las más usadas: tocar una la borra de la lista de sugerencias (no se guarda)
 function vCompra() {
   const P = S.shop.filter(s => !s.done),
