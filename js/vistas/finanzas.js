@@ -167,6 +167,67 @@ function savChart(st) {
   }).join('')}</div>
     <div class="savlg"><span><i></i>Cobrado</span><span><i class="g"></i>Generado este mes</span><span><i class="p"></i>Previsto</span><span class="mu">Interés neto de cada mes; se cobra el día 1 del siguiente</span></div>`;
 }
+/* «¿Cuánto ganaría si lo mantengo?»: desde el saldo de hoy, mes a mes como la cuenta (interés diario con el tipo de
+   cada día, abono neto el día 1 que vuelve a generar intereses) más lo que se meta cada mes (simulación, no se guarda).
+   Solo cuenta el interés desde hoy. Devuelve, por cada plazo en años, {g bruto, n neto, put metido, bal saldo final}. */
+let savAp = 0,
+  savSel = 5;
+function savPlazos(st, ap, P) {
+  const s = S.sav,
+    tx = (s.tax ?? SAV_TAX) / 100,
+    r2 = v => Math.round(v * 100) / 100,
+    td = TD(),
+    end = P.map(y => addM(td, 12 * y)),
+    out = {};
+  let bal = st.now,
+    from = td,
+    g = 0,
+    n = 0,
+    put = 0;
+  for (let k = 0; k <= 12 * Math.max(...P) + 1; k++) {
+    const nd = addM(from.slice(0, 8) + '01', 1),
+      days = dd(nd, from),
+      gi = r2(bal * savDays(s, from, days)),
+      ni = r2(gi - r2(gi * tx));
+    P.forEach((y, i) => {
+      if (!out[y] && nd > end[i]) out[y] = { g, n, put, bal };
+    });
+    g += gi;
+    n += ni;
+    bal = r2(bal + ni + ap);
+    put += ap;
+    from = nd;
+  }
+  return out;
+}
+function savPz(st) {
+  const P = exp.savy20 ? [1, 3, 5, 10, 20] : [1, 3, 5, 10],
+    R = savPlazos(st, savAp, P),
+    tax = S.sav.tax ?? SAV_TAX,
+    // sin céntimos: son previsiones a años vista
+    e0 = v =>
+      new Intl.NumberFormat('es-ES', {
+        style: 'currency',
+        currency: S.cur || 'EUR',
+        maximumFractionDigits: 0,
+        useGrouping: 'always'
+      }).format(Math.round(v || 0));
+  return `<div class="pzhd"><span>Plazo</span><span>Ganado neto</span><span>Saldo final</span></div><div class="pz">${P.map(y => {
+    const r = R[y],
+      on = y === savSel;
+    return `<div class="pzr${on ? ' on' : ''}" role="button" tabindex="0" data-a="savsel" data-i="${y}" aria-expanded="${on}"><div class="pzh"><span>${y} año${y > 1 ? 's' : ''}</span><b>${money('+' + e0(r.n))}</b><i>${money(e0(r.bal))}</i></div>${
+      on
+        ? `<div class="pzd"><span>Intereses brutos</span><b>${money(e0(r.g))}</b><span>Impuestos (${tax} %)</span><b>${money('−' + e0(r.g - r.n))}</b><span>Intereses netos</span><b class="ok">${money('+' + e0(r.n))}</b>${r.put ? `<span>Lo que habrías metido (${e0(savAp)} al mes)</span><b>${money(e0(r.put))}</b>` : ''}<span>Saldo de hoy</span><b>${money(e0(st.now))}</b></div>`
+        : ''
+    }</div>`;
+  }).join('')}</div><button class="chip pzmas" data-a="xp" data-i="savy20">${exp.savy20 ? 'Quitar 20 años' : '+ Ver 20 años'}</button>`;
+}
+/* Al escribir en la casilla solo se repinta la tabla, para no perder el cursor. */
+function savPzRefresh() {
+  const el = document.getElementById('savpz'),
+    st = el && savStats();
+  if (st) el.innerHTML = savPz(st);
+}
 function savCard() {
   const s = S.sav;
   if (!s)
@@ -196,6 +257,10 @@ function savCard() {
       ),
       3
     )}
+    <h4 class="savh">¿Cuánto ganaría si lo mantengo?</h4>
+    <div class="pzap"><span>Si además meto</span><span class="pzin"><button class="ib" data-a="savap" data-i="-50" aria-label="50 € menos">${I('minus')}</button><input id="savap" inputmode="decimal" value="${savAp || ''}" placeholder="0" aria-label="Euros que meto al mes"><button class="ib" data-a="savap" data-i="50" aria-label="50 € más">${I('plus')}</button></span><span>€ al mes</span></div>
+    <div id="savpz">${savPz(st)}</div>
+    <div class="mu pznota">Con ${pct(savRate(s, TD()) * 100)} bruto${s.rate2 != null && s.from2 > TD() ? ` hasta el ${fd(s.from2)} y ${pct(s.rate2)} desde ahí` : ''}, menos ${tax} % de impuestos. Los intereses se cobran cada mes y vuelven a generar intereses. Lo que pongas al mes es solo para el cálculo: no se guarda.</div>
     ${st.real !== null ? `<div class="mu" style="margin:8px 0">Rentabilidad real con lo apuntado hasta hoy: ≈ ${pct(st.real)} anual. La previsión se recalcula cada vez que apuntas el saldo real.</div>` : ''}
     <h4 class="savh">Apuntes</h4>
     ${fold(

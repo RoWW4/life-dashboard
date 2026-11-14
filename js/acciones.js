@@ -471,6 +471,16 @@ const A = {
         });
       };
   },
+  savsel: i => {
+    savSel = savSel === +i ? 0 : +i;
+    savPzRefresh();
+  },
+  savap: i => {
+    savAp = Math.max(0, savAp + +i);
+    const el = document.getElementById('savap');
+    if (el) el.value = savAp || '';
+    savPzRefresh();
+  },
   savadd: () => {
     const d = V('sv1'),
       b = pnum(V('sv2')),

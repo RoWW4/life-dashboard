@@ -34,6 +34,10 @@ document.addEventListener('input', e => {
     txf.q = e.target.value;
     txRefresh();
   }
+  if (e.target.id === 'savap') {
+    savAp = Math.max(0, pnum(e.target.value) || 0);
+    savPzRefresh();
+  }
 });
 document.addEventListener('keydown', e => {
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=button][data-a]')) {
