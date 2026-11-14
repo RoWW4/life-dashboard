@@ -9,7 +9,7 @@ function cumplePanel(v) {
     v,
     CUMPLE,
     `<span style="color:${AC[CUMPLE]}">${I(AI[CUMPLE])}</span> Cumpleaños <span class="cnt">· ${c.length}</span>`,
-    (c.length ? fold('a-' + CUMPLE, c.map(taskRowA), 3) : empty('No hay cumpleaños apuntados.')) +
+    (c.length ? fold('a-' + CUMPLE, c.map(taskRow), 3) : empty('No hay cumpleaños apuntados.')) +
       `<div class="more"><button class="btn sm ghost" data-a="nc">${I('plus', 'sm')} Añadir cumpleaños</button></div>`
   );
 }
@@ -40,7 +40,7 @@ function vTareas() {
       Object.keys(g).sort((a, b) => near(a).localeCompare(near(b)) || AREAS.indexOf(a) - AREAS.indexOf(b))
     ));
     // Cada panel enseña sus 5 tareas más próximas (Cumpleaños, los 3 siguientes) y se despliega con «Ver más».
-    body = `<div class="grid">${keys.map(a => (a === CUMPLE ? cumplePanel('tareas') : panel('tareas', a, `<span style="color:${AC[a] || 'inherit'}">${I(AI[a] || 'pin')}</span> ${esc(a)} <span class="cnt">· ${g[a].length}</span>`, fold('a-' + a, so(g[a]).map(taskRowA), 5)))).join('')}</div>`;
+    body = `<div class="grid">${keys.map(a => (a === CUMPLE ? cumplePanel('tareas') : panel('tareas', a, `<span style="color:${AC[a] || 'inherit'}">${I(AI[a] || 'pin')}</span> ${esc(a)} <span class="cnt">· ${g[a].length}</span>`, fold('a-' + a, so(g[a]).map(taskRow), 5)))).join('')}</div>`;
   } else {
     // Las completadas con fecha pasada no son atrasadas: van en su propio grupo.
     const B = [

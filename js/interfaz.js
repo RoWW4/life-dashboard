@@ -426,15 +426,12 @@ const linkify = s =>
     } catch (e) {}
     return `<a class="dl" href="${u}" target="_blank" rel="noopener noreferrer">${esc(h)}${I('external-link', 'sm')}</a>`;
   });
-/* Fila de una tarea. Para borrarla se abre (botón «Eliminar» de la ventana), así no se borra sin querer.
-   taskRowA: sin el icono del área, para dentro de los paneles de cada área (el icono ya está en la cabecera). */
-const tRow = (t, tl) => {
+/* Fila de una tarea, con su icono. Para borrarla se abre (botón «Eliminar» de la ventana), así no se borra sin querer. */
+const taskRow = t => {
   const n = t.due ? dayDiff(t.due) : null,
     late = !t.done && n !== null && n < 0;
-  return `<div class="row ${t.done ? 'is-done' : ''}"><input type="checkbox" class="ck" data-a="tt" data-i="${t.id}" ${t.done ? 'checked' : ''} aria-label="Completar «${esc(t.title)}»">${tl ? tile(ico(t), AC[t.area]) : ''}<button class="link" data-a="et" data-i="${t.id}"><span class="tt">${esc(t.title)}</span>${t.rep ? `<span class="mu" title="Se repite ${t.rep.toLowerCase()}">${I('repeat', 'sm')}</span>` : ''}${prChip(t.pr)}${t.rem && !t.done ? `<span class="mu" title="Aviso por Telegram: ${fdc(t.rem.slice(0, 10))} a las ${t.rem.slice(11, 16)}">${I('bell', 'sm')}</span>` : ''}${t.notes && t.notes.length ? `<span class="mu nc" title="${t.notes.length} nota${t.notes.length > 1 ? 's' : ''}">${I('message-square', 'sm')}${t.notes.length}</span>` : ''}</button><span class="when ${late ? 'er' : n === 0 && !t.done ? 'ac' : ''}">${cap(rel(t.due))}${t.tm ? ' · ' + t.tm : ''}</span></div>`;
+  return `<div class="row ${t.done ? 'is-done' : ''}"><input type="checkbox" class="ck" data-a="tt" data-i="${t.id}" ${t.done ? 'checked' : ''} aria-label="Completar «${esc(t.title)}»">${tile(ico(t), AC[t.area])}<button class="link" data-a="et" data-i="${t.id}"><span class="tt">${esc(t.title)}</span>${t.rep ? `<span class="mu" title="Se repite ${t.rep.toLowerCase()}">${I('repeat', 'sm')}</span>` : ''}${prChip(t.pr)}${t.rem && !t.done ? `<span class="mu" title="Aviso por Telegram: ${fdc(t.rem.slice(0, 10))} a las ${t.rem.slice(11, 16)}">${I('bell', 'sm')}</span>` : ''}${t.notes && t.notes.length ? `<span class="mu nc" title="${t.notes.length} nota${t.notes.length > 1 ? 's' : ''}">${I('message-square', 'sm')}${t.notes.length}</span>` : ''}</button><span class="when ${late ? 'er' : n === 0 && !t.done ? 'ac' : ''}">${cap(rel(t.due))}${t.tm ? ' · ' + t.tm : ''}</span></div>`;
 };
-const taskRow = t => tRow(t, 1),
-  taskRowA = t => tRow(t, 0);
 const expChip = d =>
   d.exp
     ? `<span class="chip ${dayDiff(d.exp) < 0 ? 'er' : dayDiff(d.exp) <= 60 ? 'wa' : ''}">${dayDiff(d.exp) < 0 ? 'Caducó' : 'Vence'} ${fdc(d.exp)}</span>`
