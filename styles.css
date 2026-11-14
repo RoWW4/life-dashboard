@@ -1034,3 +1034,11 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 .card[data-k=fic] .dh:first-of-type{padding-top:0}
 .cdocs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:4px 0 8px}
 .cdocs .qc{box-shadow:none}
+.chip.tarea{color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);box-shadow:none}
+/* Tareas «Por fecha»: filtro por área, separadores por tramos y franja del color del área */
+.tfil{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}.tfil::-webkit-scrollbar{display:none}
+.tfil .chip{font-size:12.5px;padding:5px 10px;cursor:pointer;flex-shrink:0}.tfil .chip.on{background:var(--acs);color:var(--ac2);box-shadow:inset 0 0 0 1.5px var(--ac2)}.tfil .chip.tarea.on{color:var(--c);background:color-mix(in srgb,var(--c) 24%,transparent);box-shadow:inset 0 0 0 1.5px var(--c)}
+.tlist{grid-column:1/-1}
+.tsep{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);padding:16px 0 4px;border-bottom:1px solid var(--sep)}.tsep:first-child{padding-top:0}.tsep span{font-weight:500;opacity:.8}.tsep.er{color:var(--er)}
+.row.tstripe{border-left:3px solid var(--c);padding-left:10px;margin-left:-4px}
+.tstripe .link .meta{flex-basis:100%;margin-top:0}

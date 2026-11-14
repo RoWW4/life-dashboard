@@ -91,6 +91,12 @@ const A = {
     grp = i;
     render();
   },
+  tfa: i => {
+    tfa = i;
+    render();
+    const b = $('.tfil .on');
+    if (b) b.scrollIntoView({ block: 'nearest', inline: 'center' });
+  },
   fl: i => {
     flt = i;
     render();

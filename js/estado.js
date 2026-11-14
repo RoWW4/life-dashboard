@@ -72,7 +72,8 @@ const VIEW0 = (() => {
 })();
 let view = VIEW0 || 'dia',
   flt = 'pend',
-  grp = 'area',
+  grp = 'fecha',
+  tfa = '',
   selD = '',
   cm = new Date(),
   finOff = 0,

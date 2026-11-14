@@ -427,10 +427,12 @@ const linkify = s =>
     return `<a class="dl" href="${u}" target="_blank" rel="noopener noreferrer">${esc(h)}${I('external-link', 'sm')}</a>`;
   });
 /* Fila de una tarea, con su icono. Para borrarla se abre (botón «Eliminar» de la ventana), así no se borra sin querer. */
-const taskRow = t => {
+const areaChip = a => `<span class="chip tarea" style="--c:${AC[a] || 'var(--mu)'}">${I(AI[a] || 'pin', 'sm')} ${esc(a)}</span>`;
+/* sa: con franja y etiqueta del área (lista «Por fecha» de Tareas). */
+const taskRow = (t, sa) => {
   const n = t.due ? dayDiff(t.due) : null,
     late = !t.done && n !== null && n < 0;
-  return `<div class="row ${t.done ? 'is-done' : ''}"><input type="checkbox" class="ck" data-a="tt" data-i="${t.id}" ${t.done ? 'checked' : ''} aria-label="Completar «${esc(t.title)}»">${tile(ico(t), AC[t.area])}<button class="link" data-a="et" data-i="${t.id}"><span class="tt">${esc(t.title)}</span>${t.rep ? `<span class="mu" title="Se repite ${t.rep.toLowerCase()}">${I('repeat', 'sm')}</span>` : ''}${prChip(t.pr)}${t.rem && !t.done ? `<span class="mu" title="Aviso por Telegram: ${fdc(t.rem.slice(0, 10))} a las ${t.rem.slice(11, 16)}">${I('bell', 'sm')}</span>` : ''}${t.notes && t.notes.length ? `<span class="mu nc" title="${t.notes.length} nota${t.notes.length > 1 ? 's' : ''}">${I('message-square', 'sm')}${t.notes.length}</span>` : ''}</button><span class="when ${late ? 'er' : n === 0 && !t.done ? 'ac' : ''}">${cap(rel(t.due))}${t.tm ? ' · ' + t.tm : ''}</span></div>`;
+  return `<div class="row ${t.done ? 'is-done' : ''}${sa ? ' tstripe" style="--c:' + (AC[t.area] || 'var(--mu)') : ''}"><input type="checkbox" class="ck" data-a="tt" data-i="${t.id}" ${t.done ? 'checked' : ''} aria-label="Completar «${esc(t.title)}»">${tile(ico(t), AC[t.area])}<button class="link" data-a="et" data-i="${t.id}"><span class="tt">${esc(t.title)}</span>${sa ? `<span class="meta">${areaChip(t.area)}${prChip(t.pr)}</span>` : ''}${t.rep ? `<span class="mu" title="Se repite ${t.rep.toLowerCase()}">${I('repeat', 'sm')}</span>` : ''}${sa ? '' : prChip(t.pr)}${t.rem && !t.done ? `<span class="mu" title="Aviso por Telegram: ${fdc(t.rem.slice(0, 10))} a las ${t.rem.slice(11, 16)}">${I('bell', 'sm')}</span>` : ''}${t.notes && t.notes.length ? `<span class="mu nc" title="${t.notes.length} nota${t.notes.length > 1 ? 's' : ''}">${I('message-square', 'sm')}${t.notes.length}</span>` : ''}</button><span class="when ${late ? 'er' : n === 0 && !t.done ? 'ac' : ''}">${cap(rel(t.due))}${t.tm ? ' · ' + t.tm : ''}</span></div>`;
 };
 const expChip = d =>
   d.exp
@@ -593,7 +595,7 @@ function calHTML() {
     hl = holOn(sd),
     vl = perOn(sd);
   const sl = sm.has(sd) ? `<div class="row">${tile('heart-pulse', 'var(--rose)')}<span class="g">${sTip(sd)}</span></div>` : '';
-  const day = hl.map(holRow).join('') + sl + vl.map(perRow).join('') + dl.map(taskRow).join('');
+  const day = hl.map(holRow).join('') + sl + vl.map(perRow).join('') + dl.map(t => taskRow(t)).join('');
   return `<div class="calh"><button class="ib" data-a="pm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b>${cap(new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(cm))}</b><button class="ib" data-a="pm" data-i="1" aria-label="Mes siguiente">${I('chevron-right')}</button></div><div class="cal">${c}</div><div class="calk"><span><i class="kh"></i>Festivo</span><span><i class="kv"></i>Vacaciones</span>${sm.size ? '<span><i class="ksp"></i>Salud</span>' : ''}<span><i class="kt"></i>Tareas</span><span><i class="kbd"></i>Cumpleaños</span></div><div class="dh dhx"><span>${isT ? 'Hoy' : rel(sd)} · ${fd(sd)}</span><button class="btn ghost sm" data-a="dm" data-i="${sd}">${I('plus', 'sm')} Añadir</button></div>${day || (isT ? '' : empty('Nada este día.'))}`;
 }
 function bankAlerts() {

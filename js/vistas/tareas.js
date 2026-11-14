@@ -9,7 +9,13 @@ function cumplePanel(v) {
     v,
     CUMPLE,
     `<span style="color:${AC[CUMPLE]}">${I(AI[CUMPLE])}</span> Cumpleaños <span class="cnt">· ${c.length}</span>`,
-    (c.length ? fold('a-' + CUMPLE, c.map(taskRow), 3) : empty('No hay cumpleaños apuntados.')) +
+    (c.length
+      ? fold(
+          'a-' + CUMPLE,
+          c.map(t => taskRow(t)),
+          3
+        )
+      : empty('No hay cumpleaños apuntados.')) +
       `<div class="more"><button class="btn sm ghost" data-a="nc">${I('plus', 'sm')} Añadir cumpleaños</button></div>`
   );
 }
@@ -40,26 +46,53 @@ function vTareas() {
       Object.keys(g).sort((a, b) => near(a).localeCompare(near(b)) || AREAS.indexOf(a) - AREAS.indexOf(b))
     ));
     // Cada panel enseña sus 5 tareas más próximas (Cumpleaños, los 3 siguientes) y se despliega con «Ver más».
-    body = `<div class="grid">${keys.map(a => (a === CUMPLE ? cumplePanel('tareas') : panel('tareas', a, `<span style="color:${AC[a] || 'inherit'}">${I(AI[a] || 'pin')}</span> ${esc(a)} <span class="cnt">· ${g[a].length}</span>`, fold('a-' + a, so(g[a]).map(taskRow), 5)))).join('')}</div>`;
+    body = `<div class="grid">${keys
+      .map(a =>
+        a === CUMPLE
+          ? cumplePanel('tareas')
+          : panel(
+              'tareas',
+              a,
+              `<span style="color:${AC[a] || 'inherit'}">${I(AI[a] || 'pin')}</span> ${esc(a)} <span class="cnt">· ${g[a].length}</span>`,
+              fold(
+                'a-' + a,
+                so(g[a]).map(t => taskRow(t)),
+                5
+              )
+            )
+      )
+      .join('')}</div>`;
   } else {
-    // Las completadas con fecha pasada no son atrasadas: van en su propio grupo.
+    // Por fecha (la vista de inicio): una sola lista, de lo más cercano a lo más lejano, con separadores por tramos.
+    // Cada tarea lleva una franja y una etiqueta con el color de su área; arriba se puede filtrar por área (tfa).
+    const ar = [...new Set(l.map(t => t.area))].sort((x, y) => AREAS.indexOf(x) - AREAS.indexOf(y));
+    if (tfa && !ar.includes(tfa)) tfa = '';
+    const lf = tfa ? l.filter(t => t.area === tfa) : l;
+    const dd = t => dayDiff(t.due);
+    // Las completadas con fecha pasada no son atrasadas: van en su propio tramo.
     const B = [
-      ['triangle-alert', 'Atrasadas', t => !t.done && t.due && dayDiff(t.due) < 0],
-      ['calendar-clock', 'Hoy y próximos 7 días', t => t.due && dayDiff(t.due) >= 0 && dayDiff(t.due) <= 7],
-      ['calendar-days', 'Próximos 30 días', t => t.due && dayDiff(t.due) > 7 && dayDiff(t.due) <= 30],
-      ['telescope', 'Más adelante', t => t.due && dayDiff(t.due) > 30],
-      ['inbox', 'Sin fecha (bandeja)', t => !t.due],
-      ['circle-check', 'Completadas', t => t.done && t.due && dayDiff(t.due) < 0]
+      ['Atrasadas', t => !t.done && t.due && dd(t) < 0],
+      ['Hoy', t => t.due && dd(t) === 0],
+      ['Mañana', t => t.due && dd(t) === 1],
+      ['Esta semana', t => t.due && dd(t) > 1 && dd(t) <= 7],
+      ['Este mes', t => t.due && dd(t) > 7 && dd(t) <= 30],
+      ['Más adelante', t => t.due && dd(t) > 30],
+      ['Sin fecha', t => !t.due],
+      ['Completadas', t => t.done && t.due && dd(t) < 0]
     ];
-    const G = {};
-    B.forEach(([ic, n, f]) => {
-      const x = so(l.filter(f));
-      if (x.length) G[n] = panel('tareasf', n, `${I(ic)} ${n} <span class="cnt">· ${x.length}</span>`, fold('f-' + n, x.map(taskRow), 5));
-    });
-    if (cum) G[CUMPLE] = cumplePanel('tareasf');
-    // VIS.tareas también aquí, para saber si la sección tiene más de un panel (y enseñar el asa).
-    VIS.tareas = VIS.tareasf = ord('tareasf', Object.keys(G));
-    body = `<div class="grid">${VIS.tareasf.map(n => G[n]).join('')}</div>`;
+    const lst = B.map(([n, f]) => {
+      const x = so(lf.filter(f));
+      return x.length
+        ? `<div class="tsep${n === 'Atrasadas' ? ' er' : ''}">${n} <span>· ${x.length}</span></div>` + x.map(t => taskRow(t, 1)).join('')
+        : '';
+    }).join('');
+    const fil =
+      ar.length > 1
+        ? `<div class="tfil" role="group" aria-label="Filtrar por área"><button class="chip${tfa ? '' : ' on'}" data-a="tfa" data-i="">Todas</button>${ar.map(x => `<button class="chip tarea${tfa === x ? ' on' : ''}" style="--c:${AC[x] || 'var(--mu)'}" data-a="tfa" data-i="${esc(x)}">${I(AI[x] || 'pin', 'sm')} ${esc(x)}</button>`).join('')}</div>`
+        : '';
+    VIS.tareas = [];
+    const cp = cum && !tfa ? cumplePanel('tareasf') : '';
+    if (lst || cp) body = fil + `<div class="grid">${lst ? `<div class="card tlist">${lst}</div>` : ''}${cp}</div>`;
   }
   const segF = [
     ['pend', 'Pendientes'],
@@ -69,8 +102,8 @@ function vTareas() {
   ];
   return `<div class="hdr"><div><h2>Tareas</h2><div class="sub help">Marca el cuadrado para completar · Toca el título para editar · Las repetitivas generan la siguiente</div></div><button class="btn" data-a="nt">${I('plus')} Nueva tarea</button></div>
   <div class="toolbar one"><div class="seg">${[
-    ['area', 'Por área'],
-    ['fecha', 'Por fecha']
+    ['fecha', 'Por fecha'],
+    ['area', 'Por área']
   ]
     .map(([k, n]) => `<button class="${grp === k ? 'on' : ''}" data-a="gp" data-i="${k}">${n}</button>`)
     .join(
