@@ -249,6 +249,8 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .hlmeta{font-size:12px;gap:6px}.hlmeta i{width:14px;border-top:1.5px dashed #fbbf24}
 .hlb i{display:block;width:62%;max-width:30px;border-radius:8px;background:linear-gradient(180deg,#34d399,color-mix(in srgb,#34d399 35%,transparent));opacity:.55}
 .hlb.on i,.hlb.ok i{opacity:1}.hlb.on i{box-shadow:0 0 14px color-mix(in srgb,#34d399 55%,transparent)}
+.hlb{cursor:pointer;border-radius:10px}.hlb:focus-visible{outline:2px solid var(--ac);outline-offset:2px}.hlb.sel{background:color-mix(in srgb,#34d399 12%,transparent)}.hlb.sel i{opacity:1}
+.hlw .hlxi{margin-top:12px}
 .hlb em{font-style:normal;font-size:12px;color:var(--mu);text-transform:capitalize}.hlb.on em{color:var(--tx);font-weight:600}
 .hlz{font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;color:#a78bfa;background:color-mix(in srgb,#a78bfa 14%,transparent);padding:1px 6px;border-radius:9px}
 .hlxb{padding:4px 10px;font-size:12px;margin-left:4px}

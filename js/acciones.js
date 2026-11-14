@@ -306,6 +306,11 @@ const A = {
   },
   hls: () => hlSync(true),
   hlx: () => hlxOpen(),
+  hlb: k => {
+    hlSel = hlSel === k ? null : k;
+    const e = document.getElementById('hlbox');
+    if (e) e.innerHTML = hlHTML();
+  },
   hlxm: k => {
     hlx.m = k;
     hlx.s = null;
