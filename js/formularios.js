@@ -119,19 +119,22 @@ function taskForm(t, pre) {
 }
 function txForm() {
   const o = modal(
-    `<h3>Nuevo movimiento</h3><div class="fs"><div class="seg" id="ftt"><button class="on" data-t="g">${I('arrow-down-left', 'sm')} Gasto</button><button data-t="i">${I('arrow-up-right', 'sm')} Ingreso</button></div><div class="two"><label>Importe (€)<input id="fx2" inputmode="decimal" placeholder="0,00"></label><label>Fecha<input id="fx4" type="date" value="${TD()}"></label></div><label>Descripción<input id="fx5" placeholder="Ej. Mercadona"></label><label>Categoría<select id="fx3">${opts(GCATS, 'Otros')}</select></label><div class="mu" id="fxh" style="margin-top:-4px" hidden></div></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Añadir</button></div>`
+    `<h3>Nuevo movimiento</h3><div class="fs"><div class="seg" id="ftt"><button class="on" data-t="g">${I('arrow-down-left', 'sm')} Gasto</button><button data-t="i">${I('arrow-up-right', 'sm')} Ingreso</button></div><div class="two"><label>Importe (€)<input id="fx2" inputmode="decimal" placeholder="0,00"></label><label>Fecha<input id="fx4" type="date" value="${TD()}"></label></div><label>Descripción<input id="fx5" placeholder="Ej. Mercadona"></label><label>Categoría<select id="fx3">${opts(GCATS, 'Otros')}</select></label>${devChk('fx6', true)}<div class="mu" id="fxh" style="margin-top:-4px" hidden></div></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Añadir</button></div>`
   );
   let t = 'g',
     touched = false;
   // En un ingreso, la misma frase que al editarlo: devolución, ingreso o no cuenta.
   const h = o.querySelector('#fxh'),
     hUpd = () => {
+      const c = o.querySelector('#fx3').value;
       h.hidden = t !== 'i';
+      o.querySelector('#fx6l').hidden = t !== 'i' || ICAT3.includes(c);
       if (t === 'i')
         h.innerHTML = txHint(
-          o.querySelector('#fx3').value,
+          c,
           pnum(o.querySelector('#fx2').value) || 0,
-          o.querySelector('#fx4').value || TD()
+          o.querySelector('#fx4').value || TD(),
+          !o.querySelector('#fx6').checked
         );
     };
   o.querySelectorAll('#ftt button').forEach(
@@ -141,7 +144,7 @@ function txForm() {
         o.querySelectorAll('#ftt button').forEach(x => x.classList.toggle('on', x === b));
         const sc = o.querySelector('#fx3'),
           v = sc.value;
-        sc.innerHTML = t === 'i' ? iopts(v) : opts(GCATS, v); // en un gasto no sale Nómina
+        sc.innerHTML = opts(t === 'i' ? CATS : GCATS, v); // en un gasto no sale Nómina
         if (!touched) sc.value = t === 'i' ? 'Nómina' : classify(o.querySelector('#fx5').value);
         hUpd();
       })
@@ -154,12 +157,21 @@ function txForm() {
     if (!touched) o.querySelector('#fx3').value = classify(e.target.value, t);
     hUpd();
   };
-  ['#fx2', '#fx4'].forEach(i => o.querySelector(i).addEventListener('input', hUpd));
+  ['#fx2', '#fx4', '#fx6'].forEach(i => o.querySelector(i).addEventListener('input', hUpd));
   o.querySelector('#ok').onclick = () => {
     const a = pnum(o.querySelector('#fx2').value),
       dt = o.querySelector('#fx4').value;
     if (!(a > 0) || !dt) return toast('Introduce un importe válido y una fecha');
-    S.tx.push({ id: id(), t, amt: a, cat: o.querySelector('#fx3').value, date: dt, desc: o.querySelector('#fx5').value.trim() });
+    const c = o.querySelector('#fx3').value;
+    S.tx.push({
+      id: id(),
+      t,
+      amt: a,
+      cat: c,
+      date: dt,
+      desc: o.querySelector('#fx5').value.trim(),
+      ...(t === 'i' && !ICAT3.includes(c) && !o.querySelector('#fx6').checked ? { nodev: true } : {})
+    });
     o.remove();
     ch();
     toast('💶 Movimiento añadido');
@@ -167,57 +179,40 @@ function txForm() {
   o.querySelector('#fx2').focus();
 }
 /* Frase bajo la categoría de un ingreso: qué hará la categoría elegida (devolución, ingreso o no cuenta). */
-const txHint = (c, a, date) => {
-  const y = { t: 'i', cat: c, date };
+const txHint = (c, a, date, nodev) => {
+  const y = { t: 'i', cat: c, date, nodev };
   return c === NOCNT
     ? 'No cuenta: dinero entre tus cuentas o el pago de un encargo.'
     : isDev(y)
       ? `${I('arrow-down-left', 'sm')} Devolución: resta ${eur(a)} de «${esc(c)}» y no cuenta como ingreso.`
-      : `Cuenta como ingreso${incMon(y) !== mon(date) ? ' del mes siguiente (llega a final de mes)' : ' del mes'}.`;
+      : `Cuenta como ingreso${incMon(y) !== mon(date) ? ' del mes siguiente (llega a final de mes)' : ' del mes'}.${c === 'Otros' ? ' Si te devuelven parte de un gasto (p. ej. un Bizum de una cena), elige su categoría.' : ''}`;
 };
 /* Ficha de un movimiento: descripción, categoría, nota y «extraordinario». Los del banco no dejan cambiar importe, fecha ni tipo.
    dr: lo escrito antes de cambiar entre gasto e ingreso (la ventana se vuelve a abrir con el otro tipo). */
-function txEdit(x, dr) {
+function txEdit(x) {
   const bk = fromBank(x),
     sp = isSplit(x),
-    d = { t: x.t, desc: x.desc || '', amt: (+x.amt).toFixed(2).replace('.', ','), date: x.date, cat: x.cat, note: x.note || '', ...dr },
+    d = { t: x.t, desc: x.desc || '', amt: (+x.amt).toFixed(2).replace('.', ','), date: x.date, cat: x.cat, note: x.note || '' },
     gi = d.t === 'g';
-  const cats = gi ? GCATS : ICATS;
+  const cats = gi ? GCATS : CATS;
   const o = modal(
-    `<h3>Editar ${gi ? 'gasto' : 'ingreso'}</h3><div class="fs">${bk || sp ? '' : `<div class="seg" id="ext"><button class="${gi ? 'on' : ''}" data-t="g">${I('arrow-down-left', 'sm')} Gasto</button><button class="${gi ? '' : 'on'}" data-t="i">${I('arrow-up-right', 'sm')} Ingreso</button></div>`}<label>Descripción<input id="ex1" value="${esc(d.desc)}"></label><div class="two"><label>Importe (€)<input id="ex2" inputmode="decimal" value="${esc(d.amt)}" ${bk ? 'disabled' : ''}></label><label>Fecha<input id="ex3" type="date" value="${d.date}" ${bk ? 'disabled' : ''}></label></div>${bk ? `<div class="mu" style="margin-top:-4px">${I('landmark', 'sm')} Viene del banco: el importe, la fecha y el tipo no se pueden cambiar.</div>` : ''}${
+    `<h3>Editar ${gi ? 'gasto' : 'ingreso'}</h3><div class="fs"><label>Descripción<input id="ex1" value="${esc(d.desc)}"></label><div class="two"><label>Importe (€)<input id="ex2" inputmode="decimal" value="${esc(d.amt)}" ${bk ? 'disabled' : ''}></label><label>Fecha<input id="ex3" type="date" value="${d.date}" ${bk ? 'disabled' : ''}></label></div>${bk ? `<div class="mu" style="margin-top:-4px">${I('landmark', 'sm')} Viene del banco: el importe, la fecha y el tipo no se pueden cambiar.</div>` : ''}${
       sp
         ? `<div class="mu">${I('split', 'sm')} Dividido: ${txp(x)
             .map(p => (p.enc ? 'Encargo' : esc(p.cat)) + ' ' + eur(p.amt))
             .join(' · ')}</div>`
-        : `<label>Categoría<select id="ex4">${gi ? opts(cats, d.cat) : iopts(d.cat)}</select></label>${gi ? '' : '<div class="mu" id="exh" style="margin-top:-4px"></div>'}`
-    }<label>Nota<input id="ex5" value="${esc(d.note)}" placeholder="Opcional"></label>${gi ? `<div class="chkr"><label class="chk"><input type="checkbox" id="ex6" ${x.ex ? 'checked' : ''}> Gasto extraordinario</label><button type="button" class="ib inf" aria-label="Qué es un gasto extraordinario" aria-expanded="false">${I('info', 'sm')}</button></div><div class="infx mu" hidden>Se ve en la lista, pero no cuenta en el gasto del mes ni en las comparaciones (p. ej. un pago grande y puntual).</div>${sp ? '' : `<div class="chkr"><label class="chk"><input type="checkbox" id="ex7" ${x.enc ? 'checked' : ''}> Encargo</label><button type="button" class="ib inf" aria-label="Qué es un encargo" aria-expanded="false">${I('info', 'sm')}</button></div><div class="infx mu" hidden>Compra para otra persona que te paga en mano: no cuenta como gasto tuyo. Si solo una parte es encargo, usa «Dividir».</div>`}` : ''}</div><div class="acts"><button class="btn ghost danger" id="fdel">Eliminar</button>${gi && x.t === 'g' ? `<button class="btn ghost" id="fspl" title="Repartir el importe en varias categorías o separar la parte que es encargo">${I('split', 'sm')} ${sp ? 'Cambiar división' : 'Dividir'}</button>` : ''}${x.billId || d.t !== x.t ? '' : `<button class="btn ghost" id="fmkf">${I('repeat', 'sm')} ${x.fid ? 'Quitar de Facturas' : 'Añadir a Facturas'}</button>`}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`
+        : `<label>Categoría<select id="ex4">${opts(cats, d.cat)}</select></label>${gi ? '' : devChk('ex8', !x.nodev) + '<div class="mu" id="exh" style="margin-top:-4px"></div>'}`
+    }<label>Nota<input id="ex5" value="${esc(d.note)}" placeholder="Opcional"></label>${gi ? `<div class="chkr"><label class="chk"><input type="checkbox" id="ex6" ${x.ex ? 'checked' : ''}> Gasto extraordinario</label><button type="button" class="ib inf" aria-label="Qué es un gasto extraordinario" aria-expanded="false">${I('info', 'sm')}</button></div><div class="infx mu" hidden>Se ve en la lista, pero no cuenta en el gasto del mes ni en las comparaciones (p. ej. un pago grande y puntual).</div>${sp ? '' : `<div class="chkr"><label class="chk"><input type="checkbox" id="ex7" ${x.enc ? 'checked' : ''}> Encargo</label><button type="button" class="ib inf" aria-label="Qué es un encargo" aria-expanded="false">${I('info', 'sm')}</button></div><div class="infx mu" hidden>Compra para otra persona que te paga en mano: no cuenta como gasto tuyo. Si solo una parte es encargo, usa «Dividir».</div>`}` : ''}</div><div class="acts">${gi ? `<button class="btn ghost" id="fspl" title="Repartir el importe en varias categorías o separar la parte que es encargo">${I('split', 'sm')} ${sp ? 'Cambiar división' : 'Dividir'}</button>` : ''}${x.billId ? '' : `<button class="btn ghost" id="fmkf">${I('repeat', 'sm')} ${x.fid ? 'Quitar de Facturas' : 'Añadir a Facturas'}</button>`}</div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div><div class="acts"><button class="btn ghost danger" id="fdel">${I('trash-2', 'sm')} Eliminar movimiento</button></div>`
   );
   const v = i => o.querySelector(i).value.trim();
-  // Gasto ↔ ingreso (solo apuntados a mano): se vuelve a abrir la ficha con el otro tipo, sin perder lo escrito.
-  o.querySelectorAll('#ext button').forEach(
-    b =>
-      (b.onclick = () => {
-        if (b.dataset.t === d.t) return;
-        const t = b.dataset.t,
-          desc = v('#ex1');
-        o.remove();
-        txEdit(x, {
-          t,
-          desc,
-          amt: v('#ex2'),
-          date: v('#ex3'),
-          note: v('#ex5'),
-          cat: t === x.t ? x.cat : t === 'i' ? 'Otros' : classify(desc, 'g')
-        });
-      })
-  );
   // En un ingreso, una frase dice qué hará la categoría elegida: devolución (resta de ese gasto), ingreso o no cuenta.
   const hint = o.querySelector('#exh'),
     hintUpd = () => {
-      hint.innerHTML = txHint(v('#ex4'), pnum(v('#ex2')) || 0, v('#ex3') || x.date);
+      o.querySelector('#ex8l').hidden = ICAT3.includes(v('#ex4'));
+      hint.innerHTML = txHint(v('#ex4'), pnum(v('#ex2')) || 0, v('#ex3') || x.date, !o.querySelector('#ex8').checked);
     };
   if (hint) {
-    ['#ex2', '#ex3', '#ex4'].forEach(i => o.querySelector(i).addEventListener(i === '#ex4' ? 'change' : 'input', hintUpd));
+    ['#ex2', '#ex3', '#ex4', '#ex8'].forEach(i => o.querySelector(i).addEventListener(i === '#ex4' ? 'change' : 'input', hintUpd));
     hintUpd();
   }
   // Iconos «i»: muestran u ocultan la explicación de cada casilla.
@@ -243,13 +238,12 @@ function txEdit(x, dr) {
     const nt0 = v('#ex5');
     if (nt0) x.note = nt0;
     else delete x.note;
-    if (d.t !== x.t) {
-      x.t = d.t;
-      ['ex', 'enc', 'parts', 'fid', 'notDup'].forEach(k => delete x[k]);
-    } // cambia de tipo: fuera lo que solo vale para el otro
     const ex = o.querySelector('#ex6');
     if (ex && ex.checked) x.ex = true;
     else delete x.ex;
+    const dv = o.querySelector('#ex8');
+    if (dv && !ICAT3.includes(cat) && !dv.checked) x.nodev = true;
+    else delete x.nodev;
     const en = o.querySelector('#ex7');
     if (en) {
       if (en.checked) x.enc = true;

@@ -99,10 +99,9 @@ const CATS = [
 const NOCNT = 'Traspasos',
   EXMIN = 300,
   DUPD = 3; // EXMIN: desde este importe un gasto ofrece marcarse como extraordinario · DUPD: días entre un gasto a mano y el del banco para avisar de duplicado
-/* Categorías de un ingreso: Nómina, Otros, Traspasos o una de gasto (= devolución: te devuelven parte de ese gasto, p. ej. un Bizum por una cena; resta de esa categoría y no cuenta como ingreso). */
+/* Categorías de un ingreso: Nómina, Otros, Traspasos o una de gasto con «Es una devolución» marcada (= devolución: te devuelven parte de ese gasto, p. ej. un Bizum por una cena; resta de esa categoría y no cuenta como ingreso). */
 /* Categorías de gasto: todas menos Nómina (Traspasos sí: un traspaso a otra cuenta tuya sale como gasto que no cuenta). */
 const GCATS = CATS.filter(c => c !== 'Nómina');
-const ICATS = ['Nómina', 'Otros', 'Traspasos', ...CATS.filter(c => !['Nómina', 'Otros', 'Traspasos'].includes(c))];
 const CI = {
   Traspasos: 'arrow-left-right',
   Hogar: 'house',
@@ -496,15 +495,11 @@ const nt = s =>
   ' ';
 const cap = s => (s ? s[0].toUpperCase() + s.slice(1) : s);
 const opts = (arr, sel) => arr.map(x => `<option ${x === sel ? 'selected' : ''}>${esc(x)}</option>`).join('');
-/* Desplegable de categoría de un ingreso: todas en orden alfabético; las de gasto llevan «(devolución)» porque restan de ese gasto. */
-const iopts = sel =>
-  ICATS.slice()
-    .sort((a, b) => a.localeCompare(b, 'es'))
-    .map(
-      x =>
-        `<option value="${esc(x)}" ${x === sel ? 'selected' : ''}>${esc(x)}${['Nómina', 'Otros', NOCNT].includes(x) ? '' : ' (devolución)'}</option>`
-    )
-    .join('');
+/* Categorías propias de un ingreso. Un ingreso con otra (de gasto) es devolución salvo que se desmarque «Es una devolución» (x.nodev; ver isDev). */
+const ICAT3 = ['Nómina', 'Otros', NOCNT];
+/* Casilla «Es una devolución» de un ingreso: solo se ve con una categoría de gasto. */
+const devChk = (id, on) =>
+  `<label class="chk" id="${id}l" hidden><input type="checkbox" id="${id}" ${on ? 'checked' : ''}> Es una devolución</label>`;
 const hash = s => {
   let h1 = 0xdeadbeef,
     h2 = 0x41c6ce57;

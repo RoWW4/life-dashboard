@@ -200,8 +200,9 @@ const prChip = p => (p === 'Alta' ? '<span class="chip wa">Alta</span>' : '');
 /* Gasto que cuenta en totales y comparaciones: fuera traspasos, gastos extraordinarios (x.ex, p. ej. cancelar un préstamo)
    y encargos (x.enc: compras para otra persona que devuelve el dinero en mano). */
 const cntG = x => x.t === 'g' && x.cat !== NOCNT && !x.ex && !x.enc;
-/* Devolución: ingreso con categoría de gasto (p. ej. Bizum de lo que te deben de una cena): resta del gasto de esa categoría. */
-const isDev = x => x.t === 'i' && !['Nómina', 'Otros', NOCNT].includes(x.cat);
+/* Devolución: ingreso con categoría de gasto (p. ej. Bizum de lo que te deben de una cena): resta del gasto de esa categoría.
+   Con x.nodev («Es una devolución» desmarcada) cuenta como ingreso normal. */
+const isDev = x => x.t === 'i' && !ICAT3.includes(x.cat) && !x.nodev;
 /* Importe con signo para el gasto: + gasto que cuenta, − devolución, 0 lo demás. */
 const gAmt = x => (cntG(x) ? x.amt : isDev(x) ? -x.amt : 0);
 /* Gasto dividido (x.parts = [{cat, amt, enc}]): una compra con cosas de varias categorías o con parte de encargo.
