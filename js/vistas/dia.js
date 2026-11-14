@@ -77,7 +77,7 @@ function wxDia(j) {
         : l >= 0.1
           ? 'se esperan' + mm.slice(1, -1)
           : 'sin lluvia prevista';
-  return dia[0].toUpperCase() + dia.slice(1) + ': ' + wxTxt(dd.weather_code[j], 1)[0].toLowerCase() + ' · ' + ll;
+  return dia[0].toUpperCase() + dia.slice(1) + ': ' + wxTxt(dd.weather_code[j], 1)[0].toLowerCase() + ' · ' + cap(ll);
 }
 // Modelo europeo ECMWF (forzado con models=).
 function wxLoad() {

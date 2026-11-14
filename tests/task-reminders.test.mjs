@@ -13,7 +13,7 @@ const madrid = m => {
 };
 
 /* Lanza el robot contra un Supabase y un Telegram simulados. tg(texto, intento) decide la respuesta de Telegram. */
-async function run(tasks, tg) {
+async function run(tasks, tg, extra = {}) {
   const calls = [], tries = {};
   const srv = createServer((q, r) => {
     let b = ''; q.on('data', c => b += c); q.on('end', () => {
@@ -23,7 +23,7 @@ async function run(tasks, tg) {
         const n = tries[body.text] = (tries[body.text] || 0) + 1, [code, v] = tg(body.text, n);
         return json(code, v);
       }
-      if (q.method === 'GET' && q.url.startsWith('/rest/v1/ldb_state')) return json(200, [{ data: { tasks } }]);
+      if (q.method === 'GET' && q.url.startsWith('/rest/v1/ldb_state')) return json(200, [{ data: { tasks, ...extra } }]);
       if (q.method === 'GET' && q.url.startsWith('/rest/v1/task_reminders')) return json(200, []);
       json(q.method === 'POST' ? 201 : 204);
     });
@@ -73,4 +73,17 @@ test('un aviso que se pasó de hora sin mandarse queda registrado una vez y no s
   assert.ok(!calls.some(c => c.u.startsWith('/botTEST/')), 'no se manda tarde');
   assert.deepEqual(marks(calls), [`lost:tr:d:${rem}`]);
   assert.ok(logs(calls).some(l => l.level === 'WARNING' && /no enviado a tiempo \(Aviso elegido\)/.test(l.event)));
+});
+
+test('coche: avisa 7 días antes de una fecha de «Lo próximo» y no si falta más de un mes', async () => {
+  const d = n => new Date(Date.now() + n * 864e5).toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' });
+  const car = { mt: [{ id: 'itv', n: 'Prueba ITV', nd: d(5) }, { id: 'rev', n: 'Prueba revisión', m: 12, ld: d(-300) }] };
+  const { code, calls } = await run([], () => [200, { ok: true, result: { message_id: 9 } }], { car });
+  assert.equal(code, 0);
+  const h = +new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', hour: '2-digit', hourCycle: 'h23' }).format(new Date());
+  const k = marks(calls).filter(x => x.startsWith('car:'));
+  if (h >= 9) assert.deepEqual(k, [`car:itv:${d(5)}:7`], 'solo la fecha que está a menos de 7 días');
+  else assert.deepEqual(k, [], 'antes de las 9:00 no avisa');
+  const msg = calls.find(c => c.u.startsWith('/botTEST/sendMessage') && /Coche/.test(c.body.text));
+  if (h >= 9) assert.match(msg.body.text, /Prueba ITV/);
 });

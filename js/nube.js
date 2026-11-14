@@ -36,7 +36,7 @@ function syncFail(where, e) {
   syncErrAt = new Date().toISOString();
   logErr('nube/' + where, e);
   const s = RETRY[Math.min(retryN++, RETRY.length - 1)];
-  setSync(`⚠️ ${dirty() ? 'Cambios sin subir' : 'Sin sincronizar'} · se reintenta en ${s < 60 ? s + ' s' : s / 60 + ' min'}`);
+  setSync(`⚠️ ${dirty() ? 'Cambios sin subir' : 'Sin sincronizar'} · Se reintenta en ${s < 60 ? s + ' s' : s / 60 + ' min'}`);
   if (retryN === 3 && dirty())
     toast('⚠️ No se pueden subir tus cambios a la nube. Están guardados en este dispositivo y se reintenta solo.');
   clearTimeout(retryT);

@@ -102,7 +102,7 @@ function vFact() {
       panel(
         'fact',
         'det',
-        `${I('sparkles')} Detectados en el banco <span class="cnt">· se repiten cada mes</span>`,
+        `${I('sparkles')} Detectados en el banco <span class="cnt">· Se repiten cada mes</span>`,
         det
           .map(
             o =>

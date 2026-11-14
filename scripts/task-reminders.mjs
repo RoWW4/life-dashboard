@@ -2,7 +2,7 @@
 //  · aviso a la fecha y hora elegidas en la tarea (t.rem) o, si no tiene, 1 día antes (24 h antes de la hora de la tarea;
 //    si no tiene hora, como si fuera a las 9:00);
 //  · resumen a las 7:00 con las tareas de hoy, las atrasadas y los cumpleaños (si no hay nada, no se manda);
-//  · Salud (3 días antes) y documentos que caducan (ver apartados 3 y 4).
+//  · Salud (3 días antes), documentos que caducan y fechas del coche (ver apartados 3, 4 y 5).
 // La lanza Supabase cada 15 minutos (pg_cron, tarea «task-reminders»). Lo ya avisado se apunta en la tabla
 // task_reminders para no repetirlo.
 import { env, sb, uid, summary } from './eb.mjs';
@@ -120,6 +120,29 @@ if (+P.hour >= 9) for (const d of docs) {
   await send(key, left > 0 ? `📄 «${d.name}» caduca el ${fecha} (en ${left} día${left === 1 ? '' : 's'}).`
     : left === 0 ? `📄 «${d.name}» caduca hoy.`
     : `📄 «${d.name}» caducó el ${fecha} (hace ${-left} días). Cuando lo renueves, cambia la fecha en el panel.`, 'Aviso de documento');
+}
+
+// 5) Coche: fechas de «Lo próximo» (ITV, mantenimiento…): aviso 30 días antes, 7 días antes y el mismo día (desde las 9:00).
+//    La fecha se calcula como en la app (js/vistas/coche.js): la fecha fija (nd) o la última vez (ld) más cada cuántos meses (m).
+//    Los pagos de Facturas y los documentos que vencen ya avisan por su lado.
+const addM = (d, n) => {
+  const [y, m, dd] = d.split('-').map(Number), r = new Date(Date.UTC(y, m - 1 + n, 1));
+  r.setUTCDate(Math.min(dd, new Date(Date.UTC(r.getUTCFullYear(), r.getUTCMonth() + 1, 0)).getUTCDate()));
+  return r.toISOString().slice(0, 10);
+};
+const ISO = /^\d{4}-\d{2}-\d{2}$/;
+const carMt = ((row && row.data && row.data.car && row.data.car.mt) || []).filter(x => x && x.n);
+if (+P.hour >= 9) for (const x of carMt) {
+  const nd = ISO.test(x.nd || '') ? x.nd : ISO.test(x.ld || '') && +x.m > 0 ? addM(x.ld, +x.m) : '';
+  if (!nd) continue;
+  const left = Math.round((Date.parse(nd) - Date.parse(today)) / DAY);
+  if (left < 0) continue;
+  const st = [30, 7, 0].filter(t => left <= t).pop();
+  if (st === undefined) continue;
+  const key = `car:${x.id || x.n}:${nd}:${st}`;
+  if (sent.has(key)) continue;
+  const fecha = `${DOW[new Date(nd).getUTCDay()]} ${nd.split('-').reverse().join('/')}`;
+  await send(key, left === 0 ? `🚗 Coche: hoy toca «${x.n}».` : `🚗 Coche: «${x.n}» toca el ${fecha} (en ${left} día${left === 1 ? '' : 's'}).`, 'Aviso del coche');
 }
 
 // Limpieza: lo avisado hace más de 60 días ya no hace falta.

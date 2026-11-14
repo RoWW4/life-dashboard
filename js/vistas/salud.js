@@ -176,7 +176,7 @@ function hlHTML() {
       const r = by[d] || {},
         h = r.steps ? Math.max(3, (r.steps / mx) * 100) : 0,
         ok = r.steps >= HL_PASOS;
-      return `<div class="hlb${d === td ? ' on' : ''}${ok ? ' ok' : ''}${hlSel === d ? ' pk' : ''}" data-a="hlb" data-i="${d}" role="button" tabindex="0" aria-label="${fd(d)}: ${hlN(r.steps)} pasos" title="${fd(d)} · ${hlN(r.steps)} pasos · ${hlN(r.kcal)} kcal · sueño ${hlH(r.sleep_min)}"><small>${r.steps ? (r.steps >= 1000 ? (r.steps / 1000).toFixed(1).replace('.', ',') + 'k' : r.steps) : ''}</small><div class="tr"><i style="height:${h.toFixed(1)}%"></i></div><em>${d === td ? 'Hoy' : wd.format(new Date(d + 'T12:00')).replace('.', '')}</em><span class="hlz">${r.sleep_min != null ? hlHm(r.sleep_min) : '–'}</span></div>`;
+      return `<div class="hlb${d === td ? ' on' : ''}${ok ? ' ok' : ''}${hlSel === d ? ' pk' : ''}" data-a="hlb" data-i="${d}" role="button" tabindex="0" aria-label="${fd(d)}: ${hlN(r.steps)} pasos" title="${fd(d)} · ${hlN(r.steps)} pasos · ${hlN(r.kcal)} kcal · Sueño ${hlH(r.sleep_min)}"><small>${r.steps ? (r.steps >= 1000 ? (r.steps / 1000).toFixed(1).replace('.', ',') + 'k' : r.steps) : ''}</small><div class="tr"><i style="height:${h.toFixed(1)}%"></i></div><em>${d === td ? 'Hoy' : wd.format(new Date(d + 'T12:00')).replace('.', '')}</em><span class="hlz">${r.sleep_min != null ? hlHm(r.sleep_min) : '–'}</span></div>`;
     })
     .join('');
   // Dato del día tocado (como en el histórico).
@@ -184,13 +184,13 @@ function hlHTML() {
     rs = by[sel] || {};
   const info = !sel
     ? `<div class="hlxi mu">${I('info', 'sm')} Toca una barra para ver su dato</div>`
-    : `<div class="hlxi"><b>${rs.steps == null ? 'Sin datos' : hlN(rs.steps) + ' pasos'}</b><span>${cap(new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(sel + 'T12:00')))} · ${hlN(rs.kcal)} kcal · sueño ${hlH(rs.sleep_min)}</span>${rs.steps == null ? '' : rs.steps >= HL_PASOS ? `<span class="chip ok">Objetivo cumplido</span>` : `<span class="chip">Faltaron ${hlN(HL_PASOS - rs.steps)}</span>`}</div>`;
+    : `<div class="hlxi"><b>${rs.steps == null ? 'Sin datos' : hlN(rs.steps) + ' pasos'}</b><span>${cap(new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(sel + 'T12:00')))} · ${hlN(rs.kcal)} kcal · Sueño ${hlH(rs.sleep_min)}</span>${rs.steps == null ? '' : rs.steps >= HL_PASOS ? `<span class="chip ok">Objetivo cumplido</span>` : `<span class="chip">Faltaron ${hlN(HL_PASOS - rs.steps)}</span>`}</div>`;
   const st = HLS ? (hlSync.on ? 'Sincronizando…' : 'Actualizado ' + ago(HLS.last_sync)) : 'Aún no se ha sincronizado nunca';
   return (
     (HL.length
       ? `<div class="hlg">${hlKpi(HLC.pasos, 'footprints', 'Pasos', hlN(hoy.steps), `<button class="hlmb" data-a="hlm" data-i="pasos" title="Cambiar el objetivo de pasos">${hoy.steps != null ? Math.round((hoy.steps / HL_PASOS) * 100) + ' % de ' : 'Objetivo '}${hlN(HL_PASOS)} ${I('pencil', 'sm')}</button>`, hoy.steps != null ? (hoy.steps / HL_PASOS) * 100 : null)}` +
         `${hlKpi(HLC.kcal, 'flame', 'Calorías', `${hlN(hoy.kcal)}<small>kcal</small>`, 'Quemadas hoy')}` +
-        `${hlKpi(HLC.sueno, 'moon', 'Sueño', hlD(sl), `<button class="hlmb" data-a="hlm" data-i="sueno" title="Cambiar el objetivo de sueño">${sleepDay === td ? 'Anoche' : 'Noche anterior'} · meta ${hlHm(HL_SUENO)} ${I('pencil', 'sm')}</button>`, sl != null ? (sl / HL_SUENO) * 100 : null)}` +
+        `${hlKpi(HLC.sueno, 'moon', 'Sueño', hlD(sl), `<button class="hlmb" data-a="hlm" data-i="sueno" title="Cambiar el objetivo de sueño">${sleepDay === td ? 'Anoche' : 'Noche anterior'} · Meta ${hlHm(HL_SUENO)} ${I('pencil', 'sm')}</button>`, sl != null ? (sl / HL_SUENO) * 100 : null)}` +
         `${hlKpi(HLC.pulso, 'heart-pulse', 'Pulso', rhrRow ? `${rhrRow.rhr}<small>ppm</small>` : '—', 'En reposo' + (rhrRow && rhrRow.day !== td ? ' · ' + fd(rhrRow.day) : ''))}</div>
     ${hlNoche(by[sleepDay])}
     <div class="hlw"><div class="hlwh"><b>Últimos 7 días</b><button class="btn ghost sm hlxb" data-a="hlx">${I('calendar-days', 'sm')} Histórico</button><span><i style="--c:${HLC.pasos}"></i>Pasos</span><span><i style="--c:${HLC.sueno}"></i>Sueño</span><button class="hlmb hlmeta" data-a="hlm" data-i="pasos" title="Cambiar el objetivo de pasos"><i></i>Objetivo ${hlN(HL_PASOS)}</button></div>
@@ -289,7 +289,7 @@ function hlxHTML() {
       const a = G[k];
       return {
         v: a ? a.reduce((s, v) => s + v, 0) / a.length : null,
-        t: mLabel(k) + ' · media diaria',
+        t: mLabel(k) + ' · Media diaria',
         l: new Intl.DateTimeFormat('es-ES', { month: 'short' }).format(new Date(k + '-15T12:00')).replace('.', '')
       };
     });

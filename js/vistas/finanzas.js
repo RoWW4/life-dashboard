@@ -182,7 +182,7 @@ function savCard() {
   const body = st
     ? `<div class="savk">
       <div class="bal"><span>Saldo hoy${st.est ? ' (estimado)' : ''}</span><b>${money(eur(st.now))}</b><em>${st.last.auto ? 'Saldo del banco del' : 'Último saldo real apuntado:'} ${fd(st.last.d)}</em></div>
-      <div class="up"><span>Ganado este mes</span><b>${money('+' + eur(st.acc))}</b><em>Neto hasta ayer · se abona el ${fd(st.next)}</em><em>${money(eur(st.accG))} brutos (lo que enseña el banco)</em><em>Total cobrado desde ${fd(st.L[0].d)}: ${money('+' + eur(st.gain))}</em></div>
+      <div class="up"><span>Ganado este mes</span><b>${money('+' + eur(st.acc))}</b><em>Neto hasta ayer · Se abona el ${fd(st.next)}</em><em>${money(eur(st.accG))} brutos (lo que enseña el banco)</em><em>Total cobrado desde ${fd(st.L[0].d)}: ${money('+' + eur(st.gain))}</em></div>
       <div class="hi"><span>Rentabilidad anual</span><b>${pct(st.net * 100)}</b><em>${pct(savRate(s, TD()) * 100)} bruto − ${tax} % impuestos</em>${s.rate2 != null && s.from2 > TD() ? `<em>Desde el ${fd(s.from2)}: ${pct(s.rate2)} bruto</em>` : ''}</div>
       <div class="up"><span>En 12 meses</span><b>${money('+' + eur(st.y1 - st.now))}</b><em class="fin">Saldo final ≈ ${money(eur(st.y1))}</em></div>
     </div>
@@ -211,7 +211,7 @@ function savCard() {
     : empty('Aún no hay apuntes.');
   const auto = !!(SAVC && SAVD.length),
     conn = SAVC
-      ? `<div class="mu" style="margin-bottom:10px">${I('landmark', 'sm')} Conectada con ${esc(SAVC.aspsp || 'el banco')} · última sincronización ${ago(SAVC.last_sync)}${SAVC.valid_until ? ` · permiso hasta ${fd(SAVC.valid_until.slice(0, 10))}` : ''}${SAVC.last_error && (SAVC.fail_count || 0) >= FAILMAX ? `<div class="er">Último error: ${esc(SAVC.last_error)}</div>` : ''}</div>`
+      ? `<div class="mu" style="margin-bottom:10px">${I('landmark', 'sm')} Conectada con ${esc(SAVC.aspsp || 'el banco')} · Última sincronización ${ago(SAVC.last_sync)}${SAVC.valid_until ? ` · Permiso hasta ${fd(SAVC.valid_until.slice(0, 10))}` : ''}${SAVC.last_error && (SAVC.fail_count || 0) >= FAILMAX ? `<div class="er">Último error: ${esc(SAVC.last_error)}</div>` : ''}</div>`
       : '';
   return panel(
     'inv',
@@ -268,7 +268,7 @@ function txMore(rows) {
   return (
     rows.slice(0, txN).join('') +
     (more > 0
-      ? `<button class="morebtn" data-a="txm">${I('chevron-down')}Ver ${Math.min(step, more)} más${more > step ? ` <span class="mu">· quedan ${more}</span>` : ''}</button>`
+      ? `<button class="morebtn" data-a="txm">${I('chevron-down')}Ver ${Math.min(step, more)} más${more > step ? ` <span class="mu">· Quedan ${more}</span>` : ''}</button>`
       : '')
   );
 }
@@ -396,7 +396,7 @@ function txListHTML() {
     const sp = isSplit(x);
     return (
       h +
-      `<div class="row txrow${sp ? ' has-parts' : ''}">${sp ? tile('split') : tile(CI[x.cat] || 'package', col(x.cat))}<button class="g link txg" data-a="etx" data-i="${x.id}" title="Editar: categoría, nota, Facturas o eliminar"><span class="tt">${esc(x.desc || x.cat)}</span><span class="meta"><span class="mu">${sp ? 'Dividido en ' + x.parts.length : esc(x.cat)}</span>${x.card ? `<span class="mu">· ${I('credit-card', 'sm')} Prepago</span>` : ''}${x.note ? `<span class="mu">· ${I('file-text', 'sm')} ${esc(x.note)}</span>` : ''}</span></button><span class="txr"><span class="txc">${isDev(x) ? `<span class="chip ok" title="Te devuelven parte de un gasto: resta de «${esc(x.cat)}» y no cuenta como ingreso">${I('arrow-down-left', 'sm')} Devolución</span>` : ''}${incMon(x) !== mon(x.date) ? `<span class="chip" title="Llegó a final de mes: cuenta como ingreso del mes siguiente">Cuenta para ${MS[+incMon(x).slice(5)]}</span>` : ''}${x.billId ? '<span class="chip">Factura</span>' : x.fid ? `<span class="chip">${I('repeat', 'sm')} Fijo</span>` : ''}${x.t !== 'g' || (sp && !x.ex) ? '' : x.enc && !sp ? `<button class="chip ok" data-a="txen" data-i="${x.id}" title="Encargo para otra persona: no cuenta como gasto tuyo · Toca para que cuente">${I('hand-coins', 'sm')} Encargo</button>` : x.ex ? `<button class="chip wa" data-a="txex" data-i="${x.id}" title="Se ve, pero no cuenta en el gasto del mes ni en las comparaciones · Toca para que cuente">${I('sparkles', 'sm')} Extraordinario</button>` : x.amt >= EXMIN && x.cat !== NOCNT && !x.fid && !x.billId ? `<button class="chip" data-a="txex" data-i="${x.id}" title="Marcar como gasto extraordinario: se verá, pero no contará en el gasto del mes ni en las comparaciones">¿Extraordinario?</button>` : ''}${isDup(x) ? `<button class="chip wa" data-a="nodup" data-i="${x.id}" title="Toca si no es un duplicado para quitar el aviso">${I('triangle-alert', 'sm')} ¿Duplicado?</button>` : ''}</span><span class="txb"><span class="amt ${x.t === 'i' ? 'ok' : 'neg'}">${x.t === 'i' ? '+' : '−'}${eur(x.amt)}</span></span></span></div>${
+      `<div class="row txrow${sp ? ' has-parts' : ''}">${sp ? tile('split') : tile(CI[x.cat] || 'package', col(x.cat))}<button class="g link txg" data-a="etx" data-i="${x.id}" title="Editar: categoría, nota, Facturas o eliminar"><span class="tt">${esc(x.desc || x.cat)}</span><span class="meta"><span class="mu">${sp ? 'Dividido en ' + x.parts.length : esc(x.cat)}</span>${x.card ? `<span class="mu">· ${I('credit-card', 'sm')} Prepago</span>` : ''}${x.note ? `<span class="mu">· ${I('file-text', 'sm')} ${esc(cap(x.note))}</span>` : ''}</span></button><span class="txr"><span class="txc">${isDev(x) ? `<span class="chip ok" title="Te devuelven parte de un gasto: resta de «${esc(x.cat)}» y no cuenta como ingreso">${I('arrow-down-left', 'sm')} Devolución</span>` : ''}${incMon(x) !== mon(x.date) ? `<span class="chip" title="Llegó a final de mes: cuenta como ingreso del mes siguiente">Cuenta para ${MS[+incMon(x).slice(5)]}</span>` : ''}${x.billId ? '<span class="chip">Factura</span>' : x.fid ? `<span class="chip">${I('repeat', 'sm')} Fijo</span>` : ''}${x.t !== 'g' || (sp && !x.ex) ? '' : x.enc && !sp ? `<button class="chip ok" data-a="txen" data-i="${x.id}" title="Encargo para otra persona: no cuenta como gasto tuyo · Toca para que cuente">${I('hand-coins', 'sm')} Encargo</button>` : x.ex ? `<button class="chip wa" data-a="txex" data-i="${x.id}" title="Se ve, pero no cuenta en el gasto del mes ni en las comparaciones · Toca para que cuente">${I('sparkles', 'sm')} Extraordinario</button>` : x.amt >= EXMIN && x.cat !== NOCNT && !x.fid && !x.billId ? `<button class="chip" data-a="txex" data-i="${x.id}" title="Marcar como gasto extraordinario: se verá, pero no contará en el gasto del mes ni en las comparaciones">¿Extraordinario?</button>` : ''}${isDup(x) ? `<button class="chip wa" data-a="nodup" data-i="${x.id}" title="Toca si no es un duplicado para quitar el aviso">${I('triangle-alert', 'sm')} ¿Duplicado?</button>` : ''}</span><span class="txb"><span class="amt ${x.t === 'i' ? 'ok' : 'neg'}">${x.t === 'i' ? '+' : '−'}${eur(x.amt)}</span></span></span></div>${
         sp
           ? `<div class="txparts">${txp(x)
               .map(
@@ -416,8 +416,8 @@ function txListHTML() {
     )
     .join('');
   return (
-    `<div class="txsum"><span>${L.length} movimiento${L.length === 1 ? '' : 's'}${q && txf.per !== 'todo' ? ' <span class="mu">· en todos los meses</span>' : ''}</span>${g > 0 ? `<b class="neg">−${eur(g)}</b>` : g < 0 ? `<b class="ok" title="Devoluciones: te devuelven parte de un gasto y restan de su categoría">+${eur(-g)} devuelto</b>` : ''}${i ? `<b class="ok">+${eur(i)}</b>` : ''}${on ? `<a href="#" data-a="txr">Quitar filtros</a>` : ''}</div>` +
-    (prow ? `<div class="dh">Pendientes de confirmar · se añadirán solos cuando el banco los cierre</div>${prow}` : '') +
+    `<div class="txsum"><span>${L.length} movimiento${L.length === 1 ? '' : 's'}${q && txf.per !== 'todo' ? ' <span class="mu">· En todos los meses</span>' : ''}</span>${g > 0 ? `<b class="neg">−${eur(g)}</b>` : g < 0 ? `<b class="ok" title="Devoluciones: te devuelven parte de un gasto y restan de su categoría">+${eur(-g)} devuelto</b>` : ''}${i ? `<b class="ok">+${eur(i)}</b>` : ''}${on ? `<a href="#" data-a="txr">Quitar filtros</a>` : ''}</div>` +
+    (prow ? `<div class="dh">Pendientes de confirmar · Se añadirán solos cuando el banco los cierre</div>${prow}` : '') +
     (rows.length ? txMore(rows) : empty('No hay movimientos con estos filtros.'))
   );
 }
@@ -542,7 +542,7 @@ function goalsCard() {
     const st = goalSt(g),
       p = g.obj > 0 ? Math.min(100, (g.amt / g.obj) * 100) : 0,
       when = g.d ? cap(mLabel(g.d)) : '';
-    return `<div class="goal${st.t === 'Conseguida' ? ' done' : ''}" style="--gc:${g.c || 'var(--ac)'}"><div class="gt">${tile(pickIco(GOAL_IC, g.n, [0, 'target'])[1], g.c || 'var(--ac)')}<button class="link g" data-a="goaled" data-i="${g.id}" title="Editar meta"><b>${esc(g.n)}</b></button><span class="chip ${st.k}">${st.t}</span><button class="ib" data-a="goalmv" data-i="${g.id}" aria-label="Apartar o sacar dinero de «${esc(g.n)}»" title="Apartar o sacar">${I('arrow-left-right')}</button></div><div class="gbar" role="img" aria-label="${Math.round(p)} % de la meta"><i style="width:${p.toFixed(1)}%"></i></div><div class="gd"><span>${eur(g.amt)} de ${eur(g.obj)} · ${Math.round(p)} %</span><span>${when}${st.mo ? ' · aparta ' + eur(Math.ceil(st.mo)) + '/mes' : ''}</span></div></div>`;
+    return `<div class="goal${st.t === 'Conseguida' ? ' done' : ''}" style="--gc:${g.c || 'var(--ac)'}"><div class="gt">${tile(pickIco(GOAL_IC, g.n, [0, 'target'])[1], g.c || 'var(--ac)')}<button class="link g" data-a="goaled" data-i="${g.id}" title="Editar meta"><b>${esc(g.n)}</b></button><span class="chip ${st.k}">${st.t}</span><button class="ib" data-a="goalmv" data-i="${g.id}" aria-label="Apartar o sacar dinero de «${esc(g.n)}»" title="Apartar o sacar">${I('arrow-left-right')}</button></div><div class="gbar" role="img" aria-label="${Math.round(p)} % de la meta"><i style="width:${p.toFixed(1)}%"></i></div><div class="gd"><span>${eur(g.amt)} de ${eur(g.obj)} · ${Math.round(p)} %</span><span>${when}${st.mo ? ' · Aparta ' + eur(Math.ceil(st.mo)) + '/mes' : ''}</span></div></div>`;
   });
   return panel(
     'fin',
@@ -566,7 +566,7 @@ function vFin() {
     cur = m === MN(now),
     ps = spent(pm, cur ? now.getDate() : 31);
   const ml = mLabel(m);
-  return `<div class="hdr finh"><div><h2>Finanzas</h2><div class="sub help">${user && BANK && BANK.session_id ? `${I('landmark', 'sm')} Conectado al banco · ${ago(BANK.last_sync)}` : 'Movimientos manuales, fijos e importados'}</div></div><div class="hact"><button class="btn ghost sm ico" data-a="fm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b style="min-width:130px;text-align:center">${ml}</b><button class="btn ghost sm ico" data-a="fm" data-i="1" aria-label="Mes siguiente" ${finOff >= 0 ? 'disabled style="opacity:.4"' : ''}>${I('chevron-right')}</button></div></div>
+  return `<div class="hdr finh"><div><h2>Finanzas</h2><div class="sub help">${user && BANK && BANK.session_id ? `${I('landmark', 'sm')} Conectado al banco · ${cap(ago(BANK.last_sync))}` : 'Movimientos manuales, fijos e importados'}</div></div><div class="hact"><button class="btn ghost sm ico" data-a="fm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b style="min-width:130px;text-align:center">${ml}</b><button class="btn ghost sm ico" data-a="fm" data-i="1" aria-label="Mes siguiente" ${finOff >= 0 ? 'disabled style="opacity:.4"' : ''}>${I('chevron-right')}</button></div></div>
   <div class="fintop">${acctHTML()}
   <div class="kpis">
     <div class="kpi" style="--c:var(--ok)"><span class="k"><span class="hico">${I('arrow-up-right')}</span>Ingresos</span><span class="v ok">${eur(inc)}</span><span class="d">${incL.length} movimiento${incL.length === 1 ? '' : 's'}</span></div>

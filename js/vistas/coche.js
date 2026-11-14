@@ -109,7 +109,7 @@ function carNext(c = carR(), K = carKm(c)) {
         d,
         lvl: dayDiff(d) <= 7 ? 'wa' : 'ok',
         pill: cap(rel(d)),
-        sub: doc ? 'Vence el ' + fdc(doc.exp) + ' · cargo de ' + eur(o.f.amt) + ' hacia el ' + fdc(o.d) : 'Pago · ' + eur(o.f.amt)
+        sub: doc ? 'Vence el ' + fdc(doc.exp) + ' · Cargo de ' + eur(o.f.amt) + ' hacia el ' + fdc(o.d) : 'Pago · ' + eur(o.f.amt)
       };
     }),
     ...S.docs
@@ -154,7 +154,7 @@ const carMtSub = (x, s) => {
   const parts = [];
   if (s.nd) parts.push((s.dL < 0 ? 'Venció el ' : 'Toca el ') + fdc(s.nd));
   if (s.nk !== null) parts.push('a los ' + kmf(s.nk) + ' km' + (s.kd && !s.nd ? ' (≈ ' + fdc(s.kd) + ')' : ''));
-  return esc(cap(parts.join(' · ')));
+  return esc(parts.map(cap).join(' · '));
 };
 const carNextRow = o => {
   const act =
@@ -239,7 +239,7 @@ function vCoche() {
                 'car-mov',
                 TM.map(
                   x =>
-                    `<div class="row">${tile('car', CARC)}<button class="link" data-a="etx" data-i="${x.id}"><span class="g"><span class="tt">${esc(x.desc || x.cat)}</span><br><span class="mu">${fdc(x.date)}${x.of ? ' · parte de un gasto dividido' : ''}</span></span></button><span class="amt ${gAmt(x) < 0 ? 'ok' : ''}">${gAmt(x) < 0 ? '+' : ''}${eur(Math.abs(gAmt(x)))}</span></div>`
+                    `<div class="row">${tile('car', CARC)}<button class="link" data-a="etx" data-i="${x.id}"><span class="g"><span class="tt">${esc(x.desc || x.cat)}</span><br><span class="mu">${fdc(x.date)}${x.of ? ' · Parte de un gasto dividido' : ''}</span></span></button><span class="amt ${gAmt(x) < 0 ? 'ok' : ''}">${gAmt(x) < 0 ? '+' : ''}${eur(Math.abs(gAmt(x)))}</span></div>`
                 ),
                 6
               )
@@ -299,7 +299,7 @@ function vCoche() {
           R('Aceite', i.oil)
         ]) +
         grp('Seguro', [
-          R('Compañía', [i.ins, i.pol ? 'póliza ' + i.pol : ''].filter(Boolean).join(' · ')),
+          R('Compañía', [i.ins, i.pol ? 'Póliza ' + i.pol : ''].filter(Boolean).join(' · ')),
           R('Renueva', segD ? fdc(segD) : ''),
           R('Asistencia', i.asis, 1),
           R('Agente', i.agent)

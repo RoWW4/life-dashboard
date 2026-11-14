@@ -230,7 +230,7 @@ function robotsCard() {
       ? L.slice(0, 5)
           .map(
             x =>
-              `<div class="row"><span class="g">${esc(x.m)}<em class="mu">${ago(x.t)}${x.n > 1 ? ' · ' + x.n + ' veces' : ''} · ${esc(x.w)}${x.view ? ' · ' + esc(x.view) : ''}${x.x ? ' · ' + esc(x.x) : ''}</em></span></div>`
+              `<div class="row"><span class="g">${esc(x.m)}<em class="mu">${cap(ago(x.t))}${x.n > 1 ? ' · ' + x.n + ' veces' : ''} · ${esc(x.w)}${x.view ? ' · ' + esc(x.view) : ''}${x.x ? ' · ' + esc(x.x) : ''}</em></span></div>`
           )
           .join('') +
         `<div class="f" style="margin:8px 0 0"><button class="btn ghost sm" style="flex:none" data-a="errcp">${I('download', 'sm')} Copiar los ${L.length} errores</button><button class="btn ghost sm" style="flex:none" data-a="errdel">${I('eraser', 'sm')} Borrar la lista</button></div>`
