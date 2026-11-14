@@ -338,22 +338,35 @@ function txMore(rows) {
   );
 }
 
+/* Desglose de una compra dividida dentro de una categoría: total y cada parte (la de esta categoría resaltada),
+   para que se vea qué es tuyo y qué es encargo. */
+const splitBreak = (o, c) =>
+  `<div class="cdsp"><span class="cdsp0">Compra de ${eur(o.amt)}${S.tx.filter(y => isSplit(y) && mon(y.date) === mon(o.date) && concept(y) === concept(o)).length > 1 ? ` · ${fd(o.date)}` : ''}</span>${o.parts
+    .map(
+      p =>
+        `<span class="cdsp1${!p.enc && p.cat === c ? ' on' : ''}"><i style="background:${col(p.cat)}"></i>${esc(p.cat)}${p.enc ? ` <span class="chip ok">${I('hand-coins', 'sm')} Encargo</span>` : ''}<b>${eur(+p.amt)}</b></span>`
+    )
+    .join('')}</div>`;
 /* Desglose de una categoría: por concepto, evolución de 6 meses y gastos recurrentes (para revisar bajas). */
 /* sel: mes elegido tocando una barra (las 6 barras se mantienen; cambia el mes seleccionado y sus datos). */
 function catDetail(c, sel) {
   const base = finMonth(),
     m = sel || base,
-    L = TXP().filter(x => (x.t === 'g' || isDev(x)) && x.cat === c && mon(x.date) === m),
+    // los encargos (enteros o la parte de un gasto dividido) no son gasto tuyo: no cuentan aquí
+    L = TXP().filter(x => ((x.t === 'g' && !x.enc) || isDev(x)) && x.cat === c && mon(x.date) === m),
     sg = x => (x.t === 'g' ? x.amt : -x.amt),
     tot = L.reduce((a, x) => a + sg(x), 0),
     all = spent(m);
   const g = {};
   L.forEach(x => {
     const k = nt(concept(x));
-    const e = (g[k] = g[k] || { n: concept(x), s: 0, c: 0, last: '', fx: false, bank: false, of: 0 });
+    const e = (g[k] = g[k] || { n: concept(x), s: 0, c: 0, last: '', fx: false, bank: false, of: 0, ofs: [] });
     e.s += sg(x);
     e.c++;
-    if (x.of) e.of = x.of.amt;
+    if (x.of) {
+      e.of = x.of.amt;
+      if (!e.ofs.includes(x.of)) e.ofs.push(x.of);
+    }
     if (x.date > e.last) e.last = x.date;
     if (x.fid) e.fx = true;
     if (fromBank(x)) e.bank = true;
@@ -378,7 +391,7 @@ function catDetail(c, sel) {
     modal(`<div class="cdw" style="--cc:${col(c)}"><h3 class="cdh">${tile(CI[c] || 'package', col(c))}<span>${esc(c)}<span class="mu">${mLabel(m)}</span></span></h3>
     <div class="cdk"><div><b>${eur(tot)}</b><span>${m === MN(new Date()) ? 'Este mes' : 'En ' + MS[+m.slice(5)]}</span></div><div><b>${all ? Math.round((tot / all) * 100) : 0}%</b><span>De tu gasto</span></div><div><b>${L.length}</b><span>Movimientos</span></div></div>
     <div class="hist">${ms.map((k, i) => `<button class="hb ${k === m ? 'on' : ''}" data-m="${k}" title="${mLabel(k)}: ${eur(hv[i])}" aria-label="Ver ${mLabel(k)}"><i style="height:${Math.max(3, (hv[i] / hmax) * 100)}%;background:${k === m ? col(c) : 'var(--bd2)'}"></i><span>${cap(MS[+k.slice(5)])}</span></button>`).join('')}</div>
-    <h4>Por concepto</h4>${rows.length ? rows.map(r => `<div class="row cdr"><span class="g">${esc(r.n)}<span class="meta">${r.c > 1 ? `<span class="mu">${r.c} veces</span>` : ''}${r.of ? `<span class="chip" title="Es solo una parte de un movimiento dividido">${I('split', 'sm')} ${r.c > 1 ? 'Parte de una compra' : 'Parte de ' + eur(r.of)}</span>` : ''}<span class="mu">${fd(r.last)}</span>${r.fx ? `<span class="chip">${I('repeat', 'sm')} Fijo</span>` : ''}${r.bank ? `<span class="chip">${I('landmark', 'sm')} Banco</span>` : ''}</span></span><b class="amt">${eur(r.s)}</b></div>`).join('') : empty('Sin gastos este mes.')}
+    <h4>Por concepto</h4>${rows.length ? rows.map(r => `<div class="row cdr"><span class="g">${esc(r.n)}<span class="meta">${r.c > 1 ? `<span class="mu">${r.c} veces</span>` : ''}${r.of ? `<span class="chip" title="Es solo una parte de un movimiento dividido">${I('split', 'sm')} Compra dividida</span>` : ''}<span class="mu">${fd(r.last)}</span>${r.fx ? `<span class="chip">${I('repeat', 'sm')} Fijo</span>` : ''}${r.bank ? `<span class="chip">${I('landmark', 'sm')} Banco</span>` : ''}</span></span><b class="amt">${eur(r.s)}</b>${r.ofs.map(o => splitBreak(o, c)).join('')}</div>`).join('') : empty('Sin gastos este mes.')}
     ${rec.length ? `<h4>Recurrentes · ${eur(ry)}/año <span class="mu">(≈ ${eur(ry / 12)}/mes)</span></h4><div class="mu" style="margin-bottom:4px">¿Sigues usando todas? Dar de baja una te ahorra su coste anual.</div>${rec.map(r => `<div class="row cdr"><span class="g">${esc(r.n)}<span class="meta"><span class="mu">${r.d}</span></span></span><span class="amt">${eur(r.y)}<span class="mu">/año</span></span></div>`).join('')}` : ''}
     <div class="acts" style="margin-top:14px"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button><button class="btn" id="ok">${I('list-checks')} Ver movimientos</button></div></div>`);
   o.querySelectorAll('.hb').forEach(
@@ -461,12 +474,12 @@ function txListHTML() {
     const sp = isSplit(x);
     return (
       h +
-      `<div class="row txrow${sp ? ' has-parts' : ''}">${sp ? tile('split') : tile(CI[x.cat] || 'package', col(x.cat))}<button class="g link txg" data-a="etx" data-i="${x.id}" title="Editar: categoría, nota, Facturas o eliminar"><span class="tt">${esc(x.desc || x.cat)}</span><span class="meta"><span class="mu">${sp ? 'Dividido en ' + x.parts.length : esc(x.cat)}</span>${x.card ? `<span class="mu">· ${I('credit-card', 'sm')} Prepago</span>` : ''}${x.note ? `<span class="mu">· ${I('file-text', 'sm')} ${esc(cap(x.note))}</span>` : ''}</span></button><span class="txr"><span class="txc">${isDev(x) ? `<span class="chip ok" title="Te devuelven parte de un gasto: resta de «${esc(x.cat)}» y no cuenta como ingreso">${I('arrow-down-left', 'sm')} Devolución</span>` : ''}${incMon(x) !== mon(x.date) ? `<span class="chip" title="Llegó a final de mes: cuenta como ingreso del mes siguiente">Cuenta para ${MS[+incMon(x).slice(5)]}</span>` : ''}${x.billId ? '<span class="chip">Factura</span>' : x.fid ? `<span class="chip">${I('repeat', 'sm')} Fijo</span>` : ''}${x.t !== 'g' || (sp && !x.ex) ? '' : x.enc && !sp ? `<button class="chip ok" data-a="txen" data-i="${x.id}" title="Encargo para otra persona: no cuenta como gasto tuyo · Toca para que cuente">${I('hand-coins', 'sm')} Encargo</button>` : x.ex ? `<button class="chip wa" data-a="txex" data-i="${x.id}" title="Se ve, pero no cuenta en el gasto del mes ni en las comparaciones · Toca para que cuente">${I('sparkles', 'sm')} Extraordinario</button>` : x.amt >= EXMIN && x.cat !== NOCNT && !x.fid && !x.billId ? `<button class="chip" data-a="txex" data-i="${x.id}" title="Marcar como gasto extraordinario: se verá, pero no contará en el gasto del mes ni en las comparaciones">¿Extraordinario?</button>` : ''}${isDup(x) ? `<button class="chip wa" data-a="nodup" data-i="${x.id}" title="Toca si no es un duplicado para quitar el aviso">${I('triangle-alert', 'sm')} ¿Duplicado?</button>` : ''}</span><span class="txb"><span class="amt ${x.t === 'i' ? 'ok' : 'neg'}">${x.t === 'i' ? '+' : '−'}${eur(x.amt)}</span></span></span></div>${
+      `<div class="row txrow${sp ? ' has-parts' : ''}">${sp ? tile('split') : tile(CI[x.cat] || 'package', col(x.cat))}<button class="g link txg" data-a="etx" data-i="${x.id}" title="Editar: categoría, nota, Facturas o eliminar"><span class="tt">${esc(x.desc || x.cat)}</span><span class="meta"><span class="mu">${sp ? 'Dividido en ' + x.parts.length : esc(x.cat)}</span>${x.card ? `<span class="mu">· ${I('credit-card', 'sm')} Prepago</span>` : ''}${x.note ? `<span class="mu">· ${I('file-text', 'sm')} ${esc(cap(x.note))}</span>` : ''}</span></button><span class="txr"><span class="txc">${isDev(x) ? `<span class="chip ok" title="Te devuelven parte de un gasto: resta de «${esc(x.cat)}» y no cuenta como ingreso">${I('arrow-down-left', 'sm')} Devolución</span>` : ''}${incMon(x) !== mon(x.date) ? `<span class="chip" title="Llegó a final de mes: cuenta como ingreso del mes siguiente">Cuenta para ${MS[+incMon(x).slice(5)]}</span>` : ''}${x.billId ? '<span class="chip">Factura</span>' : x.fid ? `<span class="chip">${I('repeat', 'sm')} Fijo</span>` : ''}${x.t !== 'g' || (sp && !x.ex) ? '' : x.enc && !sp ? `<button class="chip ok" data-a="txen" data-i="${x.id}" title="Encargo para otra persona: no cuenta como gasto tuyo · Toca para que cuente">${I('hand-coins', 'sm')} Encargo</button>` : x.ex ? `<button class="chip wa" data-a="txex" data-i="${x.id}" title="Se ve, pero no cuenta en el gasto del mes ni en las comparaciones · Toca para que cuente">${I('sparkles', 'sm')} Extraordinario</button>` : x.amt >= EXMIN && x.cat !== NOCNT && !x.fid && !x.billId ? `<button class="chip" data-a="txex" data-i="${x.id}" title="Marcar como gasto extraordinario: se verá, pero no contará en el gasto del mes ni en las comparaciones">¿Extraordinario?</button>` : ''}${isDup(x) ? `<button class="chip wa" data-a="nodup" data-i="${x.id}" title="Toca si no es un duplicado para quitar el aviso">${I('triangle-alert', 'sm')} ¿Duplicado?</button>` : ''}</span><span class="txb"><span class="amt ${x.t === 'i' ? 'ok' : 'neg'}">${x.t === 'i' ? '+' : '−'}${eur(x.amt)}</span>${sp && x.parts.some(p => p.enc) ? `<span class="txmine">Tuyo: ${eur(x.parts.filter(p => !p.enc).reduce((a, p) => a + +p.amt, 0))}</span>` : ''}</span></span></div>${
         sp
           ? `<div class="txparts">${txp(x)
               .map(
                 p =>
-                  `<button class="txpart" data-a="etx" data-i="${x.id}" title="Parte del movimiento · Toca para cambiar la división"><i style="background:${p.enc ? 'var(--ok)' : col(p.cat)}"></i><span>${p.enc ? `${I('hand-coins', 'sm')} Encargo` : esc(p.cat)}</span><span class="amt mu">${eur(p.amt)}</span></button>`
+                  `<button class="txpart${txf.cat && !p.enc && p.cat === txf.cat ? ' on' : ''}" data-a="etx" data-i="${x.id}" title="Parte del movimiento · Toca para cambiar la división"><i style="background:${col(p.cat)}"></i><span>${esc(p.cat)}${p.enc ? ` <span class="chip ok">${I('hand-coins', 'sm')} Encargo</span>` : ''}</span><span class="amt mu">${eur(p.amt)}</span></button>`
               )
               .join('')}</div>`
           : ''
