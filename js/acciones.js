@@ -16,6 +16,10 @@ const A = {
     render();
     window.scrollTo(0, 0);
   },
+  cgm: i => {
+    carOff = Math.min(0, carOff + +i);
+    render();
+  },
   ckm: () => carKmForm(),
   cvis: i => carVisForm(i ? carS().vis.find(v => v.id === i) : null),
   cmt: i => carMtForm(i ? carS().mt.find(x => x.id === i) : null),
