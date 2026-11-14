@@ -873,13 +873,9 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .shtx{padding:10px 12px;border-radius:12px;background:var(--card2);font-size:14px;max-height:160px;overflow:auto;overflow-wrap:anywhere}
 .shseg{flex-wrap:wrap}
 .shck{display:flex;align-items:center;gap:10px;font-size:14px;padding:4px 0}
-/* ---------- Borde de luz arcoíris en «Lo más importante» (.card.hl de Mi día) ----------
-   Solo el borde: un degradado cónico que gira, recortado con una máscara para que no tape el fondo de la tarjeta. */
-@property --lb{syntax:"<angle>";inherits:false;initial-value:0deg}
-.card.hl{position:relative;border-color:transparent}
-.card.hl::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:2px;pointer-events:none;background:conic-gradient(from var(--lb),#ff4d4d,#ffb020,#3ccf82,#2f9bff,#9b4dff,#ff4d4d);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);animation:lbspin 6s linear infinite}
-@keyframes lbspin{to{--lb:360deg}}
-@media (prefers-reduced-motion: reduce){.card.hl::before{animation:none}}
+/* ---------- Borde de «Lo más importante» (.card.hl): azul y fijo ----------
+   Antes era un degradado arcoíris que giraba sin parar: obligaba a repintar la tarjeta en cada fotograma (gasta batería). */
+.card.hl{border:2px solid var(--ac)}
 /* Móvil: al mantener pulsada el asa de una tarjeta para moverla, todas se quedan solo con su título (eventos.js, body.reord) */
 .reord #m .card>:not(h3){display:none!important}
 .reord #m .card{padding-top:12px;padding-bottom:12px}
