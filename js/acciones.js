@@ -301,6 +301,11 @@ const A = {
     S.localHol.push({ d, n });
     ch();
   },
+  dlhc: i =>
+    CF('¿Eliminar este festivo?', () => {
+      S.localHol = S.localHol.filter(h => h.d !== i);
+      ch();
+    }),
   dlh: i => {
     S.localHol = S.localHol.filter(h => h.d !== i);
     ch();

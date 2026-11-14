@@ -566,9 +566,9 @@ const holidays = y => {
 const holOn = d => holidays(+d.slice(0, 4)).filter(h => h.d === d);
 const perOn = d => S.periods.filter(p => p.from <= d && d <= p.to);
 const perRow = p =>
-  `<div class="row">${tile('sun', '#2fcf7a')}<span class="g">${esc(p.name)}<span class="meta"><span class="mu">Del ${fd(p.from)} al ${fd(p.to)} · ${dd(p.to, p.from) + 1} días</span></span></span><span class="when ${dayDiff(p.from) <= 0 && dayDiff(p.to) >= 0 ? 'ok' : ''}">${dayDiff(p.from) > 0 ? cap(rel(p.from)) : dayDiff(p.to) >= 0 ? 'Ahora' : 'Pasadas'}</span></div>`;
+  `<div class="row">${tile('sun', '#2fcf7a')}<span class="g">${esc(p.name)}<span class="meta"><span class="mu">${p.from === p.to ? 'Solo el ' + fd(p.from) : `Del ${fd(p.from)} al ${fd(p.to)} · ${dd(p.to, p.from) + 1} días`}</span></span></span><span class="when ${dayDiff(p.from) <= 0 && dayDiff(p.to) >= 0 ? 'ok' : ''}">${dayDiff(p.from) > 0 ? cap(rel(p.from)) : dayDiff(p.to) >= 0 ? 'Ahora' : 'Pasadas'}</span><button class="ib" data-a="dpe" data-i="${p.id}" aria-label="Eliminar «${esc(p.name)}»" title="Eliminar">${I('x')}</button></div>`;
 const holRow = h =>
-  `<div class="row">${tile('sparkles', '#ff5d5d')}<span class="g">${esc(h.n)}<span class="meta"><span class="mu">Festivo</span></span></span><span class="when">${cap(rel(h.d))}</span></div>`;
+  `<div class="row">${tile('sparkles', '#ff5d5d')}<span class="g">${esc(h.n)}<span class="meta"><span class="mu">${S.localHol.some(x => x.d === h.d && x.n === h.n) ? 'Festivo local' : 'Festivo'}</span></span></span><span class="when">${cap(rel(h.d))}</span>${S.localHol.some(x => x.d === h.d && x.n === h.n) ? `<button class="ib" data-a="dlhc" data-i="${h.d}" aria-label="Eliminar el festivo «${esc(h.n)}»" title="Eliminar">${I('x')}</button>` : ''}</div>`;
 
 function calHTML() {
   const y = cm.getFullYear(),

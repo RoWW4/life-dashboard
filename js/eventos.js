@@ -232,8 +232,8 @@ document.addEventListener('contextmenu', e => {
   const c = e.target.closest && e.target.closest('.cal button[data-i]');
   if (c) {
     e.preventDefault();
-    if (calLp.done) return;
-    clearTimeout(calLp.t);
+    // Con el dedo ya lo abre el temporizador de abajo (si no, el menú salía dos veces).
+    if (calLp.touch) return;
     dayMenu(c.dataset.i);
   }
 });
@@ -243,7 +243,9 @@ document.addEventListener(
   'touchstart',
   e => {
     clearTimeout(calLp.t);
+    clearTimeout(calLp.u);
     calLp.done = false;
+    calLp.touch = true;
     const c = e.target.closest && e.target.closest('.cal button[data-i]');
     if (!c || e.touches.length > 1) return;
     const t = e.touches[0];
@@ -267,13 +269,25 @@ document.addEventListener(
   },
   { passive: true }
 );
-document.addEventListener('touchend', () => clearTimeout(calLp.t), { passive: true });
+document.addEventListener(
+  'touchend',
+  () => {
+    clearTimeout(calLp.t);
+    calLp.u = setTimeout(() => {
+      calLp.touch = false; // el clic derecho que simula el móvil llega después
+      calLp.done = false; // si al soltar no llegó ningún clic, el siguiente toque sí cuenta
+    }, 800);
+  },
+  { passive: true }
+);
 document.addEventListener(
   'click',
   e => {
-    if (calLp.done && e.target.closest && e.target.closest('.cal button')) {
+    // El clic que llega al soltar el dedo tras mantener pulsado no cuenta (podía caer en una opción del menú recién abierto).
+    if (calLp.done) {
       calLp.done = false;
       e.stopPropagation();
+      e.preventDefault();
     }
   },
   true
