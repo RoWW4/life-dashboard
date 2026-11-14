@@ -141,7 +141,7 @@ function txForm() {
         o.querySelectorAll('#ftt button').forEach(x => x.classList.toggle('on', x === b));
         const sc = o.querySelector('#fx3'),
           v = sc.value;
-        sc.innerHTML = opts(t === 'i' ? ICATS : GCATS, v); // en un gasto no sale Nómina
+        sc.innerHTML = t === 'i' ? iopts(v) : opts(GCATS, v); // en un gasto no sale Nómina
         if (!touched) sc.value = t === 'i' ? 'Nómina' : classify(o.querySelector('#fx5').value);
         hUpd();
       })
@@ -189,7 +189,7 @@ function txEdit(x, dr) {
         ? `<div class="mu">${I('split', 'sm')} Dividido: ${txp(x)
             .map(p => (p.enc ? 'Encargo' : esc(p.cat)) + ' ' + eur(p.amt))
             .join(' · ')}</div>`
-        : `<label>Categoría<select id="ex4">${opts(cats, d.cat)}</select></label>${gi ? '' : '<div class="mu" id="exh" style="margin-top:-4px"></div>'}`
+        : `<label>Categoría<select id="ex4">${gi ? opts(cats, d.cat) : iopts(d.cat)}</select></label>${gi ? '' : '<div class="mu" id="exh" style="margin-top:-4px"></div>'}`
     }<label>Nota<input id="ex5" value="${esc(d.note)}" placeholder="Opcional"></label>${gi ? `<div class="chkr"><label class="chk"><input type="checkbox" id="ex6" ${x.ex ? 'checked' : ''}> Gasto extraordinario</label><button type="button" class="ib inf" aria-label="Qué es un gasto extraordinario" aria-expanded="false">${I('info', 'sm')}</button></div><div class="infx mu" hidden>Se ve en la lista, pero no cuenta en el gasto del mes ni en las comparaciones (p. ej. un pago grande y puntual).</div>${sp ? '' : `<div class="chkr"><label class="chk"><input type="checkbox" id="ex7" ${x.enc ? 'checked' : ''}> Encargo</label><button type="button" class="ib inf" aria-label="Qué es un encargo" aria-expanded="false">${I('info', 'sm')}</button></div><div class="infx mu" hidden>Compra para otra persona que te paga en mano: no cuenta como gasto tuyo. Si solo una parte es encargo, usa «Dividir».</div>`}` : ''}</div><div class="acts"><button class="btn ghost danger" id="fdel">Eliminar</button>${gi && x.t === 'g' ? `<button class="btn ghost" id="fspl" title="Repartir el importe en varias categorías o separar la parte que es encargo">${I('split', 'sm')} ${sp ? 'Cambiar división' : 'Dividir'}</button>` : ''}${x.billId || d.t !== x.t ? '' : `<button class="btn ghost" id="fmkf">${I('repeat', 'sm')} ${x.fid ? 'Quitar de Facturas' : 'Añadir a Facturas'}</button>`}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`
   );
   const v = i => o.querySelector(i).value.trim();

@@ -496,6 +496,15 @@ const nt = s =>
   ' ';
 const cap = s => (s ? s[0].toUpperCase() + s.slice(1) : s);
 const opts = (arr, sel) => arr.map(x => `<option ${x === sel ? 'selected' : ''}>${esc(x)}</option>`).join('');
+/* Desplegable de categoría de un ingreso: todas en orden alfabético; las de gasto llevan «(devolución)» porque restan de ese gasto. */
+const iopts = sel =>
+  ICATS.slice()
+    .sort((a, b) => a.localeCompare(b, 'es'))
+    .map(
+      x =>
+        `<option value="${esc(x)}" ${x === sel ? 'selected' : ''}>${esc(x)}${['Nómina', 'Otros', NOCNT].includes(x) ? '' : ' (devolución)'}</option>`
+    )
+    .join('');
 const hash = s => {
   let h1 = 0xdeadbeef,
     h2 = 0x41c6ce57;
