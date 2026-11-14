@@ -4,7 +4,8 @@
    Datos en S.car: info (ficha), km (lecturas de km), mt (mantenimientos: cada cuánto y la última vez), vis (visitas al taller).
    Los gastos no se apuntan aquí: salen de Finanzas, así no se cuentan dos veces. */
 let carTab = 'res',
-  carOff = 0; // mes de Gastos: 0 = el actual, -1 = el anterior…
+  carOff = 0, // mes de Gastos: 0 = el actual, -1 = el anterior…
+  carYr = ''; // año del historial ('' = todos)
 const CARC = '#f5a524';
 /* Mantenimientos de partida (con id fijo: si dos dispositivos los crean a la vez, se juntan en uno). */
 const CAR_MT0 = [
@@ -81,26 +82,38 @@ function carMt(x, K) {
 /* Lo próximo: mantenimientos con datos, pagos de Facturas con categoría Coche (seguro, impuesto…) y documentos de la carpeta Coche que vencen. */
 function carNext(c = carR(), K = carKm(c)) {
   const LV = { er: 0, wa: 1, ok: 2 };
+  // Un documento que vence y un pago de Facturas de lo mismo (p. ej. la póliza y el cargo del seguro, con menos de un mes
+  // de diferencia y una palabra en común) salen en una sola línea: la del pago, con la fecha en que vence el documento.
+  const words = t =>
+      nt(t)
+        .trim()
+        .split(' ')
+        .filter(w => w.length >= 5 && w !== 'coche'),
+    FX = S.fixed
+      .filter(f => f.cat === 'Coche' && f.t === 'g' && fxLive(f) && !f.var)
+      .map(f => ({ f, d: fxState(f).due || fxState(f).next }))
+      .filter(o => o.d),
+    twin = d => FX.find(o => Math.abs(dd(o.d, d.exp)) <= 31 && words(o.f.name).some(w => words(d.name).includes(w)));
   const L = [
     ...c.mt
       .map(x => ({ k: 'mt', x, s: carMt(x, K) }))
       .filter(o => o.s.lvl !== 'no')
       .map(o => ({ ...o, n: o.x.n, d: o.s.due, lvl: o.s.lvl, pill: o.s.pill })),
-    ...S.fixed
-      .filter(f => f.cat === 'Coche' && f.t === 'g' && fxLive(f) && !f.var)
-      .map(f => ({ f, d: fxState(f).due || fxState(f).next }))
-      .filter(o => o.d)
-      .map(o => ({
+    ...FX.map(o => {
+      const doc = S.docs.find(d => d.cat === 'Coche' && d.exp && twin(d) === o),
+        d = doc && doc.exp < o.d ? doc.exp : o.d;
+      return {
         k: 'fx',
         f: o.f,
         n: o.f.name,
-        d: o.d,
-        lvl: dayDiff(o.d) <= 7 ? 'wa' : 'ok',
-        pill: cap(rel(o.d)),
-        sub: 'Pago · ' + eur(o.f.amt)
-      })),
+        d,
+        lvl: dayDiff(d) <= 7 ? 'wa' : 'ok',
+        pill: cap(rel(d)),
+        sub: doc ? 'Vence el ' + fdc(doc.exp) + ' · cargo de ' + eur(o.f.amt) + ' hacia el ' + fdc(o.d) : 'Pago · ' + eur(o.f.amt)
+      };
+    }),
     ...S.docs
-      .filter(d => d.cat === 'Coche' && d.exp)
+      .filter(d => d.cat === 'Coche' && d.exp && !twin(d))
       .map(d => {
         const n = dayDiff(d.exp);
         return {
@@ -153,6 +166,16 @@ const carNextRow = o => {
     sub = o.k === 'mt' ? carMtSub(o.x, o.s) : esc(o.sub);
   return `<div class="row"><span class="cdot ${o.lvl}"></span><button class="link" ${act}><span class="g"><span class="tt">${esc(o.n)}</span><br><span class="mu">${sub}</span></span></button>${carPill(o.lvl, o.pill)}</div>`;
 };
+/* Icono y color de cada cosa del historial, según lo que se hizo. */
+const CAR_VT = [
+  [/\bitv\b/, 'circle-check', '#22c3b4'],
+  [/bateri/, 'battery', '#f2b13d'],
+  [/neumat|rueda/, 'car', '#7aa7ff'],
+  [/freno|pastilla|disco/, 'triangle-alert', '#ff6b6b'],
+  [/aceite|filtro|mantenimiento|revision/, 'wrench', '#f5a524'],
+  [/.?/, 'wrench', '#8d9099']
+];
+const carVT = v => CAR_VT.find(t => t[0].test(nt([v.what, v.det].join(' '))));
 /* Visita del historial: una línea; al tocarla se abre el detalle (lo que se hizo, taller, importe). */
 const carVisRow = v => {
   const k = 'cv:' + v.id,
@@ -161,7 +184,8 @@ const carVisRow = v => {
       .split('\n')
       .map(s => s.trim())
       .filter(Boolean);
-  return `<div class="cvis${open ? ' on' : ''}"><button class="cvh" data-a="xp" data-i="${esc(k)}" aria-expanded="${!!open}"><span class="g"><span class="tt">${esc(v.what || 'Visita al taller')}</span><br><span class="mu">${[fdc(v.d), hasN(v.km) ? kmf(v.km) + ' km' : ''].filter(Boolean).join(' · ')}</span></span>${+v.amt ? `<span class="amt">${eur(+v.amt)}</span>` : ''}${I(open ? 'chevron-up' : 'chevron-down', 'sm')}</button>${
+  const t = carVT(v);
+  return `<div class="cvis${open ? ' on' : ''}" style="--c:${t[2]}"><button class="cvh" data-a="xp" data-i="${esc(k)}" aria-expanded="${!!open}">${tile(t[1], t[2])}<span class="g"><span class="tt">${esc(v.what || 'Visita al taller')}</span><br><span class="mu">${[fdc(v.d), hasN(v.km) ? kmf(v.km) + ' km' : '', det.length > 2 ? det.length + ' trabajos' : ''].filter(Boolean).join(' · ')}</span></span>${+v.amt ? `<span class="amt">${eur(+v.amt)}</span>` : ''}${I(open ? 'chevron-up' : 'chevron-down', 'sm')}</button>${
     open
       ? `<div class="cvd">${det.length ? `<ul>${det.map(s => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}${v.note ? `<div class="mu">${esc(v.note)}</div>` : ''}${v.where ? `<div class="mu">${I('map-pin', 'sm')} ${esc(v.where)}</div>` : ''}${!det.length && !v.note && !v.where ? '<div class="mu">Sin detalle.</div>' : ''}<button class="btn sm ghost" data-a="cvis" data-i="${v.id}">${I('pencil', 'sm')} Editar</button></div>`
       : ''
@@ -226,18 +250,24 @@ function vCoche() {
   } else if (carTab === 'tal') {
     const V = [...c.vis].sort((a, b) => b.d.localeCompare(a.d)),
       Y = [...new Set(V.map(v => v.d.slice(0, 4)))];
+    if (carYr && !Y.includes(carYr)) carYr = '';
     C = {
       vis: panel(
         'coche',
         'vis',
         `${I('wrench')} Historial de mantenimiento`,
-        (V.length
-          ? Y.map(yy => {
-              const L = V.filter(v => v.d.slice(0, 4) === yy),
-                t = L.reduce((a, v) => a + (+v.amt || 0), 0);
-              return `<div class="dh cyh"><span>${yy}</span>${t ? `<span>${eur(t)}</span>` : ''}</div>` + L.map(carVisRow).join('');
-            }).join('')
-          : empty('Aún no hay nada. Cuando lleves el coche al taller, apunta qué se le hizo.')) +
+        (Y.length > 1
+          ? `<div class="cyrs" role="tablist" aria-label="Año">${['', ...Y].map(yy => `<button role="tab" class="${carYr === yy ? 'on' : ''}" aria-selected="${carYr === yy}" data-a="cyr" data-i="${yy}">${yy || 'Todos'}</button>`).join('')}</div>`
+          : '') +
+          (V.length
+            ? Y.filter(yy => !carYr || yy === carYr)
+                .map(yy => {
+                  const L = V.filter(v => v.d.slice(0, 4) === yy),
+                    t = L.reduce((a, v) => a + (+v.amt || 0), 0);
+                  return `<div class="dh cyh"><span>${yy}</span><span>${L.length} ${L.length === 1 ? 'vez' : 'veces'}${t ? ' · ' + eur(t) : ''}</span></div><div class="cvl">${L.map(carVisRow).join('')}</div>`;
+                })
+                .join('')
+            : empty('Aún no hay nada. Cuando lleves el coche al taller, apunta qué se le hizo.')) +
           `<button class="morebtn" data-a="cvis">${I('plus')} Apuntar lo que se hizo</button>`
       )
     };
