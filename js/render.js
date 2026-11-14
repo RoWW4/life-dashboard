@@ -1,7 +1,18 @@
 'use strict';
 /* Pintar la sección actual, el menú y el tema. */
 /* ---------- render ---------- */
-const V_ = { dia: vDia, tareas: vTareas, compra: vCompra, fin: vFin, fact: vFact, docs: vDocs, inv: vInv, salud: vSalud, ajus: vAjus };
+const V_ = {
+  dia: vDia,
+  tareas: vTareas,
+  compra: vCompra,
+  fin: vFin,
+  fact: vFact,
+  docs: vDocs,
+  inv: vInv,
+  salud: vSalud,
+  coche: vCoche,
+  ajus: vAjus
+};
 function theme() {
   const r = document.documentElement;
   S.theme === 'light' || S.theme === 'blue' ? r.setAttribute('data-theme', S.theme) : r.removeAttribute('data-theme');
@@ -10,7 +21,7 @@ function theme() {
 }
 function nav() {
   const c = pend(),
-    n = { tareas: c.t, compra: c.s, fact: c.b };
+    n = { tareas: c.t, compra: c.s, fact: c.b, coche: carWarn().length };
   $('#nav').innerHTML =
     `<div class="brand"><span class="logo"><i><b></b><b></b><b></b><b></b></i></span><span class="bn">${APP}</span>${eyeBtn('ib eyeg')}</div>` +
     secs()

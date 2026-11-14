@@ -991,3 +991,55 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 @media(min-width:761px){.hmoon,.hbg-cielo .hmoon,.hbg-luna .hmoon{left:auto;right:3%;top:10px;transform:none;width:62px;height:62px}.sol,.sky-dia .sol,.sky-tarde .sol{left:auto;right:4%;top:16px}.sky-amanecer .sol,.sky-atardecer .sol{top:auto;bottom:34%;right:42%}}
 /* Documentos: cada panel con el color de su categoría (borde y brillo suave). */
 .card.dcat{border-color:color-mix(in srgb,var(--c) 45%,var(--bd));box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 18%,transparent),0 0 22px -4px color-mix(in srgb,var(--c) 45%,transparent)}
+
+/* ---------- Coche (js/vistas/coche.js) ---------- */
+.nv[data-i=coche]{--c:#f5a524}.card[data-v=coche]{--mod:#f5a524}
+@media(max-width:760px){.nv[data-i=coche]:not(.on){display:none}} /* como Compra: se entra desde el acceso de Mi día */
+.ctabs{display:flex;width:max-content;max-width:100%;margin-bottom:16px;flex-wrap:nowrap}
+.ctabs button{text-align:center;white-space:nowrap}
+@media(max-width:760px){.ctabs{width:100%}.ctabs button{flex:1;padding:6px 4px}}
+/* Portada: km grandes y tres cifras, con los colores de la portada de Mi día */
+.carh{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:18px 28px;align-items:end;padding:22px 24px;margin-bottom:18px;border-radius:24px;background:var(--hero);color:var(--hero-tx);box-shadow:var(--sh2)}
+.carh::before{content:'';position:absolute;z-index:-1;width:520px;height:520px;right:-180px;top:-280px;border-radius:50%;background:radial-gradient(closest-side,var(--hero-glow),transparent)}
+.carhm{display:flex;flex-direction:column;gap:4px;min-width:0}
+.carh .eyb{font-size:13px;font-weight:500;color:var(--hero-mu);display:flex;align-items:center;gap:6px}
+.carhm b{font-size:42px;font-weight:650;letter-spacing:-.04em;line-height:1.05;font-variant-numeric:tabular-nums}
+.carhm b small{font-size:18px;font-weight:600;letter-spacing:0;color:var(--hero-mu)}
+.carhm b.carh0{font-size:28px}
+.carhs{font-size:12.5px;color:var(--hero-mu)}
+.carht{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.carht div{background:var(--hero-tile);border:1px solid var(--hero-bd);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.carht span{font-size:11.5px;color:var(--hero-mu)}
+.carht b{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:760px){.carh{grid-template-columns:1fr;padding:18px}.carhm b{font-size:36px}.carht b{font-size:15px}}
+.cdot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--dis)}
+.cdot.er{background:var(--er)}.cdot.wa{background:var(--wa)}.cdot.ok{background:var(--ok)}
+/* Mantenimiento: nombre y estado arriba, barra de lo que va gastado y la regla debajo */
+.cmt{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:6px;width:100%;padding:11px 0;border-bottom:1px solid var(--sep)}
+.cmt:last-of-type{border-bottom:0}
+.cmt:hover .cmth b{color:var(--ac2)}.cmt:focus-visible{outline:2px solid var(--ac);border-radius:6px}
+.cmth{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cmth b{font-weight:600}
+.cmt .mu{font-size:12.5px}
+.ckv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 14px;margin:0;font-size:14px}
+.ckv dt{color:var(--mu)}.ckv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;display:flex;justify-content:flex-end;align-items:center;gap:2px}
+.ckv .ccp{padding:2px;color:var(--mu)}
+.cqk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.cqk button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:14px;background:var(--card2);border:1px solid var(--bd);font-size:12.5px;font-weight:500;color:var(--tx2);text-align:center;transition:border-color .15s,background .15s}
+.cqk button:hover{border-color:var(--bd2);color:var(--tx)}.cqk button:focus-visible{outline:2px solid var(--ac)}
+.cqk .i{width:20px;height:20px;color:#f5a524}
+.ckp{margin:0 0 12px}.ckp .kpi{box-shadow:none;background:var(--card2)}
+.ckpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:760px){.ckpis{grid-template-columns:1fr 1fr}.ckpis .kpi:last-child{grid-column:1/-1}}
+.kpi .v small{font-size:13px;font-weight:500;color:var(--mu);letter-spacing:0}
+.link.inl{flex:none;display:inline;color:var(--ac2);font-weight:600}
+/* Gasto por mes: barras de los últimos 12 meses (el mes actual resaltado) */
+.cmon{display:flex;align-items:flex-end;gap:5px;height:150px}
+.cmon>div{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.cmon i{display:block;width:100%;max-width:34px;border-radius:5px 5px 2px 2px;background:color-mix(in srgb,#f5a524 55%,transparent)}
+.cmon .on i{background:#f5a524}
+.cmon em{font-style:normal;font-size:10px;color:var(--mu);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cmon span{font-size:11px;color:var(--mu)}.cmon .on span{color:var(--tx);font-weight:600}
+@media(max-width:760px){.cmon{gap:3px}.cmon em{display:none}.cmon .on em{display:block}}
+.cstk{display:flex;gap:2px;height:12px;border-radius:6px;overflow:hidden;margin:2px 0 8px}
+.cstk i{display:block;height:100%;min-width:3px}

@@ -137,6 +137,7 @@ function vDia() {
     ...open.filter(t => t.due && dayDiff(t.due) <= 1).map(t => [t.due, ico(t), t.title, AC[t.area], t.id]),
     ...fxDue(7).map(o => [o.d, 'receipt', o.f.name + ' · ' + eur(o.f.amt), col(o.f.cat)]),
     ...S.docs.filter(d => d.exp && dayDiff(d.exp) <= 30).map(d => [d.exp, DI[d.cat] || 'file-text', 'Vence: ' + d.name, DCOL[d.cat]]),
+    ...carWarn().map(o => [o.d, 'car', o.n + (/km/.test(o.pill) ? ' · ' + o.pill : ''), CARC]),
     ...bankAlerts()
   ].sort((a, b) => a[0].localeCompare(b[0]));
   const b7 = fxDue(7),
@@ -203,6 +204,10 @@ function vDia() {
       : `<button class="qc off" data-a="ed" data-i="${d.id}"><span class="qi" style="--c:${DCOL[d.cat]}">${I(DI[d.cat] || 'file-text')}</span>${esc(d.name)}<em>Añadir enlace</em></button>`;
   const quick = `<div class="qrow" aria-label="Accesos rápidos">
     <button class="qc" data-a="go" data-i="compra"><span class="qi" style="--c:#34c77b">${I('shopping-cart')}</span>Compra${P.length ? ` <b>${P.length}</b>` : ''}</button>
+    <button class="qc" data-a="go" data-i="coche"><span class="qi" style="--c:${CARC}">${I('car')}</span>Coche${(() => {
+      const o = S.car && carNext().find(o => o.lvl !== 'no');
+      return o && o.lvl !== 'ok' ? ` <em class="${o.lvl}">${esc(o.n)} · ${esc(o.pill)}</em>` : '';
+    })()}</button>
     ${pins.map(qd).join('')}
     ${pins.length > 1 ? `<button class="qlk" data-a="cust">${cust ? 'Listo' : 'Ordenar'}</button>` : ''}${pins.length ? '' : `<button class="qlk" data-a="go" data-i="docs">${I('star', 'sm')} Marca documentos con la estrella para tenerlos aquí</button>`}
   </div>${cust && pins.length > 1 ? `<div class="card qord">${pinOrd()}</div>` : ''}`;
