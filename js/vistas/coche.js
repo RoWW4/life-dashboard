@@ -148,6 +148,18 @@ const carAge = r => {
     'menos de un mes'
   );
 };
+/* Dibujo del coche (SUV pequeño azul, de lado, genérico) para el panel de los km: a la derecha, difuminado hacia la izquierda. */
+const carArt = () =>
+  `<svg class="carart" viewBox="140 280 620 245" aria-hidden="true"><defs><linearGradient id="cab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4d9be0"/><stop offset=".45" stop-color="#1f6aae"/><stop offset="1" stop-color="#0f3d70"/></linearGradient><linearGradient id="caw" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9fc6ee" stop-opacity=".45"/><stop offset=".5" stop-color="#0a1626" stop-opacity=".95"/><stop offset="1" stop-color="#0a1626"/></linearGradient></defs><g transform="translate(895 0) scale(-1 1)">` +
+  `<ellipse cx="450" cy="514" rx="300" ry="9" fill="#000" opacity=".4"/>` +
+  `<path d="M155 470 150 440 152 405Q158 386 175 378L210 372 325 352 420 305Q435 297 455 296L620 298Q650 300 662 314L722 356Q735 365 737 390L742 430 745 455Q745 472 730 472H708A56 56 0 0 0 596 472H316A58 58 0 0 0 200 472H165Q155 472 155 470Z" fill="url(#cab)"/>` +
+  `<path d="M150 446H745V455Q745 472 730 472H708A56 56 0 0 0 596 472H316A58 58 0 0 0 200 472H165Q155 472 155 470Z" fill="#11161f"/><path d="M196 472A62 62 0 0 1 320 472M592 472A60 60 0 0 1 712 472" fill="none" stroke="#11161f" stroke-width="12"/><path d="M722 425 744 428 745 450 718 450Z" fill="#11161f"/>` +
+  `<path d="M338 362 425 309Q435 302 450 302L615 304Q640 306 654 318L668 330 646 352Z" fill="url(#caw)"/><path d="M497 302V362M602 304 598 356" stroke="#1f6aae" stroke-width="5"/>` +
+  `<path d="M432 296 636 293" stroke="#c9ced6" stroke-width="4" stroke-linecap="round"/>` +
+  `<path d="M210 396 724 380" stroke="#8fc1f0" stroke-opacity=".35" stroke-width="2"/><path d="M497 362V448" stroke="#0d3561" stroke-width="1.5"/><rect x="452" y="376" width="24" height="5" rx="2.5" fill="#cfe0ff" opacity=".55"/><rect x="598" y="372" width="22" height="5" rx="2.5" fill="#cfe0ff" opacity=".55"/>` +
+  `<path d="M336 350H362V368H342Z" fill="#164f88"/>` +
+  `<path d="M160 392 212 386 206 401 162 406Z" fill="#eaf2ff"/><path d="M688 364 728 368 732 384 694 382Z" fill="#ff4d5e"/>` +
+  `<circle cx="258" cy="467" r="47" fill="#0b0d12"/><circle cx="258" cy="467" r="34" fill="#cfd4dc"/><circle cx="258" cy="467" r="28" fill="none" stroke="#2a2f38" stroke-width="16" stroke-dasharray="5 6"/><circle cx="258" cy="467" r="9" fill="#8b929e"/><circle cx="652" cy="467" r="47" fill="#0b0d12"/><circle cx="652" cy="467" r="34" fill="#cfd4dc"/><circle cx="652" cy="467" r="28" fill="none" stroke="#2a2f38" stroke-width="16" stroke-dasharray="5 6"/><circle cx="652" cy="467" r="9" fill="#8b929e"/></g></svg>`;
 /* ---------- pantalla ---------- */
 const carPill = (lvl, t) => `<span class="chip ${lvl === 'no' ? '' : lvl}">${esc(t)}</span>`;
 const carMtSub = (x, s) => {
@@ -215,7 +227,7 @@ function vCoche() {
       TM = T.filter(x => mon(x.date) === gm).sort((a, b) => b.date.localeCompare(a.date)),
       nx = carNext(c, K),
       mes = cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(md)) + (gy === y ? '' : ' ' + gy);
-    top = `<section class="carh" aria-label="Kilómetros"><div class="carhm"><span class="eyb">${I('gauge', 'sm')} Kilómetros</span>${
+    top = `<section class="carh" aria-label="Kilómetros">${carArt()}<div class="carhm"><span class="eyb">${I('gauge', 'sm')} Kilómetros</span>${
       K.cur !== null
         ? `<b>${kmf(K.cur)} <small>km</small></b><span class="carhs">Apuntado ${rel(K.d)}</span>`
         : `<b class="carh0">Sin apuntar</b><span class="carhs">Toca el lápiz para poner los km del coche.</span>`
@@ -277,10 +289,14 @@ function vCoche() {
       segD = seg ? fxState(seg).next : '',
       R = (k, v, tel) =>
         v ? `<dt>${k}</dt><dd>${tel ? `<a href="tel:${esc(String(v).replace(/[^\d+]/g, ''))}">${esc(v)}</a>` : esc(v)}</dd>` : '',
-      grp = (t, rows) => (rows.join('') ? `<div class="dh">${t}</div><dl class="ckv">${rows.join('')}</dl>` : '');
+      // Cada grupo de la ficha en su cajita, con icono y color propios.
+      grp = (t, ic, co, rows) =>
+        rows.join('')
+          ? `<section class="ckg" style="--c:${co}"><div class="ckh">${tile(ic, co)}${t}</div><dl class="ckv">${rows.join('')}</dl></section>`
+          : '';
     const age = carAge(i.reg),
       body =
-        grp('Vehículo', [
+        grp('Vehículo', 'car', '#7aa7ff', [
           R('Marca y modelo', i.model),
           R('Versión', i.ver),
           R('Matrícula', i.plate),
@@ -288,7 +304,7 @@ function vCoche() {
           R('Matriculado', i.reg ? fd(i.reg) + (age ? ' · ' + age : '') : ''),
           R('Comprado', i.buy ? fd(i.buy) : '')
         ]) +
-        grp('Motor', [
+        grp('Motor', 'fuel', '#f5a524', [
           R('Combustible', i.fuelT),
           R('Motor', i.eng),
           R('Potencia', i.pw),
@@ -298,19 +314,21 @@ function vCoche() {
           R('Neumáticos', i.tyr),
           R('Aceite', i.oil)
         ]) +
-        grp('Seguro', [
+        grp('Seguro', 'shield-check', '#22c3b4', [
           R('Compañía', [i.ins, i.pol ? 'Póliza ' + i.pol : ''].filter(Boolean).join(' · ')),
           R('Renueva', segD ? fdc(segD) : ''),
           R('Asistencia', i.asis, 1),
           R('Agente', i.agent)
         ]) +
-        (i.notes ? `<div class="dh">Notas</div><div class="mu">${esc(i.notes)}</div>` : '');
+        (i.notes
+          ? `<section class="ckg" style="--c:#8d9099"><div class="ckh">${tile('file-text', '#8d9099')}Notas</div><div class="mu">${esc(i.notes)}</div></section>`
+          : '');
     C = {
       fic: panel(
         'coche',
         'fic',
         `${I('car')} ${esc([i.model, i.plate].filter(Boolean).join(' · ') || 'Mi coche')}`,
-        (body || `<div class="mu">Sin datos todavía. Toca «Editar» para rellenar la ficha.</div>`) +
+        (body ? `<div class="ckgs">${body}</div>` : `<div class="mu">Sin datos todavía. Toca «Editar» para rellenar la ficha.</div>`) +
           `<div class="dh">Documentos</div><div class="cdocs">${D.map(d =>
             d.url
               ? `<a class="qc" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer"><span class="qi" style="--c:${CARC}">${I('file-text')}</span>${esc(d.name)}</a>`

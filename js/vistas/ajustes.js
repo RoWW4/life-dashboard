@@ -49,6 +49,27 @@ function vAjus() {
             ''
           )}</div></div>${S.wxOff ? '' : `<div class="row"><span class="g">Ciudad del tiempo</span><button class="btn sm ghost" data-a="wxc">${S.wx ? esc(S.wx.n) : 'Elegir ciudad'} ${I('pencil', 'sm')}</button></div>`}`
       ),
+      menu: panel(
+        'ajus',
+        'menu',
+        `${I('menu')} Menú`,
+        `<div class="mu" style="margin-bottom:6px">Qué secciones salen en el menú, en el móvil y en el ordenador. Ocultar una no borra nada (Compra y Coche se abren también desde Mi día).</div>${SEC.filter(
+          ([k]) => k !== 'dia' && k !== 'ajus'
+        )
+          .map(
+            ([k, e, l]) =>
+              `<div class="row"><span class="g">${I(e, 'sm')} ${l}</span><div class="seg">${[
+                [0, 'Sí'],
+                [1, 'No']
+              ]
+                .map(
+                  ([v, n]) =>
+                    `<button class="${+(S.navOff || ['compra']).includes(k) === v ? 'on' : ''}" data-a="nvo" data-i="${k}:${v}">${n}</button>`
+                )
+                .join('')}</div></div>`
+          )
+          .join('')}`
+      ),
       apar: panel(
         'ajus',
         'apar',

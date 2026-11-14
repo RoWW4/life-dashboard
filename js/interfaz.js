@@ -428,11 +428,19 @@ const linkify = s =>
   });
 /* Fila de una tarea, con su icono. Para borrarla se abre (botón «Eliminar» de la ventana), así no se borra sin querer. */
 const areaChip = a => `<span class="chip tarea" style="--c:${AC[a] || 'var(--mu)'}">${I(AI[a] || 'pin', 'sm')} ${esc(a)}</span>`;
+/* Iconos pegados a la última palabra del título, para que al partirse la línea no se queden solos abajo. */
+const glue = (tt, ex) => {
+  if (!ex) return esc(tt);
+  const i = tt.trimEnd().lastIndexOf(' ');
+  return `${esc(tt.slice(0, i + 1))}<span class="nw">${esc(tt.slice(i + 1).trimEnd())}${ex}</span>`;
+};
 /* sa: con franja y etiqueta del área (lista «Por fecha» de Tareas). */
 const taskRow = (t, sa) => {
   const n = t.due ? dayDiff(t.due) : null,
     late = !t.done && n !== null && n < 0;
-  return `<div class="row ${t.done ? 'is-done' : ''}${sa ? ' tstripe" style="--c:' + (AC[t.area] || 'var(--mu)') : ''}"><input type="checkbox" class="ck" data-a="tt" data-i="${t.id}" ${t.done ? 'checked' : ''} aria-label="Completar «${esc(t.title)}»">${tile(ico(t), AC[t.area])}<button class="link" data-a="et" data-i="${t.id}"><span class="tt">${esc(t.title)}</span>${sa ? `<span class="meta">${areaChip(t.area)}${prChip(t.pr)}</span>` : ''}${t.rep ? `<span class="mu" title="Se repite ${t.rep.toLowerCase()}">${I('repeat', 'sm')}</span>` : ''}${sa ? '' : prChip(t.pr)}${t.rem && !t.done ? `<span class="mu" title="Aviso por Telegram: ${fdc(t.rem.slice(0, 10))} a las ${t.rem.slice(11, 16)}">${I('bell', 'sm')}</span>` : ''}${t.notes && t.notes.length ? `<span class="mu nc" title="${t.notes.length} nota${t.notes.length > 1 ? 's' : ''}">${I('message-square', 'sm')}${t.notes.length}</span>` : ''}</button><span class="when ${late ? 'er' : n === 0 && !t.done ? 'ac' : ''}">${cap(rel(t.due))}${t.tm ? ' · ' + t.tm : ''}</span></div>`;
+  // Prioridad, repetición, aviso y notas: en la lista «Por fecha», junto a la etiqueta del área (en la misma línea).
+  const ex = `${prChip(t.pr)}${t.rep ? `<span class="mu" title="Se repite ${t.rep.toLowerCase()}">${I('repeat', 'sm')}</span>` : ''}${t.rem && !t.done ? `<span class="mu" title="Aviso por Telegram: ${fdc(t.rem.slice(0, 10))} a las ${t.rem.slice(11, 16)}">${I('bell', 'sm')}</span>` : ''}${t.notes && t.notes.length ? `<span class="mu nc" title="${t.notes.length} nota${t.notes.length > 1 ? 's' : ''}">${I('message-square', 'sm')}${t.notes.length}</span>` : ''}`;
+  return `<div class="row ${t.done ? 'is-done' : ''}${sa ? ' tstripe" style="--c:' + (AC[t.area] || 'var(--mu)') : ''}"><input type="checkbox" class="ck" data-a="tt" data-i="${t.id}" ${t.done ? 'checked' : ''} aria-label="Completar «${esc(t.title)}»">${tile(ico(t), AC[t.area])}<button class="link" data-a="et" data-i="${t.id}">${sa ? `<span class="tt">${esc(t.title)}</span><span class="meta">${areaChip(t.area)}${ex}</span>` : `<span class="tt">${glue(t.title, ex)}</span>`}</button><span class="when ${late ? 'er' : n === 0 && !t.done ? 'ac' : ''}">${cap(rel(t.due))}${t.tm ? ' · ' + t.tm : ''}</span></div>`;
 };
 const expChip = d =>
   d.exp

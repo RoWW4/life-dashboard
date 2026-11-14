@@ -25,6 +25,7 @@ function nav() {
   $('#nav').innerHTML =
     `<div class="brand"><span class="logo"><i><b></b><b></b><b></b><b></b></i></span><span class="bn">${APP}</span>${eyeBtn('ib eyeg')}</div>` +
     secs()
+      .filter(([k]) => !navOff(k))
       .map(
         ([k, e, l, s]) =>
           `<button class="nv ${view === k ? 'on' : ''}" data-a="go" data-i="${k}" title="Arrastra para cambiar el orden" aria-label="${l}" ${view === k ? 'aria-current="page"' : ''}><span class="e">${I(e)}</span><span class="l">${l}</span><span class="s">${s}</span>${n[k] ? `<i class="badge">${n[k]}</i>` : ''}</button>`

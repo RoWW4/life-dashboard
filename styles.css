@@ -461,8 +461,6 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
   nav.mini .nv.on .s{display:none}
   .brand,.navfoot{display:none}
   .nv[data-i=ajus]{display:none}
-  /* Compra no ocupa sitio en la barra (se entra desde el acceso rápido de Mi día); solo sale mientras estás en ella. */
-  .nv[data-i=compra]:not(.on){display:none}
   .nv{flex:1 1 0;flex-direction:column;justify-content:center;gap:1px;padding:8px 0;min-height:44px;align-items:center;font-size:10.5px;font-weight:600;border-radius:19px;position:relative;min-width:0;transition:flex-grow .25s,background .2s,color .2s}
   .nv .e{width:auto}.nv .e .i{width:21px;height:21px}.nv .l,.nv .s{display:none}
   .nv.on{flex-grow:1.55;background:var(--acs);box-shadow:none;color:var(--ac2);padding:6px 0 5px}.nv.on .e{color:var(--ac)}.nv.on .s{display:block;white-space:nowrap;line-height:1.1}
@@ -1042,3 +1040,13 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 .tsep{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);padding:16px 0 4px;border-bottom:1px solid var(--sep)}.tsep:first-child{padding-top:0}.tsep span{font-weight:500;opacity:.8}.tsep.er{color:var(--er)}
 .row.tstripe{border-left:3px solid var(--c);padding-left:10px;margin-left:-4px}
 .tstripe .link .meta{flex-basis:100%;margin-top:0}
+.tt .nw{white-space:nowrap}.tt .nw>*{margin-left:6px;vertical-align:middle}
+/* Coche · Ficha: cada grupo (Vehículo, Motor, Seguro, Notas) en su cajita con icono y una línea de su color */
+.ckgs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:6px}
+.ckg{background:color-mix(in srgb,var(--c) 6%,var(--card2));border-radius:14px;padding:12px 14px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 18%,transparent);border-top:3px solid var(--c)}
+.ckh{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700;color:var(--c);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.ckh .ic{width:28px;height:28px}
+/* Coche · panel de los km: dibujo del coche a la derecha, difuminado hacia la izquierda */
+.carart{position:absolute;z-index:-1;right:8px;bottom:-2px;width:min(58%,300px);height:auto;pointer-events:none;-webkit-mask-image:linear-gradient(90deg,transparent,#000 45%);mask-image:linear-gradient(90deg,transparent,#000 45%);opacity:.95}
+.carh{min-height:150px}
+.carh .carhb{align-self:flex-start;position:relative}
