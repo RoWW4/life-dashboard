@@ -53,21 +53,19 @@ function vAjus() {
         'ajus',
         'menu',
         `${I('menu')} Menú`,
-        `<div class="mu" style="margin-bottom:6px">Qué secciones salen en el menú, en el móvil y en el ordenador. Ocultar una no borra nada (Compra y Coche se abren también desde Mi día).</div>${SEC.filter(
+        `<div class="mu" style="margin-bottom:6px">En el móvil, abajo salen Mi día y las 3 que pongas en «Barra»; el resto, en el botón «Más». En el ordenador salen todas menos las ocultas. Ocultar una no borra nada (Compra y Coche se abren también desde Mi día).</div>${SEC.filter(
           ([k]) => k !== 'dia' && k !== 'ajus'
         )
-          .map(
-            ([k, e, l]) =>
-              `<div class="row"><span class="g">${I(e, 'sm')} ${l}</span><div class="seg">${[
-                [0, 'Sí'],
-                [1, 'No']
-              ]
-                .map(
-                  ([v, n]) =>
-                    `<button class="${+(S.navOff || ['compra']).includes(k) === v ? 'on' : ''}" data-a="nvo" data-i="${k}:${v}">${n}</button>`
-                )
-                .join('')}</div></div>`
-          )
+          .map(([k, e, l]) => {
+            const st = (S.navOff || ['compra']).includes(k) ? 'o' : barKeys().includes(k) ? 'b' : 'm';
+            return `<div class="row"><span class="g">${I(e, 'sm')} ${l}</span><div class="seg">${[
+              ['b', 'Barra'],
+              ['m', 'Más'],
+              ['o', 'No']
+            ]
+              .map(([v, n]) => `<button class="${st === v ? 'on' : ''}" data-a="nvo" data-i="${k}:${v}">${n}</button>`)
+              .join('')}</div></div>`;
+          })
           .join('')}`
       ),
       apar: panel(

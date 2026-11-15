@@ -63,6 +63,12 @@ nav{width:224px;flex-shrink:0;position:sticky;top:14px;height:calc(100vh - 28px)
 .badge{min-width:20px;height:19px;padding:0 6px;border-radius:7px;background:var(--hov);box-shadow:inset 0 0 0 1px var(--bd2);color:var(--tx2);font-size:11px;font-weight:600;display:grid;place-items:center;font-style:normal;font-variant-numeric:tabular-nums}
 .nv.on .badge{background:rgba(255,255,255,.22);box-shadow:none;color:#fff}
 .nv.more{display:none}
+/* Hoja «Más» del móvil: cuadrícula de secciones */
+.msecs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.msecs button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 4px;border-radius:16px;background:var(--hov);font-size:12.5px;font-weight:500;text-align:center;color:var(--tx)}
+.msecs button.on{box-shadow:inset 0 0 0 2px var(--c)}
+.msecs button:focus-visible{outline:2px solid var(--ac)}
+.msecs .ic{--c:inherit;width:42px;height:42px;border-radius:13px}
 /* Botón de Ajustes del móvil (en el ordenador, Ajustes está en el menú lateral) */
 .app{position:relative}
 .ajb{all:unset;box-sizing:border-box;display:none;place-items:center;width:38px;height:38px;border-radius:50%;cursor:pointer;color:var(--mu);background:var(--card);border:1px solid var(--bd);box-shadow:var(--sh)}
@@ -479,11 +485,12 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
      y la sección abierta resaltada con su nombre debajo. Al bajar por la página se encoge. */
   nav{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));top:auto;width:auto;height:auto;margin:0;border:1px solid var(--bd);border-radius:24px;box-shadow:0 10px 30px -10px rgba(0,0,0,.45);flex-direction:row;align-items:center;padding:5px;z-index:20;background:var(--bg2);background:color-mix(in srgb,var(--nav) 82%,transparent);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);gap:2px;transform-origin:50% 100%;transition:transform .25s,opacity .25s}
   nav.mini{transform:scale(.86) translateY(4px);opacity:.92}
-  nav.mini .nv.on .s{display:none}
+  nav.mini .nv .s{display:none}
   .brand,.navfoot{display:none}
-  .nv[data-i=ajus]{display:none}
+  .nv[data-i=ajus],.nv.xb{display:none}
+  .nv.more{display:flex}
   .nv{flex:1 1 0;flex-direction:column;justify-content:center;gap:1px;padding:8px 0;min-height:44px;align-items:center;font-size:10.5px;font-weight:600;border-radius:19px;position:relative;min-width:0;transition:flex-grow .25s,background .2s,color .2s}
-  .nv .e{width:auto}.nv .e .i{width:21px;height:21px}.nv .l,.nv .s{display:none}
+  .nv .e{width:auto}.nv .e .i{width:21px;height:21px}.nv .l{display:none}.nv .s{display:block;white-space:nowrap;line-height:1.1;font-size:10.5px}
   .nv.on{flex-grow:1.55;background:var(--acs);box-shadow:none;color:var(--ac2);padding:6px 0 5px}.nv.on .e{color:var(--ac)}.nv.on .s{display:block;white-space:nowrap;line-height:1.1}
   .nv:hover{background:none}.nv.on:hover{background:var(--acs)}.nv.on .badge{background:var(--ac)}
   .badge{position:absolute;top:2px;left:calc(50% + 5px);min-width:16px;height:16px;font-size:9.5px;padding:0 4px}
@@ -614,7 +621,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .card[data-k=fact],.card[data-k=pag],.card[data-k=sinc]{--mod:#f0a83a}
 .card[data-k=gasto],.card[data-k=ahorro]{--mod:#22c3b4}
 .card[data-k=docs]{--mod:#f5d33d}
-.nv[data-i=docs].on .e{color:#2b2300}:root[data-theme=light] .nv[data-i=docs]{--c:#c99a06}:root[data-theme=light] .card[data-k=docs]{--mod:#c99a06}
+.nv[data-i=docs].on .e{color:#2b2300}:root[data-theme=light] :is(.nv,.msecs button)[data-i=docs]{--c:#c99a06}:root[data-theme=light] .card[data-k=docs]{--mod:#c99a06}
 .card[data-k=ing]{--mod:var(--ok)}
 .card[data-k=reglas],.card[data-k=det]{--mod:#9b87f5}
 .card[data-v=salud]{--mod:var(--rose)}
@@ -733,8 +740,8 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 /* ---------- Rediseño de Mi día y del menú ---------- */
 /* Menú del ordenador: sin caja, pegado al borde sobre el fondo de la página. Cada sección tiene su icono en una baldosa
    de su color (--c); la abierta va en una tarjeta con la baldosa rellena. */
-.nv[data-i=dia]{--c:#2f9bff}.nv[data-i=tareas]{--c:#9b87f5}.nv[data-i=compra]{--c:#34c77b}.nv[data-i=fin]{--c:#22c3b4}
-.nv[data-i=fact]{--c:#f0a83a}.nv[data-i=docs]{--c:#f5d33d}.nv[data-i=inv]{--c:#7aa7ff}.nv[data-i=salud]{--c:var(--rose)}.nv[data-i=ajus]{--c:var(--mu)}
+:is(.nv,.msecs button)[data-i=dia]{--c:#2f9bff}:is(.nv,.msecs button)[data-i=tareas]{--c:#9b87f5}:is(.nv,.msecs button)[data-i=compra]{--c:#34c77b}:is(.nv,.msecs button)[data-i=fin]{--c:#22c3b4}
+:is(.nv,.msecs button)[data-i=fact]{--c:#f0a83a}:is(.nv,.msecs button)[data-i=docs]{--c:#f5d33d}:is(.nv,.msecs button)[data-i=inv]{--c:#7aa7ff}:is(.nv,.msecs button)[data-i=salud]{--c:var(--rose)}:is(.nv,.msecs button)[data-i=ajus]{--c:var(--mu)}
 @media(min-width:761px){
   nav{width:240px;top:0;height:100vh;height:100dvh;margin:0;padding:26px 14px 18px;border:0;border-right:1px solid var(--sep);border-radius:0;background:transparent;box-shadow:none;gap:3px}
   .brand{font-size:16.5px;font-weight:700;padding:0 8px 26px;gap:11px}
@@ -1009,7 +1016,7 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 .card.dcat{border-color:color-mix(in srgb,var(--c) 45%,var(--bd));box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 18%,transparent),0 0 22px -4px color-mix(in srgb,var(--c) 45%,transparent)}
 
 /* ---------- Coche (js/vistas/coche.js) ---------- */
-.nv[data-i=coche]{--c:#f5a524}.card[data-v=coche]{--mod:#f5a524}
+:is(.nv,.msecs button)[data-i=coche]{--c:#f5a524}.card[data-v=coche]{--mod:#f5a524}
 .ctabs{display:flex;width:max-content;max-width:100%;margin-bottom:16px;flex-wrap:nowrap}
 .ctabs button{text-align:center;white-space:nowrap}
 @media(max-width:760px){.ctabs{width:100%}.ctabs button{flex:1;padding:6px 4px}}

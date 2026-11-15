@@ -233,7 +233,16 @@ const secs = () =>
   ).map(k => SEC.find(x => x[0] === k)); // secciones en el orden elegido (en el ordenador se arrastran en el menú)
 /* Secciones que no salen en el menú (Ajustes → Menú). De serie, Compra (se entra desde Mi día). La que está abierta sale siempre. */
 const navOff = k => k !== view && (S.navOff || ['compra']).includes(k);
-const tabs = () => secs().filter(x => x[0] !== 'ajus' && !navOff(x[0])); // barra del móvil: todas menos Ajustes, que va en el botón de arriba
+/* Barra del móvil: Mi día y hasta 3 secciones elegidas en Ajustes (S.navBar), en el orden del menú; el resto va en «Más». */
+const NAVBAR0 = ['tareas', 'fin', 'salud'];
+const barKeys = () => {
+  const b = S.navBar || NAVBAR0;
+  return secs()
+    .map(x => x[0])
+    .filter(k => b.includes(k) && k !== 'dia' && k !== 'ajus' && !(S.navOff || ['compra']).includes(k))
+    .slice(0, 3);
+};
+const tabs = () => secs().filter(x => x[0] === 'dia' || barKeys().includes(x[0])); // para deslizar entre secciones en el móvil
 const MS = ['', 'ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 const KW = [
   [/cumplea/i, 'cake'],

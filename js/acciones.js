@@ -580,12 +580,32 @@ const A = {
     const t = wxDia(i);
     if (t) toast(t);
   },
+  // Ajustes → Menú: b = en la barra del móvil, m = en «Más», o = oculta.
   nvo: i => {
     const [k, v] = i.split(':'),
-      o = (S.navOff || ['compra']).filter(x => x !== k);
-    if (v === '1') o.push(k);
+      o = (S.navOff || ['compra']).filter(x => x !== k),
+      b = barKeys().filter(x => x !== k);
+    if (v === 'b') {
+      if (b.length >= 3) return toast('En la barra caben 3 además de Mi día: pasa antes una a «Más»');
+      b.push(k);
+    }
+    if (v === 'o') o.push(k);
     S.navOff = o;
+    S.navBar = b;
     ch();
+  },
+  // Móvil: hoja con las secciones que no están en la barra.
+  nmas: () => {
+    const bar = ['dia', ...barKeys()],
+      L = secs().filter(([k]) => !bar.includes(k) && (k === 'ajus' || !navOff(k)));
+    modal(
+      `<h3>Más secciones</h3><div class="msecs">${L.map(([k, e, l]) => `<button class="${view === k ? 'on' : ''}" data-a="gom" data-i="${k}"><span class="ic">${I(e)}</span>${l}</button>`).join('')}</div>`
+    );
+  },
+  gom: i => {
+    document.querySelectorAll('.ov').forEach(o => o.remove());
+    view = i;
+    render();
   },
   wxo: i => {
     if (i === '1') S.wxOff = true;

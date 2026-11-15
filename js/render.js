@@ -21,16 +21,19 @@ function theme() {
 }
 function nav() {
   const c = pend(),
-    n = { tareas: c.t, compra: c.s, fact: c.b };
+    n = { tareas: c.t, compra: c.s, fact: c.b },
+    bar = ['dia', 'ajus', ...barKeys()];
   $('#nav').innerHTML =
     `<div class="brand"><span class="logo"><i><b></b><b></b><b></b><b></b></i></span><span class="bn">${APP}</span>${eyeBtn('ib eyeg')}</div>` +
     secs()
       .filter(([k]) => !navOff(k))
       .map(
         ([k, e, l, s]) =>
-          `<button class="nv ${view === k ? 'on' : ''}" data-a="go" data-i="${k}" title="Arrastra para cambiar el orden" aria-label="${l}" ${view === k ? 'aria-current="page"' : ''}><span class="e">${I(e)}</span><span class="l">${l}</span><span class="s">${s}</span>${n[k] ? `<i class="badge">${n[k]}</i>` : ''}</button>`
+          `<button class="nv ${view === k ? 'on' : ''}${bar.includes(k) ? '' : ' xb'}" data-a="go" data-i="${k}" title="Arrastra para cambiar el orden" aria-label="${l}" ${view === k ? 'aria-current="page"' : ''}><span class="e">${I(e)}</span><span class="l">${l}</span><span class="s">${s}</span>${n[k] ? `<i class="badge">${n[k]}</i>` : ''}</button>`
       )
       .join('') +
+    // Móvil: «Más» abre las secciones que no van en la barra (en el ordenador no se ve).
+    `<button class="nv more ${bar.includes(view) ? '' : 'on'}" data-a="nmas" aria-label="Más secciones" style="--c:var(--ac)"><span class="e">${I('menu')}</span><span class="l">Más</span><span class="s">Más</span></button>` +
     `<div class="navfoot"><span id="syncst">${syncTxt}</span>${user ? `<span>${esc(user.email)}</span>` : ''}</div>`;
   // Móvil: Ajustes sale de la barra y queda como botón redondo arriba a la derecha.
   const a = $('#ajb');
