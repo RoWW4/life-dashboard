@@ -510,6 +510,13 @@ const A = {
     ),
   ef: i => fixedForm(S.fixed.find(x => x.id === i)),
   fxinf: i => fxInfo(S.fixed.find(x => x.id === i)),
+  fxp: i => {
+    const f = S.fixed.find(x => x.id === i);
+    if (!f) return;
+    delete f.pause;
+    ch();
+    toast(`«${f.name}» ya cuenta en tus pagos`);
+  },
   goaladd: () => goalForm(),
   goaled: i => {
     const g = S.goals.find(x => x.id === i);

@@ -3,6 +3,7 @@
 /* ---------- Facturas: pagos e ingresos que se repiten (S.fixed) ----------
    {id, name, t:'g'|'i', amt, cat, day|days, month (anual), every (cada N meses desde from), once (fecha única),
     from 'AAAA-MM' (desde cuándo), until, k (concepto con el que llega al banco)}.
+   pause: true = en pausa (de momento lo paga otra persona): no cuenta en ningún sitio hasta quitar la pausa.
    var: true = pago variable sin día fijo (amt es lo previsto al mes; se enlazan todos los cargos con su concepto k).
    La app no apunta gastos sola: un pago está hecho cuando hay un movimiento con su fid (del banco o marcado a mano). */
 const mIdx = m => +m.slice(0, 4) * 12 + +m.slice(5, 7);
@@ -54,7 +55,7 @@ const fxVar = (f, m) => {
   const L = S.tx.filter(x => x.fid === f.id && mon(x.date) === m);
   return { n: L.length, s: L.reduce((a, x) => a + x.amt, 0) };
 };
-const fxLive = f => !f.until || f.until >= TD();
+const fxLive = f => !f.pause && (!f.until || f.until >= TD());
 /* Pagos que piden atención en los próximos n días (o atrasados en el último mes). */
 const fxDue = n =>
   S.fixed

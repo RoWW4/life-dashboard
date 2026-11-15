@@ -25,6 +25,9 @@ const fxItem = f => {
         : '<span class="chip">Terminado</span>';
   return `<div class="row brow">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><button class="link tt fxn" data-a="fxinf" data-i="${f.id}" title="Ver lo que cuesta al año">${esc(f.name)}</button><span class="mu">${fxFreq(f)}${fxEnd(f, s.next)}${s.paid ? (fromBank(s.paid) ? ' · Llegó del banco' : ' · Apuntado en el panel, aún sin cargo del banco') + (s.next && Math.abs(dd(s.paid.date, s.next)) > 10 ? ' · Próximo ' + fdc(s.next) : '') : ''}</span></span>${chip}<span class="amt ${f.t === 'i' ? 'ok' : ''}">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
 };
+/* Fila de un pago en pausa (p. ej. lo paga otra persona por ahora): no cuenta; botón para quitar la pausa. */
+const fxPauseItem = f =>
+  `<div class="row brow fxpz">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><button class="link tt fxn" data-a="fxinf" data-i="${f.id}" title="Ver lo que cuesta al año">${esc(f.name)}</button><span class="mu">${fxFreq(f)} · No cuenta mientras esté en pausa</span></span><button class="btn sm ghost" data-a="fxp" data-i="${f.id}" title="Empezar a contarlo en tus pagos">Reanudar</button><span class="amt">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
 /* Ficha de un pago o ingreso (al tocar su nombre): cuánto supone al año y al mes, lo pagado este año y los últimos cargos. */
 /* Ficha de un pago o ingreso (al tocar su nombre), con el color de su categoría: cuánto supone al año y al mes,
    lo pagado este año (barra frente a lo previsto) y los últimos cargos. */
@@ -119,6 +122,7 @@ function vFact() {
   // Este mes: lo que se cobra en el mes (pagado o no) y lo atrasado del mes anterior que no llegó.
   const { tot, paid, cur } = fxMonth();
   const rest = pays.filter(f => !cur.includes(f));
+  const paus = S.fixed.filter(f => f.pause);
   const mes = new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(now),
     ingm = ings.reduce(
       (q, f) =>
@@ -132,7 +136,8 @@ function vFact() {
   const pag =
     `<div class="mu">Pagado ${eur(paid)} · Falta ${eur(tot - paid)}</div>${tot ? `<div class="bar fxbar" role="img" aria-label="Pagado el ${Math.round((paid / tot) * 100)} % de los pagos del mes"><div style="width:${Math.min(100, (paid / tot) * 100)}%;background:var(--ok)"></div></div>` : ''}` +
     (cur.length ? `<div class="dh">Este mes</div>${by(cur, f => fxOcc(f, a, b)[0] || fxState(f).due)}` : '') +
-    (rest.length ? `<div class="dh">Próximos</div>${by(rest, f => fxState(f).next)}` : '');
+    (rest.length ? `<div class="dh">Próximos</div>${by(rest, f => fxState(f).next)}` : '') +
+    (paus.length ? `<div class="dh">En pausa</div>${paus.map(fxPauseItem).join('')}` : '');
   const C = {
     det:
       det.length &&
@@ -162,7 +167,7 @@ function vFact() {
       'fact',
       'pag',
       `${I('receipt')} Pagos <span class="cnt">· ${cap(mes)}: ${eur(tot)}</span>`,
-      pays.length ? pag : empty('Sin pagos todavía.'),
+      pays.length || paus.length ? pag : empty('Sin pagos todavía.'),
       'wide'
     )
   };
