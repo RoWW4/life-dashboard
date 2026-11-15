@@ -18,6 +18,23 @@ const carR = () => {
   const c = S.car && typeof S.car === 'object' ? S.car : {};
   return { info: c.info || {}, km: c.km || [], mt: Array.isArray(c.mt) ? c.mt : CAR_MT0, vis: c.vis || [] };
 };
+/* Lo que manda el coche por Kia Connect (robot kia-km, cada 3 h): S.car.live = estado (at: hora del dato, fuel %, low,
+   range km, warn: avisos, locked, open: lo que está abierto, loc: {lat, lon}) y S.car.trips = {days: {fecha: {km, min}},
+   months: {AAAA-MM: {km, min, spd}}}. Lo escribe la base de datos (ldb_car_live); la app solo lo lee. */
+const CAR_AV = {
+  oil: 'Nivel de aceite',
+  brake: 'Líquido de frenos',
+  washer: 'Líquido limpiaparabrisas',
+  key: 'Pila de la llave',
+  tire: 'Presión de las ruedas'
+};
+const CAR_AB = { doors: 'puertas', windows: 'ventanillas', trunk: 'maletero', hood: 'capó' };
+const carLive = () => (S.car && S.car.live && typeof S.car.live === 'object' ? S.car.live : null);
+const carTrips = () => {
+  const t = (S.car && S.car.trips) || {};
+  return { days: t.days || {}, months: t.months || {} };
+};
+const carHm = m => (m >= 60 ? Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : '') : Math.round(m || 0) + ' min');
 /* Para guardar: crea S.car con sus listas (y los mantenimientos de partida) la primera vez. */
 const carS = () => {
   const c = (S.car = S.car && typeof S.car === 'object' && !Array.isArray(S.car) ? S.car : {});
@@ -99,7 +116,28 @@ function carNext(c = carR(), K = carKm(c)) {
       .map(f => ({ f, d: fxState(f).due || fxState(f).next }))
       .filter(o => o.d),
     twin = d => FX.find(o => Math.abs(dd(o.d, d.exp)) <= 31 && words(o.f.name).some(w => words(d.name).includes(w)));
+  const lv = carLive(),
+    kia = lv
+      ? [
+          ...(lv.warn || [])
+            .filter(w => CAR_AV[w])
+            .map(w => ({ k: 'kia', n: CAR_AV[w], d: TD(), lvl: 'er', pill: 'Aviso', sub: 'Aviso del coche (Kia Connect)' })),
+          ...(lv.low
+            ? [
+                {
+                  k: 'kia',
+                  n: 'Depósito bajo',
+                  d: TD(),
+                  lvl: 'er',
+                  pill: hasN(lv.range) ? kmf(lv.range) + ' km' : 'Repostar',
+                  sub: 'Quedan ' + (hasN(lv.fuel) ? lv.fuel + ' %' : 'pocos litros')
+                }
+              ]
+            : [])
+        ]
+      : [];
   const L = [
+    ...kia,
     ...c.mt
       .map(x => ({ k: 'mt', x, s: carMt(x, K) }))
       .filter(o => o.s.lvl !== 'no')
@@ -134,8 +172,8 @@ function carNext(c = carR(), K = carKm(c)) {
   ];
   return L.sort((a, b) => LV[a.lvl] - LV[b.lvl] || a.d.localeCompare(b.d));
 }
-/* Avisos para Mi día: solo los mantenimientos en rojo, cuando ya se usa la sección. */
-const carWarn = () => (S.car ? carNext().filter(o => o.k === 'mt' && o.lvl === 'er') : []);
+/* Avisos para Mi día: los mantenimientos en rojo y los avisos del coche (Kia; en la sección van en «Estado», no en Lo próximo). */
+const carWarn = () => (S.car ? carNext().filter(o => (o.k === 'mt' || o.k === 'kia') && o.lvl === 'er') : []);
 /* Gastos: los movimientos con categoría Coche (también las partes de un gasto dividido; las devoluciones restan). */
 const carTx = () => TXP().filter(x => x.cat === 'Coche' && gAmt(x));
 
@@ -165,6 +203,62 @@ const carArt = () =>
   `<path d="M336 350H362V368H342Z" fill="#164f88"/>` +
   `<path d="M160 392 212 386 206 401 162 406Z" fill="#eaf2ff"/><path d="M688 364 728 368 732 384 694 382Z" fill="#ff4d5e"/>` +
   `<circle cx="258" cy="467" r="47" fill="#0b0d12"/><circle cx="258" cy="467" r="34" fill="#cfd4dc"/><circle cx="258" cy="467" r="28" fill="none" stroke="#2a2f38" stroke-width="16" stroke-dasharray="5 6"/><circle cx="258" cy="467" r="9" fill="#8b929e"/><circle cx="652" cy="467" r="47" fill="#0b0d12"/><circle cx="652" cy="467" r="34" fill="#cfd4dc"/><circle cx="652" cy="467" r="28" fill="none" stroke="#2a2f38" stroke-width="16" stroke-dasharray="5 6"/><circle cx="652" cy="467" r="9" fill="#8b929e"/></g></svg>`;
+/* Tarjeta «Estado»: avisos, si está cerrado y dónde está aparcado. */
+function carEstado(lv) {
+  const W = (lv.warn || []).filter(w => CAR_AV[w]),
+    O = (lv.open || []).filter(x => CAR_AB[x]),
+    row = (ic, co, t, s, extra = '') =>
+      `<div class="row">${tile(ic, co)}<span class="g"><span class="tt">${t}</span>${s ? `<br><span class="mu">${s}</span>` : ''}</span>${extra}</div>`;
+  return (
+    (W.length
+      ? W.map(w => row('triangle-alert', 'var(--er)', esc(CAR_AV[w]), 'Aviso del coche', carPill('er', 'Revisar'))).join('')
+      : row('circle-check', 'var(--ok)', 'Sin avisos', 'Aceite, frenos, limpiaparabrisas, ruedas y llave')) +
+    (lv.locked === undefined && !O.length
+      ? ''
+      : O.length
+        ? row('lock-open', 'var(--wa)', 'Abierto: ' + O.map(x => CAR_AB[x]).join(', '), lv.locked ? 'Con el cierre puesto' : 'Sin cerrar')
+        : lv.locked
+          ? row('lock', 'var(--ok)', 'Cerrado', 'Puertas, ventanillas y maletero')
+          : row('lock-open', 'var(--wa)', 'Sin cerrar', 'Puertas, ventanillas y maletero cerrados, pero sin el cierre puesto')) +
+    (lv.loc && hasN(lv.loc.lat) && hasN(lv.loc.lon)
+      ? row(
+          'map-pin',
+          CARC,
+          'Aparcado',
+          cap(ago(lv.at)),
+          `<a class="btn sm ghost" href="https://www.google.com/maps/search/?api=1&query=${+lv.loc.lat},${+lv.loc.lon}" target="_blank" rel="noopener noreferrer">${I('map-pin', 'sm')} Ver en el mapa</a>`
+        )
+      : '') +
+    `<div class="mu" style="margin-top:8px">Datos de Kia Connect · ${ago(lv.at)}</div>`
+  );
+}
+/* Tarjeta «Conducción»: km de cada día de los últimos 30 días y totales de los últimos meses. */
+function carCond(T) {
+  const days = [];
+  for (let i = 29; i >= 0; i--) days.push(addD(TD(), -i));
+  const v = days.map(d => +((T.days[d] || {}).km || 0)),
+    mx = Math.max(1, ...v),
+    tot = v.reduce((a, b) => a + b, 0),
+    M = Object.keys(T.months).sort().reverse().slice(0, 6),
+    mes = m =>
+      cap(
+        new Intl.DateTimeFormat('es-ES', { month: 'long', year: m.slice(0, 4) === TD().slice(0, 4) ? undefined : 'numeric' }).format(
+          new Date(m + '-01T00:00')
+        )
+      );
+  return (
+    `<div class="cgm"><b class="big">${kmf(tot)} km</b><span class="mu">En los últimos 30 días · ${kmf(tot / 30)} km al día de media</span></div>` +
+    `<div class="cbars" role="img" aria-label="Km de cada día en los últimos 30 días">${days.map((d, i) => `<i class="${v[i] ? '' : 'z'}" style="--h:${Math.max(v[i] ? 6 : 2, Math.round((v[i] / mx) * 100))}%" title="${fdc(d)}: ${kmf(v[i])} km"></i>`).join('')}</div>` +
+    `<div class="cbl"><span>${fdc(days[0])}</span><span>Hoy</span></div>` +
+    (M.length
+      ? `<div class="dh">Por meses</div>` +
+        M.map(m => {
+          const x = T.months[m];
+          return `<div class="row">${tile('route', CARC)}<span class="g"><span class="tt">${mes(m)}</span><br><span class="mu">${[x.min ? carHm(x.min) + ' al volante' : '', x.spd ? Math.round(x.spd) + ' km/h de media' : ''].filter(Boolean).join(' · ')}</span></span><b class="amt">${kmf(x.km)} km</b></div>`;
+        }).join('')
+      : '')
+  );
+}
 /* ---------- pantalla ---------- */
 const carPill = (lvl, t) => `<span class="chip ${lvl === 'no' ? '' : lvl}">${esc(t)}</span>`;
 const carMtSub = (x, s) => {
@@ -231,10 +325,16 @@ function vCoche() {
       gy = gm.slice(0, 4),
       TM = T.filter(x => mon(x.date) === gm).sort((a, b) => b.date.localeCompare(a.date)),
       nx = carNext(c, K),
+      lv = carLive(),
+      TR = carTrips(),
       mes = cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(md)) + (gy === y ? '' : ' ' + gy);
     top = `<section class="carh" aria-label="Kilómetros">${carArt()}<div class="carhm"><span class="eyb">${I('gauge', 'sm')} Kilómetros</span>${
       K.cur !== null
-        ? `<b>${kmf(K.cur)} <small>km</small></b><span class="carhs">${K.src === 'kia' ? 'De Kia Connect' : 'Apuntado'} ${rel(K.d)}</span>`
+        ? `<b>${kmf(K.cur)} <small>km</small></b><span class="carhs">${K.src === 'kia' ? 'De Kia Connect' : 'Apuntado'} ${rel(K.d)}</span>${
+            lv && hasN(lv.fuel)
+              ? `<span class="carfu ${lv.low ? 'low' : ''}"><span class="carfb"><i style="width:${Math.max(3, Math.min(100, +lv.fuel))}%"></i></span>${I('fuel', 'sm')} ${Math.round(lv.fuel)} %${hasN(lv.range) ? ' · ' + kmf(lv.range) + ' km de autonomía' : ''}</span>`
+              : ''
+          }`
         : `<b class="carh0">Sin apuntar</b><span class="carhs">Toca el lápiz para poner los km del coche.</span>`
     }</div><button class="carhb" data-a="ckm" aria-label="Actualizar los km" title="Actualizar los km">${I('pencil')}</button></section>`;
     C = {
@@ -242,10 +342,14 @@ function vCoche() {
         'coche',
         'prox',
         `${I('calendar-clock')} Lo próximo`,
-        (nx.length ? fold('car-prox', nx.map(carNextRow), 5) : empty('Nada a la vista.')) +
+        (nx.some(o => o.k !== 'kia') ? fold('car-prox', nx.filter(o => o.k !== 'kia').map(carNextRow), 5) : empty('Nada a la vista.')) +
           `<button class="morebtn" data-a="cmt" data-i="">${I('plus')} Añadir fecha</button>`,
         'hl'
       ),
+      ...(lv ? { estado: panel('coche', 'estado', `${I('shield-check')} Estado`, carEstado(lv)) } : {}),
+      ...(Object.keys(TR.days).length || Object.keys(TR.months).length
+        ? { cond: panel('coche', 'cond', `${I('route')} Conducción`, carCond(TR)) }
+        : {}),
       gasto: panel(
         'coche',
         'gasto',

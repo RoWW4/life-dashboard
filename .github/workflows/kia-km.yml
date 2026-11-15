@@ -1,15 +1,19 @@
-name: Km del coche (Kia Connect)
+name: Coche (Kia Connect)
 
-# Lee una vez al día el cuentakilómetros del coche en Kia Connect (último estado guardado, sin despertar el coche) y lo
-# apunta en la sección Coche del panel si ha subido. También se puede lanzar a mano (Run workflow).
+# Cada 3 horas, de 7 a 22 h (hora de invierno), lee en Kia Connect el último estado guardado del coche (sin despertarlo):
+# km, combustible, avisos, cierre, ubicación y viajes, y los guarda en la sección Coche del panel. También a mano.
 # Secretos: KIA_USER y KIA_PASSWORD (cuenta de Kia Connect), KIA_PIN si la cuenta lo pide, y los de Supabase.
 on:
   schedule:
-    - cron: '17 20 * * *'
+    - cron: '17 6-21/3 * * *'
   workflow_dispatch:
     inputs:
       diag:
         description: 'Prueba: ver qué datos manda el coche (solo nombres, sin valores)'
+        type: boolean
+        default: false
+      backfill:
+        description: 'Rellenar los viajes de los últimos meses'
         type: boolean
         default: false
 
@@ -38,5 +42,6 @@ jobs:
           KIA_PASSWORD: ${{ secrets.KIA_PASSWORD }}
           KIA_PIN: ${{ secrets.KIA_PIN }}
           KIA_DIAG: ${{ inputs.diag && '1' || '' }}
+          KIA_BACKFILL: ${{ inputs.backfill && '1' || '' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}

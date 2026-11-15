@@ -1,14 +1,18 @@
-"""Km del coche desde Kia Connect (lo lanza .github/workflows/kia-km.yml una vez al día).
+"""Coche desde Kia Connect (lo lanza .github/workflows/kia-km.yml cada 3 horas, de 7 a 23 h).
 
 Entra en Kia Connect con la cuenta de la dueña del panel (secretos KIA_USER y KIA_PASSWORD; KIA_PIN si la cuenta lo
-pide), lee el cuentakilómetros del último estado guardado por Kia (no despierta el coche) y lo pasa a Supabase con
-ldb_car_km(), que solo lo apunta si los km han subido. El repositorio es público: en la consola no se escribe ni el
-número de km ni datos del coche o de la cuenta.
+pide) y lee el último estado guardado por Kia (no despierta el coche):
+- km: se pasan a ldb_car_km(), que solo los apunta si han subido;
+- estado (combustible, autonomía, avisos, cerrado, ubicación) y viajes (km y minutos por día y por mes): ldb_car_live().
+El repositorio es público: en la consola no se escribe ningún valor ni dato del coche o de la cuenta.
+Con KIA_BACKFILL=1 trae también los días de este mes y el anterior y los últimos 6 meses (para rellenar al empezar).
 """
+import datetime as dt
 import json
 import os
 import sys
 import urllib.request
+from zoneinfo import ZoneInfo
 
 from hyundai_kia_connect_api import VehicleManager
 
@@ -55,7 +59,6 @@ DIAG_FIELDS = [
 
 def diag(vm):
     """Prueba: qué datos manda este coche. Solo escribe nombres y si vienen o no, nunca valores (el registro es público)."""
-    import datetime as dt
 
     v = next(iter(vm.vehicles.values()))
     for f in DIAG_FIELDS:
@@ -80,6 +83,101 @@ def diag(vm):
     d = v.day_trip_info
     print("viajes de ayer con datos:", "sí" if d and (d.summary or d.trip_list) else "no")
     print("estadísticas diarias:", "sí" if getattr(v, "daily_stats", None) else "no")
+
+
+WARN = {
+    "oil": "oil_level_warning_is_on",
+    "brake": "brake_fluid_warning_is_on",
+    "washer": "washer_fluid_warning_is_on",
+    "key": "smart_key_battery_warning_is_on",
+    "tire": "tire_pressure_all_warning_is_on",
+}
+
+
+def g(v, f):
+    try:
+        return getattr(v, f)
+    except Exception:
+        return None
+
+
+def num(x):
+    try:
+        return round(float(x), 1)
+    except (TypeError, ValueError):
+        return None
+
+
+def live(v):
+    """Lo último que mandó el coche, en el formato de S.car.live (ver js/vistas/coche.js)."""
+    at = g(v, "last_updated_at")
+    opn = []
+    if any(g(v, f"{p}_door_is_open") for p in ("front_left", "front_right", "back_left", "back_right")):
+        opn.append("doors")
+    if any(g(v, f"{p}_window_is_open") for p in ("front_left", "front_right", "back_left", "back_right")):
+        opn.append("windows")
+    if g(v, "trunk_is_open"):
+        opn.append("trunk")
+    if g(v, "hood_is_open"):
+        opn.append("hood")
+    lat, lon = g(v, "location_latitude"), g(v, "location_longitude")
+    o = {
+        "at": at.isoformat() if isinstance(at, dt.datetime) else dt.datetime.now(dt.UTC).isoformat(),
+        "fuel": num(g(v, "fuel_level")),
+        "low": bool(g(v, "fuel_level_is_low")),
+        "range": num(g(v, "total_driving_range") or g(v, "fuel_driving_range")),
+        "warn": [k for k, f in WARN.items() if g(v, f)],
+        "open": opn,
+        "sync": dt.datetime.now(dt.UTC).isoformat(),
+    }
+    if g(v, "is_locked") is not None:
+        o["locked"] = bool(g(v, "is_locked"))
+    if lat is not None and lon is not None:
+        o["loc"] = {"lat": round(float(lat), 5), "lon": round(float(lon), 5)}
+    return {k: x for k, x in o.items() if x is not None}
+
+
+def trip(t):
+    return {"km": num(t.distance) or 0, "min": int(t.drive_time or 0), "spd": num(t.avg_speed)} if t else None
+
+
+def trips(vm, vid, backfill):
+    """Km y minutos de cada día (hoy, ayer y, al rellenar, los dos últimos meses) y resumen de cada mes."""
+    v = vm.get_vehicle(vid)
+    hoy = dt.datetime.now(ZoneInfo("Europe/Madrid")).date()
+    meses = [hoy.replace(day=1)]
+    for _ in range(6 if backfill else (1 if hoy.day <= 3 else 0)):
+        meses.append((meses[-1] - dt.timedelta(days=1)).replace(day=1))
+    days, months, quiero = {}, {}, {hoy, hoy - dt.timedelta(days=1)}
+    for i, m in enumerate(meses):
+        try:
+            vm.update_month_trip_info(vid, m.strftime("%Y%m"))
+        except Exception as e:
+            print(f"(viajes de un mes no disponibles: {type(e).__name__})")
+            continue
+        mt = v.month_trip_info
+        if not mt or not mt.summary:
+            continue
+        months[m.strftime("%Y-%m")] = trip(mt.summary)
+        for d in mt.day_list or []:
+            if not d.trip_count:
+                continue
+            s = str(d.yyyymmdd)
+            try:
+                f = dt.date(int(s[:4]), int(s[4:6]), int(s[6:8])) if len(s) == 8 else m.replace(day=int(s))
+            except ValueError:
+                continue
+            if backfill and i <= 1:
+                quiero.add(f)
+    for f in sorted(quiero):
+        try:
+            vm.update_day_trip_info(vid, f.strftime("%Y%m%d"))
+        except Exception:
+            continue
+        di = v.day_trip_info
+        if di and di.summary:
+            days[f.isoformat()] = {k: x for k, x in trip(di.summary).items() if k != "spd"}
+    return days, months
 
 
 def main():
@@ -107,6 +205,12 @@ def main():
         print({"ok": "Km actualizados", "same": "Sin km nuevos"}.get(res, f"No se apuntó ({res})"))
         if res not in ("ok", "same"):
             raise RuntimeError(f"ldb_car_km: {res}")
+        vid = next(iter(vm.vehicles))
+        days, months = trips(vm, vid, os.environ.get("KIA_BACKFILL") == "1")
+        res = rpc("ldb_car_live", {"p_live": live(vm.get_vehicle(vid)), "p_days": days, "p_months": months})
+        print(f"Estado guardado ({len(days)} días, {len(months)} meses)" if res == "ok" else f"Estado no guardado ({res})")
+        if res != "ok":
+            raise RuntimeError(f"ldb_car_live: {res}")
         job("ok")
     except Exception as e:
         msg = f"{type(e).__name__}: {str(e)[:300]}"
