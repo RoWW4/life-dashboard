@@ -242,7 +242,7 @@ function savCard() {
     tax = s.tax ?? SAV_TAX;
   const body = st
     ? `<div class="savk">
-      <div class="bal"><span>Saldo hoy${st.est ? ' (estimado)' : ''}</span><b>${money(eur(st.now))}</b><em>${st.last.auto ? 'Saldo del banco del' : 'Último saldo real apuntado:'} ${fd(st.last.d)}</em></div>
+      <div class="bal">${finDeco()}<span>Saldo hoy${st.est ? ' (estimado)' : ''}</span><b>${money(eur(st.now))}</b><em>${st.last.auto ? 'Saldo del banco del' : 'Último saldo real apuntado:'} ${fd(st.last.d)}</em></div>
       <div class="up"><span>Ganado este mes</span><b>${money('+' + eur(st.acc))}</b><em>Neto hasta ayer · Se abona el ${fd(st.next)}</em><em>${money(eur(st.accG))} brutos (lo que enseña el banco)</em><em>Total cobrado desde ${fd(st.L[0].d)}: ${money('+' + eur(st.gain))}</em></div>
       <div class="hi"><span>Rentabilidad anual</span><b>${pct(st.net * 100)}</b><em>${pct(savRate(s, TD()) * 100)} bruto − ${tax} % impuestos</em>${s.rate2 != null && s.from2 > TD() ? `<em>Desde el ${fd(s.from2)}: ${pct(s.rate2)} bruto</em>` : ''}</div>
       <div class="up"><span>En 12 meses</span><b>${money('+' + eur(st.y1 - st.now))}</b><em class="fin">Saldo final ≈ ${money(eur(st.y1))}</em></div>
@@ -567,11 +567,14 @@ function acctBal() {
     d: nx.reduce((m, x) => (x.date > m ? x.date : m), a.d)
   };
 }
+/* Dibujos de fondo de los saldos (Finanzas e Inversiones), muy suaves, como en la cabecera de Mascotas. */
+const finDeco = () =>
+  `<span class="fdeco" aria-hidden="true">${I('coins')}<i>€</i>${I('piggy-bank')}${I('trending-up')}<i>€</i>${I('banknote')}</span>`;
 function acctHTML() {
   const b = acctBal(),
     eye = `<button class="ib" data-a="money" aria-label="${showMoney ? 'Ocultar saldo' : 'Mostrar saldo'}" title="${showMoney ? 'Ocultar saldo' : 'Mostrar saldo'}">${I(showMoney ? 'eye' : 'eye-off')}</button>`;
   return (
-    `<div class="acct ${showMoney ? '' : 'priv'}"><div class="k">${I('landmark')} Saldo de la cuenta <span class="bk">(Openbank)</span>${eye}<button class="ib" data-a="accedit" aria-label="Cambiar saldo" title="Cambiar saldo a mano">${I('pencil')}</button></div>` +
+    `<div class="acct ${showMoney ? '' : 'priv'}">${finDeco()}<div class="k">${I('landmark')} Saldo de la cuenta <span class="bk">(Openbank)</span>${eye}<button class="ib" data-a="accedit" aria-label="Cambiar saldo" title="Cambiar saldo a mano">${I('pencil')}</button></div>` +
     (b.v === null
       ? `<b>—</b>`
       : `<b>${money(eur(b.v))}</b><span class="d">${b.bank ? 'Del banco · ' + ago(b.d) : 'Actualizado a ' + fd(b.d)}</span>`) +

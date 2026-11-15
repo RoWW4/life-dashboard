@@ -692,6 +692,20 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 /* Saldos (Finanzas e Inversiones): fondo oscuro con luces de color difuminadas que se mueven muy despacio («aurora»).
    Si hay un fondo con imagen, se ve detrás muy desenfocado, como continuación de la portada de Mi día. */
 :is(.fintop .acct,.savk>div.bal){background:linear-gradient(160deg,color-mix(in srgb,var(--hero) 45%,#060b18),#05080f);border:1px solid var(--hero-bd)}
+/* Dibujos de fondo (finDeco) */
+.fdeco{position:absolute;inset:0;z-index:-1;pointer-events:none;color:#9cc8ff}.fdeco>*{position:absolute;opacity:.1}
+.fdeco>i{font-style:normal;font-weight:700;line-height:1}
+.fdeco>:nth-child(1){width:92px;height:92px;right:18px;bottom:16px;transform:rotate(-12deg);opacity:.1}
+.fdeco>:nth-child(2){font-size:46px;right:150px;top:62px;transform:rotate(12deg)}
+.fdeco>:nth-child(3){width:44px;height:44px;right:34px;top:74px;transform:rotate(8deg)}
+.fdeco>:nth-child(4){width:34px;height:34px;right:150px;bottom:26px;opacity:.12}
+.fdeco>:nth-child(n+5){display:none}
+/* Inversiones (recuadro pequeño) y móvil: menos dibujos y solo donde no hay texto */
+.savk .fdeco>:nth-child(n+3){display:none}.savk .fdeco>:nth-child(1){width:60px;height:60px;right:10px;bottom:8px}.savk .fdeco>:nth-child(2){font-size:30px;right:84px;top:auto;bottom:12px}
+@media(max-width:760px){.fintop .fdeco>:nth-child(4){display:none}.fintop .fdeco>:nth-child(1){width:66px;height:66px;right:12px;bottom:10px}.fintop .fdeco>:nth-child(2){font-size:32px;right:96px;top:auto;bottom:14px}.fintop .fdeco>:nth-child(3){display:none}.savk .fdeco>:nth-child(2){display:none}.savk .fdeco>:nth-child(1){width:52px;height:52px;top:14px;right:14px;bottom:auto}}
+/* Azul dinero: degradado azul con brillo y los dibujos de finDeco en azul claro */
+:is(.fintop .acct,.savk>div.bal){background:linear-gradient(160deg,#123566 0%,#0c2347 55%,#08162e 100%);border-color:rgba(130,180,255,.2);box-shadow:0 16px 36px -18px rgba(47,155,255,.55),var(--sh2)}
+:is(.fintop .acct,.savk>div.bal)::before{background:radial-gradient(34% 40% at 75% 25%,rgba(70,160,255,.42),transparent 70%),radial-gradient(30% 34% at 25% 80%,rgba(40,120,230,.25),transparent 70%)}
 :is(.fintop .acct,.savk>div.bal)::before{content:'';position:absolute;z-index:-1;inset:-40%;pointer-events:none;
   background:radial-gradient(32% 38% at 72% 28%,color-mix(in srgb,var(--ac) 55%,transparent),transparent 70%),radial-gradient(30% 34% at 30% 78%,rgba(124,92,255,.32),transparent 70%),radial-gradient(26% 30% at 88% 82%,rgba(40,210,230,.22),transparent 70%);
   filter:blur(22px);animation:aur 22s ease-in-out infinite alternate}
