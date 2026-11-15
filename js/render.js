@@ -29,10 +29,10 @@ function nav() {
   $('#nav').innerHTML =
     `<div class="brand"><span class="logo"><i><b></b><b></b><b></b><b></b></i></span><span class="bn">${APP}</span>${eyeBtn('ib eyeg')}</div>` +
     secs()
-      .filter(([k]) => !navOff(k))
+      .filter(([k]) => !navOff(k) || !navOffPc(k))
       .map(
         ([k, e, l, s]) =>
-          `<button class="nv ${sv === k ? 'on' : ''}${bar.includes(k) ? '' : ' xb'}" data-a="go" data-i="${k}" title="Arrastra para cambiar el orden" aria-label="${l}" ${sv === k ? 'aria-current="page"' : ''}><span class="e">${I(e)}</span><span class="l">${l}</span><span class="s">${s}</span>${n[k] ? `<i class="badge">${n[k]}</i>` : ''}</button>`
+          `<button class="nv ${sv === k ? 'on' : ''}${bar.includes(k) ? '' : ' xb'}${navOff(k) ? ' moff' : ''}${navOffPc(k) ? ' pcoff' : ''}" data-a="go" data-i="${k}" title="Arrastra para cambiar el orden" aria-label="${l}" ${sv === k ? 'aria-current="page"' : ''}><span class="e">${I(e)}</span><span class="l">${l}</span><span class="s">${s}</span>${n[k] ? `<i class="badge">${n[k]}</i>` : ''}</button>`
       )
       .join('') +
     // Móvil: «Más» abre las secciones que no van en la barra (en el ordenador no se ve).

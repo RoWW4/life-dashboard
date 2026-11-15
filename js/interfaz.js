@@ -405,6 +405,9 @@ const panel = (v, k, title, inner, cls = '', st = '') => {
   const z = SZ[v + ':' + k];
   return `<div class="card ${cls}${z ? ' sz' + z : ''}" data-v="${v}" data-k="${esc(k)}"${st ? ` style="${st}"` : ''}><h3><span class="t">${title}</span><span class="pa"><button class="ib szb" data-a="sz" data-i="${esc(v + ':' + k)}" title="Ancho del panel${z ? ': ' + SZN[z] : ''} (toca para cambiarlo)" aria-label="Cambiar el ancho del panel">${I('move-horizontal')}</button><span class="hd" draggable="${NATIVE_DRAG}" title="Mantén pulsado y arrastra para mover">${I('grip-vertical')}</span></span></h3>${inner}</div>`;
 };
+/* Mensaje de error plegado: se ve que hay un error (t) y el texto entero solo al tocarlo. extra: algo más tras el texto (p. ej. un enlace). */
+const errFold = (t, msg, extra = '') =>
+  `<details class="errd"><summary>${I('triangle-alert', 'sm')} ${t}<span class="errv">Ver</span></summary><div>${esc(String(msg))}${extra}</div></details>`;
 /* Muestra las n primeras filas y un botón para desplegar el resto (estado por panel, no se guarda). */
 const fold = (k, rows, n) => {
   const open = exp[k],

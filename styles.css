@@ -62,7 +62,16 @@ nav{width:224px;flex-shrink:0;position:sticky;top:14px;height:calc(100vh - 28px)
 .nv:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .badge{min-width:20px;height:19px;padding:0 6px;border-radius:7px;background:var(--hov);box-shadow:inset 0 0 0 1px var(--bd2);color:var(--tx2);font-size:11px;font-weight:600;display:grid;place-items:center;font-style:normal;font-variant-numeric:tabular-nums}
 .nv.on .badge{background:rgba(255,255,255,.22);box-shadow:none;color:#fff}
-.nv.more{display:none;margin-top:0} /* .more (más abajo) es otra cosa: sin su margen */
+.nv.more{display:none;margin-top:0}
+/* Errores plegados (errFold): una línea en rojo; el texto entero al desplegar */
+.errd{margin:4px 0 8px;font-size:13px}.errd summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;color:var(--er);font-weight:500}.errd summary::-webkit-details-marker{display:none}
+.errd .errv{margin-left:auto;font-size:12px;color:var(--mu);font-weight:500}.errd[open] .errv{visibility:hidden}
+.errd>div{margin-top:6px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--er) 8%,transparent);color:var(--tx2);font-size:12.5px;overflow-wrap:anywhere;max-height:220px;overflow:auto}
+/* Ajustes → Menú: columnas Móvil y Ordenador */
+.nvr{display:grid;grid-template-columns:minmax(0,1fr) auto 96px;gap:8px;align-items:center}.nvr .seg{justify-self:start}.nvr .seg button{padding:4px 10px}.nvr .g{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nvh>span{justify-self:start;padding-left:4px}.nvr .ls{display:none}
+.nvh{min-height:0;padding:4px 0;font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--mu)}
+@media(max-width:420px){.nvr .ln{display:none}.nvr .ls{display:inline}.nvr{grid-template-columns:minmax(0,1fr) auto auto;gap:6px}.nvr .seg button{padding:4px 7px;font-size:13px}}
+@media(min-width:761px){.nv.pcoff{display:none}} /* oculta solo en el ordenador (Ajustes → Menú) */ /* .more (más abajo) es otra cosa: sin su margen */
 /* Finanzas: pestañas Movimientos · Facturas · Inversiones */
 .dinh{margin-bottom:12px}
 .dtabs{display:flex;width:100%;max-width:460px;box-sizing:border-box;flex-wrap:nowrap;margin-bottom:18px}
@@ -224,7 +233,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .gxfl .nw{white-space:nowrap}.gxfl b{white-space:nowrap;font-weight:600;font-variant-numeric:tabular-nums}.gxfl b.er{color:color-mix(in srgb,var(--er) 82%,var(--tx))}.gxfl b.ok{color:color-mix(in srgb,var(--ok) 82%,var(--tx))}
 .sring{width:170px;height:170px;flex-shrink:0;position:relative}.sring svg{width:100%;height:100%;display:block}
 .sring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 22px}
-.sring .c b{font-size:44px;font-weight:650;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}.sring .c span{font-size:14px;color:var(--mu);margin-top:4px;line-height:1.3}
+.sring .c b{font-size:44px;font-weight:650;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}.sring .c span{font-size:13px;color:var(--mu);margin-top:5px;line-height:1.25}
 .swd{margin-top:-4px}
 .schips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}.schip{font-size:13px;padding:4px 10px;border-radius:999px;background:var(--card2);border:1px solid var(--bd);color:var(--tx2)}.schip b{color:var(--tx);font-weight:650}
 .schip.on{background:var(--roses);border-color:color-mix(in srgb,var(--rose) 35%,transparent);color:var(--rose)}.schip.on b{color:var(--rose)}
@@ -265,8 +274,8 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .hlmb{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--mu);border-radius:6px}
 .hlmb .i{width:11px;height:11px;opacity:.6}.hlmb:hover{color:var(--tx)}.hlmb:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .hlmeta{font-size:12px;gap:6px}.hlmeta i{width:14px;border-top:1.5px dashed #fbbf24}
-.hlb i{display:block;width:62%;max-width:30px;border-radius:7px 7px 2px 2px;background:linear-gradient(180deg,#34d399,color-mix(in srgb,#34d399 40%,transparent))}
-.hlb{cursor:pointer;border-radius:10px}.hlb:focus-visible{outline:2px solid var(--ac);outline-offset:2px}.hlb{-webkit-tap-highlight-color:transparent}.hlbars.picked .hlb:not(.pk) i{opacity:.35}.hlb.pk i{opacity:1;box-shadow:0 0 12px color-mix(in srgb,#34d399 60%,transparent)}.hlb.pk em,.hlb.pk small{color:var(--tx);font-weight:600}
+.hlb i{display:block;width:62%;max-width:30px;border-radius:6px 6px 2px 2px;background:color-mix(in srgb,#34d399 72%,var(--card))}
+.hlb{cursor:pointer;border-radius:10px}.hlb:focus-visible{outline:2px solid var(--ac);outline-offset:2px}.hlb{-webkit-tap-highlight-color:transparent}.hlbars.picked .hlb:not(.pk) i{opacity:.35}.hlb.pk i{opacity:1}.hlb.pk em,.hlb.pk small{color:var(--tx);font-weight:600}
 .hlw .hlxi{margin-top:12px}
 .hlb em{font-style:normal;font-size:12px;color:var(--mu);text-transform:capitalize}.hlb.on em{color:var(--tx);font-weight:600}
 .hlz{font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;color:#a78bfa;background:color-mix(in srgb,#a78bfa 14%,transparent);padding:1px 6px;border-radius:9px}
@@ -504,7 +513,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
   nav.mini{transform:scale(.86) translateY(4px);opacity:.92}
   nav.mini .nv .s{display:none}
   .brand,.navfoot{display:none}
-  .nv[data-i=ajus],.nv.xb{display:none}
+  .nv[data-i=ajus],.nv.xb,.nv.moff{display:none}
   .nv.more{display:flex}
   /* Barra con todos los iconos (Ajustes): solo iconos y el nombre de la sección abierta */
   nav.all .nv .s{display:none}nav.all .nv.on .s{display:block}
@@ -640,7 +649,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .card[data-k=fact],.card[data-k=pag],.card[data-k=sinc]{--mod:#f0a83a}
 .card[data-k=gasto],.card[data-k=ahorro]{--mod:#22c3b4}
 .card[data-k=docs]{--mod:#f5d33d}
-.nv[data-i=docs].on .e{color:#2b2300}:root[data-theme=light] :is(.nv,.msecs button)[data-i=docs]{--c:#c99a06}:root[data-theme=light] .card[data-k=docs]{--mod:#c99a06}
+.nv[data-i=docs].on .e{background:#d4a20a} /* icono blanco como el resto; amarillo algo más oscuro para que se lea */:root[data-theme=light] :is(.nv,.msecs button)[data-i=docs]{--c:#c99a06}:root[data-theme=light] .card[data-k=docs]{--mod:#c99a06}
 .card[data-k=ing]{--mod:var(--ok)}
 .card[data-k=reglas],.card[data-k=det]{--mod:#9b87f5}
 .card[data-v=salud]{--mod:var(--rose)}
@@ -920,7 +929,7 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .shtx{padding:10px 12px;border-radius:12px;background:var(--card2);font-size:14px;max-height:160px;overflow:auto;overflow-wrap:anywhere}
 .shseg{flex-wrap:wrap}
 .shck{display:flex;align-items:center;gap:10px;font-size:14px;padding:4px 0}
-/* ---------- Paneles destacados (.card.hl: «Lo más importante», Coche → «Lo próximo», Vacunas, carpetas de Documentos) ----------
+/* ---------- Paneles destacados (.card.hl: «Lo más importante», Coche → «Lo próximo», carpetas de Documentos) ----------
    Fondo teñido suavemente del color de la sección (--mod), borde fino del mismo tono y sombra con un poco de color.
    (Antes: borde azul de 2 px; antes aún, un degradado arcoíris que giraba y gastaba batería.) */
 .card.hl{border:1px solid color-mix(in srgb,var(--mod) 28%,var(--bd));background:linear-gradient(165deg,color-mix(in srgb,var(--mod) 13%,var(--card)) 0%,var(--card) 55%);box-shadow:0 12px 30px -16px color-mix(in srgb,var(--mod) 55%,transparent),var(--sh)}

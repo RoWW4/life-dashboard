@@ -663,8 +663,9 @@ const A = {
   },
   // Ajustes → Menú: b = en la barra del móvil, m = en «Más», o = oculta; s = se ve (con la barra de todos los iconos).
   nvo: i => {
+    if (!S.navOffPc) S.navOffPc = navOffL().slice(); // el ordenador se queda como estaba
     const [k, v] = i.split(':'),
-      o = (S.navOff || ['compra']).filter(x => x !== k);
+      o = navOffL().filter(x => x !== k);
     if (S.navAll) {
       if (v === 'o') o.push(k);
       S.navOff = o;
@@ -678,6 +679,14 @@ const A = {
     if (v === 'o') o.push(k);
     S.navOff = o;
     S.navBar = b;
+    ch();
+  },
+  // Ajustes → Menú, columna Ordenador: s = se ve, o = oculta.
+  nvp: i => {
+    const [k, v] = i.split(':'),
+      o = navOffPcL().filter(x => x !== k);
+    if (v === 'o') o.push(k);
+    S.navOffPc = o;
     ch();
   },
   // Móvil: hoja con las secciones que no están en la barra.

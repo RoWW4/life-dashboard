@@ -62,12 +62,13 @@ function vAjus() {
           S.navAll
             ? 'En el móvil salen abajo todas las secciones que no estén ocultas, solo con su icono.'
             : 'En el móvil, abajo salen Mi día y las 3 que pongas en «Barra»; el resto, en el botón «Más».'
-        } En el ordenador salen todas menos las ocultas. Ocultar una no borra nada (Compra y Coche se abren también desde Mi día).</div>${SEC.filter(
+        } En el ordenador se elige aparte. Ocultar una no borra nada (todas se abren también desde Mi día).</div><div class="row nvr nvh"><span class="g"></span><span>Móvil</span><span>Ordenador</span></div>${SEC.filter(
           ([k]) => k !== 'dia' && k !== 'ajus'
         )
-          .map(([k, e, l]) => {
-            const st = (S.navOff || ['compra']).includes(k) ? 'o' : S.navAll ? 's' : barKeys().includes(k) ? 'b' : 'm';
-            return `<div class="row"><span class="g">${I(e, 'sm')} ${l}</span><div class="seg">${(S.navAll
+          .map(([k, e, l, sh]) => {
+            const st = navOffL().includes(k) ? 'o' : S.navAll ? 's' : barKeys().includes(k) ? 'b' : 'm',
+              pc = navOffPcL().includes(k) ? 'o' : 's';
+            return `<div class="row nvr"><span class="g">${I(e, 'sm')} <span class="ln">${l}</span><span class="ls">${sh}</span></span><div class="seg" aria-label="${l} en el móvil">${(S.navAll
               ? [
                   ['s', 'Sí'],
                   ['o', 'No']
@@ -79,6 +80,11 @@ function vAjus() {
                 ]
             )
               .map(([v, n]) => `<button class="${st === v ? 'on' : ''}" data-a="nvo" data-i="${k}:${v}">${n}</button>`)
+              .join('')}</div><div class="seg" aria-label="${l} en el ordenador">${[
+              ['s', 'Sí'],
+              ['o', 'No']
+            ]
+              .map(([v, n]) => `<button class="${pc === v ? 'on' : ''}" data-a="nvp" data-i="${k}:${v}">${n}</button>`)
               .join('')}</div></div>`;
           })
           .join('')}`
@@ -239,7 +245,11 @@ function robotsCard() {
     return (
       `<div class="row"><span class="g">${esc(ROBOTS[j.job] || j.job)}<em class="mu">${j.last_ok ? 'Funcionó bien ' + ago(j.last_ok) : 'Todavía no ha funcionado bien'}${j.fail_count ? ` · ${j.fail_count} fallo${j.fail_count > 1 ? 's' : ''} seguido${j.fail_count > 1 ? 's' : ''}` : ''}</em></span><span class="chip ${bad ? 'er' : 'ok'}">${bad ? 'Con fallos' : 'Funciona'}</span></div>` +
       (j.last_error
-        ? `<div class="mu er" style="margin:-2px 0 8px">${esc(String(j.last_error).slice(0, 240))}${j.run_url ? ` · <a href="${esc(j.run_url)}" target="_blank" rel="noopener noreferrer">ver ejecución</a>` : ''}</div>`
+        ? errFold(
+            'Último error',
+            j.last_error,
+            j.run_url ? ` · <a href="${esc(j.run_url)}" target="_blank" rel="noopener noreferrer">ver ejecución</a>` : ''
+          )
         : '')
     );
   };
@@ -259,7 +269,7 @@ function robotsCard() {
   const L = errLog();
   const app =
     `<div class="dh">Esta app en este dispositivo</div>` +
-    (syncErr ? `<div class="mu er" style="margin-bottom:6px">No se pudo sincronizar ${ago(syncErrAt)}: ${esc(syncErr)}</div>` : '') +
+    (syncErr ? errFold('No se pudo sincronizar ' + ago(syncErrAt), syncErr) : '') +
     (L.length
       ? L.slice(0, 5)
           .map(

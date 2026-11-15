@@ -30,7 +30,7 @@ function salRing(st, n) {
     p = late ? 1 : Math.min(1, (st.day - 1) / st.avg);
   const col = 'var(--rose)';
   return `<div class="sring"><svg viewBox="0 0 128 128" role="img" aria-label="Días que faltan para el próximo inicio"><g transform="rotate(-90 64 64)"><circle r="${R}" cx="64" cy="64" fill="none" stroke="var(--roses)" stroke-width="12"/><circle r="${R}" cx="64" cy="64" fill="none" stroke="${col}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(C * p).toFixed(1)} ${C.toFixed(1)}"/></g></svg>
-    <div class="c">${late ? `<b class="wa">+${-n}</b><span>${-n === 1 ? 'día tarde' : 'días tarde'}</span>` : n === 0 ? `<b>Hoy</b><span>previsto</span>` : `<b>${n}</b><span>${n === 1 ? 'día' : 'días'}</span>`}</div></div>`;
+    <div class="c">${late ? `<b class="wa">+${-n}</b><span>${-n === 1 ? 'Día' : 'Días'} de<br>retraso</span>` : n === 0 ? `<b>Hoy</b><span>Próximo<br>previsto</span>` : `<b>${n}</b><span>${n === 1 ? 'Día' : 'Días'} para<br>el próximo</span>`}</div></div>`;
 }
 /* ---------- Actividad (Google Health) ----------
    Un Google Apps Script de la cuenta de Google (scripts/google-health.gs) deja cada hora en Supabase los pasos, kcal,

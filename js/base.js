@@ -230,8 +230,12 @@ const secs = () =>
     'nav',
     SEC.map(x => x[0])
   ).map(k => SEC.find(x => x[0] === k)); // secciones en el orden elegido (en el ordenador se arrastran en el menú)
-/* Secciones que no salen en el menú (Ajustes → Menú). De serie, Compra (se entra desde Mi día). La que está abierta sale siempre. */
-const navOff = k => k !== secOf(view) && (S.navOff || ['compra']).includes(k);
+/* Secciones que no salen en el menú (Ajustes → Menú), por separado en el móvil (S.navOff) y en el ordenador (S.navOffPc;
+   sin guardar, las mismas que en el móvil). De serie, Compra (se entra desde Mi día). La que está abierta sale siempre. */
+const navOffL = () => S.navOff || ['compra'],
+  navOffPcL = () => S.navOffPc || navOffL();
+const navOff = k => k !== secOf(view) && navOffL().includes(k);
+const navOffPc = k => k !== secOf(view) && navOffPcL().includes(k);
 /* «Finanzas» junta tres vistas con pestañas: Movimientos (fin), Facturas (fact) e Inversiones (inv). En el menú cuentan como «fin». */
 const DIN = [
   ['fin', 'Movimientos'],

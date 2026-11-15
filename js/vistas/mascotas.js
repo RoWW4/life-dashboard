@@ -201,8 +201,7 @@ function vMascotas() {
               ? `<div class="pvall">${all.map(v => `<button class="link" data-a="pvac" data-i="${esc(v.id)}"><span>${esc(v.n)}</span><span class="mu">${fdc(v.d)}</span></button>`).join('')}</div>`
               : '')
           : '') +
-        `<button class="morebtn" data-a="pvacn">${I('plus')} Apuntar vacuna o desparasitación</button>`,
-      'hl'
+        `<button class="morebtn" data-a="pvacn">${I('plus')} Apuntar vacuna o desparasitación</button>`
     ),
     med: panel(
       pv,
