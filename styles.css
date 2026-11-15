@@ -1010,7 +1010,6 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 
 /* ---------- Coche (js/vistas/coche.js) ---------- */
 .nv[data-i=coche]{--c:#f5a524}.card[data-v=coche]{--mod:#f5a524}
-@media(max-width:760px){.nv[data-i=coche]:not(.on){display:none}} /* como Compra: se entra desde el acceso de Mi día */
 .ctabs{display:flex;width:max-content;max-width:100%;margin-bottom:16px;flex-wrap:nowrap}
 .ctabs button{text-align:center;white-space:nowrap}
 @media(max-width:760px){.ctabs{width:100%}.ctabs button{flex:1;padding:6px 4px}}
