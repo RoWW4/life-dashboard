@@ -24,7 +24,6 @@ const carR = () => {
 const CAR_AV = {
   oil: 'Nivel de aceite',
   brake: 'Líquido de frenos',
-  washer: 'Líquido limpiaparabrisas',
   key: 'Pila de la llave',
   tire: 'Presión de las ruedas'
 };
@@ -300,7 +299,7 @@ function carEstado(lv) {
   return (
     (W.length
       ? W.map(w => row('triangle-alert', 'var(--er)', esc(CAR_AV[w]), 'Aviso del coche', carPill('er', 'Revisar'))).join('')
-      : row('circle-check', 'var(--ok)', 'Sin avisos', 'Aceite, frenos, limpiaparabrisas, ruedas y llave')) +
+      : row('circle-check', 'var(--ok)', 'Sin avisos', 'Aceite, frenos, ruedas y pila de la llave')) +
     (lv.locked === undefined && !O.length
       ? ''
       : O.length
@@ -325,7 +324,6 @@ function carEstado(lv) {
    Los días sin viajes no se guardan: desde el primer día guardado, un día que falta cuenta como 0 km. */
 let carCalM = 0, // mes del calendario: 0 = el actual, -1 = el anterior…
   carDay = ''; // día abierto en el calendario
-const CAR_WD = ['domingos', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábados'];
 function carCond(T) {
   const D = T.days,
     keys = Object.keys(D).sort(),
@@ -344,7 +342,8 @@ function carCond(T) {
     mk = td.slice(0, 7),
     mT = T.months[mk] || {},
     mKm = mT.km != null ? +mT.km : sum(mk + '-01', td),
-    // Día de la semana que más (media de los últimos 60 días con datos) y media de lunes a viernes (últimos 30).
+    // Día de la semana con más km de media (últimos 60 días con datos; si hay empate, el primero de lunes a domingo)
+    // y media de lunes a viernes (últimos 30).
     from60 = [addD(td, -59), first].sort()[1],
     by = Array.from({ length: 7 }, () => [0, 0]);
   for (let d = from60; d <= td; d = addD(d, 1)) {
@@ -352,7 +351,7 @@ function carCond(T) {
     by[w][0] += km(d);
     by[w][1]++;
   }
-  const avgW = by.map(([t, n]) => (n ? t / n : 0)),
+  const avgW = [1, 2, 3, 4, 5, 6, 0].map(w => (by[w][1] ? Math.round(by[w][0] / by[w][1]) : 0)), // de lunes a domingo
     top = avgW.indexOf(Math.max(...avgW));
   let lv = [0, 0];
   for (let d = [addD(td, -29), first].sort()[1]; d <= td; d = addD(d, 1)) {
@@ -410,12 +409,18 @@ function carCond(T) {
       );
   return (
     `<div class="ckps">${kpi('Esta semana', kmf(tw) + ' km', pct === null ? 'Desde el lunes' : (pct > 0 ? '+' : '') + pct + ' % que la pasada')}${kpi('Este mes', kmf(mKm) + ' km', mT.min ? carHm(+mT.min) + ' al volante' : 'Hasta hoy')}${
-      avgW[top] ? kpi('Día que más', cap(CAR_WD[top]), kmf(avgW[top]) + ' km de media') : ''
+      avgW[top]
+        ? kpi(
+            'Día con más km',
+            ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'][top],
+            kmf(avgW[top]) + ' km de media'
+          )
+        : ''
     }${lv[1] ? kpi('Entre semana', kmf(lv[0] / lv[1]) + ' km/día', 'De lunes a viernes') : ''}</div>` +
     `<div class="cgnav"><button class="ib" data-a="ccm" data-i="-1" aria-label="Mes anterior" ${canPrev ? '' : 'disabled'}>${I('chevron-left')}</button><b>${ml}</b><button class="ib" data-a="ccm" data-i="1" aria-label="Mes siguiente" ${carCalM ? '' : 'disabled'}>${I('chevron-right')}</button></div>` +
     `<div class="mu ccsub">${kmf(cmKm)} km${cmT.min ? ' · ' + carHm(+cmT.min) + ' al volante' : ''}${cmT.spd ? ' · ' + Math.round(cmT.spd) + ' km/h de media' : ''}</div>` +
     `<div class="ccal">${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => `<span class="h">${d}</span>`).join('')}${cells.join('')}</div>` +
-    (det || `<div class="mu ccsub">Toca un día para ver el detalle.</div>`) +
+    (det || `<div class="mu cchint">Toca un día para ver el detalle.</div>`) +
     (M.length
       ? `<div class="dh">Por meses</div><div class="cml">${M.map(m => {
           const k = +T.months[m].km || 0;

@@ -88,7 +88,6 @@ def diag(vm):
 WARN = {
     "oil": "oil_level_warning_is_on",
     "brake": "brake_fluid_warning_is_on",
-    "washer": "washer_fluid_warning_is_on",
     "key": "smart_key_battery_warning_is_on",
     "tire": "tire_pressure_all_warning_is_on",
 }

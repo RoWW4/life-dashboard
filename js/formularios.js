@@ -823,10 +823,10 @@ function carKmForm() {
 }
 /* Lo que se le hizo al coche: título, detalle (una cosa por línea), km, taller e importe, y qué mantenimientos quedan hechos
    (su «última vez» pasa a ser esta). */
-function carVisForm(v) {
+function carVisForm(v, pre) {
   const n = !v,
     c = carS();
-  v = v || { d: TD(), km: '', what: '', det: '', where: '', amt: '', mt: [] };
+  v = v || { d: TD(), km: '', what: '', det: '', where: '', amt: '', mt: [], ...pre };
   const o = modal(
     `<h3>${n ? 'Mantenimiento hecho' : 'Editar'}</h3><div class="fs"><label>Qué fue<input id="cv1" value="${esc(v.what)}" placeholder="Ej. Revisión anual, cambio de ruedas…"></label><label>Detalle (una cosa por línea)<textarea id="cv6" rows="4" placeholder="Cambio de aceite&#10;Filtro de aire&#10;…">${esc(v.det || v.note || '')}</textarea></label><div class="two"><label>Fecha<input id="cv2" type="date" value="${v.d}"></label><label>Km del coche<input id="cv3" inputmode="numeric" value="${hasN(v.km) ? kmf(v.km) : ''}" placeholder="Ej. 48.215"></label></div><div class="two"><label>Taller<input id="cv4" value="${esc(v.where)}" placeholder="Opcional"></label><label>Importe<input id="cv5" inputmode="decimal" value="${carNum(v.amt)}" placeholder="Opcional"></label></div>${c.mt.length ? `<div><div class="mu" style="margin-bottom:6px">¿Qué mantenimientos quedan hechos?</div>${c.mt.map(x => `<label class="chk"><input type="checkbox" class="ck" data-m="${esc(x.id)}" ${(v.mt || []).includes(x.id) ? 'checked' : ''}> ${esc(x.n)}</label>`).join('')}</div>` : ''}</div><div class="acts">${n ? '' : '<button class="btn ghost danger" id="fdel">Eliminar</button>'}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">${n ? 'Añadir' : 'Guardar'}</button></div>`
   );
@@ -853,14 +853,17 @@ function carVisForm(v) {
       delete v.note;
       Object.assign(v, x);
     }
-    // Los mantenimientos marcados toman esta visita como última vez (si es más reciente que la que tenían).
+    // Los mantenimientos marcados toman esta visita como última vez (si es más reciente que la que tenían) y pierden
+    // su fecha fija: la próxima sale del periodo. Los de una sola vez (sin periodo, p. ej. una revisión antes de la ITV)
+    // ya están hechos: salen de la lista (quedan en el historial).
     c.mt
       .filter(m => x.mt.includes(m.id) && (!m.ld || m.ld <= x.d))
       .forEach(m => {
         m.ld = x.d;
         if (hasN(x.km)) m.lk = x.km;
-        if (m.nd && m.nd <= x.d) delete m.nd;
+        delete m.nd;
       });
+    c.mt = c.mt.filter(m => !(x.mt.includes(m.id) && !+m.m && !+m.km));
     o.remove();
     ch();
     toast(n ? 'Apuntado' : 'Guardado');
@@ -874,7 +877,11 @@ function carMtForm(x) {
     c = carS();
   x = x || { n: '', km: '', m: '', ld: '', lk: '', nd: '' };
   const o = modal(
-    `<h3>${n ? 'Nuevo mantenimiento' : esc(x.n)}</h3><div class="fs"><label>Nombre<input id="cm1" value="${esc(x.n)}" placeholder="Ej. Pastillas de freno, batería…"></label><div class="two"><label>Cada (km)<input id="cm2" inputmode="numeric" value="${hasN(x.km) ? kmf(x.km) : ''}" placeholder="Ej. 15.000"></label><label>Cada (meses)<input id="cm3" inputmode="numeric" value="${x.m || ''}" placeholder="Ej. 12"></label></div><div class="mu">Si pones los dos, avisa con lo que llegue antes.</div><div class="two"><label>Última vez<input id="cm4" type="date" value="${x.ld || ''}"></label><label>A los (km)<input id="cm5" inputmode="numeric" value="${hasN(x.lk) ? kmf(x.lk) : ''}" placeholder="Opcional"></label></div><label>Próxima fecha fija (opcional)<input id="cm6" type="date" value="${x.nd || ''}"></label><div class="mu">Para cuando la fecha no sale del periodo, como la primera ITV.</div></div><div class="acts">${n ? '' : '<button class="btn ghost danger" id="fdel">Eliminar</button>'}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">${n ? 'Añadir' : 'Guardar'}</button></div>`
+    `<h3>${n ? 'Nuevo mantenimiento' : esc(x.n)}</h3><div class="fs"><label>Nombre<input id="cm1" value="${esc(x.n)}" placeholder="Ej. Pastillas de freno, batería…"></label><div class="two"><label>Cada (km)<input id="cm2" inputmode="numeric" value="${hasN(x.km) ? kmf(x.km) : ''}" placeholder="Ej. 15.000"></label><label>Cada (meses)<input id="cm3" inputmode="numeric" value="${x.m || ''}" placeholder="Ej. 12"></label></div><div class="mu">Si pones los dos, avisa con lo que llegue antes.</div><div class="two"><label>Última vez<input id="cm4" type="date" value="${x.ld || ''}"></label><label>A los (km)<input id="cm5" inputmode="numeric" value="${hasN(x.lk) ? kmf(x.lk) : ''}" placeholder="Opcional"></label></div><label>Próxima fecha fija (opcional)<input id="cm6" type="date" value="${x.nd || ''}"></label><div class="mu">Para cuando la fecha no sale del periodo, como la primera ITV.</div>${
+      n
+        ? ''
+        : `<button class="btn ghost" id="fdone">${I('circle-check', 'sm')} Ya está hecho</button><div class="mu">Se apunta en el historial${+x.m || +x.km ? ' y la próxima vez se cuenta desde ese día' : ' y se quita de Lo próximo'}.</div>`
+    }</div><div class="acts">${n ? '' : '<button class="btn ghost danger" id="fdel">Eliminar</button>'}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">${n ? 'Añadir' : 'Guardar'}</button></div>`
   );
   o.querySelector('#ok').onclick = () => {
     const g = k => o.querySelector(k).value.trim(),
@@ -899,7 +906,15 @@ function carMtForm(x) {
     ch();
     toast(n ? 'Mantenimiento añadido' : 'Guardado');
   };
-  if (!n) o.querySelector('#fdel').onclick = () => carDel(o, c.mt, x, '«' + x.n + '»');
+  if (!n) {
+    o.querySelector('#fdel').onclick = () => carDel(o, c.mt, x, '«' + x.n + '»');
+    // «Ya está hecho»: abre «Mantenimiento hecho» con este marcado, hoy y los km actuales (se puede añadir taller e importe).
+    o.querySelector('#fdone').onclick = () => {
+      const K = carKm();
+      o.remove();
+      carVisForm(null, { what: x.n, mt: [x.id], km: K.cur !== null ? K.cur : '' });
+    };
+  }
   o.querySelector(n ? '#cm1' : x.ld ? '#cm2' : '#cm4').focus();
 }
 /* Ficha del coche. */
