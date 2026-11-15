@@ -179,6 +179,7 @@ button.chip{border:0;cursor:pointer;font-family:inherit}button.chip:hover{color:
 .btn:hover{filter:brightness(1.08)}.btn:active{transform:scale(.97)}
 .btn:disabled{opacity:.45;cursor:default;filter:none;transform:none}
 .btn.ghost{background:var(--card);color:var(--tx);border:1px solid var(--bd2);box-shadow:var(--sh)}
+.btn.done{background:var(--ok);color:#06210f;font-weight:700;box-shadow:0 8px 18px -10px var(--ok)}.btn.done:hover{filter:brightness(1.06)}
 .btn.ghost:hover{filter:none;background:color-mix(in srgb,var(--card) 92%,var(--tx))}
 .btn.sm{padding:5px 11px;font-size:13px;border-radius:8px}
 .btn.danger{background:var(--er)}.btn.ghost.danger{background:var(--ers);color:var(--er);border-color:transparent;box-shadow:none}

@@ -880,7 +880,7 @@ function carMtForm(x) {
     `<h3>${n ? 'Nuevo mantenimiento' : esc(x.n)}</h3><div class="fs"><label>Nombre<input id="cm1" value="${esc(x.n)}" placeholder="Ej. Pastillas de freno, batería…"></label><div class="two"><label>Cada (km)<input id="cm2" inputmode="numeric" value="${hasN(x.km) ? kmf(x.km) : ''}" placeholder="Ej. 15.000"></label><label>Cada (meses)<input id="cm3" inputmode="numeric" value="${x.m || ''}" placeholder="Ej. 12"></label></div><div class="mu">Si pones los dos, avisa con lo que llegue antes.</div><div class="two"><label>Última vez<input id="cm4" type="date" value="${x.ld || ''}"></label><label>A los (km)<input id="cm5" inputmode="numeric" value="${hasN(x.lk) ? kmf(x.lk) : ''}" placeholder="Opcional"></label></div><label>Próxima fecha fija (opcional)<input id="cm6" type="date" value="${x.nd || ''}"></label><div class="mu">Para cuando la fecha no sale del periodo, como la primera ITV.</div>${
       n
         ? ''
-        : `<button class="btn ghost" id="fdone">${I('circle-check', 'sm')} Ya está hecho</button><div class="mu">Se apunta en el historial${+x.m || +x.km ? ' y la próxima vez se cuenta desde ese día' : ' y se quita de Lo próximo'}.</div>`
+        : `<button class="btn done" id="fdone">${I('circle-check', 'sm')} Ya está hecho</button><div class="mu">Se apunta en el historial${+x.m || +x.km ? ' y la próxima vez se cuenta desde ese día' : ' y se quita de Lo próximo'}.</div>`
     }</div><div class="acts">${n ? '' : '<button class="btn ghost danger" id="fdel">Eliminar</button>'}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">${n ? 'Añadir' : 'Guardar'}</button></div>`
   );
   o.querySelector('#ok').onclick = () => {
