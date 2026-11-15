@@ -974,9 +974,9 @@ function carInfoForm() {
 /* ---------- Mascotas (ver vistas/mascotas.js) ---------- */
 const petOf = (k, vid) => petsR().find(p => (p[k] || []).some(v => v.id === vid));
 /* Ficha de la mascota (también para añadir una nueva), con su foto. */
-function petForm(p) {
+function petForm(p, sp) {
   const n = !p;
-  p = p || { n: '', sp: 'gato', sex: '', born: '', col: '', chip: '', ster: '', kg: '', vet: '', notes: '' };
+  p = p || { n: '', sp: sp || 'gato', sex: '', born: '', col: '', chip: '', ster: '', kg: '', vet: '', notes: '' };
   let photo = p.photo || '';
   const sel = (idf, L, v) =>
     `<select id="${idf}">${L.map(([k, l]) => `<option value="${k}" ${v === k ? 'selected' : ''}>${l}</option>`).join('')}</select>`;

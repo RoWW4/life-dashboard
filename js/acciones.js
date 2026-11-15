@@ -85,7 +85,12 @@ const A = {
     petSel = i;
     render();
   },
-  padd: () => petForm(null),
+  ptab: i => {
+    petTab = i;
+    petSel = '';
+    render();
+  },
+  padd: i => petForm(null, i),
   pinf: i => petForm(petsR().find(p => p.id === i)),
   pvacn: () => petVacForm(null),
   pvac: i => {
