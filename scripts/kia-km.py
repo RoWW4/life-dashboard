@@ -138,11 +138,14 @@ def live(v):
 
 
 def trip(t):
-    return {"km": num(t.distance) or 0, "min": int(t.drive_time or 0), "spd": num(t.avg_speed)} if t else None
+    if not t:
+        return None
+    o = {"km": num(t.distance) or 0, "min": int(t.drive_time or 0), "spd": num(t.avg_speed), "max": num(getattr(t, "max_speed", None))}
+    return {k: x for k, x in o.items() if x is not None}
 
 
 def trips(vm, vid, backfill):
-    """Km y minutos de cada día (hoy, ayer y, al rellenar, los dos últimos meses) y resumen de cada mes."""
+    """Km, minutos, velocidad media y máxima y número de viajes de cada día (hoy, ayer y, al rellenar, los dos últimos meses) y resumen de cada mes."""
     v = vm.get_vehicle(vid)
     hoy = dt.datetime.now(ZoneInfo("Europe/Madrid")).date()
     meses = [hoy.replace(day=1)]
@@ -176,7 +179,7 @@ def trips(vm, vid, backfill):
             continue
         di = v.day_trip_info
         if di and di.summary:
-            days[f.isoformat()] = {k: x for k, x in trip(di.summary).items() if k != "spd"}
+            days[f.isoformat()] = {**trip(di.summary), "n": len(di.trip_list or [])}
     return days, months
 
 

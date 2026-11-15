@@ -61,6 +61,16 @@ const A = {
     carOff = Math.min(0, carOff + +i);
     render();
   },
+  // Coche → Conducción: mes del calendario y día abierto.
+  ccm: i => {
+    carCalM = Math.min(0, carCalM + +i);
+    carDay = '';
+    render();
+  },
+  ccd: i => {
+    carDay = carDay === i ? '' : i;
+    render();
+  },
   cyr: i => {
     carYr = i || '';
     render();

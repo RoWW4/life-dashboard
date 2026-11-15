@@ -320,30 +320,107 @@ function carEstado(lv) {
     `<div class="mu" style="margin-top:8px">Datos de Kia Connect · ${ago(lv.at)}</div>`
   );
 }
-/* Tarjeta «Conducción»: km de cada día de los últimos 30 días y totales de los últimos meses. */
+/* Tarjeta «Conducción»: cifras (semana, mes, día que más, entre semana), calendario del mes con los km de cada día
+   (al tocar un día, su detalle: tiempo, viajes, velocidad media y máxima) y barras por meses.
+   Los días sin viajes no se guardan: desde el primer día guardado, un día que falta cuenta como 0 km. */
+let carCalM = 0, // mes del calendario: 0 = el actual, -1 = el anterior…
+  carDay = ''; // día abierto en el calendario
+const CAR_WD = ['domingos', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábados'];
 function carCond(T) {
-  const days = [];
-  for (let i = 29; i >= 0; i--) days.push(addD(TD(), -i));
-  const v = days.map(d => +((T.days[d] || {}).km || 0)),
-    mx = Math.max(1, ...v),
-    tot = v.reduce((a, b) => a + b, 0),
+  const D = T.days,
+    keys = Object.keys(D).sort(),
+    first = keys[0] || TD(),
+    km = d => (D[d] ? +D[d].km || 0 : 0),
+    sum = (a, b) => {
+      let t = 0;
+      for (let d = a; d <= b; d = addD(d, 1)) t += km(d);
+      return t;
+    },
+    td = TD(),
+    wd = (new Date(td + 'T00:00').getDay() + 6) % 7, // 0 = lunes
+    w0 = addD(td, -wd),
+    tw = sum(w0, td),
+    pw = sum(addD(w0, -7), addD(td, -7)), // la semana pasada hasta el mismo día
+    mk = td.slice(0, 7),
+    mT = T.months[mk] || {},
+    mKm = mT.km != null ? +mT.km : sum(mk + '-01', td),
+    // Día de la semana que más (media de los últimos 60 días con datos) y media de lunes a viernes (últimos 30).
+    from60 = [addD(td, -59), first].sort()[1],
+    by = Array.from({ length: 7 }, () => [0, 0]);
+  for (let d = from60; d <= td; d = addD(d, 1)) {
+    const w = new Date(d + 'T00:00').getDay();
+    by[w][0] += km(d);
+    by[w][1]++;
+  }
+  const avgW = by.map(([t, n]) => (n ? t / n : 0)),
+    top = avgW.indexOf(Math.max(...avgW));
+  let lv = [0, 0];
+  for (let d = [addD(td, -29), first].sort()[1]; d <= td; d = addD(d, 1)) {
+    const w = new Date(d + 'T00:00').getDay();
+    if (w > 0 && w < 6) lv = [lv[0] + km(d), lv[1] + 1];
+  }
+  const kpi = (t, v, s, cl = '') => `<div class="ckp"><span>${t}</span><b>${v}</b><em class="${cl}">${s}</em></div>`,
+    pct = pw ? Math.round(((tw - pw) / pw) * 100) : null;
+  // Calendario
+  const base = new Date(+td.slice(0, 4), +td.slice(5, 7) - 1 + carCalM, 1),
+    cm = MN(base),
+    nd = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate(),
+    off = (base.getDay() + 6) % 7,
+    cmT = T.months[cm] || {},
+    cmKm = cmT.km != null ? +cmT.km : sum(cm + '-01', [cm + '-' + String(nd).padStart(2, '0'), td].sort()[0]),
+    lvl = k => (k <= 0 ? 'z' : k < 15 ? 'l1' : k < 35 ? 'l2' : k < 60 ? 'l3' : 'l4'),
+    cells = [];
+  for (let i = 0; i < off; i++) cells.push('<span class="e"></span>');
+  for (let i = 1; i <= nd; i++) {
+    const d = cm + '-' + String(i).padStart(2, '0'),
+      sin = d > td || d < first,
+      k = km(d);
+    cells.push(
+      sin
+        ? `<span class="f">${i}</span>`
+        : `<button class="${lvl(k)}${d === td ? ' hoy' : ''}${d === carDay ? ' on' : ''}" data-a="ccd" data-i="${d}" aria-label="${fdc(d)}: ${kmf(k)} km"><b>${i}</b>${k ? `<em>${kmf(k)} km</em>` : ''}</button>`
+    );
+  }
+  const x = carDay && carDay.slice(0, 7) === cm ? D[carDay] || { km: 0 } : null,
+    det = x
+      ? `<div class="ccdet"><b>${cap(new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'short' }).format(new Date(carDay + 'T00:00')))}</b>${
+          +x.km
+            ? `<div class="ccdg">${[
+                ['Km', kmf(x.km)],
+                ['Al volante', carHm(+x.min || 0)],
+                x.n ? ['Viajes', x.n] : null,
+                x.spd ? ['Media', Math.round(x.spd) + ' km/h'] : null,
+                x.max ? ['Máxima', Math.round(x.max) + ' km/h'] : null
+              ]
+                .filter(Boolean)
+                .map(([a, b]) => `<span><em>${a}</em>${b}</span>`)
+                .join('')}</div>`
+            : '<div class="mu">No se usó el coche.</div>'
+        }</div>`
+      : '',
+    ml = cap(new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(base)),
+    canPrev = cm > first.slice(0, 7),
     M = Object.keys(T.months).sort().reverse().slice(0, 6),
+    mMax = Math.max(1, ...M.map(m => +T.months[m].km || 0)),
     mes = m =>
       cap(
-        new Intl.DateTimeFormat('es-ES', { month: 'long', year: m.slice(0, 4) === TD().slice(0, 4) ? undefined : 'numeric' }).format(
+        new Intl.DateTimeFormat('es-ES', { month: 'long', year: m.slice(0, 4) === td.slice(0, 4) ? undefined : 'numeric' }).format(
           new Date(m + '-01T00:00')
         )
       );
   return (
-    `<div class="cgm"><b class="big">${kmf(tot)} km</b><span class="mu">En los últimos 30 días · ${kmf(tot / 30)} km al día de media</span></div>` +
-    `<div class="cbars" role="img" aria-label="Km de cada día en los últimos 30 días">${days.map((d, i) => `<i class="${v[i] ? '' : 'z'}" style="--h:${Math.max(v[i] ? 6 : 2, Math.round((v[i] / mx) * 100))}%" title="${fdc(d)}: ${kmf(v[i])} km"></i>`).join('')}</div>` +
-    `<div class="cbl"><span>${fdc(days[0])}</span><span>Hoy</span></div>` +
+    `<div class="ckps">${kpi('Esta semana', kmf(tw) + ' km', pct === null ? 'Desde el lunes' : (pct > 0 ? '+' : '') + pct + ' % que la pasada')}${kpi('Este mes', kmf(mKm) + ' km', mT.min ? carHm(+mT.min) + ' al volante' : 'Hasta hoy')}${
+      avgW[top] ? kpi('Día que más', cap(CAR_WD[top]), kmf(avgW[top]) + ' km de media') : ''
+    }${lv[1] ? kpi('Entre semana', kmf(lv[0] / lv[1]) + ' km/día', 'De lunes a viernes') : ''}</div>` +
+    `<div class="cgnav"><button class="ib" data-a="ccm" data-i="-1" aria-label="Mes anterior" ${canPrev ? '' : 'disabled'}>${I('chevron-left')}</button><b>${ml}</b><button class="ib" data-a="ccm" data-i="1" aria-label="Mes siguiente" ${carCalM ? '' : 'disabled'}>${I('chevron-right')}</button></div>` +
+    `<div class="mu ccsub">${kmf(cmKm)} km${cmT.min ? ' · ' + carHm(+cmT.min) + ' al volante' : ''}${cmT.spd ? ' · ' + Math.round(cmT.spd) + ' km/h de media' : ''}</div>` +
+    `<div class="ccal">${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => `<span class="h">${d}</span>`).join('')}${cells.join('')}</div>` +
+    (det || `<div class="mu ccsub">Toca un día para ver el detalle.</div>`) +
     (M.length
-      ? `<div class="dh">Por meses</div>` +
-        M.map(m => {
-          const x = T.months[m];
-          return `<div class="row">${tile('route', CARC)}<span class="g"><span class="tt">${mes(m)}</span><br><span class="mu">${[x.min ? carHm(x.min) + ' al volante' : '', x.spd ? Math.round(x.spd) + ' km/h de media' : ''].filter(Boolean).join(' · ')}</span></span><b class="amt">${kmf(x.km)} km</b></div>`;
-        }).join('')
+      ? `<div class="dh">Por meses</div><div class="cml">${M.map(m => {
+          const k = +T.months[m].km || 0;
+          return `<div><span>${mes(m)}</span><i><b style="width:${Math.round((k / mMax) * 100)}%"></b></i><em>${kmf(k)} km</em></div>`;
+        }).join('')}</div>`
       : '')
   );
 }
