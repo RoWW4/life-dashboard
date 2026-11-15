@@ -151,12 +151,12 @@ function vMascotas() {
   if (p) petSel = p.id;
   const hdr = `<div class="hdr"><div><h2>Mascotas</h2><div class="sub help">Su edad, las vacunas (con aviso cuando toca la siguiente) y lo que les ha pasado en el veterinario.</div></div></div>`;
   // Pestañas de los grupos (Gatos, Agapornis…) y, al lado, el lápiz para añadir, cambiar o quitar grupos.
-  const tabs = `<div class="ptabw"><div class="seg ctabs ptabs" role="tablist" aria-label="Grupos">${TB.map(
+  const tabs = `<div class="ptabw"><div class="seg ctabs ptabs" role="tablist" aria-label="Pestañas">${TB.map(
     x =>
       `<button role="tab" aria-selected="${petTab === x.id}" class="${petTab === x.id ? 'on' : ''}" data-a="ptab" data-i="${esc(x.id)}">${I(x.ic || 'paw-print', 'sm')} ${esc(x.n)}</button>`
   ).join(
     ''
-  )}</div><button class="ib" data-a="pgrp" aria-label="Cambiar los grupos" title="Añadir, cambiar o quitar grupos">${I('pencil')}</button></div>`;
+  )}</div><button class="ib" data-a="pgrp" aria-label="Cambiar las pestañas" title="Añadir, cambiar o quitar pestañas">${I('pencil')}</button></div>`;
   const sel = `<div class="petsel" role="tablist" aria-label="Mascotas">${L.map(
     x =>
       `<button role="tab" class="${x.id === (p && p.id) ? 'on' : ''}" aria-selected="${x.id === (p && p.id)}" data-a="psel" data-i="${esc(x.id)}">${petAv(x, 'sm')}<span><b>${esc(x.n || 'Sin nombre')}</b><small>${esc(petAge(x.born, 1) || g.one || '')}</small></span></button>`
