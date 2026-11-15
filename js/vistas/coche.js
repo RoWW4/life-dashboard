@@ -246,7 +246,7 @@ function carMap(lat, lon) {
     `<div class="cmap" id="cmap" role="application" aria-label="Mapa de dónde está aparcado el coche"><div class="cmload">${I('map-pin', 'sm')} Cargando mapa…</div></div>` +
     `<div class="cmbar">${
       rt
-        ? `<span class="g"><b>${Math.max(1, Math.round(rt.s / 60))} min andando</b><br><span class="mu">${carDist(rt.m)}${rt.aprox ? ' en línea recta' : ''}</span></span><a class="btn sm" href="${dir}" target="_blank" rel="noopener noreferrer">${I('navigation', 'sm')} Indicaciones</a>`
+        ? `<span class="g"><b>${Math.max(1, Math.round(rt.s / 60))} min andando</b><br><span class="mu">${carDist(rt.m)}${rt.aprox ? ' en línea recta' : ''}</span></span><button class="ib" data-a="cgx" aria-label="Quitar el camino" title="Quitar el camino">${I('x')}</button><a class="btn sm" href="${dir}" target="_blank" rel="noopener noreferrer">${I('navigation', 'sm')} Indicaciones</a>`
         : `<span class="g mu">Toca para ver dónde estás tú y el camino.</span><button class="btn sm" data-a="cgo">${I('navigation', 'sm')} Llegar al coche</button>`
     }</div>`
   );

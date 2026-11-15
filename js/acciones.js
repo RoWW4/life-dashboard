@@ -12,6 +12,11 @@ const A = {
     render();
   },
   // Coche (vistas/coche.js)
+  // Coche: quitar el camino y tu ubicación del mapa; vuelve a centrarse en el coche.
+  cgx: () => {
+    carRt = carMe = carMapV = null;
+    render();
+  },
   // Coche: «Llegar al coche». Pide la ubicación del móvil y el camino andando hasta donde está aparcado.
   cgo: () => {
     const lv = carLive();
