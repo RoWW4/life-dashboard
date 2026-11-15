@@ -203,6 +203,94 @@ const carArt = () =>
   `<path d="M336 350H362V368H342Z" fill="#164f88"/>` +
   `<path d="M160 392 212 386 206 401 162 406Z" fill="#eaf2ff"/><path d="M688 364 728 368 732 384 694 382Z" fill="#ff4d5e"/>` +
   `<circle cx="258" cy="467" r="47" fill="#0b0d12"/><circle cx="258" cy="467" r="34" fill="#cfd4dc"/><circle cx="258" cy="467" r="28" fill="none" stroke="#2a2f38" stroke-width="16" stroke-dasharray="5 6"/><circle cx="258" cy="467" r="9" fill="#8b929e"/><circle cx="652" cy="467" r="47" fill="#0b0d12"/><circle cx="652" cy="467" r="34" fill="#cfd4dc"/><circle cx="652" cy="467" r="28" fill="none" stroke="#2a2f38" stroke-width="16" stroke-dasharray="5 6"/><circle cx="652" cy="467" r="9" fill="#8b929e"/></g></svg>`;
+/* Mapa de dónde está aparcado, dentro de la tarjeta: Leaflet (se carga solo al abrir el mapa) con teselas de CARTO
+   (oscuras, o claras con el tema claro, con nombres de calles). Se mueve con el dedo y se acerca con dos dedos o + y −.
+   «Llegar al coche» pide la ubicación del móvil, marca dónde estás y dibuja el camino andando (routing.openstreetmap.de;
+   si no responde, línea recta); «Indicaciones» abre la navegación paso a paso en Google Maps. */
+const LEAF = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/';
+let carLeaf = null, // promesa de carga de Leaflet
+  carMapV = null, // centro y zoom del mapa entre repintados
+  carMe = null, // [lat, lon] del móvil
+  carRt = null; // camino andando: {pts, m, s, aprox, to}
+function carLeafLoad() {
+  if (window.L) return Promise.resolve();
+  return (carLeaf =
+    carLeaf ||
+    new Promise((ok, ko) => {
+      const c = document.createElement('link');
+      Object.assign(c, {
+        rel: 'stylesheet',
+        href: LEAF + 'leaflet.css',
+        integrity: 'sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H',
+        crossOrigin: 'anonymous'
+      });
+      const s = document.createElement('script');
+      Object.assign(s, {
+        src: LEAF + 'leaflet.js',
+        integrity: 'sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH',
+        crossOrigin: 'anonymous'
+      });
+      s.onload = ok;
+      s.onerror = () => {
+        carLeaf = null;
+        ko(new Error('Leaflet'));
+      };
+      document.head.append(c, s);
+    }));
+}
+const carDist = m => (m < 1000 ? Math.round(m / 10) * 10 + ' m' : (m / 1000).toFixed(1).replace('.', ',') + ' km');
+function carMap(lat, lon) {
+  const rt = carRt && carRt.to === lat + ',' + lon ? carRt : null,
+    dir = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=walking`;
+  return (
+    `<div class="cmap" id="cmap" role="application" aria-label="Mapa de dónde está aparcado el coche"><div class="cmload">${I('map-pin', 'sm')} Cargando mapa…</div></div>` +
+    `<div class="cmbar">${
+      rt
+        ? `<span class="g"><b>${Math.max(1, Math.round(rt.s / 60))} min andando</b><br><span class="mu">${carDist(rt.m)}${rt.aprox ? ' en línea recta' : ''}</span></span><a class="btn sm" href="${dir}" target="_blank" rel="noopener noreferrer">${I('navigation', 'sm')} Indicaciones</a>`
+        : `<span class="g mu">Toca para ver dónde estás tú y el camino.</span><button class="btn sm" data-a="cgo">${I('navigation', 'sm')} Llegar al coche</button>`
+    }</div>`
+  );
+}
+/* Después de pintar: monta el mapa en #cmap (si está abierto). Guarda centro y zoom para el siguiente repintado. */
+function carMapMount() {
+  const el = document.getElementById('cmap'),
+    lv = carLive();
+  if (!el || !lv || !lv.loc) return;
+  const car = [+lv.loc.lat, +lv.loc.lon];
+  carLeafLoad()
+    .then(() => {
+      if (!el.isConnected) return;
+      el.innerHTML = '';
+      const m = L.map(el, { zoomControl: false, attributionControl: true }),
+        dark = S.theme !== 'light';
+      L.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`, {
+        subdomains: 'abcd',
+        maxZoom: 19,
+        attribution: '© OpenStreetMap · © CARTO'
+      }).addTo(m);
+      m.attributionControl.setPrefix(false);
+      L.control.zoom({ position: 'topright', zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' }).addTo(m);
+      const rt = carRt && carRt.to === car.join(',') ? carRt : null;
+      if (rt) L.polyline(rt.pts, { color: '#4d9bff', weight: 5, opacity: 0.9, dashArray: rt.aprox ? '6 8' : null }).addTo(m);
+      L.marker(car, {
+        icon: L.divIcon({ className: '', html: `<span class="cmpin">${I('car')}</span>`, iconSize: [40, 40], iconAnchor: [20, 20] }),
+        title: 'Coche'
+      }).addTo(m);
+      if (carMe)
+        L.marker(carMe, {
+          icon: L.divIcon({ className: '', html: '<span class="cmme"><i></i><b>Tú</b></span>', iconSize: [18, 18], iconAnchor: [9, 9] }),
+          title: 'Tú'
+        }).addTo(m);
+      if (carMapV) m.setView(carMapV.c, carMapV.z, { animate: false });
+      else if (rt) m.fitBounds(L.latLngBounds(rt.pts.concat([car])), { padding: [36, 36], maxZoom: 17 });
+      else m.setView(car, 16);
+      m.on('moveend', () => (carMapV = { c: m.getCenter(), z: m.getZoom() }));
+    })
+    .catch(() => {
+      if (el.isConnected)
+        el.innerHTML = `<div class="cmload">No se pudo cargar el mapa. <a href="https://www.google.com/maps/search/?api=1&query=${car.join(',')}" target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a></div>`;
+    });
+}
 /* Tarjeta «Estado»: avisos, si está cerrado y dónde está aparcado. */
 function carEstado(lv) {
   const W = (lv.warn || []).filter(w => CAR_AV[w]),
@@ -226,8 +314,8 @@ function carEstado(lv) {
           CARC,
           'Aparcado',
           cap(ago(lv.at)),
-          `<a class="btn sm ghost" href="https://www.google.com/maps/search/?api=1&query=${+lv.loc.lat},${+lv.loc.lon}" target="_blank" rel="noopener noreferrer">${I('map-pin', 'sm')} Ver en el mapa</a>`
-        )
+          `<button class="btn sm ghost" data-a="xp" data-i="carmap" aria-expanded="${!!exp.carmap}">${I(exp.carmap ? 'chevron-up' : 'map-pin', 'sm')} ${exp.carmap ? 'Ocultar' : 'Ver en el mapa'}</button>`
+        ) + (exp.carmap ? carMap(+lv.loc.lat, +lv.loc.lon) : '')
       : '') +
     `<div class="mu" style="margin-top:8px">Datos de Kia Connect · ${ago(lv.at)}</div>`
   );

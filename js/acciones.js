@@ -12,6 +12,41 @@ const A = {
     render();
   },
   // Coche (vistas/coche.js)
+  // Coche: «Llegar al coche». Pide la ubicación del móvil y el camino andando hasta donde está aparcado.
+  cgo: () => {
+    const lv = carLive();
+    if (!lv || !lv.loc) return;
+    if (!navigator.geolocation) return toast('Este dispositivo no da la ubicación');
+    toast('Buscando dónde estás…');
+    navigator.geolocation.getCurrentPosition(
+      async p => {
+        carMe = [p.coords.latitude, p.coords.longitude];
+        const car = [+lv.loc.lat, +lv.loc.lon],
+          to = car.join(',');
+        try {
+          const r = await fetch(
+            `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${carMe[1]},${carMe[0]};${car[1]},${car[0]}?overview=full&geometries=geojson`,
+            { signal: AbortSignal.timeout(8000) }
+          );
+          const x = (await r.json()).routes[0];
+          carRt = { pts: x.geometry.coordinates.map(([a, b]) => [b, a]), m: x.distance, s: x.duration, to };
+        } catch (e) {
+          // Sin ruta: línea recta, a paso normal (1,3 m/s).
+          const R = 6371e3,
+            f = Math.PI / 180,
+            h =
+              Math.sin(((car[0] - carMe[0]) * f) / 2) ** 2 +
+              Math.cos(carMe[0] * f) * Math.cos(car[0] * f) * Math.sin(((car[1] - carMe[1]) * f) / 2) ** 2,
+            m = 2 * R * Math.asin(Math.sqrt(h));
+          carRt = { pts: [carMe, car], m, s: m / 1.3, aprox: true, to };
+        }
+        carMapV = null;
+        render();
+      },
+      e => toast(e.code === 1 ? 'Sin permiso para ver dónde estás' : 'No se pudo saber dónde estás'),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+    );
+  },
   ctab: i => {
     carTab = i;
     render();
@@ -104,6 +139,7 @@ const A = {
   },
   xp: i => {
     exp[i] = !exp[i];
+    if (i === 'carmap') carMapV = null; // el mapa del coche vuelve a centrarse al abrirlo
     if (i === 'tx') txRefresh();
     else render();
   },
