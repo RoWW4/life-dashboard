@@ -1102,7 +1102,27 @@ function petVacForm(v, pre) {
     toast(n ? 'Apuntado' : 'Guardado');
   };
   if (!n) {
-    o.querySelector('#fdel').onclick = () => carDel(o, p.vac, v, 'esta dosis');
+    // Si hay más dosis del mismo tipo, al quitar esta saldría la anterior: se puede quitar solo esta o todo el tipo.
+    o.querySelector('#fdel').onclick = () => {
+      const k = nt(v.n || '').trim(),
+        same = p.vac.filter(x => nt(x.n || '').trim() === k);
+      if (same.length < 2) return carDel(o, p.vac, v, 'esta dosis');
+      const q = modal(
+        `<p style="color:var(--tx)">¿Qué quieres eliminar?</p><div class="mu" style="margin-bottom:14px">Hay ${same.length} dosis de «${esc(v.n)}». Si quitas solo esta, en la lista saldrá la anterior.</div><div class="acts"><button class="btn ghost" data-close>Cancelar</button><span class="sp"></span><button class="btn ghost danger" id="d1">Solo esta dosis</button><button class="btn danger" id="dall">Todas (${same.length})</button></div>`
+      );
+      q.querySelector('#d1').onclick = () => {
+        p.vac.splice(p.vac.indexOf(v), 1);
+        q.remove();
+        ch();
+        toast('Dosis eliminada');
+      };
+      q.querySelector('#dall').onclick = () => {
+        p.vac = p.vac.filter(x => !same.includes(x));
+        q.remove();
+        ch();
+        toast('«' + v.n + '» eliminado');
+      };
+    };
     o.querySelector('#fdone').onclick = () => {
       const m = v.d && v.nx ? Math.max(1, Math.round(dd(v.nx, v.d) / 30.44)) : 12;
       o.remove();
