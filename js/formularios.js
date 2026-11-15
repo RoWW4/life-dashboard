@@ -385,10 +385,11 @@ function shopEdit(s) {
     o.remove();
     ch();
   };
-  o.querySelector('#fdel').onclick = () => {
-    o.remove();
-    A.ds(s.id);
-  };
+  o.querySelector('#fdel').onclick = () =>
+    CF(`¿Eliminar «${s.name}» de la lista?`, () => {
+      o.remove();
+      A.ds(s.id);
+    });
   o.querySelector('#se1').focus();
 }
 /* Alta y edición de un pago o ingreso de Facturas. */

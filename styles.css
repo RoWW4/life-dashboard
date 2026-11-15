@@ -405,6 +405,12 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .nc{display:inline-flex;align-items:center;gap:3px;font-size:12px}
 .fs .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.acts .sp{flex:1}.acts+.acts{margin-top:10px}.acts:empty{display:none}
+/* Móvil: en las ventanas, los botones de cada fila se reparten el ancho a partes iguales (sin huecos ni botones
+   descolgados) y el texto largo puede ir en dos líneas. */
+@media(max-width:760px){
+  .dlg .acts .sp{display:none}
+  .dlg .acts>.btn{flex:1 1 0;min-width:0;white-space:normal;text-align:center;padding-left:10px;padding-right:10px;min-height:44px}
+}
 .pick{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:6px}
 .pick button{cursor:pointer;border:1px solid var(--bd);background:var(--card2);border-radius:var(--r);padding:16px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;font-weight:600;font-size:14px;transition:border-color .15s,background .15s}
 .pick .ic{width:44px;height:44px;border-radius:13px}.pick .ic .i{width:22px;height:22px}
@@ -961,6 +967,9 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .enter :is(.card,.kpi,.hs,.acct){animation:cardin .42s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
 .enter :is(.bar div,.kbar i,.gbar i,.hlp i){transform-origin:left;animation:barin .8s cubic-bezier(.2,.8,.2,1) .15s both}
 @keyframes cardin{from{opacity:0;transform:translateY(10px)}}
+/* Las tarjetas destacadas (.card.hl, fondo con degradado y sombra de color) no se animan: en el móvil, al quitar la
+   animación (a los 1,1 s) se volvían a dibujar de otra forma y el degradado de arriba «se apagaba» un poco. */
+.enter .card.hl{animation:none}
 @keyframes barin{from{transform:scaleX(0)}}
 /* Móvil: al pulsar, botones y filas se encogen un poco (como en las apps del teléfono) */
 @media (pointer: coarse){

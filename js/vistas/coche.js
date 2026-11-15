@@ -181,7 +181,7 @@ function carNext(c = carR(), K = carKm(c)) {
         d,
         lvl: dayDiff(d) <= 7 ? 'wa' : 'ok',
         pill: cap(rel(d)),
-        sub: doc ? 'Vence el ' + fdc(doc.exp) + ' · Cargo de ' + eur(o.f.amt) + ' hacia el ' + fdc(o.d) : 'Pago · ' + eur(o.f.amt)
+        sub: 'Cargo de ' + eur(o.f.amt) // la fecha ya va a la derecha
       };
     }),
     ...S.docs

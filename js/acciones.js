@@ -349,10 +349,11 @@ const A = {
     S.rules.push({ k, cat: V('r2') });
     ch();
   },
-  dr: i => {
-    S.rules.splice(+i, 1);
-    ch();
-  },
+  dr: i =>
+    CF('¿Quitar esta regla? Los movimientos ya clasificados no cambian.', () => {
+      S.rules.splice(+i, 1);
+      ch();
+    }),
   afx: () => {
     const a = V('fx_a'),
       b = V('fx_b');
@@ -362,10 +363,11 @@ const A = {
     ch();
     toast('Corrección guardada');
   },
-  dfx: i => {
-    S.fixes.splice(+i, 1);
-    ch();
-  },
+  dfx: i =>
+    CF('¿Quitar esta corrección de nombre?', () => {
+      S.fixes.splice(+i, 1);
+      ch();
+    }),
   rg: (i, el) => {
     S.region = el.value;
     ch();
