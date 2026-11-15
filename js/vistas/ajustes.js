@@ -16,7 +16,7 @@ function vDocs() {
               c,
               `<span style="color:${DCOL[c]}">${I(DI[c])}</span> ${c} <span class="cnt">· ${g[c].length}</span>`,
               g[c].map(docRow).join(''),
-              'dcat',
+              'hl dcat',
               '--c:' + DCOL[c]
             )
           )

@@ -322,6 +322,15 @@ let txf = { q: '', cat: '', per: 'mes', t: '' };
 /* Movimientos: 5 al principio; «Ver más» añade una tanda (10 en el móvil, 40 en el ordenador). Se vuelve a empezar al cambiar filtros o mes. */
 let txN = 0,
   txK = '';
+/* Todos / Gastos / Ingresos: en el ordenador va en la cabecera del panel (txs1), junto al título; en el móvil, con los filtros (txs2). */
+const txSeg = c =>
+  `<div class="seg ${c}">${[
+    ['', 'Todos'],
+    ['g', 'Gastos'],
+    ['i', 'Ingresos']
+  ]
+    .map(([k, n]) => `<button class="${txf.t === k ? 'on' : ''}" data-a="txft" data-i="${k}">${n}</button>`)
+    .join('')}</div>`;
 function txMore(rows) {
   const step = matchMedia('(max-width:760px)').matches ? 10 : 40,
     k = JSON.stringify(txf) + finMonth();
@@ -658,7 +667,7 @@ function vFin() {
       mov: panel(
         'fin',
         'mov',
-        `${I('list-checks')} Movimientos <button class="btn sm movadd" data-a="nx" aria-label="Añadir movimiento" title="Añadir movimiento">${I('plus', 'sm')} Añadir</button>`,
+        `${I('list-checks')} Movimientos <button class="btn sm movadd" data-a="nx" aria-label="Añadir movimiento" title="Añadir movimiento">${I('plus', 'sm')} Añadir</button>${txSeg('txs1')}`,
         `<span id="txcard"></span>
     <div class="txf"><input id="txq" class="in" type="search" placeholder="Buscar concepto, nota o importe…" value="${esc(txf.q)}" aria-label="Buscar en movimientos"><select class="in" data-a="txfc" aria-label="Categoría"><option value="">Todas las categorías</option>${CATS.map(c => `<option ${txf.cat === c ? 'selected' : ''}>${c}</option>`).join('')}</select><select class="in" data-a="txfp" aria-label="Periodo">${(() => {
       const ms = [...new Set([...Array(3)].map((_, j) => MN(new Date(now.getFullYear(), now.getMonth() - j, 1))).concat(m))]
@@ -674,13 +683,7 @@ function vFin() {
           .map(([k, n]) => `<option value="${k}" ${txf.per === k ? 'selected' : ''}>${n}</option>`)
           .join('')
       );
-    })()}</select><div class="seg">${[
-      ['', 'Todos'],
-      ['g', 'Gastos'],
-      ['i', 'Ingresos']
-    ]
-      .map(([k, n]) => `<button class="${txf.t === k ? 'on' : ''}" data-a="txft" data-i="${k}">${n}</button>`)
-      .join('')}</div></div>
+    })()}</select>${txSeg('txs2')}</div>
     <div id="txlist">${txListHTML()}</div>`,
         'wide'
       ),

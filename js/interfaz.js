@@ -462,7 +462,7 @@ const pinDocs = () => {
 };
 
 function donut(cats, budget, sp, rem) {
-  const R = 52,
+  const R = 54,
     C = 2 * Math.PI * R,
     den = Math.max(budget, sp, 1);
   let off = 0;
@@ -470,12 +470,19 @@ function donut(cats, budget, sp, rem) {
     .map(([c, v]) => {
       const len = (v / den) * C,
         g = len > 4 ? 1.5 : 0;
-      const s = `<circle r="${R}" cx="64" cy="64" fill="none" stroke="${col(c)}" stroke-width="13" stroke-dasharray="${Math.max(len - g, 0.5)} ${C}" stroke-dashoffset="${-off}"><title>${c}: ${eur(v)}</title></circle>`;
+      const s = `<circle r="${R}" cx="64" cy="64" fill="none" stroke="${col(c)}" stroke-width="11" stroke-dasharray="${Math.max(len - g, 0.5)} ${C}" stroke-dashoffset="${-off}"><title>${c}: ${eur(v)}</title></circle>`;
       off += len;
       return s;
     })
     .join('');
-  return `<div class="donut"><svg viewBox="0 0 128 128" role="img" aria-label="Gasto del mes por categoría"><g transform="rotate(-90 64 64)"><circle r="${R}" cx="64" cy="64" fill="none" stroke="color-mix(in srgb,var(--ok) 30%,transparent)" stroke-width="13"/>${segs}</g></svg><div class="c"><b class="${rem < 0 ? 'er' : ''}">${eur(Math.abs(rem))}</b><span>${rem >= 0 ? 'Disponible' : 'Por encima'}</span></div></div>`;
+  return `<div class="donut"><svg viewBox="0 0 128 128" role="img" aria-label="Gasto del mes por categoría"><g transform="rotate(-90 64 64)"><circle r="${R}" cx="64" cy="64" fill="none" stroke="color-mix(in srgb,var(--ok) 30%,transparent)" stroke-width="11"/>${segs}</g></svg><div class="c"><b class="${rem < 0 ? 'er' : ''}" style="--fs:${Math.min(
+    16,
+    66 /
+      (eur(Math.abs(rem))
+        .replace(/<[^>]*>/g, '')
+        .replace(/&[a-z]+;/g, ' ').length *
+        0.56)
+  ).toFixed(1)}cqw">${eur(Math.abs(rem))}</b><span>${rem >= 0 ? 'Disponible' : 'Por encima'}</span></div></div>`;
 }
 /* Gasto del mes (igual en Mi día y en Finanzas): anillo con lo disponible (verde: tope − gastado; las facturas por pagar se ven debajo), total gastado con una sola línea de contexto
    y todas las categorías en barras (icono, % del gasto y total): a la derecha en el ordenador, debajo en el móvil.
@@ -498,7 +505,7 @@ function gastoBody(m) {
   const info = B
     ? `<b class="${pc >= 100 ? 'er' : pc >= 80 ? 'wa' : 'ok'}">${Math.round(pc)} %</b> de tu tope`
     : 'Define un tope en Ajustes';
-  const gx = `<div class="gx">${B ? donut(cats, B, sp, rem) : ''}<div class="gxi"><div class="mu">Gastado ${cur ? 'este mes' : 'en ' + MS[+m.slice(5)]}</div><div class="big">${eur(sp)}</div><div class="mu">${info}</div>${fl && B ? `<div class="mu">Facturas por pagar: ${eur(fl)} · Te quedarán ${eur(rem - fl)}</div>` : fl ? `<div class="mu">Facturas por pagar: ${eur(fl)}</div>` : ''}</div></div>`;
+  const gx = `<div class="gx">${B ? donut(cats, B, sp, rem) : ''}<div class="gxi"><div class="mu">Gastado ${cur ? 'este mes' : 'en ' + MS[+m.slice(5)]}</div><div class="big">${eur(sp)}</div><div class="mu">${info}</div>${fl ? `<div class="mu gxfl">Facturas por pagar: <b class="er">${eur(fl)}</b>${B ? ` · <span class="nw">Te quedarán <b class="${rem - fl < 0 ? 'er' : 'ok'}">${eur(rem - fl)}</b></span>` : ''}</div>` : ''}</div></div>`;
   const txm = TXP().filter(x => mon(x.date) === m),
     mx = Math.max(1, ...cats.map(c => c[1]));
   const bars = cats

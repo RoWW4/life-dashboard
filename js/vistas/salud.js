@@ -30,7 +30,7 @@ function salRing(st, n) {
     p = late ? 1 : Math.min(1, (st.day - 1) / st.avg);
   const col = 'var(--rose)';
   return `<div class="sring"><svg viewBox="0 0 128 128" role="img" aria-label="Días que faltan para el próximo inicio"><g transform="rotate(-90 64 64)"><circle r="${R}" cx="64" cy="64" fill="none" stroke="var(--roses)" stroke-width="12"/><circle r="${R}" cx="64" cy="64" fill="none" stroke="${col}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(C * p).toFixed(1)} ${C.toFixed(1)}"/></g></svg>
-    <div class="c">${late ? `<b class="wa">+${-n}</b><span>${-n === 1 ? 'Día de retraso' : 'Días de retraso'}</span>` : n === 0 ? `<b>Hoy</b><span>Próximo previsto</span>` : `<b>${n}</b><span>${n === 1 ? 'Día para el próximo' : 'Días para el próximo'}</span>`}</div></div>`;
+    <div class="c">${late ? `<b class="wa">+${-n}</b><span>${-n === 1 ? 'día tarde' : 'días tarde'}</span>` : n === 0 ? `<b>Hoy</b><span>previsto</span>` : `<b>${n}</b><span>${n === 1 ? 'día' : 'días'}</span>`}</div></div>`;
 }
 /* ---------- Actividad (Google Health) ----------
    Un Google Apps Script de la cuenta de Google (scripts/google-health.gs) deja cada hora en Supabase los pasos, kcal,
@@ -334,8 +334,8 @@ function vSalud() {
       `${I('heart-pulse')} Seguimiento`,
       st.last
         ? `<div class="gx">${salRing(st, n)}<div class="sinf">
-          <div class="mu">Próximo previsto</div><div class="big">${fd(st.next)}</div>
-          <div class="mu">Día ${st.day} · Empezó el ${fd(st.last)}</div>
+          <div class="mu">Próximo previsto</div><div class="big">${fd(st.next)}</div><div class="mu swd">${cap(new Intl.DateTimeFormat('es-ES', { weekday: 'long' }).format(new Date(st.next + 'T12:00')))}</div>
+          <div class="schips"><span class="schip on">Día <b>${st.day}</b> de ${st.avg}</span><span class="schip">Empezó el <b>${fdc(st.last)}</b></span></div>
           <div class="mu">Ciclo de ${st.avg} días · ${st.gaps.length ? 'Media de los últimos ' + st.gaps.length : 'duración habitual'}</div>
           <div class="mu">${I('clock', 'sm')} Aviso por Telegram 3 días antes.</div></div></div>
         ${add}<div class="sact"><button class="btn ghost" data-a="sah">${I('calendar-days')} Ver histórico</button><button class="link txl mu" data-a="sad" data-i="${st.last}">Quitar la última fecha (${fd(st.last)})</button></div>`

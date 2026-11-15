@@ -1,6 +1,6 @@
 'use strict';
 /* Sección «Mi día»: versión mínima. Portada (fecha, saludo, una frase y tres cifras), «Lo más importante», el calendario
-   con los próximos días y una fila de accesos (compra y documentos a mano). Facturas y gasto se ven en su sección. */
+   con los próximos días y accesos a las secciones y, aparte, a los documentos a mano. Facturas y gasto se ven en su sección. */
 /* ---------- vistas ---------- */
 let gOff = 0; // meses hacia atrás en «Gasto del mes» (acción 'gm'; no se guarda)
 /* Tiempo de la portada (Open-Meteo, gratis y sin clave) de la ciudad elegida en Ajustes (S.wx = {n, lat, lon}, va con tus datos).
@@ -198,20 +198,33 @@ function vDia() {
   // Cada cifra lleva el icono y el color de su sección (--c).
   const hs = (go, ic, c, k, v, d, extra = '') =>
     `<button class="hs" style="--c:${c}" data-a="go" data-i="${go}"><span class="hk"><span class="hico">${I(ic)}</span>${k}</span><span class="hv">${v}${extra}</span><span class="hd2">${d}</span></button>`;
-  // Fila de accesos: la compra (cuántos productos faltan) y los documentos a mano, que se abren directamente.
+  // Documentos a mano: se abren directamente.
   const qd = d =>
     d.url
       ? `<a class="qc" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer"><span class="qi" style="--c:${DCOL[d.cat]}">${I(DI[d.cat] || 'file-text')}</span>${esc(d.name)}${d.exp && dayDiff(d.exp) <= 60 ? `<em class="${dayDiff(d.exp) < 0 ? 'er' : 'wa'}">${dayDiff(d.exp) < 0 ? 'Caducó' : 'Vence ' + fdc(d.exp)}</em>` : ''}</a>`
       : `<button class="qc off" data-a="ed" data-i="${d.id}"><span class="qi" style="--c:${DCOL[d.cat]}">${I(DI[d.cat] || 'file-text')}</span>${esc(d.name)}<em>Añadir enlace</em></button>`;
-  const quick = `<div class="qrow" aria-label="Accesos rápidos">
-    <button class="qc" data-a="go" data-i="compra"><span class="qi" style="--c:#34c77b">${I('shopping-cart')}</span>Compra${P.length ? ` <b>${P.length}</b>` : ''}</button>
-    <button class="qc" data-a="go" data-i="coche"><span class="qi" style="--c:${CARC}">${I('car')}</span>Coche${(() => {
+  // Accesos a todas las secciones (en el orden del menú), con su color; Compra lleva lo que falta y Coche su aviso.
+  const QCOL = { tareas: '#9b87f5', compra: '#34c77b', fin: '#22c3b4', docs: '#e0b416', salud: 'var(--rose)', coche: CARC, mascotas: PETC };
+  const qx = {
+    compra: () => (P.length ? ` <b>${P.length}</b>` : ''),
+    coche: () => {
       const o = S.car && carNext().find(o => o.lvl !== 'no');
       return o && o.lvl !== 'ok' ? ` <em class="${o.lvl}">${esc(o.n)} · ${esc(o.pill)}</em>` : '';
-    })()}</button>
+    }
+  };
+  const qs = secs()
+    .filter(([k]) => k !== 'dia' && k !== 'ajus')
+    .map(
+      ([k, ic, l]) =>
+        `<button class="qc" data-a="go" data-i="${k}"><span class="qi" style="--c:${QCOL[k] || 'var(--ac)'}">${I(ic)}</span>${l}${qx[k] ? qx[k]() : ''}</button>`
+    )
+    .join('');
+  // Los documentos a mano van aparte, en su propia fila, para no mezclarlos con las secciones.
+  const quick = `<div class="qbox"><div class="qt">Secciones</div><div class="qrow" aria-label="Accesos a secciones">${qs}</div>
+    <div class="qt">Documentos a mano</div><div class="qrow" aria-label="Documentos a mano">
     ${pins.map(qd).join('')}
     ${pins.length > 1 ? `<button class="qlk" data-a="cust">${cust ? 'Listo' : 'Ordenar'}</button>` : ''}${pins.length ? '' : `<button class="qlk" data-a="go" data-i="docs">${I('star', 'sm')} Marca documentos con la estrella para tenerlos aquí</button>`}
-  </div>${cust && pins.length > 1 ? `<div class="card qord">${pinOrd()}</div>` : ''}`;
+  </div></div>${cust && pins.length > 1 ? `<div class="card qord">${pinOrd()}</div>` : ''}`;
   setTimeout(wxLoad);
   return `<section class="hero" aria-label="Resumen de hoy">${heroBg()}
     <div class="hmain"><div class="eyb">${cap(new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(now))}</div>

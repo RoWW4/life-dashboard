@@ -125,6 +125,7 @@ body.solo .card .pa{display:none}
 .hd{cursor:grab;color:var(--mu);opacity:.45;user-select:none;display:grid;place-items:center;padding:5px;border-radius:8px;transition:opacity .15s,background .15s}.card:hover .hd{opacity:.75}.hd:hover{opacity:1!important;background:var(--hov)}
 .hact{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .morebtn{all:unset;box-sizing:border-box;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 0;margin-top:4px;border-top:1px solid var(--sep);color:var(--ac2);font-size:13px;font-weight:600}
+:has(+.morebtn){border-bottom:0!important}
 .morebtn:hover{color:var(--ac2)}.morebtn:focus-visible{outline:2px solid var(--ac);border-radius:6px}
 .morebtn .i{width:15px;height:15px}
 .card.dragging,.nv.dragging{opacity:.5}
@@ -214,14 +215,20 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 
 /* ---------- gasto ---------- */
 .gx{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
-.donut{width:180px;height:180px;flex-shrink:0;position:relative}
+.donut{width:180px;height:180px;flex-shrink:0;position:relative;container-type:inline-size}
 .donut svg{width:100%;height:100%;display:block}
 .donut .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-.donut .c b{font-size:20px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.donut .c span{font-size:12px;color:var(--mu)}
+.donut .c b{font-size:var(--fs,20px);font-weight:700;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.donut .c>span{font-size:12.5px;color:var(--mu);margin-top:3px}
+/* Facturas por pagar (en rojo suave) y lo que quedará (en verde suave) */
+.gxfl .nw{white-space:nowrap}.gxfl b{white-space:nowrap;font-weight:600;font-variant-numeric:tabular-nums}.gxfl b.er{color:color-mix(in srgb,var(--er) 82%,var(--tx))}.gxfl b.ok{color:color-mix(in srgb,var(--ok) 82%,var(--tx))}
 .sring{width:170px;height:170px;flex-shrink:0;position:relative}.sring svg{width:100%;height:100%;display:block}
 .sring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 22px}
-.sring .c b{font-size:40px;font-weight:650;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}.sring .c span{font-size:12px;color:var(--mu);margin-top:6px;line-height:1.3}
+.sring .c b{font-size:44px;font-weight:650;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}.sring .c span{font-size:14px;color:var(--mu);margin-top:4px;line-height:1.3}
+.swd{margin-top:-4px}
+.schips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}.schip{font-size:13px;padding:4px 10px;border-radius:999px;background:var(--card2);border:1px solid var(--bd);color:var(--tx2)}.schip b{color:var(--tx);font-weight:650}
+.schip.on{background:var(--roses);border-color:color-mix(in srgb,var(--rose) 35%,transparent);color:var(--rose)}.schip.on b{color:var(--rose)}
+@media(max-width:760px){.schips{justify-content:center}}
 .sinf{flex:1;min-width:200px;display:flex;flex-direction:column;gap:6px}.sinf .big{margin:-2px 0 8px}
 .sact{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;font-size:13px}
 /* Salud · actividad (Google Health): 4 tarjetas con icono de color (--c) y progreso, la última noche por fases
@@ -258,8 +265,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .hlmb{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--mu);border-radius:6px}
 .hlmb .i{width:11px;height:11px;opacity:.6}.hlmb:hover{color:var(--tx)}.hlmb:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .hlmeta{font-size:12px;gap:6px}.hlmeta i{width:14px;border-top:1.5px dashed #fbbf24}
-.hlb i{display:block;width:62%;max-width:30px;border-radius:8px;background:linear-gradient(180deg,#34d399,color-mix(in srgb,#34d399 35%,transparent));opacity:.55}
-.hlb.on i,.hlb.ok i{opacity:1}.hlb.on i{box-shadow:0 0 14px color-mix(in srgb,#34d399 55%,transparent)}
+.hlb i{display:block;width:62%;max-width:30px;border-radius:7px 7px 2px 2px;background:linear-gradient(180deg,#34d399,color-mix(in srgb,#34d399 40%,transparent))}
 .hlb{cursor:pointer;border-radius:10px}.hlb:focus-visible{outline:2px solid var(--ac);outline-offset:2px}.hlb{-webkit-tap-highlight-color:transparent}.hlbars.picked .hlb:not(.pk) i{opacity:.35}.hlb.pk i{opacity:1;box-shadow:0 0 12px color-mix(in srgb,#34d399 60%,transparent)}.hlb.pk em,.hlb.pk small{color:var(--tx);font-weight:600}
 .hlw .hlxi{margin-top:12px}
 .hlb em{font-style:normal;font-size:12px;color:var(--mu);text-transform:capitalize}.hlb.on em{color:var(--tx);font-weight:600}
@@ -646,6 +652,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 /* Lista de la compra en Mi día: filas más compactas */
 /* Fila de accesos al pie de Mi día: compra y documentos a mano, en pastillas pequeñas */
 .qrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 16px}
+.qbox{min-width:0}.qbox .qrow{margin-bottom:12px}.qt{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);margin:2px 2px 7px}
 .qc{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:999px;background:var(--card);border:1px solid var(--bd);box-shadow:var(--sh);font-size:13.5px;font-weight:500;color:var(--tx);transition:border-color .15s,background .15s;max-width:100%}
 .qc:hover{border-color:var(--bd2);background:color-mix(in srgb,var(--card) 92%,var(--tx));text-decoration:none}
 .qc:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
@@ -656,8 +663,8 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .qi .i{width:14px;height:14px}
 .qlk{all:unset;cursor:pointer;font-size:13px;color:var(--mu);padding:6px 4px;border-radius:6px}.qlk:hover{color:var(--tx)}
 .qord{max-width:520px}
-@media(min-width:761px){.dgrid>.qrow,.dgrid>.qord{grid-column:span 8;align-content:flex-start;max-width:none}}
-@media(min-width:761px) and (max-width:1180px){.dgrid>.qrow,.dgrid>.qord{grid-column:span 12}}
+@media(min-width:761px){.dgrid>.qbox,.dgrid>.qord{grid-column:span 8;align-content:flex-start;max-width:none}}
+@media(min-width:761px) and (max-width:1180px){.dgrid>.qbox,.dgrid>.qord{grid-column:span 12}}
 
 /* ---------- Finanzas: saldo protagonista + cifras ---------- */
 .fintop{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:16px;margin-bottom:18px}
@@ -742,7 +749,7 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .bg-all .hero{background:transparent!important;box-shadow:none;padding-left:4px;padding-right:4px;min-height:0}
 .bg-all :is(.card,nav,.kpi,.qc,.acct:not(.fintop .acct),.seg){background:color-mix(in srgb,var(--card) 74%,transparent);backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2)}
 .bg-all main>.hdr,.bg-all main>.hdr h2{color:#fff}
-.bg-all main>.hdr .sub,.bg-all main>.mu,.bg-all .qlk{color:rgba(235,242,255,.78)}
+.bg-all main>.hdr .sub,.bg-all main>.mu,.bg-all .qlk,.bg-all .qt{color:rgba(235,242,255,.78)}
 @media(max-width:760px){.hwn>b{font-size:52px}.hwx{gap:14px}.hwc{flex-basis:100%;grid-template-columns:repeat(4,1fr);padding:0;border:0}.hwc>svg{left:0;width:100%}.bg-on .hero{min-height:0}}
 
 /* Menos movimiento si el sistema lo pide: todo sigue funcionando sin animaciones */
@@ -913,7 +920,7 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .shtx{padding:10px 12px;border-radius:12px;background:var(--card2);font-size:14px;max-height:160px;overflow:auto;overflow-wrap:anywhere}
 .shseg{flex-wrap:wrap}
 .shck{display:flex;align-items:center;gap:10px;font-size:14px;padding:4px 0}
-/* ---------- Paneles destacados (.card.hl: «Lo más importante», Coche → «Lo próximo») ----------
+/* ---------- Paneles destacados (.card.hl: «Lo más importante», Coche → «Lo próximo», Vacunas, carpetas de Documentos) ----------
    Fondo teñido suavemente del color de la sección (--mod), borde fino del mismo tono y sombra con un poco de color.
    (Antes: borde azul de 2 px; antes aún, un degradado arcoíris que giraba y gastaba batería.) */
 .card.hl{border:1px solid color-mix(in srgb,var(--mod) 28%,var(--bd));background:linear-gradient(165deg,color-mix(in srgb,var(--mod) 13%,var(--card)) 0%,var(--card) 55%);box-shadow:0 12px 30px -16px color-mix(in srgb,var(--mod) 55%,transparent),var(--sh)}
@@ -937,6 +944,9 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 @keyframes ddin{from{opacity:0;transform:scaleY(.94)}}
 /* Finanzas: botón de añadir dentro del título de Movimientos */
 .card h3 .movadd{margin-left:10px;padding:4px 11px;font-size:12.5px;vertical-align:middle}
+/* Todos/Gastos/Ingresos: en la cabecera en el ordenador; con los filtros en el móvil */
+.card h3 .txs1{margin-left:12px;vertical-align:middle;font-size:13px;font-weight:500;flex-wrap:nowrap}.card h3 .txs1 .i{display:none}
+@media(min-width:761px){.txf .txs2{display:none}}@media(max-width:760px){.card h3 .txs1{display:none}}
 /* Ajustes: «Borrar todo» plegado */
 .danger-z summary{cursor:pointer;color:var(--mu);font-size:13.5px;font-weight:500}
 .danger-z[open] summary{color:var(--er)}
@@ -1030,11 +1040,11 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 /* Ordenador: la luna y el sol arriba a la derecha, por encima del tiempo (antes chocaban con la temperatura) */
 @media(min-width:761px){.hmoon,.hbg-cielo .hmoon,.hbg-luna .hmoon{left:auto;right:3%;top:10px;transform:none;width:62px;height:62px}.sol,.sky-dia .sol,.sky-tarde .sol{left:auto;right:4%;top:16px}.sky-amanecer .sol,.sky-atardecer .sol{top:auto;bottom:34%;right:42%}}
 /* Documentos: cada panel con el color de su categoría (borde y brillo suave). */
-.card.dcat{border-color:color-mix(in srgb,var(--c) 45%,var(--bd));box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 18%,transparent),0 0 22px -4px color-mix(in srgb,var(--c) 45%,transparent)}
+.card.dcat{--mod:var(--c)}
 
 /* ---------- Coche (js/vistas/coche.js) ---------- */
 :is(.nv,.msecs button)[data-i=coche]{--c:#f5a524}.card[data-v=coche]{--mod:#f5a524}
-:is(.nv,.msecs button)[data-i=mascotas]{--c:#c08457}.card[data-v=mascotas]{--mod:#c08457}
+:is(.nv,.msecs button)[data-i=mascotas]{--c:#c08457}.card[data-v^=mascotas]{--mod:#c08457}
 .ctabs{display:flex;width:max-content;max-width:100%;margin-bottom:16px;flex-wrap:nowrap}
 .ctabs button{text-align:center;white-space:nowrap}
 @media(max-width:760px){.ctabs{width:100%}.ctabs button{flex:1;padding:6px 4px}}
@@ -1153,9 +1163,16 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 .pav{flex:none;width:36px;height:36px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:color-mix(in srgb,#c08457 22%,var(--card2));color:#c08457}
 .pav img{width:100%;height:100%;object-fit:cover;display:block}
 .pav.lg{width:112px;height:112px}.pav.lg .i{width:40px;height:40px}
-.peth{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:24px 22px 20px;margin-bottom:18px;border-radius:24px;background:var(--hero);color:var(--hero-tx);box-shadow:var(--sh2)}
-.peth::before{content:'';position:absolute;z-index:-1;width:520px;height:520px;left:50%;margin-left:-260px;top:-300px;border-radius:50%;background:radial-gradient(closest-side,rgba(240,150,80,.35),transparent)}
-.peth .pav.lg{box-shadow:0 0 0 3px var(--hero-bd);background:var(--hero-tile);color:var(--hero-tx)}
+.peth{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:24px 22px 20px;margin-bottom:18px;border-radius:24px;background:linear-gradient(160deg,#3a2618 0%,#24170f 55%,#1a120c 100%);color:#fff;box-shadow:0 16px 36px -18px rgba(192,132,87,.6),var(--sh2);--hero-mu:rgba(255,236,220,.72);--hero-bd:rgba(255,220,190,.22);--hero-tile:rgba(255,220,190,.1);--hero:#2a1b12}
+.peth::before{content:'';position:absolute;z-index:-1;width:560px;height:560px;left:50%;margin-left:-280px;top:-320px;border-radius:50%;background:radial-gradient(closest-side,rgba(240,160,90,.42),transparent)}
+/* Huellas de fondo, muy suaves */
+.pdeco{position:absolute;inset:0;z-index:-1;pointer-events:none;color:#f0b07a}.pdeco .i{position:absolute;opacity:.1}
+.pdeco .i:nth-child(1){width:120px;height:120px;left:-18px;bottom:-22px;transform:rotate(-14deg);opacity:.09}
+.pdeco .i:nth-child(2){width:46px;height:46px;left:14%;top:18px;transform:rotate(-22deg)}
+.pdeco .i:nth-child(3){width:34px;height:34px;right:16%;top:46%;transform:rotate(18deg)}
+.pdeco .i:nth-child(4){width:26px;height:26px;left:26%;bottom:22px;opacity:.13}
+.pdeco .i:nth-child(5){width:64px;height:64px;right:-8px;bottom:-10px;transform:rotate(24deg);opacity:.08}
+.peth .pav.lg{box-shadow:0 0 0 3px rgba(240,170,110,.55),0 8px 24px -6px rgba(0,0,0,.5);background:var(--hero-tile);color:var(--hero-tx)}
 .peth .carhb{position:absolute;top:14px;right:14px}
 .peth .pphoto{margin-bottom:8px}
 .petn{font-size:30px;font-weight:650;letter-spacing:-.03em;line-height:1.1;overflow-wrap:anywhere}
