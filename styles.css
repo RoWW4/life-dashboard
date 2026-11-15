@@ -602,7 +602,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 
 /* Casillas con icono «i» que despliega su explicación */
 .chkr{display:flex;align-items:center;gap:2px}.chkr .chk{flex:none;margin:0}
-.chkr .inf{width:28px;height:28px;color:var(--mu)}.chkr .inf[aria-expanded="true"]{color:var(--ac)}
+.chkr .inf{width:28px;height:28px;padding:0;display:inline-grid;place-items:center;color:var(--mu)}.chkr .inf .i{width:17px;height:17px;vertical-align:0}.chkr .inf[aria-expanded="true"]{color:var(--ac)}
 .infx{font-size:12.5px;margin:-2px 0 6px 28px;line-height:1.4}
 
 /* ---------- portada (bloque protagonista) ---------- */
