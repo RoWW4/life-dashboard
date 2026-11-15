@@ -27,8 +27,14 @@ const CAR_AV = {
   key: 'Pila de la llave',
   tire: 'Presión de las ruedas'
 };
-/* % del depósito. Este coche no lo manda (Kia Connect da 0 aunque haya autonomía): con 0 % y autonomía de más de 30 km se toma como «sin dato». */
-const carFuel = lv => (!hasN(lv.fuel) || (+lv.fuel === 0 && hasN(lv.range) && +lv.range > 30) ? null : +lv.fuel);
+/* % del depósito. Este coche no lo manda (Kia Connect da 0 aunque haya autonomía): con 0 % y autonomía de más de 30 km se toma como «sin dato»
+   y se calcula con la autonomía: litros que quedan = km × consumo medio / 100, sobre la capacidad del depósito (ficha técnica del modelo). */
+const CAR_TANK = 45, // litros
+  CAR_L100 = 5.75; // consumo medio, l/100 km (entre 5,5 y 6)
+const carFuelReal = lv => (!hasN(lv.fuel) || (+lv.fuel === 0 && hasN(lv.range) && +lv.range > 30) ? null : +lv.fuel);
+const carFuel = lv => carFuelReal(lv) ?? (hasN(lv.range) ? Math.min(100, ((+lv.range * CAR_L100) / 100 / CAR_TANK) * 100) : null);
+/* Color de la barra: verde por encima de la mitad, naranja hasta 1/4 y rojo en 1/4 o menos. */
+const carFuelLvl = p => (p > 50 ? 'ok' : p > 25 ? 'wa' : 'er');
 const CAR_AB = { doors: 'puertas', windows: 'ventanillas', trunk: 'maletero', hood: 'capó' };
 const carLive = () => (S.car && S.car.live && typeof S.car.live === 'object' ? S.car.live : null);
 const carTrips = () => {
@@ -534,10 +540,8 @@ function vCoche() {
       K.cur !== null
         ? `<b>${kmf(K.cur)} <small>km</small></b><span class="carhs">${K.src === 'kia' ? 'De Kia Connect' : 'Apuntado'} ${rel(K.d)}</span>${
             lv && carFuel(lv) != null
-              ? `<span class="carfu ${lv.low ? 'low' : ''}"><span class="carfb"><i style="width:${Math.max(3, Math.min(100, carFuel(lv)))}%"></i></span>${I('fuel', 'sm')} ${Math.round(carFuel(lv))} %${hasN(lv.range) ? ' · ' + kmf(lv.range) + ' km de autonomía' : ''}</span>`
-              : lv && hasN(lv.range)
-                ? `<span class="carfu ${lv.low ? 'low' : ''}">${I('fuel', 'sm')} <span class="carfr">${kmf(lv.range)} km</span> de autonomía</span>`
-                : ''
+              ? `<span class="carfu ${lv.low ? 'er' : carFuelLvl(carFuel(lv))}" title="${carFuelReal(lv) == null ? `Calculado con la autonomía: depósito de ${CAR_TANK} l y consumo medio de ${String(CAR_L100).replace('.', ',')} l/100 km` : 'Dato del coche'}"><span class="carfb"><i style="width:${Math.max(3, carFuel(lv)).toFixed(0)}%"></i></span>${I('fuel', 'sm')} ${carFuelReal(lv) == null ? '≈ ' : ''}${Math.round(carFuel(lv))} %${hasN(lv.range) ? `<span class="carfa"><span class="carfr">${kmf(lv.range)} km</span> de autonomía</span>` : ''}</span>`
+              : ''
           }`
         : `<b class="carh0">Sin apuntar</b><span class="carhs">Toca el lápiz para poner los km del coche.</span>`
     }</div><button class="carhb" data-a="ckm" aria-label="Actualizar los km" title="Actualizar los km">${I('pencil')}</button></section>`;
