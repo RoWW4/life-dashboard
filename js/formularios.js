@@ -976,14 +976,26 @@ const petOf = (k, vid) => petsR().find(p => (p[k] || []).some(v => v.id === vid)
 /* Ficha de la mascota (también para añadir una nueva), con su foto. */
 function petForm(p, sp) {
   const n = !p;
-  p = p || { n: '', sp: sp || 'gato', sex: '', born: '', col: '', chip: '', ster: '', kg: '', vet: '', notes: '' };
+  p = p || {
+    n: '',
+    sp: sp || (petGrps()[0] || {}).id || 'gato',
+    sex: '',
+    born: '',
+    raza: '',
+    col: '',
+    chip: '',
+    ster: '',
+    kg: '',
+    vet: '',
+    notes: ''
+  };
   let photo = p.photo || '';
   const sel = (idf, L, v) =>
     `<select id="${idf}">${L.map(([k, l]) => `<option value="${k}" ${v === k ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
   const o = modal(
-    `<h3>${n ? 'Nueva mascota' : 'Ficha'}</h3><div class="fs"><div class="pff"><label class="pphoto" title="Elegir foto"><span class="pav lg" id="pfav">${photo ? `<img src="${esc(photo)}" alt="">` : I('paw-print')}</span><span class="pcam">${I('upload', 'sm')}</span><input type="file" id="pff" accept="image/*" hidden></label><label style="flex:1">Nombre<input id="pf1" value="${esc(p.n)}" placeholder="Su nombre"></label></div><div class="two"><label>Especie${sel(
+    `<h3>${n ? 'Nueva mascota' : 'Ficha'}</h3><div class="fs"><div class="pff"><label class="pphoto" title="Elegir foto"><span class="pav lg" id="pfav">${photo ? `<img src="${esc(photo)}" alt="">` : I('paw-print')}</span><span class="pcam">${I('upload', 'sm')}</span><input type="file" id="pff" accept="image/*" hidden></label><label style="flex:1">Nombre<input id="pf1" value="${esc(p.n)}" placeholder="Su nombre"></label></div><div class="two"><label>Grupo${sel(
       'pf2',
-      Object.entries(PET_SP).map(([k, v]) => [k, v[1]]),
+      petGrps().map(g => [g.id, esc(g.n)]),
       p.sp
     )}</label><label>Sexo${sel(
       'pf3',
@@ -993,7 +1005,7 @@ function petForm(p, sp) {
         ['h', 'Hembra']
       ],
       p.sex
-    )}</label></div><div class="two"><label>Nacimiento<input id="pf4" type="date" value="${p.born || ''}"></label><label>Raza o color<input id="pf5" value="${esc(p.col)}" placeholder="Ej. Naranja, atigrado…"></label></div><div class="two"><label>Microchip<input id="pf6" value="${esc(p.chip)}" inputmode="numeric" placeholder="Opcional"></label><label>Esterilizado${sel(
+    )}</label></div><label>Nacimiento<input id="pf4" type="date" value="${p.born || ''}"></label><div class="two"><label>Raza<input id="pf11" value="${esc(p.raza)}" placeholder="Ej. Europeo común"></label><label>Color<input id="pf5" value="${esc(p.col)}" placeholder="Ej. Naranja, atigrado…"></label></div><div class="two"><label>Microchip<input id="pf6" value="${esc(p.chip)}" inputmode="numeric" placeholder="Opcional"></label><label>Esterilizado${sel(
       'pf7',
       [
         ['', '—'],
@@ -1016,6 +1028,7 @@ function petForm(p, sp) {
         sp: g('#pf2'),
         sex: g('#pf3'),
         born: g('#pf4'),
+        raza: g('#pf11'),
         col: g('#pf5'),
         chip: g('#pf6'),
         ster: g('#pf7'),
@@ -1126,4 +1139,49 @@ function petMedForm(v) {
   };
   if (!n) o.querySelector('#fdel').onclick = () => carDel(o, p.med, v, 'esto del historial');
   o.querySelector('#pm1').focus();
+}
+/* Grupos de Mascotas (las pestañas): nombre, cómo se dice una sola y el icono. Se añaden, cambian o quitan aquí;
+   un grupo con mascotas no se quita (primero hay que cambiarlas de grupo o eliminarlas). */
+function petGrpForm() {
+  const G = petGrps().map(g => ({ ...g }));
+  const o = modal(
+    `<h3>Grupos</h3><div class="fs"><div class="mu">Cada grupo es una pestaña de Mascotas (por ejemplo, Gatos o Agapornis).</div><div id="pgl"></div><button class="morebtn" type="button" id="pgadd">${I('plus')} Añadir grupo</button></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`
+  );
+  const L = o.querySelector('#pgl'),
+    keep = () =>
+      L.querySelectorAll('.pgr').forEach((r, i) => {
+        G[i].n = r.querySelector('[data-f=n]').value.trim();
+        G[i].one = r.querySelector('[data-f=one]').value.trim();
+        G[i].ic = r.querySelector('[data-f=ic]').value;
+      }),
+    draw = () => {
+      L.innerHTML = G.map((g, i) => {
+        const n = petsR().filter(p => petSp(p) === g.id).length;
+        return `<div class="pgr"><div class="two"><label>Nombre<input data-f="n" value="${esc(g.n)}" placeholder="Ej. Gatos"></label><label>Una sola<input data-f="one" value="${esc(g.one || '')}" placeholder="Ej. Gato"></label></div><div class="pgrb"><label>Icono<select data-f="ic">${PET_IC.map(([k, l]) => `<option value="${k}" ${g.ic === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label><button class="btn ghost danger" type="button" data-del="${i}" ${n ? 'disabled' : ''}>Quitar</button></div>${n ? `<div class="mu">${n === 1 ? 'Tiene 1 mascota' : 'Tiene ' + n + ' mascotas'}: para quitarlo, antes cámbialas de grupo o elimínalas.</div>` : ''}</div>`;
+      }).join('');
+      L.querySelectorAll('[data-del]').forEach(
+        b =>
+          (b.onclick = () => {
+            keep();
+            G.splice(+b.dataset.del, 1);
+            draw();
+          })
+      );
+    };
+  draw();
+  o.querySelector('#pgadd').onclick = () => {
+    keep();
+    G.push({ id: id(), n: '', one: '', ic: 'paw-print' });
+    draw();
+    L.querySelector('.pgr:last-child [data-f=n]').focus();
+  };
+  o.querySelector('#ok').onclick = () => {
+    keep();
+    if (G.some(g => !g.n)) return toast('Pon nombre a cada grupo');
+    S.petGrp = G;
+    if (!G.some(g => g.id === petTab)) petTab = '';
+    o.remove();
+    ch();
+    toast('Grupos guardados');
+  };
 }

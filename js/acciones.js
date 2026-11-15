@@ -91,6 +91,11 @@ const A = {
     render();
   },
   padd: i => petForm(null, i),
+  pgrp: () => petGrpForm(),
+  pgm: i => {
+    petOff = Math.min(0, petOff + +i);
+    render();
+  },
   pinf: i => petForm(petsR().find(p => p.id === i)),
   pvacn: () => petVacForm(null),
   pvac: i => {

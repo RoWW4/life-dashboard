@@ -1,12 +1,14 @@
 'use strict';
 /* Sección «Mascotas»: una ficha por animal con su foto, la edad, vacunas y desparasitaciones (con la próxima fecha),
    historial del veterinario y lo gastado (de los movimientos con categoría Mascotas).
-   Datos en S.pets (lista): id, n (nombre), sp (gato, perro, ave, otro), sex (m/h), born (nacimiento), col (raza o color),
+   Datos en S.pets (lista): id, n (nombre), sp (grupo: su id en S.petGrp), sex (m/h), born (nacimiento), raza, col (color),
    chip, ster (esterilizado), kg, vet (veterinario), notes, photo (foto pequeña en JPEG),
    vac: [{id, n, d (puesta), nx (próxima)}] y med: [{id, d, what, det, vet, imp (se destaca en la ficha)}].
+   Grupos (pestañas) en S.petGrp: [{id, n (nombre en plural), one (en singular), ic (icono)}]; sin guardar, los de partida.
    El repositorio es público: aquí no van nombres ni datos de las mascotas; viven en Supabase. */
 let petSel = '',
-  petTab = ''; // pestaña: gatos, aves… (solo sale si hay de más de una especie)
+  petTab = '', // grupo abierto (pestaña)
+  petOff = 0; // mes de Gastos: 0 = el actual, -1 = el anterior…
 const PETC = '#c08457';
 const PET_SP = {
   gato: ['cat', 'Gato', 'Gatos'],
@@ -14,7 +16,30 @@ const PET_SP = {
   ave: ['bird', 'Agapornis', 'Agapornis'],
   otro: ['paw-print', 'Otro', 'Otros']
 };
-const petSp = p => (PET_SP[p.sp] ? p.sp : 'otro');
+const PET_IC = [
+  ['cat', 'Gato'],
+  ['dog', 'Perro'],
+  ['bird', 'Pájaro'],
+  ['paw-print', 'Huella']
+];
+const PET_G0 = [
+  { id: 'gato', n: 'Gatos', one: 'Gato', ic: 'cat' },
+  { id: 'ave', n: 'Agapornis', one: 'Agapornis', ic: 'bird' }
+];
+const petSp = p => p.sp || 'otro';
+/* Grupos: los guardados (o los de partida) y, por si acaso, uno para cada mascota cuyo grupo ya no existe. */
+const petGrps = () => {
+  const G = (Array.isArray(S.petGrp) ? S.petGrp : PET_G0).filter(g => g && g.id);
+  petsR().forEach(p => {
+    const k = petSp(p);
+    if (!G.some(g => g.id === k)) {
+      const d = PET_SP[k] || PET_SP.otro;
+      G.push({ id: k, n: d[2], one: d[1], ic: d[0] });
+    }
+  });
+  return G;
+};
+const petGrp = k => petGrps().find(g => g.id === k) || { id: k, n: 'Otros', one: '', ic: 'paw-print' };
 const PET_VAC = ['Trivalente felina', 'Rabia', 'Leucemia felina', 'Desparasitación interna', 'Desparasitación externa', 'Revisión anual'];
 /* Para leer (no cambia S). */
 const petsR = () => (Array.isArray(S.pets) ? S.pets.filter(p => p && p.id) : []);
@@ -26,8 +51,7 @@ const petFix = p => {
   });
   return p;
 };
-/* Especies que hay (en orden fijo) y la pestaña abierta. */
-const petTabs = () => Object.keys(PET_SP).filter(k => petsR().some(p => petSp(p) === k));
+const petTabs = () => petGrps().map(g => g.id);
 const petCur = () => {
   const T = petTabs(),
     all = petsR(),
@@ -37,7 +61,7 @@ const petCur = () => {
   const L = all.filter(p => petSp(p) === petTab);
   return L.find(p => p.id === petSel) || L[0] || null;
 };
-const petIc = p => (PET_SP[p.sp] || PET_SP.otro)[0];
+const petIc = p => petGrp(petSp(p)).ic || 'paw-print';
 const petAv = (p, cls = '') =>
   p.photo ? `<span class="pav ${cls}"><img src="${esc(p.photo)}" alt=""></span>` : `<span class="pav ${cls}">${I(petIc(p))}</span>`;
 
@@ -122,34 +146,35 @@ const petVacRow = o =>
 function vMascotas() {
   const p = petCur(),
     L = petsR().filter(x => petSp(x) === petTab),
-    TB = petTabs();
+    TB = petGrps(),
+    g = petGrp(petTab);
   if (p) petSel = p.id;
   const hdr = `<div class="hdr"><div><h2>Mascotas</h2><div class="sub help">Su edad, las vacunas (con aviso cuando toca la siguiente) y lo que les ha pasado en el veterinario.</div></div></div>`;
+  // Pestañas de los grupos (Gatos, Agapornis…) y, al lado, el lápiz para añadir, cambiar o quitar grupos.
+  const tabs = `<div class="ptabw"><div class="seg ctabs ptabs" role="tablist" aria-label="Grupos">${TB.map(
+    x =>
+      `<button role="tab" aria-selected="${petTab === x.id}" class="${petTab === x.id ? 'on' : ''}" data-a="ptab" data-i="${esc(x.id)}">${I(x.ic || 'paw-print', 'sm')} ${esc(x.n)}</button>`
+  ).join(
+    ''
+  )}</div><button class="ib" data-a="pgrp" aria-label="Cambiar los grupos" title="Añadir, cambiar o quitar grupos">${I('pencil')}</button></div>`;
+  const sel = `<div class="petsel" role="tablist" aria-label="Mascotas">${L.map(
+    x =>
+      `<button role="tab" class="${x.id === (p && p.id) ? 'on' : ''}" aria-selected="${x.id === (p && p.id)}" data-a="psel" data-i="${esc(x.id)}">${petAv(x, 'sm')}<span><b>${esc(x.n || 'Sin nombre')}</b><small>${esc(petAge(x.born, 1) || g.one || '')}</small></span></button>`
+  ).join('')}<button class="padd" data-a="padd" data-i="${esc(petTab)}" aria-label="Añadir">${I('plus')}<span>Añadir</span></button></div>`;
   if (!p) {
     VIS.mascotas = [];
     return (
       hdr +
-      `<div class="card pet0">${tile('paw-print', PETC)}<div><b>Aún no hay ninguna mascota</b><div class="mu">Añade cada una con su foto y su fecha de nacimiento; luego puedes apuntar las vacunas de la cartilla y su historial.</div></div><button class="btn" data-a="padd">${I('plus')} Añadir mascota</button></div>`
+      (TB.length ? tabs : '') +
+      `<div class="card pet0">${tile(g.ic || 'paw-print', PETC)}<div><b>${TB.length ? 'Aún no hay ninguno en ' + esc(g.n) : 'Aún no hay ninguna mascota'}</b><div class="mu">Añade cada una con su foto y su fecha de nacimiento; luego puedes apuntar las vacunas de la cartilla y su historial.</div></div><button class="btn" data-a="padd" data-i="${esc(petTab)}">${I('plus')} Añadir</button></div>`
     );
   }
-  const tabs =
-    TB.length > 1
-      ? `<div class="seg ctabs ptabs" role="tablist" aria-label="Especie">${TB.map(k => `<button role="tab" aria-selected="${petTab === k}" class="${petTab === k ? 'on' : ''}" data-a="ptab" data-i="${k}">${I(PET_SP[k][0], 'sm')} ${PET_SP[k][2]}</button>`).join('')}</div>`
-      : '';
-  const sel = `<div class="petsel" role="tablist" aria-label="Mascotas">${L.map(
-    x =>
-      `<button role="tab" class="${x.id === p.id ? 'on' : ''}" aria-selected="${x.id === p.id}" data-a="psel" data-i="${esc(x.id)}">${petAv(x, 'sm')}<span><b>${esc(x.n || 'Sin nombre')}</b><small>${esc(petAge(x.born, 1) || (PET_SP[x.sp] || PET_SP.otro)[1])}</small></span></button>`
-  ).join(
-    ''
-  )}<button class="padd" data-a="padd" data-i="${petTab}" aria-label="Añadir mascota">${I('plus')}<span>Añadir</span></button></div>`;
   const age = petAge(p.born),
     bd = petBday(p.born),
     sx = p.sex === 'm' ? 'Macho' : p.sex === 'h' ? 'Hembra' : '';
-  // Cabecera centrada: foto, nombre, edad y lo básico (especie, sexo, color); el cumpleaños, en pequeño.
-  const top = `<section class="peth" aria-label="${esc(p.n || 'Mascota')}"><button class="carhb" data-a="pinf" data-i="${esc(p.id)}" aria-label="Editar la ficha" title="Editar la ficha">${I('pencil')}</button><label class="pphoto" title="Cambiar la foto">${petAv(p, 'lg')}<span class="pcam">${I('upload', 'sm')}</span><input type="file" id="petfile" data-i="${esc(p.id)}" accept="image/*" hidden></label><b class="petn">${esc(p.n || 'Sin nombre')}</b><span class="petage">${age ? esc(age) : 'Sin fecha de nacimiento'}</span><span class="eyb">${I(petIc(p), 'sm')} ${[(PET_SP[p.sp] || PET_SP.otro)[1], sx, p.col].filter(Boolean).map(esc).join(' · ')}</span>${
-    bd
-      ? `<span class="carhs">${I('cake', 'sm')} ${bd.n === 0 ? `¡Hoy cumple ${bd.age}!` : `Cumple ${bd.age} ${bd.n === 1 ? 'mañana' : 'en ' + bd.n + ' días'}`}</span>`
-      : ''
+  // Cabecera centrada: foto, nombre, edad, lo básico (sexo, raza, color) y la fecha de nacimiento.
+  const top = `<section class="peth" aria-label="${esc(p.n || 'Mascota')}"><button class="carhb" data-a="pinf" data-i="${esc(p.id)}" aria-label="Editar la ficha" title="Editar la ficha">${I('pencil')}</button><label class="pphoto" title="Cambiar la foto">${petAv(p, 'lg')}<span class="pcam">${I('upload', 'sm')}</span><input type="file" id="petfile" data-i="${esc(p.id)}" accept="image/*" hidden></label><b class="petn">${esc(p.n || 'Sin nombre')}</b><span class="petage">${age ? esc(age) : 'Sin fecha de nacimiento'}</span><span class="eyb">${I(petIc(p), 'sm')} ${[g.one, sx, p.raza, p.col].filter(Boolean).map(esc).join(' · ')}</span>${
+    bd ? `<span class="carhs">${I('cake', 'sm')} ${bd.n === 0 ? `¡Hoy cumple ${bd.age}!` : fd(p.born)}</span>` : ''
   }</section>`;
   const VV = petVac(p),
     all = [...(p.vac || [])].sort((a, b) => (b.d || '').localeCompare(a.d || '')),
@@ -158,7 +183,11 @@ function vMascotas() {
     y = TD().slice(0, 4),
     T = TXP().filter(x => x.cat === 'Mascotas' && gAmt(x)),
     sum = A => A.reduce((a, x) => a + gAmt(x), 0),
-    TM = T.filter(x => mon(x.date) === MN(new Date())).sort((a, b) => b.date.localeCompare(a.date));
+    md = new Date(new Date().getFullYear(), new Date().getMonth() + petOff, 1),
+    gm = MN(md),
+    gy = gm.slice(0, 4),
+    mes = cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(md)) + (gy === y ? '' : ' ' + gy),
+    TM = T.filter(x => mon(x.date) === gm).sort((a, b) => b.date.localeCompare(a.date));
   const C = {
     vac: panel(
       'mascotas',
@@ -194,7 +223,8 @@ function vMascotas() {
       (x => (x ? `<dl class="ckv">${x}</dl>` : `<div class="mu">Toca «Editar» para añadir el chip, el veterinario…</div>`))(
         [
           R('Nacimiento', p.born ? fd(p.born) : ''),
-          R('Raza o color', p.col),
+          R('Raza', p.raza),
+          R('Color', p.col),
           R('Microchip', p.chip),
           R('Esterilizado', p.ster),
           R('Peso', p.kg ? String(p.kg).replace('.', ',') + ' kg' : ''),
@@ -208,7 +238,7 @@ function vMascotas() {
       'mascotas',
       'gasto',
       `${I('wallet')} Gastos`,
-      `<div class="cgm"><b class="big">${eur(sum(TM))}</b><span class="mu">Este mes · En ${y}: ${eur(sum(T.filter(x => x.date.slice(0, 4) === y)))}</span></div>` +
+      `<div class="cgnav"><button class="ib" data-a="pgm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b>${mes}</b><button class="ib" data-a="pgm" data-i="1" aria-label="Mes siguiente" ${petOff ? '' : 'disabled'}>${I('chevron-right')}</button></div><div class="cgm"><b class="big">${eur(sum(TM))}</b><span class="mu">En ${gy}: ${eur(sum(T.filter(x => x.date.slice(0, 4) === gy)))}</span></div>` +
         (TM.length
           ? fold(
               'pet-mov',
@@ -218,7 +248,7 @@ function vMascotas() {
               ),
               5
             )
-          : '') +
+          : empty('Sin gastos de mascotas en ' + mes.toLowerCase() + '.')) +
         `<div class="mu" style="margin-top:8px">De todas las mascotas. Salen solos de los movimientos con categoría Mascotas.</div>`
     )
   };

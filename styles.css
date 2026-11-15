@@ -1034,6 +1034,7 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 
 /* ---------- Coche (js/vistas/coche.js) ---------- */
 :is(.nv,.msecs button)[data-i=coche]{--c:#f5a524}.card[data-v=coche]{--mod:#f5a524}
+:is(.nv,.msecs button)[data-i=mascotas]{--c:#c08457}.card[data-v=mascotas]{--mod:#c08457}
 .ctabs{display:flex;width:max-content;max-width:100%;margin-bottom:16px;flex-wrap:nowrap}
 .ctabs button{text-align:center;white-space:nowrap}
 @media(max-width:760px){.ctabs{width:100%}.ctabs button{flex:1;padding:6px 4px}}
@@ -1146,7 +1147,7 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 .petsel::-webkit-scrollbar{display:none}
 .petsel button{all:unset;box-sizing:border-box;cursor:pointer;flex:none;display:flex;align-items:center;gap:9px;padding:6px 14px 6px 6px;border-radius:999px;background:var(--card);border:1px solid var(--bd);transition:background .15s,border-color .15s}
 .petsel button>span:not(.pav){display:flex;flex-direction:column;line-height:1.2}.petsel b{font-size:14px;font-weight:650}.petsel small{font-size:11.5px;color:var(--mu)}
-.petsel button.on{border-color:#c08457;background:color-mix(in srgb,#c08457 14%,var(--card))}
+.petsel button.on{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 12%,var(--card))}
 .petsel button:focus-visible{outline:2px solid var(--ac)}
 .petsel .padd{padding:6px 14px;color:var(--mu);font-size:13px;gap:6px}.petsel .padd span{flex-direction:row}
 .pav{flex:none;width:36px;height:36px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:color-mix(in srgb,#c08457 22%,var(--card2));color:#c08457}
@@ -1161,7 +1162,7 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 .petage{font-size:17px;font-weight:600}
 .peth .eyb{font-size:13px;font-weight:500;color:var(--hero-mu);display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:2px}
 .peth .carhs{display:flex;align-items:center;gap:5px}
-.ptabs{display:flex;width:100%;max-width:420px;margin-bottom:12px}.ptabs button{flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-align:center}
+.ptabw{display:flex;align-items:center;gap:8px;margin-bottom:12px}.ptabs{display:flex;flex:1;max-width:420px;margin:0}.ptabs button{flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-align:center}
 .pcrop{z-index:60}
 .pcv{position:relative;width:min(280px,100%);aspect-ratio:1;margin:4px auto 14px;border-radius:16px;overflow:hidden;background:#000;touch-action:none;cursor:grab;user-select:none}
 .pcv:active{cursor:grabbing}
@@ -1177,3 +1178,4 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 .pvall{display:flex;flex-direction:column;margin:0 0 6px}.pvall .link{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--sep);font-size:14px}
 .pvq{display:flex;flex-wrap:nowrap;margin:-2px 0 2px}.pvq button{flex:1;text-align:center;padding:5px 2px;white-space:nowrap;font-size:12.5px}
 @media(max-width:760px){.peth{padding:20px 16px 18px}.peth .pav.lg{width:104px;height:104px}.petn{font-size:26px}.petage{font-size:15px}}
+.pgr{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-bottom:1px solid var(--sep)}.pgrb{display:flex;align-items:flex-end;gap:10px}.pgrb label{flex:1}
