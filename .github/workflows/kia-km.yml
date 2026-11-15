@@ -1,0 +1,36 @@
+name: Km del coche (Kia Connect)
+
+# Lee una vez al día el cuentakilómetros del coche en Kia Connect (último estado guardado, sin despertar el coche) y lo
+# apunta en la sección Coche del panel si ha subido. También se puede lanzar a mano (Run workflow).
+# Secretos: KIA_USER y KIA_PASSWORD (cuenta de Kia Connect), KIA_PIN si la cuenta lo pide, y los de Supabase.
+on:
+  schedule:
+    - cron: '17 20 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: kia-km
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  km:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Instalar
+        run: pip install --quiet hyundai_kia_connect_api==5.3.1
+      - name: Leer km
+        run: python scripts/kia-km.py
+        env:
+          KIA_USER: ${{ secrets.KIA_USER }}
+          KIA_PASSWORD: ${{ secrets.KIA_PASSWORD }}
+          KIA_PIN: ${{ secrets.KIA_PIN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}

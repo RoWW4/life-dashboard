@@ -35,13 +35,18 @@ const hasN = v => v !== undefined && v !== null && v !== '' && !isNaN(+v);
 function carKm(c = carR()) {
   const P = [...c.km, ...c.vis.filter(v => hasN(v.km)), ...c.mt.filter(x => hasN(x.lk) && x.ld).map(x => ({ d: x.ld, km: x.lk }))]
     .filter(p => p.d && hasN(p.km))
-    .map(p => ({ d: p.d, km: +p.km }))
+    .map(p => ({ d: p.d, km: +p.km, src: p.src }))
     .sort((a, b) => a.d.localeCompare(b.d) || a.km - b.km);
-  if (!P.length) return { cur: null, d: '', rate: null };
+  if (!P.length) return { cur: null, d: '', rate: null, src: '' };
   const last = P.reduce((a, p) => (p.km >= a.km ? p : a), P[0]);
   // Ritmo: desde la lectura más antigua de los últimos 6 meses que tenga al menos 14 días de margen.
   const from = P.find(p => dd(last.d, p.d) >= 14 && dd(TD(), p.d) <= 183) || (dd(last.d, P[0].d) >= 14 ? P[0] : null);
-  return { cur: last.km, d: last.d, rate: from && last.km > from.km ? (last.km - from.km) / dd(last.d, from.d) : null };
+  return {
+    cur: last.km,
+    d: last.d,
+    src: last.src || '',
+    rate: from && last.km > from.km ? (last.km - from.km) / dd(last.d, from.d) : null
+  };
 }
 
 /* Estado de un mantenimiento: próxima fecha (por tiempo o fija), km que faltan, fecha estimada por km, avance y nivel. */
@@ -229,7 +234,7 @@ function vCoche() {
       mes = cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(md)) + (gy === y ? '' : ' ' + gy);
     top = `<section class="carh" aria-label="Kilómetros">${carArt()}<div class="carhm"><span class="eyb">${I('gauge', 'sm')} Kilómetros</span>${
       K.cur !== null
-        ? `<b>${kmf(K.cur)} <small>km</small></b><span class="carhs">Apuntado ${rel(K.d)}</span>`
+        ? `<b>${kmf(K.cur)} <small>km</small></b><span class="carhs">${K.src === 'kia' ? 'De Kia Connect' : 'Apuntado'} ${rel(K.d)}</span>`
         : `<b class="carh0">Sin apuntar</b><span class="carhs">Toca el lápiz para poner los km del coche.</span>`
     }</div><button class="carhb" data-a="ckm" aria-label="Actualizar los km" title="Actualizar los km">${I('pencil')}</button></section>`;
     C = {
