@@ -42,6 +42,46 @@ def job(event, error=None):
         print(f"(no se pudo apuntar el latido {event}: {type(e).__name__})")
 
 
+DIAG_FIELDS = [
+    "fuel_level", "fuel_level_is_low", "fuel_driving_range", "total_driving_range", "engine_type",
+    "oil_level_warning_is_on", "brake_fluid_warning_is_on", "washer_fluid_warning_is_on", "smart_key_battery_warning_is_on",
+    "tire_pressure_all_warning_is_on", "tire_pressure_front_left_warning_is_on", "battery_auxiliary_fail_warning_is_on",
+    "car_battery_percentage", "dtc_count", "lamp_status", "headlamp_status",
+    "is_locked", "front_left_door_is_open", "front_left_window_is_open", "trunk_is_open", "hood_is_open", "sunroof_is_open",
+    "location_latitude", "location_last_set_time", "last_updated_at",
+    "average_fuel_economy_drive", "average_fuel_economy_after_refuel", "average_fuel_economy_accumulated",
+]
+
+
+def diag(vm):
+    """Prueba: qué datos manda este coche. Solo escribe nombres y si vienen o no, nunca valores (el registro es público)."""
+    import datetime as dt
+
+    v = next(iter(vm.vehicles.values()))
+    for f in DIAG_FIELDS:
+        try:
+            val = getattr(v, f)
+        except Exception:
+            val = None
+        print(f"{f}: {'sí' if val is not None else 'no'}")
+    vid = next(iter(vm.vehicles))
+    hoy = dt.date.today()
+    for nombre, fn in (
+        ("viajes del mes", lambda: vm.update_month_trip_info(vid, hoy.strftime("%Y%m"))),
+        ("viajes de ayer", lambda: vm.update_day_trip_info(vid, (hoy - dt.timedelta(days=1)).strftime("%Y%m%d"))),
+    ):
+        try:
+            fn()
+            print(f"{nombre}: sí")
+        except Exception as e:
+            print(f"{nombre}: no ({type(e).__name__})")
+    m = v.month_trip_info
+    print("viajes del mes con datos:", "sí" if m and (m.summary or m.day_list) else "no")
+    d = v.day_trip_info
+    print("viajes de ayer con datos:", "sí" if d and (d.summary or d.trip_list) else "no")
+    print("estadísticas diarias:", "sí" if getattr(v, "daily_stats", None) else "no")
+
+
 def main():
     job("start")
     try:
@@ -54,6 +94,8 @@ def main():
         )
         vm.check_and_refresh_token()
         vm.update_all_vehicles_with_cached_state()  # último estado guardado: no despierta el coche
+        if os.environ.get("KIA_DIAG") == "1":
+            diag(vm)
         kms = [v.odometer for v in vm.vehicles.values() if v.odometer]
         if not kms:
             raise RuntimeError("Kia Connect no devuelve el cuentakilómetros")

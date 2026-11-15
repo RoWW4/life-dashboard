@@ -7,6 +7,11 @@ on:
   schedule:
     - cron: '17 20 * * *'
   workflow_dispatch:
+    inputs:
+      diag:
+        description: 'Prueba: ver qué datos manda el coche (solo nombres, sin valores)'
+        type: boolean
+        default: false
 
 concurrency:
   group: kia-km
@@ -32,5 +37,6 @@ jobs:
           KIA_USER: ${{ secrets.KIA_USER }}
           KIA_PASSWORD: ${{ secrets.KIA_PASSWORD }}
           KIA_PIN: ${{ secrets.KIA_PIN }}
+          KIA_DIAG: ${{ inputs.diag && '1' || '' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
