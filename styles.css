@@ -214,7 +214,7 @@ input::placeholder,textarea::placeholder{color:var(--mu);opacity:.85}
 .barcfg,.bgcfg{flex-wrap:wrap}.barcfg .g,.bgcfg .g{flex-basis:100%}.barcfg .g em,.bgcfg .g em{display:block;font-style:normal;font-size:12px}
 .barcfg .seg label.on,.seg button.on{background:var(--acs);color:var(--ac2);box-shadow:none}
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
-input[type=checkbox].ck{appearance:none;-webkit-appearance:none;width:20px;height:20px;border:1.5px solid var(--dis);border-radius:6px;cursor:pointer;flex-shrink:0;display:inline-grid;place-items:center;background:transparent;margin:0;transition:background .15s,border-color .15s}
+input[type=checkbox].ck{appearance:none;-webkit-appearance:none;width:20px;height:20px;padding:0;box-sizing:border-box;border:1.5px solid var(--dis);border-radius:6px;cursor:pointer;flex-shrink:0;display:inline-grid;place-items:center;background:transparent;margin:0;transition:background .15s,border-color .15s}
 input[type=checkbox].ck:hover{border-color:var(--ac)}
 input[type=checkbox].ck:checked{background:var(--ac);border-color:var(--ac);animation:ckp .22s ease}
 input[type=checkbox].ck:checked::after{content:'';width:5px;height:10px;border:solid #fff;border-width:0 2.2px 2.2px 0;transform:translateY(-1px) rotate(45deg)}
@@ -406,7 +406,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .dlg p{margin:0 0 14px;color:var(--mu)}
 .fs{display:flex;flex-direction:column;gap:14px;margin-bottom:20px}
 .fs label{display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--tx2);font-weight:500;min-width:0}
-.fs label.chk{flex-direction:row;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;color:var(--tx)}
+.fs label.chk{flex-direction:row;align-items:center;gap:10px;flex-wrap:wrap;font-size:13.5px;color:var(--tx);padding:5px 0;cursor:pointer}
 .link.txl{flex:0 1 auto;display:inline;text-align:left}.link.txl:hover{color:var(--ac2)}
 .notes h4{margin:4px 0 6px;display:flex;align-items:center;gap:6px}
 .note{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--sep)}
