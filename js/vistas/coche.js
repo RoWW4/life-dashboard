@@ -203,8 +203,8 @@ const carArt = () =>
   `<path d="M336 350H362V368H342Z" fill="#164f88"/>` +
   `<path d="M160 392 212 386 206 401 162 406Z" fill="#eaf2ff"/><path d="M688 364 728 368 732 384 694 382Z" fill="#ff4d5e"/>` +
   `<circle cx="258" cy="467" r="47" fill="#0b0d12"/><circle cx="258" cy="467" r="34" fill="#cfd4dc"/><circle cx="258" cy="467" r="28" fill="none" stroke="#2a2f38" stroke-width="16" stroke-dasharray="5 6"/><circle cx="258" cy="467" r="9" fill="#8b929e"/><circle cx="652" cy="467" r="47" fill="#0b0d12"/><circle cx="652" cy="467" r="34" fill="#cfd4dc"/><circle cx="652" cy="467" r="28" fill="none" stroke="#2a2f38" stroke-width="16" stroke-dasharray="5 6"/><circle cx="652" cy="467" r="9" fill="#8b929e"/></g></svg>`;
-/* Mapa de dónde está aparcado, dentro de la tarjeta: Leaflet (se carga solo al abrir el mapa) con teselas de CARTO
-   (oscuras, o claras con el tema claro, con nombres de calles). Se mueve con el dedo y se acerca con dos dedos o + y −.
+/* Mapa de dónde está aparcado, dentro de la tarjeta: Leaflet (se carga solo al abrir el mapa) con el mapa de
+   OpenStreetMap (sin clave; con el tema oscuro se oscurece con un filtro). Se mueve con el dedo y se acerca con dos dedos o + y −.
    «Llegar al coche» pide la ubicación del móvil, marca dónde estás y dibuja el camino andando (routing.openstreetmap.de;
    si no responde, línea recta); «Indicaciones» abre la navegación paso a paso en Google Maps. */
 const LEAF = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/';
@@ -263,11 +263,11 @@ function carMapMount() {
       el.innerHTML = '';
       const m = L.map(el, { zoomControl: false, attributionControl: true }),
         dark = S.theme !== 'light';
-      L.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`, {
-        subdomains: 'abcd',
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        attribution: '© OpenStreetMap · © CARTO'
+        attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
       }).addTo(m);
+      el.classList.toggle('dk', dark); // con el tema oscuro, el mapa se oscurece con un filtro (styles.css)
       m.attributionControl.setPrefix(false);
       L.control.zoom({ position: 'topright', zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' }).addTo(m);
       const rt = carRt && carRt.to === car.join(',') ? carRt : null;
@@ -282,7 +282,7 @@ function carMapMount() {
           title: 'Tú'
         }).addTo(m);
       if (carMapV) m.setView(carMapV.c, carMapV.z, { animate: false });
-      else if (rt) m.fitBounds(L.latLngBounds(rt.pts.concat([car])), { padding: [36, 36], maxZoom: 17 });
+      else if (rt) m.fitBounds(L.latLngBounds(rt.pts.concat([car])), { padding: [44, 44], maxZoom: 18 });
       else m.setView(car, 16);
       m.on('moveend', () => (carMapV = { c: m.getCenter(), z: m.getZoom() }));
     })
