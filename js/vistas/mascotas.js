@@ -188,9 +188,10 @@ function vMascotas() {
     gy = gm.slice(0, 4),
     mes = cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(md)) + (gy === y ? '' : ' ' + gy),
     TM = T.filter(x => mon(x.date) === gm).sort((a, b) => b.date.localeCompare(a.date));
+  const pv = 'mascotas-' + petTab; // orden y ancho de los paneles, por pestaña
   const C = {
     vac: panel(
-      'mascotas',
+      pv,
       'vac',
       `${I('syringe')} Vacunas y desparasitación`,
       (VV.length ? VV.map(petVacRow).join('') : empty('Nada apuntado. Copia aquí lo que pone la cartilla.')) +
@@ -204,7 +205,7 @@ function vMascotas() {
       'hl'
     ),
     med: panel(
-      'mascotas',
+      pv,
       'med',
       `${I('stethoscope')} Historial médico`,
       (MD.length
@@ -217,7 +218,7 @@ function vMascotas() {
         `<button class="morebtn" data-a="pmedn">${I('plus')} Apuntar en el historial</button>`
     ),
     fic: panel(
-      'mascotas',
+      pv,
       'fic',
       `${I('id-card')} Ficha`,
       (x => (x ? `<dl class="ckv">${x}</dl>` : `<div class="mu">Toca «Editar» para añadir el chip, el veterinario…</div>`))(
@@ -235,7 +236,7 @@ function vMascotas() {
         `<button class="morebtn" data-a="pinf" data-i="${esc(p.id)}">${I('pencil')} Editar</button>`
     ),
     gasto: panel(
-      'mascotas',
+      pv,
       'gasto',
       `${I('wallet')} Gastos`,
       `<div class="cgnav"><button class="ib" data-a="pgm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b>${mes}</b><button class="ib" data-a="pgm" data-i="1" aria-label="Mes siguiente" ${petOff ? '' : 'disabled'}>${I('chevron-right')}</button></div><div class="cgm"><b class="big">${eur(sum(TM))}</b><span class="mu">En ${gy}: ${eur(sum(T.filter(x => x.date.slice(0, 4) === gy)))}</span></div>` +
@@ -252,8 +253,12 @@ function vMascotas() {
         `<div class="mu" style="margin-top:8px">De todas las mascotas. Salen solos de los movimientos con categoría Mascotas.</div>`
     )
   };
-  VIS.mascotas = ord('mascotas', Object.keys(C));
-  return `${hdr}${tabs}${sel}${top}<div class="grid">${VIS.mascotas.map(k => C[k]).join('')}</div>`;
+  // Cada pestaña guarda su propio orden de paneles; en las aves, la ficha va primero de partida (no se vacunan).
+  // Las de gatos empiezan con el orden que hubiera antes para toda la sección.
+  const K0 = g.ic === 'bird' ? ['fic', 'med', 'gasto', 'vac'] : Object.keys(C);
+  VIS[pv] = ord(pv, S.order[pv] || g.ic === 'bird' ? K0 : ord('mascotas', K0));
+  VIS.mascotas = VIS[pv];
+  return `${hdr}${tabs}${sel}${top}<div class="grid">${VIS[pv].map(k => C[k]).join('')}</div>`;
 }
 
 /* Foto: al elegirla se abre una ventana para encuadrarla (arrastrar para mover; la barra, la rueda o dos dedos para
