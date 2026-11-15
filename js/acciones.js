@@ -7,7 +7,8 @@ const V = i => {
 };
 const A = {
   go: i => {
-    view = i;
+    // Al entrar en Finanzas desde el menú, vuelve a la última pestaña abierta.
+    view = i === 'fin' && secOf(view) !== 'fin' ? dinLast : i;
     render();
   },
   // Coche (vistas/coche.js)
@@ -580,11 +581,16 @@ const A = {
     const t = wxDia(i);
     if (t) toast(t);
   },
-  // Ajustes → Menú: b = en la barra del móvil, m = en «Más», o = oculta.
+  // Ajustes → Menú: b = en la barra del móvil, m = en «Más», o = oculta; s = se ve (con la barra de todos los iconos).
   nvo: i => {
     const [k, v] = i.split(':'),
-      o = (S.navOff || ['compra']).filter(x => x !== k),
-      b = barKeys().filter(x => x !== k);
+      o = (S.navOff || ['compra']).filter(x => x !== k);
+    if (S.navAll) {
+      if (v === 'o') o.push(k);
+      S.navOff = o;
+      return ch();
+    }
+    const b = barKeys().filter(x => x !== k);
     if (v === 'b') {
       if (b.length >= 3) return toast('En la barra caben 3 además de Mi día: pasa antes una a «Más»');
       b.push(k);
@@ -599,13 +605,17 @@ const A = {
     const bar = ['dia', ...barKeys()],
       L = secs().filter(([k]) => !bar.includes(k) && (k === 'ajus' || !navOff(k)));
     modal(
-      `<h3>Más secciones</h3><div class="msecs">${L.map(([k, e, l]) => `<button class="${view === k ? 'on' : ''}" data-a="gom" data-i="${k}"><span class="ic">${I(e)}</span>${l}</button>`).join('')}</div>`
+      `<h3>Más secciones</h3><div class="msecs">${L.map(([k, e, l]) => `<button class="${secOf(view) === k ? 'on' : ''}" data-a="gom" data-i="${k}"><span class="ic">${I(e)}</span>${l}</button>`).join('')}</div>`
     );
   },
   gom: i => {
     document.querySelectorAll('.ov').forEach(o => o.remove());
-    view = i;
-    render();
+    A.go(i);
+  },
+  nva: i => {
+    if (i === '1') S.navAll = true;
+    else delete S.navAll;
+    ch();
   },
   wxo: i => {
     if (i === '1') S.wxOff = true;

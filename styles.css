@@ -63,6 +63,10 @@ nav{width:224px;flex-shrink:0;position:sticky;top:14px;height:calc(100vh - 28px)
 .badge{min-width:20px;height:19px;padding:0 6px;border-radius:7px;background:var(--hov);box-shadow:inset 0 0 0 1px var(--bd2);color:var(--tx2);font-size:11px;font-weight:600;display:grid;place-items:center;font-style:normal;font-variant-numeric:tabular-nums}
 .nv.on .badge{background:rgba(255,255,255,.22);box-shadow:none;color:#fff}
 .nv.more{display:none}
+/* Finanzas: pestañas Movimientos · Facturas · Inversiones */
+.dinh{margin-bottom:12px}
+.dtabs{display:flex;width:100%;max-width:460px;box-sizing:border-box;flex-wrap:nowrap;margin-bottom:18px}
+.dtabs.seg button{flex:1 1 0;text-align:center;white-space:nowrap}
 /* Hoja «Más» del móvil: cuadrícula de secciones */
 .msecs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
 .msecs button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 4px;border-radius:16px;background:var(--hov);font-size:12.5px;font-weight:500;text-align:center;color:var(--tx)}
@@ -489,6 +493,8 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
   .brand,.navfoot{display:none}
   .nv[data-i=ajus],.nv.xb{display:none}
   .nv.more{display:flex}
+  /* Barra con todos los iconos (Ajustes): solo iconos y el nombre de la sección abierta */
+  nav.all .nv .s{display:none}nav.all .nv.on .s{display:block}
   .nv{flex:1 1 0;flex-direction:column;justify-content:center;gap:1px;padding:8px 0;min-height:44px;align-items:center;font-size:10.5px;font-weight:600;border-radius:19px;position:relative;min-width:0;transition:flex-grow .25s,background .2s,color .2s}
   .nv .e{width:auto}.nv .e .i{width:21px;height:21px}.nv .l{display:none}.nv .s{display:block;white-space:nowrap;line-height:1.1;font-size:10.5px}
   .nv.on{flex-grow:1.55;background:var(--acs);box-shadow:none;color:var(--ac2);padding:6px 0 5px}.nv.on .e{color:var(--ac)}.nv.on .s{display:block;white-space:nowrap;line-height:1.1}

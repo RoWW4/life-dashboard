@@ -53,16 +53,31 @@ function vAjus() {
         'ajus',
         'menu',
         `${I('menu')} Menú`,
-        `<div class="mu" style="margin-bottom:6px">En el móvil, abajo salen Mi día y las 3 que pongas en «Barra»; el resto, en el botón «Más». En el ordenador salen todas menos las ocultas. Ocultar una no borra nada (Compra y Coche se abren también desde Mi día).</div>${SEC.filter(
+        `<div class="row"><span class="g">Barra del móvil</span><div class="seg">${[
+          ['0', 'Con «Más»'],
+          ['1', 'Todos los iconos']
+        ]
+          .map(([v, n]) => `<button class="${+!!S.navAll === +v ? 'on' : ''}" data-a="nva" data-i="${v}">${n}</button>`)
+          .join('')}</div></div><div class="mu" style="margin:6px 0">${
+          S.navAll
+            ? 'En el móvil salen abajo todas las secciones que no estén ocultas, solo con su icono.'
+            : 'En el móvil, abajo salen Mi día y las 3 que pongas en «Barra»; el resto, en el botón «Más».'
+        } En el ordenador salen todas menos las ocultas. Ocultar una no borra nada (Compra y Coche se abren también desde Mi día).</div>${SEC.filter(
           ([k]) => k !== 'dia' && k !== 'ajus'
         )
           .map(([k, e, l]) => {
-            const st = (S.navOff || ['compra']).includes(k) ? 'o' : barKeys().includes(k) ? 'b' : 'm';
-            return `<div class="row"><span class="g">${I(e, 'sm')} ${l}</span><div class="seg">${[
-              ['b', 'Barra'],
-              ['m', 'Más'],
-              ['o', 'No']
-            ]
+            const st = (S.navOff || ['compra']).includes(k) ? 'o' : S.navAll ? 's' : barKeys().includes(k) ? 'b' : 'm';
+            return `<div class="row"><span class="g">${I(e, 'sm')} ${l}</span><div class="seg">${(S.navAll
+              ? [
+                  ['s', 'Sí'],
+                  ['o', 'No']
+                ]
+              : [
+                  ['b', 'Barra'],
+                  ['m', 'Más'],
+                  ['o', 'No']
+                ]
+            )
               .map(([v, n]) => `<button class="${st === v ? 'on' : ''}" data-a="nvo" data-i="${k}:${v}">${n}</button>`)
               .join('')}</div></div>`;
           })

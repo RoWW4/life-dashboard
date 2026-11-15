@@ -218,9 +218,7 @@ const SEC = [
   ['tareas', 'list-checks', 'Tareas', 'Tareas'],
   ['compra', 'shopping-cart', 'Compra', 'Compra'],
   ['fin', 'wallet', 'Finanzas', 'Finanzas'],
-  ['fact', 'receipt', 'Facturas', 'Facturas'],
   ['docs', 'folder-open', 'Documentos', 'Docs'],
-  ['inv', 'trending-up', 'Inversiones', 'Inversión'],
   ['salud', 'heart-pulse', 'Salud', 'Salud'],
   ['coche', 'car', 'Coche', 'Coche'],
   ['ajus', 'settings', 'Ajustes', 'Ajustes']
@@ -232,10 +230,23 @@ const secs = () =>
     SEC.map(x => x[0])
   ).map(k => SEC.find(x => x[0] === k)); // secciones en el orden elegido (en el ordenador se arrastran en el menú)
 /* Secciones que no salen en el menú (Ajustes → Menú). De serie, Compra (se entra desde Mi día). La que está abierta sale siempre. */
-const navOff = k => k !== view && (S.navOff || ['compra']).includes(k);
-/* Barra del móvil: Mi día y hasta 3 secciones elegidas en Ajustes (S.navBar), en el orden del menú; el resto va en «Más». */
+const navOff = k => k !== secOf(view) && (S.navOff || ['compra']).includes(k);
+/* «Finanzas» junta tres vistas con pestañas: Movimientos (fin), Facturas (fact) e Inversiones (inv). En el menú cuentan como «fin». */
+const DIN = [
+  ['fin', 'Movimientos'],
+  ['fact', 'Facturas'],
+  ['inv', 'Inversiones']
+];
+const secOf = v => (DIN.some(x => x[0] === v) ? 'fin' : v);
+let dinLast = 'fin'; // última pestaña de Finanzas abierta (para volver a ella)
+/* Barra del móvil: Mi día y hasta 3 secciones elegidas en Ajustes (S.navBar), en el orden del menú; el resto va en «Más».
+   Con S.navAll, como antes: todas las secciones visibles, solo iconos, sin «Más». */
 const NAVBAR0 = ['tareas', 'fin', 'salud'];
 const barKeys = () => {
+  if (S.navAll)
+    return secs()
+      .map(x => x[0])
+      .filter(k => k !== 'dia' && k !== 'ajus' && !navOff(k));
   const b = S.navBar || NAVBAR0;
   return secs()
     .map(x => x[0])

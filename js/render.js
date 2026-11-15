@@ -21,19 +21,23 @@ function theme() {
 }
 function nav() {
   const c = pend(),
-    n = { tareas: c.t, compra: c.s, fact: c.b },
+    n = { tareas: c.t, compra: c.s, fin: c.b },
+    sv = secOf(view),
     bar = ['dia', 'ajus', ...barKeys()];
+  $('#nav').classList.toggle('all', !!S.navAll);
   $('#nav').innerHTML =
     `<div class="brand"><span class="logo"><i><b></b><b></b><b></b><b></b></i></span><span class="bn">${APP}</span>${eyeBtn('ib eyeg')}</div>` +
     secs()
       .filter(([k]) => !navOff(k))
       .map(
         ([k, e, l, s]) =>
-          `<button class="nv ${view === k ? 'on' : ''}${bar.includes(k) ? '' : ' xb'}" data-a="go" data-i="${k}" title="Arrastra para cambiar el orden" aria-label="${l}" ${view === k ? 'aria-current="page"' : ''}><span class="e">${I(e)}</span><span class="l">${l}</span><span class="s">${s}</span>${n[k] ? `<i class="badge">${n[k]}</i>` : ''}</button>`
+          `<button class="nv ${sv === k ? 'on' : ''}${bar.includes(k) ? '' : ' xb'}" data-a="go" data-i="${k}" title="Arrastra para cambiar el orden" aria-label="${l}" ${sv === k ? 'aria-current="page"' : ''}><span class="e">${I(e)}</span><span class="l">${l}</span><span class="s">${s}</span>${n[k] ? `<i class="badge">${n[k]}</i>` : ''}</button>`
       )
       .join('') +
     // Móvil: «Más» abre las secciones que no van en la barra (en el ordenador no se ve).
-    `<button class="nv more ${bar.includes(view) ? '' : 'on'}" data-a="nmas" aria-label="Más secciones" style="--c:var(--ac)"><span class="e">${I('menu')}</span><span class="l">Más</span><span class="s">Más</span></button>` +
+    (S.navAll
+      ? ''
+      : `<button class="nv more ${bar.includes(sv) ? '' : 'on'}" data-a="nmas" aria-label="Más secciones" style="--c:var(--ac)"><span class="e">${I('menu')}</span><span class="l">Más</span><span class="s">Más</span></button>`) +
     `<div class="navfoot"><span id="syncst">${syncTxt}</span>${user ? `<span>${esc(user.email)}</span>` : ''}</div>`;
   // Móvil: Ajustes sale de la barra y queda como botón redondo arriba a la derecha.
   const a = $('#ajb');
@@ -51,7 +55,15 @@ function render() {
     same = render.last === view;
   if (!same) cust = false;
   if (!V_[view]) view = 'dia';
-  $('#m').innerHTML = V_[view]();
+  let h = V_[view]();
+  // Finanzas: título común y pestañas; cada vista conserva su cabecera (subtítulo y botones) sin su título.
+  if (DIN.some(x => x[0] === view)) {
+    dinLast = view;
+    h =
+      `<div class="hdr dinh"><div><h2>Finanzas</h2></div></div><div class="seg dtabs" role="tablist" aria-label="Finanzas">${DIN.map(([k, l]) => `<button role="tab" class="${view === k ? 'on' : ''}" aria-selected="${view === k}" data-a="go" data-i="${k}">${l}</button>`).join('')}</div>` +
+      h.replace(/<h2>[^<]*<\/h2>/, '');
+  }
+  $('#m').innerHTML = h;
   // Al cambiar de sección, las tarjetas entran en cascada y las barras crecen desde cero (clase .enter, solo un momento).
   if (!same) {
     const m = $('#m');
