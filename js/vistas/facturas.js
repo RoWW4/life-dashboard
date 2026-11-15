@@ -23,12 +23,49 @@ const fxItem = f => {
       : s.next
         ? `<span class="chip">Próximo ${fdc(s.next)}</span>`
         : '<span class="chip">Terminado</span>';
-  return `<div class="row brow">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><span class="tt">${esc(f.name)}</span><br><span class="mu">${fxFreq(f)}${fxEnd(f, s.next)}${s.paid ? (fromBank(s.paid) ? ' · Llegó del banco' : ' · Apuntado en el panel, aún sin cargo del banco') + (s.next && Math.abs(dd(s.paid.date, s.next)) > 10 ? ' · Próximo ' + fdc(s.next) : '') : ''}</span></span>${chip}<span class="amt ${f.t === 'i' ? 'ok' : ''}">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
+  return `<div class="row brow">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><button class="link tt fxn" data-a="fxinf" data-i="${f.id}" title="Ver lo que cuesta al año">${esc(f.name)}</button><span class="mu">${fxFreq(f)}${fxEnd(f, s.next)}${s.paid ? (fromBank(s.paid) ? ' · Llegó del banco' : ' · Apuntado en el panel, aún sin cargo del banco') + (s.next && Math.abs(dd(s.paid.date, s.next)) > 10 ? ' · Próximo ' + fdc(s.next) : '') : ''}</span></span>${chip}<span class="amt ${f.t === 'i' ? 'ok' : ''}">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
 };
+/* Ficha de un pago o ingreso (al tocar su nombre): cuánto supone al año y al mes, lo pagado este año y los últimos cargos. */
+/* Ficha de un pago o ingreso (al tocar su nombre), con el color de su categoría: cuánto supone al año y al mes,
+   lo pagado este año (barra frente a lo previsto) y los últimos cargos. */
+function fxInfo(f) {
+  const y = TD().slice(0, 4),
+    G = f.t === 'g',
+    c = col(f.cat),
+    L = S.tx.filter(x => x.fid === f.id).sort((a, b) => b.date.localeCompare(a.date)),
+    LY = L.filter(x => x.date.startsWith(y)),
+    hy = LY.reduce((a, x) => a + x.amt, 0),
+    an = f.var ? f.amt * 12 : yearly(f),
+    p = an ? Math.min(100, (hy / an) * 100) : 0;
+  const o = modal(
+    `<div class="fxinf" style="--c:${c}"><div class="fxhero">${tile(CI[f.cat] || 'receipt', c)}<h3>${esc(f.name)}</h3><span class="mu">${esc(f.cat || '')} · ${fxWhen(f)}</span>${
+      f.once
+        ? `<b>${eur(f.amt)}</b><small>Una sola vez</small>`
+        : `<span class="fxhk">${G ? 'Te cuesta al año' : 'Te entra al año'}</span><b>${eur(an)}</b><small>${f.var ? 'Previsto: ' : ''}${eur(an / 12)} al mes</small>`
+    }</div>
+    <div class="fxprog"><div class="fxpt"><span>${G ? 'Pagado' : 'Cobrado'} en ${y}</span><b>${eur(hy)}</b></div>${f.once ? '' : `<div class="fxpb"><i style="width:${p.toFixed(0)}%"></i></div>`}<div class="mu">${LY.length} cargo${LY.length === 1 ? '' : 's'}${an && !f.once ? ' · ' + Math.round(p) + ' % de lo previsto en el año' : ''}</div></div>
+    ${G && !f.once ? `<div class="mu" style="margin:10px 0 4px">¿Lo sigues usando? Darlo de baja te ahorra ${eur(an)} al año.</div>` : ''}
+    ${
+      L.length
+        ? `<div class="dh" style="margin-top:12px">Últimos cargos</div>${L.slice(0, 6)
+            .map(
+              x =>
+                `<div class="row"><span class="g">${fd(x.date)}${fromBank(x) ? '<span class="mu"> · Del banco</span>' : ''}</span><span class="amt">${eur(x.amt)}</span></div>`
+            )
+            .join('')}`
+        : ''
+    }</div>
+    <div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button><button class="btn" id="fxe">${I('pencil', 'sm')} Editar</button></div>`
+  );
+  o.querySelector('#fxe').onclick = () => {
+    o.remove();
+    fixedForm(f);
+  };
+}
 /* Fila de un pago variable: lo que lleva este mes frente a lo previsto. */
 const fxVarItem = f => {
   const v = fxVar(f, MN(new Date()));
-  return `<div class="row brow">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><span class="tt">${esc(f.name)}</span><br><span class="mu">${fxFreq(f)}${fxEnd(f)} · ${v.n} cargo${v.n === 1 ? '' : 's'} este mes</span></span><span class="chip ${v.s >= f.amt ? 'ok' : ''}">Llevas ${eur(v.s)}</span><span class="amt">≈ ${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
+  return `<div class="row brow">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><button class="link tt fxn" data-a="fxinf" data-i="${f.id}" title="Ver lo que cuesta al año">${esc(f.name)}</button><span class="mu">${fxFreq(f)}${fxEnd(f)} · ${v.n} cargo${v.n === 1 ? '' : 's'} este mes</span></span><span class="chip ${v.s >= f.amt ? 'ok' : ''}">Llevas ${eur(v.s)}</span><span class="amt">≈ ${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
 };
 /* Pagos de Facturas de este mes: total previsto (lo real si ya llegó), lo pagado y la lista (incluye lo atrasado del mes anterior). */
 function fxMonth() {

@@ -509,6 +509,7 @@ const A = {
       String(S.budget || '')
     ),
   ef: i => fixedForm(S.fixed.find(x => x.id === i)),
+  fxinf: i => fxInfo(S.fixed.find(x => x.id === i)),
   goaladd: () => goalForm(),
   goaled: i => {
     const g = S.goals.find(x => x.id === i);
