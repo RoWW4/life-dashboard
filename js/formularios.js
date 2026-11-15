@@ -877,7 +877,11 @@ function carMtForm(x) {
     c = carS();
   x = x || { n: '', km: '', m: '', ld: '', lk: '', nd: '' };
   const o = modal(
-    `<h3>${n ? 'Nuevo mantenimiento' : esc(x.n)}</h3><div class="fs"><label>Nombre<input id="cm1" value="${esc(x.n)}" placeholder="Ej. Pastillas de freno, batería…"></label><div class="two"><label>Cada (km)<input id="cm2" inputmode="numeric" value="${hasN(x.km) ? kmf(x.km) : ''}" placeholder="Ej. 15.000"></label><label>Cada (meses)<input id="cm3" inputmode="numeric" value="${x.m || ''}" placeholder="Ej. 12"></label></div><div class="mu">Si pones los dos, avisa con lo que llegue antes.</div><div class="two"><label>Última vez<input id="cm4" type="date" value="${x.ld || ''}"></label><label>A los (km)<input id="cm5" inputmode="numeric" value="${hasN(x.lk) ? kmf(x.lk) : ''}" placeholder="Opcional"></label></div><label>Próxima fecha fija (opcional)<input id="cm6" type="date" value="${x.nd || ''}"></label><div class="mu">Para cuando la fecha no sale del periodo, como la primera ITV.</div>${
+    `<h3>${n ? 'Nuevo mantenimiento' : esc(x.n)}</h3><div class="fs"><label>Nombre<input id="cm1" value="${esc(x.n)}" placeholder="Ej. Pastillas de freno, batería…"></label><div class="two"><label>Cada (km)<input id="cm2" inputmode="numeric" value="${hasN(x.km) ? kmf(x.km) : ''}" placeholder="Ej. 15.000"></label><label>Cada (meses)<input id="cm3" inputmode="numeric" value="${x.m || ''}" placeholder="Ej. 12"></label></div><div class="mu">Si pones los dos, avisa con lo que llegue antes.</div><div class="two"><label>Última vez<input id="cm4" type="date" value="${x.ld || ''}"></label><label>A los (km)<input id="cm5" inputmode="numeric" value="${hasN(x.lk) ? kmf(x.lk) : ''}" placeholder="Opcional"></label></div><label>Próxima fecha fija (opcional)<input id="cm6" type="date" value="${x.nd || ''}"></label><div class="mu">${
+      CAR_ITV.test(x.n || '') && (c.info || {}).reg
+        ? 'Para la ITV y la revisión pre-ITV la fecha sale sola de la matriculación (Ficha): la primera ITV a los 4 años, luego cada 2 y desde los 10 años cada año; la pre-ITV, un mes antes.'
+        : 'Para cuando la fecha no sale del periodo, como la primera ITV.'
+    }</div>${
       n
         ? ''
         : `<button class="btn done" id="fdone">${I('circle-check', 'sm')} Ya está hecho</button><div class="mu">Se apunta en el historial${+x.m || +x.km ? ' y la próxima vez se cuenta desde ese día' : ' y se quita de Lo próximo'}.</div>`

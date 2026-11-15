@@ -66,8 +66,38 @@ function carKm(c = carR()) {
 }
 
 /* Estado de un mantenimiento: próxima fecha (por tiempo o fija), km que faltan, fecha estimada por km, avance y nivel. */
+/* ITV de un turismo particular (España): la primera a los 4 años de la matriculación (Ficha), luego cada 2 años y, desde
+   los 10 años, cada año. carItvNext da la siguiente después de «after» (la última pasada; sin ella, la primera); una ITV
+   pasada hasta 30 días antes de su fecha cuenta para esa fecha. La revisión pre-ITV va 30 días antes de la ITV que toca;
+   hecha en los 3 meses antes de esa ITV, ya cuenta para ella. Con matrícula, estas fechas salen solas (no del periodo).
+   El robot de avisos (scripts/task-reminders.mjs) hace la misma cuenta. */
+const CAR_PRE = /pre-?\s?itv/i,
+  CAR_ITV = /\bitv\b/i;
+function carItvNext(reg, after) {
+  const r = /^\d{4}-\d{2}$/.test(reg || '') ? reg + '-01' : reg;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(r || '')) return '';
+  let y = 4,
+    d = addM(r, 48);
+  while (after && d <= addD(after, 30)) {
+    y += y >= 10 ? 1 : 2;
+    d = addM(r, y * 12);
+  }
+  return d;
+}
+function carItvDate(x) {
+  const c = S.car || {},
+    reg = (c.info || {}).reg;
+  if (!reg || !CAR_ITV.test(x.n || '')) return '';
+  if (!CAR_PRE.test(x.n)) return carItvNext(reg, x.ld);
+  const itv = (c.mt || []).find(m => m !== x && CAR_ITV.test(m.n || '') && !CAR_PRE.test(m.n)),
+    n = carItvNext(reg, itv && itv.ld),
+    pre = addD(n, -30);
+  return x.ld && x.ld >= addD(n, -90) ? addD(carItvNext(reg, n), -30) : pre;
+}
+/* Nombre en la lista: «Primera ITV» pasa a «ITV» cuando ya se ha pasado la primera. */
+const carMtName = x => (x.ld && /^primera itv$/i.test((x.n || '').trim()) ? 'ITV' : x.n);
 function carMt(x, K) {
-  const nd = x.nd || (x.ld && +x.m ? addM(x.ld, +x.m) : ''),
+  const nd = carItvDate(x) || x.nd || (x.ld && +x.m ? addM(x.ld, +x.m) : ''),
     nk = hasN(x.lk) && +x.km ? +x.lk + +x.km : null,
     dL = nd ? dayDiff(nd) : null,
     kL = nk !== null && K.cur !== null ? nk - K.cur : null,
@@ -140,7 +170,7 @@ function carNext(c = carR(), K = carKm(c)) {
     ...c.mt
       .map(x => ({ k: 'mt', x, s: carMt(x, K) }))
       .filter(o => o.s.lvl !== 'no')
-      .map(o => ({ ...o, n: o.x.n, d: o.s.due, lvl: o.s.lvl, pill: o.s.pill })),
+      .map(o => ({ ...o, n: carMtName(o.x), d: o.s.due, lvl: o.s.lvl, pill: o.s.pill })),
     ...FX.map(o => {
       const doc = S.docs.find(d => d.cat === 'Coche' && d.exp && twin(d) === o),
         d = doc && doc.exp < o.d ? doc.exp : o.d;

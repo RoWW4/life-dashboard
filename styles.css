@@ -907,9 +907,10 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
 .shtx{padding:10px 12px;border-radius:12px;background:var(--card2);font-size:14px;max-height:160px;overflow:auto;overflow-wrap:anywhere}
 .shseg{flex-wrap:wrap}
 .shck{display:flex;align-items:center;gap:10px;font-size:14px;padding:4px 0}
-/* ---------- Borde de «Lo más importante» (.card.hl): azul y fijo ----------
-   Antes era un degradado arcoíris que giraba sin parar: obligaba a repintar la tarjeta en cada fotograma (gasta batería). */
-.card.hl{border:2px solid var(--ac)}
+/* ---------- Paneles destacados (.card.hl: «Lo más importante», Coche → «Lo próximo») ----------
+   Fondo teñido suavemente del color de la sección (--mod), borde fino del mismo tono y sombra con un poco de color.
+   (Antes: borde azul de 2 px; antes aún, un degradado arcoíris que giraba y gastaba batería.) */
+.card.hl{border:1px solid color-mix(in srgb,var(--mod) 28%,var(--bd));background:linear-gradient(165deg,color-mix(in srgb,var(--mod) 13%,var(--card)) 0%,var(--card) 55%);box-shadow:0 12px 30px -16px color-mix(in srgb,var(--mod) 55%,transparent),var(--sh)}
 /* Móvil: al mantener pulsada el asa de una tarjeta para moverla, todas se quedan solo con su título (eventos.js, body.reord) */
 .reord #m .card>:not(h3){display:none!important}
 .reord #m .card{padding-top:12px;padding-bottom:12px}

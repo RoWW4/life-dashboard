@@ -132,8 +132,26 @@ const addM = (d, n) => {
 };
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const carMt = ((row && row.data && row.data.car && row.data.car.mt) || []).filter(x => x && x.n);
+// ITV y pre-ITV con matrícula: como en la app (carItvNext / carItvDate): a los 4 años, luego cada 2 y desde los 10 cada año;
+// la pre-ITV, 30 días antes de la ITV que toca.
+const carReg = (row && row.data && row.data.car && row.data.car.info && row.data.car.info.reg) || '';
+const addDay = (d, n) => new Date(Date.parse(d) + n * DAY).toISOString().slice(0, 10);
+const itvNext = (reg, after) => {
+  const r = /^\d{4}-\d{2}$/.test(reg) ? reg + '-01' : reg;
+  if (!ISO.test(r)) return '';
+  let y = 4, d = addM(r, 48);
+  while (after && d <= addDay(after, 30)) { y += y >= 10 ? 1 : 2; d = addM(r, y * 12); }
+  return d;
+};
+const itvDate = x => {
+  if (!carReg || !/\bitv\b/i.test(x.n)) return '';
+  if (!/pre-?\s?itv/i.test(x.n)) return itvNext(carReg, x.ld);
+  const itv = carMt.find(m => m !== x && /\bitv\b/i.test(m.n) && !/pre-?\s?itv/i.test(m.n)),
+    n = itvNext(carReg, itv && itv.ld), pre = addDay(n, -30);
+  return x.ld && x.ld >= addDay(n, -90) ? addDay(itvNext(carReg, n), -30) : pre;
+};
 if (+P.hour >= 9) for (const x of carMt) {
-  const nd = ISO.test(x.nd || '') ? x.nd : ISO.test(x.ld || '') && +x.m > 0 ? addM(x.ld, +x.m) : '';
+  const nd = itvDate(x) || (ISO.test(x.nd || '') ? x.nd : ISO.test(x.ld || '') && +x.m > 0 ? addM(x.ld, +x.m) : '');
   if (!nd) continue;
   const left = Math.round((Date.parse(nd) - Date.parse(today)) / DAY);
   if (left < 0) continue;
@@ -142,7 +160,8 @@ if (+P.hour >= 9) for (const x of carMt) {
   const key = `car:${x.id || x.n}:${nd}:${st}`;
   if (sent.has(key)) continue;
   const fecha = `${DOW[new Date(nd).getUTCDay()]} ${nd.split('-').reverse().join('/')}`;
-  await send(key, left === 0 ? `🚗 Coche: hoy toca «${x.n}».` : `🚗 Coche: «${x.n}» toca el ${fecha} (en ${left} día${left === 1 ? '' : 's'}).`, 'Aviso del coche');
+  const nm = x.ld && /^primera itv$/i.test(x.n.trim()) ? 'ITV' : x.n;
+  await send(key, left === 0 ? `🚗 Coche: hoy toca «${nm}».` : `🚗 Coche: «${nm}» toca el ${fecha} (en ${left} día${left === 1 ? '' : 's'}).`, 'Aviso del coche');
 }
 
 // Limpieza: lo avisado hace más de 60 días ya no hace falta.

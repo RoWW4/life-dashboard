@@ -12,3 +12,6 @@ Solo lo importante que queda por decidir o hacer. **No hacerlo hasta que la due�
 
 ## Salud (Google Health)
 - Funcionando desde el 05/11/2026 (llegan los cuatro datos). Comprobar a partir del 13/11 que sigue sincronizando, es decir, que el permiso de Google no caduca a los 7 días; si caduca, ejecutar otra vez `conectar()` en Apps Script.
+
+## Coche
+- «Cambiar de coche» (cuando haga falta): botón en la Ficha que guarde el coche actual en «Coches anteriores» (ficha, historial, km y conducción; solo para consultar, sin avisos) y empiece uno nuevo con su matriculación, para que ITV, pre-ITV y mantenimientos se calculen con la edad del coche nuevo. Revisar entonces el robot de Kia Connect (`scripts/kia-km.py`): elegir el coche si la cuenta tiene más de uno, o dejar de usarlo si es de otra marca.
