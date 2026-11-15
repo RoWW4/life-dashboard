@@ -21,7 +21,7 @@ function theme() {
 }
 function nav() {
   const c = pend(),
-    n = { tareas: c.t, compra: c.s, fact: c.b, coche: carWarn().length };
+    n = { tareas: c.t, compra: c.s, fact: c.b };
   $('#nav').innerHTML =
     `<div class="brand"><span class="logo"><i><b></b><b></b><b></b><b></b></i></span><span class="bn">${APP}</span>${eyeBtn('ib eyeg')}</div>` +
     secs()

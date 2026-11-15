@@ -129,8 +129,11 @@ function carNext(c = carR(), K = carKm(c)) {
   ];
   return L.sort((a, b) => LV[a.lvl] - LV[b.lvl] || a.d.localeCompare(b.d));
 }
-/* Avisos para Mi día y el menú: solo los mantenimientos en rojo, cuando ya se usa la sección. */
-const carWarn = () => (S.car ? carNext().filter(o => o.k === 'mt' && o.lvl === 'er') : []);
+/* Avisos para Mi día: los mantenimientos en rojo a 7 días o menos (o con pocos km), cuando ya se usa la sección. */
+const carWarn = () =>
+  S.car
+    ? carNext().filter(o => o.k === 'mt' && o.lvl === 'er' && ((o.s.dL !== null && o.s.dL <= 7) || (o.s.kL !== null && o.s.kL <= 1000)))
+    : [];
 /* Gastos: los movimientos con categoría Coche (también las partes de un gasto dividido; las devoluciones restan). */
 const carTx = () => TXP().filter(x => x.cat === 'Coche' && gAmt(x));
 
