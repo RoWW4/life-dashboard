@@ -80,6 +80,23 @@ const A = {
   cmt: i => carMtForm(i ? carS().mt.find(x => x.id === i) : null),
   cinf: () => carInfoForm(),
   ccdoc: () => docForm(null, { cat: 'Coche' }),
+  // Mascotas (vistas/mascotas.js)
+  psel: i => {
+    petSel = i;
+    render();
+  },
+  padd: () => petForm(null),
+  pinf: i => petForm(petsR().find(p => p.id === i)),
+  pvacn: () => petVacForm(null),
+  pvac: i => {
+    const p = petOf('vac', i);
+    if (p) petVacForm(p.vac.find(v => v.id === i));
+  },
+  pmedn: () => petMedForm(null),
+  pmed: i => {
+    const p = petOf('med', i);
+    if (p) petMedForm(p.med.find(v => v.id === i));
+  },
   sd: i => {
     selD = i;
     render();

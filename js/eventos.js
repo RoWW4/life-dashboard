@@ -27,6 +27,7 @@ document.addEventListener('change', e => {
     r.readAsText(t.files[0]);
   }
   if (t.id === 'bgfile' && t.files[0]) bgFile(t.files[0]);
+  if (t.id === 'petfile' && t.files[0]) petPhotoSet(t.dataset.i, t.files[0]);
   if (t.id === 'bankfile' && t.files[0]) importFile(t.files[0]).catch(() => toast('No se pudo leer el archivo'));
 });
 document.addEventListener('input', e => {

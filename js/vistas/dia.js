@@ -138,6 +138,7 @@ function vDia() {
     ...fxDue(7).map(o => [o.d, 'receipt', o.f.name + ' · ' + eur(o.f.amt), col(o.f.cat)]),
     ...S.docs.filter(d => d.exp && dayDiff(d.exp) <= 30).map(d => [d.exp, DI[d.cat] || 'file-text', 'Vence: ' + d.name, DCOL[d.cat]]),
     ...carWarn().map(o => [o.d, 'car', o.n + (/km/.test(o.pill) ? ' · ' + o.pill : ''), CARC]),
+    ...petWarn().map(o => [o.d, o.ic, o.t, PETC]),
     ...bankAlerts()
   ].sort((a, b) => a[0].localeCompare(b[0]));
   const b7 = fxDue(7),

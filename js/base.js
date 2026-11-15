@@ -221,6 +221,7 @@ const SEC = [
   ['docs', 'folder-open', 'Documentos', 'Docs'],
   ['salud', 'heart-pulse', 'Salud', 'Salud'],
   ['coche', 'car', 'Coche', 'Coche'],
+  ['mascotas', 'paw-print', 'Mascotas', 'Mascotas'],
   ['ajus', 'settings', 'Ajustes', 'Ajustes']
 ];
 const FAILMAX = 3; // fallos seguidos del banco antes de avisar (y de que GitHub mande correo)

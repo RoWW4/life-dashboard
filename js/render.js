@@ -11,6 +11,7 @@ const V_ = {
   inv: vInv,
   salud: vSalud,
   coche: vCoche,
+  mascotas: vMascotas,
   ajus: vAjus
 };
 function theme() {
