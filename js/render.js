@@ -54,7 +54,6 @@ function render() {
   nav();
   const y = window.scrollY,
     same = render.last === view;
-  if (!same) cust = false;
   if (!V_[view]) view = 'dia';
   let h = V_[view]();
   // Finanzas: título común y pestañas; cada vista conserva su cabecera (subtítulo y botones) sin su título.
@@ -80,8 +79,6 @@ function render() {
     logErr('almacenamiento', e, 'sección');
   }
   // Cada tarjeta lleva siempre su asa (arrastrar) y sus flechas ↑↓; si la sección solo tiene una, no se enseñan.
-  // «cust» queda solo para ordenar los documentos a mano de Mi día.
-  document.body.classList.toggle('cust', cust);
   document.body.classList.toggle('solo', (VIS[view] || []).length < 2);
   masonry();
   if (view === 'coche') carMapMount(); // mapa de dónde está aparcado (si está abierto)

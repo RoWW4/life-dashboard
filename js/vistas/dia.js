@@ -1,6 +1,6 @@
 'use strict';
 /* Sección «Mi día»: versión mínima. Portada (fecha, saludo, una frase y tres cifras), «Lo más importante», el calendario
-   con los próximos días y accesos a las secciones y, aparte, a los documentos a mano. Facturas y gasto se ven en su sección. */
+   con los próximos días y accesos a las secciones. Facturas y gasto se ven en su sección. */
 /* ---------- vistas ---------- */
 let gOff = 0; // meses hacia atrás en «Gasto del mes» (acción 'gm'; no se guarda)
 /* Tiempo de la portada (Open-Meteo, gratis y sin clave) de la ciudad elegida en Ajustes (S.wx = {n, lat, lon}, va con tus datos).
@@ -143,16 +143,7 @@ function vDia() {
   ].sort((a, b) => a[0].localeCompare(b[0]));
   const b7 = fxDue(7),
     m = MN(now);
-  const P = S.shop.filter(s => !s.done),
-    pins = pinDocs().slice(0, PINMAX);
-  // Con «Ordenar», los documentos a mano salen en lista con flechas para cambiar su orden.
-  const pinOrd = () =>
-    pins
-      .map(
-        (d, j) =>
-          `<div class="row">${tile(DI[d.cat] || 'file-text', DCOL[d.cat])}<span class="g">${esc(d.name)}</span><button class="ib" data-a="mv" data-i="pins|${d.id}|-1" aria-label="Subir" ${j ? '' : 'disabled'}>${I('chevron-up')}</button><button class="ib" data-a="mv" data-i="pins|${d.id}|1" aria-label="Bajar" ${j < pins.length - 1 ? '' : 'disabled'}>${I('chevron-down')}</button></div>`
-      )
-      .join('');
+  const P = S.shop.filter(s => !s.done);
   // Etiqueta de cuándo: rojo si está atrasado, acento si es hoy y gris si es más adelante.
   const when = d => {
     const n = dayDiff(d);
@@ -198,33 +189,15 @@ function vDia() {
   // Cada cifra lleva el icono y el color de su sección (--c).
   const hs = (go, ic, c, k, v, d, extra = '') =>
     `<button class="hs" style="--c:${c}" data-a="go" data-i="${go}"><span class="hk"><span class="hico">${I(ic)}</span>${k}</span><span class="hv">${v}${extra}</span><span class="hd2">${d}</span></button>`;
-  // Documentos a mano: se abren directamente.
-  const qd = d =>
-    d.url
-      ? `<a class="qc" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer"><span class="qi" style="--c:${DCOL[d.cat]}">${I(DI[d.cat] || 'file-text')}</span>${esc(d.name)}${d.exp && dayDiff(d.exp) <= 60 ? `<em class="${dayDiff(d.exp) < 0 ? 'er' : 'wa'}">${dayDiff(d.exp) < 0 ? 'Caducó' : 'Vence ' + fdc(d.exp)}</em>` : ''}</a>`
-      : `<button class="qc off" data-a="ed" data-i="${d.id}"><span class="qi" style="--c:${DCOL[d.cat]}">${I(DI[d.cat] || 'file-text')}</span>${esc(d.name)}<em>Añadir enlace</em></button>`;
-  // Accesos a todas las secciones (en el orden del menú), con su color; Compra lleva lo que falta y Coche su aviso.
+  // Accesos a todas las secciones (en el orden del menú): cuadrícula de iconos con su color; Compra lleva cuántos productos faltan.
   const QCOL = { tareas: '#9b87f5', compra: '#34c77b', fin: '#22c3b4', docs: '#e0b416', salud: 'var(--rose)', coche: CARC, mascotas: PETC };
-  const qx = {
-    compra: () => (P.length ? ` <b>${P.length}</b>` : ''),
-    coche: () => {
-      const o = S.car && carNext().find(o => o.lvl !== 'no');
-      return o && o.lvl !== 'ok' ? ` <em class="${o.lvl}">${esc(o.n)} · ${esc(o.pill)}</em>` : '';
-    }
-  };
-  const qs = secs()
+  const quick = `<div class="qgrid" role="navigation" aria-label="Ir a una sección">${secs()
     .filter(([k]) => k !== 'dia' && k !== 'ajus')
     .map(
-      ([k, ic, l]) =>
-        `<button class="qc" data-a="go" data-i="${k}"><span class="qi" style="--c:${QCOL[k] || 'var(--ac)'}">${I(ic)}</span>${l}${qx[k] ? qx[k]() : ''}</button>`
+      ([k, ic, l, sh]) =>
+        `<button class="qs" data-a="go" data-i="${k}" style="--c:${QCOL[k] || 'var(--ac)'}" aria-label="${l}"><span class="qsi">${I(ic)}${k === 'compra' && P.length ? `<b>${P.length}</b>` : ''}</span><span class="qsl">${k === 'docs' ? sh : l}</span></button>`
     )
-    .join('');
-  // Los documentos a mano van aparte, en su propia fila, para no mezclarlos con las secciones.
-  const quick = `<div class="qbox"><div class="qt">Secciones</div><div class="qrow" aria-label="Accesos a secciones">${qs}</div>
-    <div class="qt">Documentos a mano</div><div class="qrow" aria-label="Documentos a mano">
-    ${pins.map(qd).join('')}
-    ${pins.length > 1 ? `<button class="qlk" data-a="cust">${cust ? 'Listo' : 'Ordenar'}</button>` : ''}${pins.length ? '' : `<button class="qlk" data-a="go" data-i="docs">${I('star', 'sm')} Marca documentos con la estrella para tenerlos aquí</button>`}
-  </div></div>${cust && pins.length > 1 ? `<div class="card qord">${pinOrd()}</div>` : ''}`;
+    .join('')}</div>`;
   setTimeout(wxLoad);
   return `<section class="hero" aria-label="Resumen de hoy">${heroBg()}
     <div class="hmain"><div class="eyb">${cap(new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(now))}</div>

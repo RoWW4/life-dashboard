@@ -78,8 +78,7 @@ let view = VIEW0 || 'dia',
   cm = new Date(),
   finOff = 0,
   VIS = {},
-  exp = {},
-  cust = false;
+  exp = {};
 
 /* Migraciones y limpieza. Devuelve true si cambió algo.
    El repositorio es público: aquí no van datos personales (ni semillas con nombres, importes o documentos); sus datos viven en Supabase. */

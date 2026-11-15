@@ -200,10 +200,6 @@ const A = {
     render();
     toast('Ancho del panel: ' + SZN[n]);
   },
-  cust: () => {
-    cust = !cust;
-    render();
-  },
   txm: () => {
     txN += matchMedia('(max-width:760px)').matches ? 10 : 40;
     txRefresh();
@@ -641,13 +637,6 @@ const A = {
   },
   nd: () => docForm(),
   ed: i => docForm(S.docs.find(x => x.id === i)),
-  pd: i => {
-    const d = S.docs.find(x => x.id === i);
-    if (!d.pin && S.docs.filter(x => x.pin).length >= PINMAX)
-      return toast(`Ya tienes ${PINMAX} documentos a mano: quita la estrella a otro primero`);
-    d.pin = !d.pin;
-    ch();
-  },
   dd: i =>
     CF('¿Quitar este documento de la lista? (No se borra ningún archivo)', () => {
       S.docs = S.docs.filter(x => x.id !== i);

@@ -27,6 +27,8 @@ const CAR_AV = {
   key: 'Pila de la llave',
   tire: 'Presión de las ruedas'
 };
+/* % del depósito. Este coche no lo manda (Kia Connect da 0 aunque haya autonomía): con 0 % y autonomía de más de 30 km se toma como «sin dato». */
+const carFuel = lv => (!hasN(lv.fuel) || (+lv.fuel === 0 && hasN(lv.range) && +lv.range > 30) ? null : +lv.fuel);
 const CAR_AB = { doors: 'puertas', windows: 'ventanillas', trunk: 'maletero', hood: 'capó' };
 const carLive = () => (S.car && S.car.live && typeof S.car.live === 'object' ? S.car.live : null);
 const carTrips = () => {
@@ -159,7 +161,7 @@ function carNext(c = carR(), K = carKm(c)) {
                   d: TD(),
                   lvl: 'er',
                   pill: hasN(lv.range) ? kmf(lv.range) + ' km' : 'Repostar',
-                  sub: 'Quedan ' + (hasN(lv.fuel) ? lv.fuel + ' %' : 'pocos litros')
+                  sub: 'Quedan ' + (carFuel(lv) != null ? Math.round(carFuel(lv)) + ' %' : 'pocos litros')
                 }
               ]
             : [])
@@ -531,9 +533,11 @@ function vCoche() {
     top = `<section class="carh" aria-label="Kilómetros">${carArt()}<div class="carhm"><span class="eyb">${I('gauge', 'sm')} Kilómetros</span>${
       K.cur !== null
         ? `<b>${kmf(K.cur)} <small>km</small></b><span class="carhs">${K.src === 'kia' ? 'De Kia Connect' : 'Apuntado'} ${rel(K.d)}</span>${
-            lv && hasN(lv.fuel)
-              ? `<span class="carfu ${lv.low ? 'low' : ''}"><span class="carfb"><i style="width:${Math.max(3, Math.min(100, +lv.fuel))}%"></i></span>${I('fuel', 'sm')} ${Math.round(lv.fuel)} %${hasN(lv.range) ? ' · ' + kmf(lv.range) + ' km de autonomía' : ''}</span>`
-              : ''
+            lv && carFuel(lv) != null
+              ? `<span class="carfu ${lv.low ? 'low' : ''}"><span class="carfb"><i style="width:${Math.max(3, Math.min(100, carFuel(lv)))}%"></i></span>${I('fuel', 'sm')} ${Math.round(carFuel(lv))} %${hasN(lv.range) ? ' · ' + kmf(lv.range) + ' km de autonomía' : ''}</span>`
+              : lv && hasN(lv.range)
+                ? `<span class="carfu ${lv.low ? 'low' : ''}">${I('fuel', 'sm')} <span class="carfr">${kmf(lv.range)} km</span> de autonomía</span>`
+                : ''
           }`
         : `<b class="carh0">Sin apuntar</b><span class="carhs">Toca el lápiz para poner los km del coche.</span>`
     }</div><button class="carhb" data-a="ckm" aria-label="Actualizar los km" title="Actualizar los km">${I('pencil')}</button></section>`;

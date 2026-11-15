@@ -620,7 +620,7 @@ function docForm(d, pre) {
     if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u;
     const x = { name: v('#fd1'), cat: v('#fd2'), url: u, notes: v('#fd5'), exp: v('#fd4') };
     if (!x.name) return toast('Indica el nombre');
-    if (n) S.docs.push({ id: id(), ...x, pin: true });
+    if (n) S.docs.push({ id: id(), ...x });
     else Object.assign(d, x);
     o.remove();
     ch();
