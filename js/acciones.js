@@ -371,25 +371,9 @@ const A = {
   ar: () => {
     const k = V('r1');
     if (!k) return toast('Escribe una palabra');
-    const fl = V('r3'),
-      cat = V('r2');
-    if (cat === DEVC && fl !== 'dev') return toast('«' + DEVC + '» solo vale para devoluciones');
-    if (fl === 'dev' && ['Nómina', 'Otros', 'Traspasos'].includes(cat)) return toast('Elige la categoría del gasto que te devuelven');
-    S.rules.push({ k, cat, ...(fl ? { fl } : {}) });
-    // Se aplica también a lo que ya llegó del banco y sigue sin clasificar.
-    const kk = nt(k).trim();
-    let c = 0;
-    S.tx.forEach(y => {
-      if (!fromBank(y) || y.cat !== 'Otros' || y.keep || !nt(y.desc).includes(kk)) return;
-      if (fl === 'dev' ? y.t !== 'i' : y.t !== 'g') return;
-      const r = classifyX(y.desc, y.t);
-      if (r.cat === 'Otros' && !r.pdev) return;
-      Object.assign(y, r);
-      c++;
-    });
-    ch();
-    toast('🏷️ Regla guardada' + (c ? ' · ' + c + ' movimientos clasificados' : ''));
+    ruleSave(null, k, V('r3'), V('r2'));
   },
+  er: i => S.rules[+i] && ruleForm(+i),
   dr: i =>
     CF('¿Quitar esta regla? Los movimientos ya clasificados no cambian.', () => {
       S.rules.splice(+i, 1);

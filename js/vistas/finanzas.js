@@ -297,11 +297,11 @@ function rulesCard() {
     'fin',
     'reglas',
     `${I('tags')} Reglas de clasificación <span class="cnt">· ${S.rules.length}</span>`,
-    `<div class="mu" style="margin-bottom:8px">Si el concepto del banco contiene la palabra, se asigna esa categoría. Se crean solas al cambiar la categoría de un movimiento del banco. Una regla de devolución vale para dinero que te llega (p. ej. «bizum de»).</div>${fold(
+    `<div class="mu" style="margin-bottom:8px">Si el concepto del banco contiene la palabra, se asigna esa categoría. Se crean solas al cambiar la categoría de un movimiento del banco. Toca una para editarla. Una regla de devolución vale para dinero que te llega (p. ej. «bizum de»).</div>${fold(
       'reglas',
       S.rules.map(
         (r, i) =>
-          `<div class="row"><span class="g">«${esc(r.k)}»<span class="meta">${RFL[r.fl] ? `<span class="chip ${r.fl === 'dev' ? 'ok' : r.fl === 'ex' ? 'wa' : ''}">${I(RFL[r.fl][1], 'sm')} ${RFL[r.fl][0]}</span>` : ''}<span class="chip" style="color:${r.cat === DEVC ? 'var(--tx2)' : col(r.cat)}">${I(r.cat === DEVC ? 'file-text' : CI[r.cat] || 'package', 'sm')} ${esc(r.cat)}</span></span></span><button class="ib" data-a="dr" data-i="${i}" aria-label="Eliminar regla">${I('x')}</button></div>`
+          `<div class="row"><button class="g link" data-a="er" data-i="${i}" title="Editar regla">«${esc(r.k)}»<span class="meta">${RFL[r.fl] ? `<span class="chip ${r.fl === 'dev' ? 'ok' : r.fl === 'ex' ? 'wa' : ''}">${I(RFL[r.fl][1], 'sm')} ${RFL[r.fl][0]}</span>` : ''}<span class="chip" style="color:${r.cat === DEVC ? 'var(--tx2)' : col(r.cat)}">${I(r.cat === DEVC ? 'file-text' : CI[r.cat] || 'package', 'sm')} ${esc(r.cat)}</span></span></button><button class="ib" data-a="dr" data-i="${i}" aria-label="Eliminar regla">${I('x')}</button></div>`
       ),
       3
     )}

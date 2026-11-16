@@ -393,6 +393,50 @@ function shopEdit(s) {
     });
   o.querySelector('#se1').focus();
 }
+/* Guarda una regla nueva (i = null) o cambia la i. Devuelve false si no vale. Se aplica también a lo que ya llegó del banco y sigue en «Otros». */
+function ruleSave(i, k, fl, cat) {
+  k = (k || '').trim();
+  if (!k) return (toast('Escribe una palabra'), false);
+  if (cat === DEVC && fl !== 'dev') return (toast('«' + DEVC + '» solo vale para devoluciones'), false);
+  if (fl === 'dev' && ['Nómina', 'Otros', 'Traspasos'].includes(cat))
+    return (toast('Elige la categoría del gasto que te devuelven'), false);
+  const r = { k, cat, ...(fl ? { fl } : {}) };
+  if (i === null) S.rules.push(r);
+  else S.rules[i] = r;
+  const kk = nt(k).trim();
+  let c = 0;
+  S.tx.forEach(y => {
+    if (!fromBank(y) || y.cat !== 'Otros' || y.keep || !nt(y.desc).includes(kk)) return;
+    if (fl === 'dev' ? y.t !== 'i' : y.t !== 'g') return;
+    const x = classifyX(y.desc, y.t);
+    if (x.cat === 'Otros' && !x.pdev) return;
+    Object.assign(y, x);
+    c++;
+  });
+  ch();
+  toast('🏷️ Regla guardada' + (c ? ' · ' + c + ' movimientos clasificados' : ''));
+  return true;
+}
+/* Editar una regla de clasificación: palabra, tipo y categoría. Los movimientos ya clasificados no cambian. */
+function ruleForm(i) {
+  const r = S.rules[i];
+  const o = modal(
+    `<h3>Editar regla</h3><div class="fs"><label>Palabra<input id="re1" value="${esc(r.k)}"></label><div class="two"><label>Tipo<select id="re3"><option value="">Normal</option>${Object.entries(
+      RFL
+    )
+      .map(([k, [n]]) => `<option value="${k}" ${r.fl === k ? 'selected' : ''}>${n}</option>`)
+      .join(
+        ''
+      )}</select></label><label>Categoría<select id="re2">${opts([...CATS, DEVC], r.cat)}</select></label></div><div class="mu" style="margin-top:-4px">Los movimientos ya clasificados no cambian; solo los que siguen en «Otros» y los que lleguen.</div></div><div class="acts"><button class="btn ghost danger" id="fdel">Eliminar</button><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`
+  );
+  o.querySelector('#ok').onclick = () => {
+    if (ruleSave(i, o.querySelector('#re1').value, o.querySelector('#re3').value, o.querySelector('#re2').value)) o.remove();
+  };
+  o.querySelector('#fdel').onclick = () => {
+    o.remove();
+    A.dr(i);
+  };
+}
 /* Alta y edición de un pago o ingreso de Facturas. */
 /* Mes de inicio como AAAA-MM. Acepta AAAA-MM o una fecha escrita (01/11/27, 11/2027…); '' si está vacío, null si no se entiende. */
 const ymOf = s => {
