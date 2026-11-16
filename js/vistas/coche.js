@@ -18,7 +18,7 @@ const carR = () => {
   const c = S.car && typeof S.car === 'object' ? S.car : {};
   return { info: c.info || {}, km: c.km || [], mt: Array.isArray(c.mt) ? c.mt : CAR_MT0, vis: c.vis || [] };
 };
-/* Lo que manda el coche por Kia Connect (robot kia-km, cada hora de 7 a 23 h y con «Actualizar»): S.car.live = estado (at: hora del dato, fuel %, low,
+/* Lo que manda el coche por Kia Connect (robot kia-km, cada 3 h de 7 a 22 h y con «Actualizar»): S.car.live = estado (at: hora del dato, fuel %, low,
    range km, warn: avisos, locked, open: lo que está abierto, loc: {lat, lon}) y S.car.trips = {days: {fecha: {km, min}},
    months: {AAAA-MM: {km, min, spd}}}. Lo escribe la base de datos (ldb_car_live); la app solo lo lee. */
 const CAR_AV = {
@@ -38,10 +38,8 @@ const carFuelLvl = p => (p > 50 ? 'ok' : p > 25 ? 'wa' : 'er');
 const CAR_AB = { doors: 'puertas', windows: 'ventanillas', trunk: 'maletero', hood: 'capó' };
 const carLive = () => (S.car && S.car.live && typeof S.car.live === 'object' ? S.car.live : null);
 /* «Actualizar»: pide a Supabase que lance el robot del coche (ldb_car_refresh, como mucho cada 5 min) y espera
-   (hasta ~3 min) a que termine según su latido (job_health «kia-km»); luego trae los datos. Al abrir Coche se hace
-   solo si la última lectura tiene más de 30 min. El robot lee lo último que mandó el coche: no lo despierta. */
-const CAR_OLD = 30 * 60000;
-let carT = 0;
+   (hasta ~3 min) a que termine según su latido (job_health «kia-km»); luego trae los datos. Solo al pulsarlo (al abrir Coche
+   no se lanza). El robot lee lo último que mandó el coche: no lo despierta. */
 const carJob = () => (OPS && OPS.jobs ? OPS.jobs.find(j => j.job === 'kia-km') : null);
 const carRepaint = () => {
   if (view === 'coche') render();
@@ -81,13 +79,6 @@ async function carSync(manual) {
   }
   carRepaint();
   if (manual) toast(msg);
-}
-/* Al abrir Coche (como mucho una vez por minuto): si la última lectura del robot es vieja, pide otra sin avisar. */
-function carOpen() {
-  if (!sb || !user || !OPS || carSync.on || Date.now() - carT < 60000) return;
-  carT = Date.now();
-  const j = carJob();
-  if (!j || !j.last_ok || Date.now() - new Date(j.last_ok) > CAR_OLD) carSync(false);
 }
 const carTrips = () => {
   const t = (S.car && S.car.trips) || {};
@@ -568,7 +559,6 @@ const carVisRow = v => {
 };
 
 function vCoche() {
-  setTimeout(carOpen);
   const c = carR(),
     K = carKm(c),
     i = c.info,

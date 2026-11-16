@@ -53,9 +53,9 @@ select cron.schedule('savings-sync', '13 6 * * *', $
   where exists (select 1 from vault.decrypted_secrets where name = 'github_dispatch_token');
 $);
 
--- Coche (Kia Connect): lanza «Coche (Kia Connect)» cada hora (≈ de 07:00 a 23:00 en invierno).
+-- Coche (Kia Connect): lanza «Coche (Kia Connect)» cada 3 h (≈ 07:00, 10:00, 13:00, 16:00, 19:00 y 22:00 en invierno).
 -- Desde el 16/11/2026; antes lo lanzaba el «schedule» de GitHub cada 3 h, con retrasos.
-select cron.schedule('kia-km', '0 6-22 * * *', $$
+select cron.schedule('kia-km', '0 6-21/3 * * *', $$
   select net.http_post(
     url := 'https://api.github.com/repos/RoWW4/life-dashboard/actions/workflows/kia-km.yml/dispatches',
     body := '{"ref":"main"}'::jsonb,
