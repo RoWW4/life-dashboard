@@ -57,7 +57,7 @@ function vCompra() {
   const row = s =>
     `<div class="row ${s.done ? 'is-done' : ''}"><input type="checkbox" class="ck" data-a="ts" data-i="${s.id}" ${s.done ? 'checked' : ''} aria-label="Comprado">${(([, ic, c]) => tile(ic, c))(shopIco(s.name))}<button class="link g" data-a="es" data-i="${s.id}" title="Editar"><span class="tt">${esc(s.name)}</span> ${s.qty > 1 ? `<span class="mu">×${s.qty}</span>` : ''}</button><span class="amt mu">${s.price ? eur(s.price * s.qty) : ''}</span><button class="ib" data-a="ds" data-i="${s.id}" aria-label="Eliminar">${I('x')}</button></div>`;
   return `<div class="hdr"><div><h2>Lista de la compra</h2><div class="sub">Estimado pendiente ${eur(est)} · Comprado ${eur(real)}</div></div></div>
-  <div class="card"><div class="f" style="margin:0"><input id="s1" placeholder="Producto…" aria-label="Producto"><input id="s2" type="number" min="1" value="1" aria-label="Cantidad"><input id="s3" type="number" step="0.01" min="0" placeholder="Precio/ud (opcional)" aria-label="Precio por unidad"><button class="btn" data-a="as">Añadir</button><button class="btn ghost ico" data-a="vs" aria-label="Dictar">${I('mic')}</button></div>${(() => {
+  <div class="card"><div class="f shf"><span class="shin"><input id="s1" placeholder="Producto…" aria-label="Producto"><button class="inb" data-a="vs" aria-label="Dictar" title="Dictar">${I('mic')}</button></span><input id="s2" type="number" min="1" value="1" aria-label="Cantidad"><input id="s3" type="number" step="0.01" min="0" placeholder="Precio/ud (opcional)" aria-label="Precio por unidad"><button class="btn" data-a="as">Añadir</button></div>${SCAN_OK ? `<button class="btn shscan" data-a="scan">${I('scan-barcode')} Escanear productos</button>` : ''}${(() => {
     // Más usadas: las 10 que más veces se han añadido (y que no están ya pendientes).
     const pend = new Set(P.map(x => shopKey(x.name))),
       Q = Object.entries(S.shopN)
@@ -88,4 +88,240 @@ function vCompra() {
     VIS.compra = ord('compra', ['pend', 'hecho']);
     return `<div class="grid2">${VIS.compra.map(k => C[k]).join('')}</div>`;
   })()}`;
+}
+
+/* ---------- Escáner de códigos de barras ----------
+   Usa la cámara y el lector de códigos del propio navegador (Chrome en Android); si no lo hay, el botón no sale.
+   El nombre sale de lo ya aprendido (S.shopBC: código → nombre) o de Open Food Facts (base pública y gratuita, sin clave).
+   La cámara sigue abierta para escanear varios seguidos; el mismo código no se vuelve a añadir hasta que sale de la imagen. */
+const SCAN_OK = 'BarcodeDetector' in window && !!navigator.mediaDevices?.getUserMedia;
+const OFF_API = 'https://world.openfoodfacts.org/api/v2/product/';
+/* Nombre corto para la lista: sin la marca ni la cantidad («Leche semidesnatada»). */
+function offName(p) {
+  const full = String(p.product_name_es || p.product_name || p.generic_name_es || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  let n = full;
+  String(p.brands || '')
+    .split(',')
+    .map(b => b.trim())
+    .filter(b => b.length > 1)
+    .forEach(b => (n = n.replace(new RegExp('(^|\\s)' + reEsc(b) + '(?=\\s|$)', 'ig'), ' ')));
+  n = n
+    .replace(/\s+\d+(?:[.,]\d+)?\s*(?:x\s*\d+(?:[.,]\d+)?\s*)?(?:kg|g|gr|l|ml|cl|uds?|unidades|x)\b.*$/i, '')
+    .replace(/\s+/g, ' ')
+    .replace(/^[\s,\-–]+|[\s,\-–]+$/g, '');
+  if (!n) n = full;
+  return n.length > 42 ? n.slice(0, 42).replace(/\s+\S*$/, '') : n;
+}
+/* '' si no lo conoce; lanza error si no hay conexión. */
+async function offLook(code) {
+  const r = await fetch(OFF_API + encodeURIComponent(code) + '.json?fields=product_name,product_name_es,generic_name_es,brands');
+  if (r.status === 404) return '';
+  if (!r.ok) throw new Error('Open Food Facts: HTTP ' + r.status);
+  const j = await r.json();
+  return j.status === 1 && j.product ? offName(j.product) : '';
+}
+/* Añade lo escaneado (o suma 1 si ya está pendiente). Devuelve el texto del aviso y cómo deshacerlo. */
+function scanAdd(code, name) {
+  name = cap(String(name).trim());
+  S.shopBC[code] = name;
+  const p = S.shop.find(x => !x.done && (x.bc === code || shopKey(x.name) === shopKey(name)));
+  if (p) {
+    p.qty = (p.qty || 1) + 1;
+    p.bc = p.bc || code;
+    ch();
+    const i = p.id;
+    return {
+      t: `${name} · ya estaba, ahora ×${p.qty}`,
+      undo: () => {
+        const q = S.shop.find(x => x.id === i);
+        if (q) q.qty = Math.max(1, (q.qty || 1) - 1);
+        ch();
+      }
+    };
+  }
+  shopAdd(name, 1, 0);
+  const it = S.shop[S.shop.length - 1];
+  it.bc = code;
+  ch();
+  return {
+    t: name,
+    undo: () => {
+      S.shop = S.shop.filter(x => x.id !== it.id);
+      ch();
+    }
+  };
+}
+async function scanOpen() {
+  const o = document.createElement('div');
+  o.className = 'scan';
+  o.setAttribute('role', 'dialog');
+  o.setAttribute('aria-label', 'Escanear productos');
+  o.innerHTML = `<video playsinline muted autoplay></video><div class="scfr" aria-hidden="true"><i></i></div>
+    <div class="sctop"><button class="scb" data-x="torch" hidden aria-label="Linterna" title="Linterna">${I('flashlight')}</button><span class="sp"></span><button class="btn" data-x="end">Listo</button></div>
+    <div class="scbot"><div class="scmsg" aria-live="polite">Abriendo la cámara…</div>
+    <form class="scask" hidden><label for="scn"></label><input id="scn" placeholder="Nombre del producto" autocomplete="off"><div class="acts"><button type="button" class="btn ghost" data-x="skip">Saltar</button><button class="btn">Añadir</button></div></form>
+    <div class="scok" hidden><span class="tt"></span><button class="link" data-x="undo">Deshacer</button></div></div>`;
+  document.body.appendChild(o);
+  document.body.classList.add('scanning');
+  const v = o.querySelector('video'),
+    msg = o.querySelector('.scmsg'),
+    ask = o.querySelector('.scask'),
+    okEl = o.querySelector('.scok');
+  let stream = null,
+    alive = true,
+    busy = false,
+    last = '',
+    seen = 0,
+    n = 0,
+    undo = null,
+    torch = false;
+  const close = () => {
+    if (!alive) return;
+    alive = false;
+    stream && stream.getTracks().forEach(t => t.stop());
+    o.remove();
+    document.body.classList.remove('scanning');
+    document.removeEventListener('visibilitychange', onHide);
+    if (n) toast(`🛒 ${n} producto${n > 1 ? 's' : ''} escaneado${n > 1 ? 's' : ''}`);
+  };
+  const onHide = () => document.hidden && close();
+  document.addEventListener('visibilitychange', onHide);
+  const done = r => {
+    n++;
+    undo = r.undo;
+    okEl.hidden = false;
+    okEl.querySelector('.tt').textContent = '✔ ' + r.t;
+    msg.textContent = 'Apunta al siguiente, o pulsa «Listo»';
+    navigator.vibrate && navigator.vibrate(60);
+  };
+  /* No lo conoce (o no hay conexión): se pide el nombre y se recuerda para la próxima. */
+  const askName = (code, off) =>
+    new Promise(res => {
+      ask.hidden = false;
+      okEl.hidden = true;
+      msg.textContent = '';
+      ask.querySelector('label').textContent = off
+        ? 'Sin conexión para buscarlo. ¿Qué producto es?'
+        : 'No conozco este producto. ¿Qué es? Lo recordaré la próxima vez.';
+      const inp = ask.querySelector('input');
+      inp.value = '';
+      inp.focus();
+      const fin = name => {
+        ask.hidden = true;
+        ask.onsubmit = null;
+        ask.querySelector('[data-x=skip]').onclick = null;
+        res(name);
+      };
+      ask.onsubmit = e => {
+        e.preventDefault();
+        const t = inp.value.trim();
+        if (t) fin(t);
+        else inp.focus();
+      };
+      ask.querySelector('[data-x=skip]').onclick = () => fin('');
+    });
+  const got = async code => {
+    busy = true;
+    try {
+      let name = S.shopBC[code],
+        off = false;
+      if (!name) {
+        msg.textContent = 'Buscando ' + code + '…';
+        try {
+          name = await offLook(code);
+        } catch (e) {
+          off = true;
+          name = '';
+        }
+        if (!alive) return;
+        if (!name) {
+          name = await askName(code, off);
+          if (!alive) return;
+          if (!name) {
+            msg.textContent = 'Apunta al código de barras';
+            return;
+          }
+        }
+      }
+      done(scanAdd(code, name));
+    } finally {
+      busy = false;
+      seen = Date.now();
+    }
+  };
+  o.addEventListener('click', e => {
+    const x = e.target.closest('[data-x]')?.dataset.x;
+    if (x === 'end') close();
+    if (x === 'undo' && undo) {
+      undo();
+      undo = null;
+      n = Math.max(0, n - 1);
+      okEl.hidden = true;
+      msg.textContent = 'Quitado. Apunta al código de barras';
+    }
+    if (x === 'torch') {
+      torch = !torch;
+      stream
+        .getVideoTracks()[0]
+        .applyConstraints({ advanced: [{ torch }] })
+        .catch(() => {});
+      e.target.closest('[data-x]').classList.toggle('on', torch);
+    }
+  });
+  o.addEventListener('keydown', e => e.key === 'Escape' && close());
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    });
+  } catch (e) {
+    close();
+    return CF(
+      e && e.name === 'NotAllowedError'
+        ? 'La cámara está bloqueada para el panel. Actívala en los permisos del sitio (el candado junto a la dirección).'
+        : 'No se ha podido abrir la cámara.',
+      () => {},
+      undefined,
+      true
+    );
+  }
+  if (!alive) return stream.getTracks().forEach(t => t.stop());
+  v.srcObject = stream;
+  v.play().catch(() => {});
+  try {
+    const caps = stream.getVideoTracks()[0].getCapabilities?.() || {};
+    if (caps.torch) o.querySelector('[data-x=torch]').hidden = false;
+  } catch (e) {}
+  let det;
+  try {
+    const want = ['ean_13', 'ean_8', 'upc_a', 'upc_e'],
+      sup = await BarcodeDetector.getSupportedFormats();
+    det = new BarcodeDetector({ formats: want.filter(f => sup.includes(f)).length ? want.filter(f => sup.includes(f)) : sup });
+  } catch (e) {
+    close();
+    return CF('Este navegador no sabe leer códigos de barras.', () => {}, undefined, true);
+  }
+  msg.textContent = 'Apunta al código de barras';
+  const tick = async () => {
+    if (!alive) return;
+    if (!busy && v.readyState >= 2) {
+      try {
+        const c = (await det.detect(v)).find(b => /^\d{6,14}$/.test(b.rawValue));
+        if (c && alive) {
+          const now = Date.now();
+          if (c.rawValue === last && now - seen < 1500)
+            seen = now; // sigue delante: no repetir
+          else {
+            last = c.rawValue;
+            seen = now;
+            await got(c.rawValue);
+          }
+        }
+      } catch (e) {}
+    }
+    setTimeout(tick, 180);
+  };
+  tick();
 }

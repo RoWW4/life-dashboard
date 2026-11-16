@@ -340,6 +340,7 @@ const A = {
     ch();
     toast('🛒 ' + o.n + ' añadido');
   },
+  scan: () => scanOpen(),
   sqe: () => {
     shopQEdit = !shopQEdit;
     render();

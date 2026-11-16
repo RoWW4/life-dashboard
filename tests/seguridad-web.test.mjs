@@ -13,6 +13,7 @@ test('CSP: no bloquea nada de lo que usa el panel y sí lo que no está autoriza
     await ctx.addInitScript(() => { window.__csp = []; document.addEventListener('securitypolicyviolation', e => window.__csp.push(`${e.effectiveDirective} ${e.blockedURI}`)); });
     await ctx.route(/cdnjs\.cloudflare\.com\/ajax\/libs\/pdf\.js\/.*\.mjs/, r => r.fulfill({ contentType: 'text/javascript', body: PDFJS_FAKE, headers: { 'access-control-allow-origin': '*' } }));
     await ctx.route(/open-meteo\.com/, r => r.fulfill({ contentType: 'application/json', body: '{}', headers: { 'access-control-allow-origin': '*' } }));
+    await ctx.route(/openfoodfacts\.org/, r => r.fulfill({ contentType: 'application/json', body: '{"status":0}', headers: { 'access-control-allow-origin': '*' } }));
     await ctx.route(/date\.nager\.at/, r => r.fulfill({ contentType: 'application/json', body: '[]', headers: { 'access-control-allow-origin': '*' } }));
   } });
   try {
@@ -28,6 +29,7 @@ test('CSP: no bloquea nada de lo que usa el panel y sí lo que no está autoriza
       await ok(fetch('https://api.open-meteo.com/v1/forecast?latitude=1&longitude=1'));
       await ok(fetch('https://geocoding-api.open-meteo.com/v1/search?name=x'));
       await ok(fetch('https://date.nager.at/api/v3/PublicHolidays/2026/ES'));
+      await ok(offLook('8480000000000'));                                      // escáner de Compra (Open Food Facts)
       await ok(fetch(CFG.supabaseUrl + '/rest/v1/'));                            // Supabase
       await ok(fetch('https://script.google.com/macros/s/prueba/exec', { mode: 'no-cors' })); // «Sincronizar ahora» de Salud
     });

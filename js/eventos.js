@@ -52,7 +52,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (e.key === 'Enter' && e.target.tagName === 'INPUT' && !e.target.closest('.ov')) {
-    const b = e.target.closest('.f,.quick,.login')?.querySelector('button[data-a]');
+    const b = e.target.closest('.f,.quick,.login')?.querySelector('button[data-a]:not(.inb)');
     if (b) {
       e.preventDefault();
       b.click();

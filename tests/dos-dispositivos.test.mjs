@@ -20,6 +20,14 @@ test('dos dispositivos: los cambios de cada uno se juntan y nada se pierde, tamb
     // 2) El primero recoge lo del segundo al volver a la app.
     await A.evaluate(() => pull()); await idle(A);
     assert.equal(await A.evaluate(() => S.tasks.map(t => t.id).sort().join(',')), 'a,b,x1,x2');
+    // 2b) Códigos de barras aprendidos en cada dispositivo: se juntan los dos (y el producto escaneado lleva su código).
+    await A.evaluate(() => { scanAdd('1111111111111', 'producto uno'); }); await idle(A);
+    await B.evaluate(() => { scanAdd('2222222222222', 'producto dos'); }); await idle(B);
+    await A.evaluate(() => pull()); await idle(A);
+    assert.deepEqual(st.db.ldb_state[0].data.shopBC, { 1111111111111: 'Producto uno', 2222222222222: 'Producto dos' });
+    assert.deepEqual(await A.evaluate(() => S.shop.filter(x => x.bc).map(x => x.bc + ':' + x.name + 'x' + x.qty).sort()), ['1111111111111:Producto unox1', '2222222222222:Producto dosx1']);
+    await A.evaluate(() => { scanAdd('2222222222222', 'Producto dos'); }); // otra vez el mismo: suma 1, no lo repite
+    assert.equal(await A.evaluate(() => S.shop.filter(x => x.bc === '2222222222222').map(x => x.qty).join()), '2');
 
     // 3) Nube caída: el cambio se queda en el dispositivo, se avisa, queda en el registro y se reintenta solo.
     st.down = true;

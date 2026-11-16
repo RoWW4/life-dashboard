@@ -436,6 +436,7 @@ function shopEdit(s) {
       qty: Math.max(1, +o.querySelector('#se2').value || 1),
       price: pnum(o.querySelector('#se3').value) || 0
     });
+    if (s.bc) S.shopBC[s.bc] = s.name; // escaneado: la próxima vez sale con este nombre
     o.remove();
     ch();
   };
