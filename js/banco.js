@@ -3,18 +3,61 @@
 /* ---------- banco: clasificar, deduplicar e importar ---------- */
 /* Pagos con el móvil o el reloj: «Google pay: COMPRA EN BUGA RAMEN» → «BUGA RAMEN». Sin esto, «google» lo mandaba a Suscripciones. */
 const PAYP = /^\s*(?:google|fitbit|apple|samsung|garmin)\s*pay\s*:?\s*(?:(?:compra|pago)\s+)?(?:en\s+)?/i;
-function classify(desc, t) {
-  const d = nt(String(desc || '').replace(PAYP, ''));
-  // Recargar la tarjeta prepago o devolver su saldo a la cuenta es mover dinero entre tus cuentas (lo gastado con ella se apunta desde su extracto).
-  if (/ (recarga|descarga) tarjeta prepago /.test(d)) return 'Traspasos';
-  // A un ingreso solo le valen reglas de Nómina, Otros o Traspasos: las devoluciones (ingreso con categoría de gasto) se eligen a mano.
+/* Reglas (S.rules): {k, cat, fl}. fl (opcional): 'dev' = devolución (vale para ingresos, p. ej. «bizum de»), 'ex' = extraordinario, 'enc' = encargo (gastos).
+   En una regla de devolución, cat = DEVC saca la categoría del concepto del Bizum («cena» → Restaurantes); si no la sabe, va a «Sin clasificar». */
+const DEVC = 'Según el concepto';
+/* Palabras de un concepto de Bizum que dicen de qué gasto es (solo para devoluciones; además de las reglas y palabras de siempre). */
+const DEVKW = [
+  ['Restaurantes', [' cena', ' comida', ' almuerzo', ' desayuno', ' merienda', ' brunch', ' cerve', ' cana', ' copa', ' vermut', ' pizza']],
+  ['Ocio', [' cine', ' entrada', ' concierto', ' teatro', ' fiesta', ' regalo']],
+  ['Viajes', [' viaje', ' hotel', ' vuelo', ' avion', ' apartamento', ' casa rural', ' airbnb']],
+  ['Supermercado', [' super', ' mercadona']],
+  ['Hogar', [' luz ', ' agua ', ' internet', ' wifi', ' alquiler']],
+  ['Coche', [' gasolina', ' peaje']]
+];
+function ruleFor(d, t) {
   for (const r of S.rules) {
     const k = nt(r.k).trim();
-    if (k && d.includes(k) && (t !== 'i' || ['Nómina', 'Otros', 'Traspasos'].includes(r.cat))) return r.cat;
+    if (!k || !d.includes(k)) continue;
+    if (r.fl === 'dev') {
+      if (t === 'i') return r;
+    } else if (t !== 'i' || ['Nómina', 'Otros', 'Traspasos'].includes(r.cat)) return r;
   }
-  if (t === 'i') return /nomina/.test(d) ? 'Nómina' : 'Otros';
-  for (const [c, ks] of KWC) if (ks.some(k => d.includes(k))) return c;
-  return 'Otros';
+  return null;
+}
+function classify(desc, t) {
+  return classifyX(desc, t).cat;
+}
+/* Categoría y marcas de un movimiento del banco: {cat, ex, enc, pdev (devolución a la que falta poner categoría)}. */
+function classifyX(desc, t) {
+  const d = nt(String(desc || '').replace(PAYP, ''));
+  // Recargar la tarjeta prepago o devolver su saldo a la cuenta es mover dinero entre tus cuentas (lo gastado con ella se apunta desde su extracto).
+  if (/ (recarga|descarga) tarjeta prepago /.test(d)) return { cat: 'Traspasos' };
+  // A un ingreso solo le valen reglas de Nómina, Otros o Traspasos, o las de devolución.
+  const r = ruleFor(d, t);
+  if (r && r.fl === 'dev') {
+    const cat = r.cat === DEVC ? devCat(desc) : r.cat;
+    return cat ? { cat } : { cat: 'Otros', pdev: true };
+  }
+  if (r) return { cat: r.cat, ...(t !== 'i' && r.fl === 'ex' ? { ex: true } : {}), ...(t !== 'i' && r.fl === 'enc' ? { enc: true } : {}) };
+  if (t === 'i') return { cat: /nomina/.test(d) ? 'Nómina' : 'Otros' };
+  for (const [c, ks] of KWC) if (ks.some(k => d.includes(k))) return { cat: c };
+  return { cat: 'Otros' };
+}
+/* Categoría de gasto que dice el concepto de un Bizum (lo que va tras «concepto»; si no lo hay, todo el texto). '' si no se sabe. */
+function devCat(desc) {
+  const m = String(desc || '').match(/concepto:?\s*(.*)$/i),
+    c = m
+      ? m[1]
+      : String(desc || '')
+          .split(' · ')
+          .slice(1)
+          .join(' ') || desc;
+  const d = nt(c),
+    r = ruleFor(d, 'g');
+  if (r && GCATS.includes(r.cat) && !['Otros', 'Traspasos'].includes(r.cat)) return r.cat;
+  for (const [k, ks] of [...KWC, ...DEVKW]) if (k !== 'Nómina' && ks.some(w => d.includes(w))) return k;
+  return '';
 }
 const tcase = s => s.toLowerCase().replace(/(^|[\s(])\S/g, c => c.toUpperCase());
 function cleanDesc(s) {
@@ -52,7 +95,8 @@ function ingest(items, fld) {
     }
     const t = it.amt < 0 ? 'g' : 'i',
       amt = Math.round(Math.abs(it.amt) * 100) / 100,
-      cat = classify(it.desc, t);
+      cx = classifyX(it.desc, t),
+      cat = cx.cat;
     let m = S.tx.find(x => free(x) && x.t === t && Math.abs(x.amt - amt) < 0.01 && Math.abs(dd(x.date, it.date)) <= 4);
     if (!m)
       m = S.tx.find(
@@ -64,7 +108,7 @@ function ingest(items, fld) {
       if (m.fid) m.amt = amt;
       link++;
     } else {
-      const x = { id: id(), t, amt, cat, date: it.date, desc: cleanDesc(it.desc), [fld]: it.id };
+      const x = { id: id(), ...cx, t, amt, date: it.date, desc: cleanDesc(it.desc), [fld]: it.id };
       S.tx.push(x);
       fxMatch(x);
       add++;

@@ -223,7 +223,8 @@ const spent = (m, d = 31) =>
 /* Mes al que cuenta un ingreso: la nómina que llega a partir del día 25 es la del mes siguiente. */
 const incMon = x =>
   x.cat === 'Nómina' && +x.date.slice(8) >= 25 ? MN(new Date(+x.date.slice(0, 4), +x.date.slice(5, 7), 1)) : mon(x.date);
-const income = m => S.tx.filter(x => x.t === 'i' && x.cat !== NOCNT && !isDev(x) && incMon(x) === m);
+// x.pdev: devolución que aún espera categoría (bandeja «Sin clasificar»): tampoco cuenta como ingreso.
+const income = m => S.tx.filter(x => x.t === 'i' && x.cat !== NOCNT && !isDev(x) && !x.pdev && incMon(x) === m);
 const byCat = m => {
   const o = {};
   TXP()

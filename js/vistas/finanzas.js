@@ -290,20 +290,28 @@ function savCard() {
     'wide'
   );
 }
+/* Marcas que puede poner una regla además de la categoría (ver classifyX en banco.js). */
+const RFL = { dev: ['Devolución', 'arrow-down-left'], ex: ['Extraordinario', 'sparkles'], enc: ['Encargo', 'hand-coins'] };
 function rulesCard() {
   return panel(
     'fin',
     'reglas',
     `${I('tags')} Reglas de clasificación <span class="cnt">· ${S.rules.length}</span>`,
-    `<div class="mu" style="margin-bottom:8px">Si el concepto del banco contiene la palabra, se asigna esa categoría. Se crean solas al cambiar la categoría de un movimiento del banco.</div>${fold(
+    `<div class="mu" style="margin-bottom:8px">Si el concepto del banco contiene la palabra, se asigna esa categoría. Se crean solas al cambiar la categoría de un movimiento del banco. Una regla de devolución vale para dinero que te llega (p. ej. «bizum de»).</div>${fold(
       'reglas',
       S.rules.map(
         (r, i) =>
-          `<div class="row"><span class="g">«${esc(r.k)}»</span><span class="chip" style="color:${col(r.cat)}">${I(CI[r.cat] || 'package', 'sm')} ${r.cat}</span><button class="ib" data-a="dr" data-i="${i}" aria-label="Eliminar regla">${I('x')}</button></div>`
+          `<div class="row"><span class="g">«${esc(r.k)}»<span class="meta">${RFL[r.fl] ? `<span class="chip ${r.fl === 'dev' ? 'ok' : r.fl === 'ex' ? 'wa' : ''}">${I(RFL[r.fl][1], 'sm')} ${RFL[r.fl][0]}</span>` : ''}<span class="chip" style="color:${r.cat === DEVC ? 'var(--tx2)' : col(r.cat)}">${I(r.cat === DEVC ? 'file-text' : CI[r.cat] || 'package', 'sm')} ${esc(r.cat)}</span></span></span><button class="ib" data-a="dr" data-i="${i}" aria-label="Eliminar regla">${I('x')}</button></div>`
       ),
       3
     )}
-  <div class="f" style="margin:10px 0 0"><input id="r1" placeholder="Palabra (ej. mercadona)"><select id="r2">${opts(CATS, 'Supermercado')}</select><button class="btn" data-a="ar">Añadir</button></div>`
+  <div class="f" style="margin:10px 0 0"><input id="r1" placeholder="Palabra (ej. mercadona)"><select id="r3" aria-label="Tipo de regla"><option value="">Normal</option>${Object.entries(
+    RFL
+  )
+    .map(([k, [n]]) => `<option value="${k}">${n}</option>`)
+    .join(
+      ''
+    )}</select><select id="r2" aria-label="Categoría">${opts([...CATS, DEVC], 'Supermercado')}</select><button class="btn" data-a="ar">Añadir</button></div>`
   );
 }
 /* Mes que se está viendo en Finanzas y utilidades del desglose */
@@ -368,8 +376,9 @@ function catDetail(c, sel) {
     all = spent(m);
   const g = {};
   L.forEach(x => {
-    const k = nt(concept(x));
-    const e = (g[k] = g[k] || { n: concept(x), s: 0, c: 0, last: '', fx: false, bank: false, of: 0, ofs: [] });
+    // Las devoluciones van en su propio grupo aunque compartan concepto con un gasto.
+    const k = (x.t === 'i' ? 'i' : 'g') + nt(concept(x));
+    const e = (g[k] = g[k] || { n: concept(x), dev: x.t === 'i', s: 0, c: 0, last: '', fx: false, bank: false, of: 0, ofs: [] });
     e.s += sg(x);
     e.c++;
     if (x.of) {
@@ -380,7 +389,10 @@ function catDetail(c, sel) {
     if (x.fid) e.fx = true;
     if (fromBank(x)) e.bank = true;
   });
-  const rows = Object.values(g).sort((a, b) => b.s - a.s);
+  // Primero los gastos (de mayor a menor) y después las devoluciones (de mayor a menor).
+  const rows = Object.values(g).sort((a, b) => a.dev - b.dev || Math.abs(b.s) - Math.abs(a.s)),
+    gst = L.filter(x => x.t === 'g').reduce((a, x) => a + x.amt, 0),
+    dvt = Math.round((gst - tot) * 100) / 100;
   const ms = [-5, -4, -3, -2, -1, 0].map(i => mAdd(base, i)),
     hv = ms.map(k =>
       Math.max(
@@ -398,9 +410,10 @@ function catDetail(c, sel) {
   const ry = rec.reduce((a, r) => a + r.y, 0);
   const o =
     modal(`<div class="cdw" style="--cc:${col(c)}"><h3 class="cdh">${tile(CI[c] || 'package', col(c))}<span>${esc(c)}<span class="mu">${mLabel(m)}</span></span></h3>
-    <div class="cdk"><div><b>${eur(tot)}</b><span>${m === MN(new Date()) ? 'Este mes' : 'En ' + MS[+m.slice(5)]}</span></div><div><b>${all ? Math.round((tot / all) * 100) : 0}%</b><span>De tu gasto</span></div><div><b>${L.length}</b><span>Movimientos</span></div></div>
+    <div class="cdk"><div><b>${eur(tot)}</b><span>${dvt > 0 ? 'Te ha costado' : m === MN(new Date()) ? 'Este mes' : 'En ' + MS[+m.slice(5)]}</span></div><div><b>${all ? Math.round((tot / all) * 100) : 0}%</b><span>De tu gasto</span></div><div><b>${L.length}</b><span>Movimientos</span></div></div>
     <div class="hist">${ms.map((k, i) => `<button class="hb ${k === m ? 'on' : ''}" data-m="${k}" title="${mLabel(k)}: ${eur(hv[i])}" aria-label="Ver ${mLabel(k)}"><i style="height:${Math.max(3, (hv[i] / hmax) * 100)}%;background:${k === m ? col(c) : 'var(--bd2)'}"></i><span>${cap(MS[+k.slice(5)])}</span></button>`).join('')}</div>
-    <h4>Por concepto</h4>${rows.length ? rows.map(r => `<div class="row cdr"><span class="g">${esc(r.n)}<span class="meta">${r.c > 1 ? `<span class="mu">${r.c} veces</span>` : ''}${r.of ? `<span class="chip" title="Es solo una parte de un movimiento dividido">${I('split', 'sm')} Compra dividida</span>` : ''}<span class="mu">${fd(r.last)}</span>${r.fx ? `<span class="chip">${I('repeat', 'sm')} Fijo</span>` : ''}${r.bank ? `<span class="chip">${I('landmark', 'sm')} Banco</span>` : ''}</span></span><b class="amt">${eur(r.s)}</b>${r.ofs.map(o => splitBreak(o, c)).join('')}</div>`).join('') : empty('Sin gastos este mes.')}
+    ${dvt > 0 ? `<div class="cdsum"><div><span>Gastado</span><b>${eur(gst)}</b></div><div class="ok"><span>Te han devuelto</span><b>− ${eur(dvt)}</b></div><div class="t"><span>Te ha costado a ti</span><b>${eur(tot)}</b></div></div>` : ''}
+    <h4>Por concepto</h4>${rows.length ? rows.map(r => `<div class="row cdr${r.dev ? ' dev' : ''}"><span class="g">${esc(r.n)}<span class="meta">${r.c > 1 ? `<span class="mu">${r.c} veces</span>` : ''}${r.of ? `<span class="chip" title="Es solo una parte de un movimiento dividido">${I('split', 'sm')} Compra dividida</span>` : ''}<span class="mu">${fd(r.last)}</span>${r.fx ? `<span class="chip">${I('repeat', 'sm')} Fijo</span>` : ''}${r.dev ? `<span class="chip ok" title="Te devuelven parte de un gasto: resta de esta categoría">${I('arrow-down-left', 'sm')} Te devuelven</span>` : r.bank ? `<span class="chip">${I('landmark', 'sm')} Banco</span>` : ''}</span></span><b class="amt">${r.dev ? '+' + eur(-r.s) : eur(r.s)}</b>${r.ofs.map(o => splitBreak(o, c)).join('')}</div>`).join('') : empty('Sin gastos este mes.')}
     ${rec.length ? `<h4>Recurrentes · ${eur(ry)}/año <span class="mu">(≈ ${eur(ry / 12)}/mes)</span></h4><div class="mu" style="margin-bottom:4px">¿Sigues usando todas? Dar de baja una te ahorra su coste anual.</div>${rec.map(r => `<div class="row cdr"><span class="g">${esc(r.n)}<span class="meta"><span class="mu">${r.d}</span></span></span><span class="amt">${eur(r.y)}<span class="mu">/año</span></span></div>`).join('')}` : ''}
     <div class="acts" style="margin-top:14px"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button><button class="btn" id="ok">${I('list-checks')} Ver movimientos</button></div></div>`);
   o.querySelectorAll('.hb').forEach(
@@ -474,7 +487,7 @@ function txListHTML() {
   const g = L.flatMap(txp)
       .filter(p => !txf.cat || p.cat === txf.cat)
       .reduce((a, x) => a + gAmt(x), 0),
-    i = L.filter(x => x.t === 'i' && x.cat !== NOCNT && !isDev(x)).reduce((a, x) => a + x.amt, 0);
+    i = L.filter(x => x.t === 'i' && x.cat !== NOCNT && !isDev(x) && !x.pdev).reduce((a, x) => a + x.amt, 0);
   const on = txf.q || txf.cat || txf.t || txf.per !== 'mes';
   let lastD = '';
   const rows = L.map(x => {
@@ -526,8 +539,9 @@ const txRefresh = () => {
 };
 
 /* Bandeja «Sin clasificar»: gastos en «Otros» (de cualquier mes) para ponerles categoría de uno en uno.
+   También las devoluciones a las que una regla no pudo poner categoría (x.pdev).
    «Dejar en Otros» (x.keep) y «Encargo» (x.enc) los sacan de la bandeja. Sin pendientes, la tarjeta no se muestra. */
-const sincL = () => S.tx.filter(x => x.t === 'g' && x.cat === 'Otros' && !x.keep && !x.enc && !isSplit(x)).sort(txNewest());
+const sincL = () => S.tx.filter(x => (x.t === 'g' || x.pdev) && x.cat === 'Otros' && !x.keep && !x.enc && !isSplit(x)).sort(txNewest());
 function sincCard() {
   const L = sincL();
   if (!L.length) return '';
@@ -535,7 +549,7 @@ function sincCard() {
     'fin',
     'sinc',
     `${I('inbox')} Sin clasificar <span class="cnt">· ${L.length}</span>`,
-    `<div class="mu" style="margin-bottom:8px">Gastos en «Otros». Elige su categoría (te propondrá crear una regla) o déjalos en «Otros».</div>` +
+    `<div class="mu" style="margin-bottom:8px">Gastos en «Otros» y devoluciones sin categoría. Elige su categoría (en un gasto, te propondrá crear una regla) o déjalos en «Otros».</div>` +
       fold(
         'sinc',
         L.map(
@@ -543,7 +557,7 @@ function sincCard() {
             `<div class="row">${tile(CI.Otros || 'package', col('Otros'))}<span class="g">${esc(x.desc || 'Sin concepto')}<span class="meta"><span class="mu">${fd(x.date)}</span><select class="sel" data-a="txc" data-i="${x.id}" aria-label="Categoría">${opts(
               GCATS,
               x.cat
-            )}</select><button class="chip" data-a="txk" data-i="${x.id}" title="Está bien en «Otros»: quitar de esta bandeja">Dejar en Otros</button><button class="chip" data-a="txen" data-i="${x.id}" title="Compra para otra persona que te paga en mano: no cuenta como gasto tuyo">${I('hand-coins', 'sm')} Encargo</button></span></span><span class="amt neg">−${eur(x.amt)}</span></div>`
+            )}</select><button class="chip" data-a="txk" data-i="${x.id}" title="Está bien en «Otros»: quitar de esta bandeja">Dejar en Otros</button>${x.pdev ? `<span class="chip ok" title="Te devuelven parte de un gasto: elige de qué categoría">${I('arrow-down-left', 'sm')} Devolución</span>` : `<button class="chip" data-a="txen" data-i="${x.id}" title="Compra para otra persona que te paga en mano: no cuenta como gasto tuyo">${I('hand-coins', 'sm')} Encargo</button>`}</span></span>${x.pdev ? `<span class="amt ok">+${eur(x.amt)}</span>` : `<span class="amt neg">−${eur(x.amt)}</span>`}</div>`
         ),
         5
       )

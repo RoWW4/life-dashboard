@@ -339,6 +339,7 @@ const A = {
   txc: (i, el) => {
     const x = S.tx.find(y => y.id === i);
     x.cat = el.value;
+    delete x.pdev;
     ch();
     if (fromBank(x) && x.t === 'g') {
       const w =
@@ -370,8 +371,24 @@ const A = {
   ar: () => {
     const k = V('r1');
     if (!k) return toast('Escribe una palabra');
-    S.rules.push({ k, cat: V('r2') });
+    const fl = V('r3'),
+      cat = V('r2');
+    if (cat === DEVC && fl !== 'dev') return toast('«' + DEVC + '» solo vale para devoluciones');
+    if (fl === 'dev' && ['Nómina', 'Otros', 'Traspasos'].includes(cat)) return toast('Elige la categoría del gasto que te devuelven');
+    S.rules.push({ k, cat, ...(fl ? { fl } : {}) });
+    // Se aplica también a lo que ya llegó del banco y sigue sin clasificar.
+    const kk = nt(k).trim();
+    let c = 0;
+    S.tx.forEach(y => {
+      if (!fromBank(y) || y.cat !== 'Otros' || y.keep || !nt(y.desc).includes(kk)) return;
+      if (fl === 'dev' ? y.t !== 'i' : y.t !== 'g') return;
+      const r = classifyX(y.desc, y.t);
+      if (r.cat === 'Otros' && !r.pdev) return;
+      Object.assign(y, r);
+      c++;
+    });
     ch();
+    toast('🏷️ Regla guardada' + (c ? ' · ' + c + ' movimientos clasificados' : ''));
   },
   dr: i =>
     CF('¿Quitar esta regla? Los movimientos ya clasificados no cambian.', () => {
@@ -764,6 +781,7 @@ const A = {
     const x = S.tx.find(y => y.id === i);
     if (!x) return;
     x.keep = true;
+    delete x.pdev;
     ch();
     toast('Se queda en «Otros»');
   },

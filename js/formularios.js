@@ -244,6 +244,7 @@ function txEdit(x) {
     const dv = o.querySelector('#ex8');
     if (dv && !ICAT3.includes(cat) && !dv.checked) x.nodev = true;
     else delete x.nodev;
+    if (cat !== 'Otros') delete x.pdev;
     const en = o.querySelector('#ex7');
     if (en) {
       if (en.checked) x.enc = true;
