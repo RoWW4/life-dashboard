@@ -426,7 +426,15 @@ function shopForm() {
 }
 function shopEdit(s) {
   const o = modal(
-    `<h3>Editar producto</h3><div class="fs"><label>Nombre<input id="se1" value="${esc(s.name)}"></label><div class="two"><label>Cantidad<input id="se2" type="number" min="1" value="${s.qty || 1}"></label><label>Precio/ud (€)<input id="se3" inputmode="decimal" value="${s.price || ''}" placeholder="Opcional"></label></div></div><div class="acts"><button class="btn ghost danger" id="fdel">Eliminar</button><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`
+    `<h3>Editar producto</h3><div class="fs"><label>Nombre<input id="se1" value="${esc(s.name)}"></label><div class="two"><label>Cantidad<input id="se2" type="number" min="1" value="${s.qty || 1}"></label><label>Precio/ud (€)<input id="se3" inputmode="decimal" value="${s.price || ''}" placeholder="Opcional"></label></div>${S.stores.length ? `<label>Tienda</label><div class="stpick">${['', ...S.stores].map(n => `<button type="button" class="chip${(s.st || '') === n ? ' on' : ''}" data-st="${esc(n)}"${n ? ` style="--c:${stCol(n)}"` : ''}>${n ? esc(n) : 'Cualquiera'}</button>`).join('')}</div>` : ''}</div><div class="acts"><button class="btn ghost danger" id="fdel">Eliminar</button><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`
+  );
+  let st = s.st || '';
+  o.querySelectorAll('[data-st]').forEach(
+    b =>
+      (b.onclick = () => {
+        st = b.dataset.st;
+        o.querySelectorAll('[data-st]').forEach(x => x.classList.toggle('on', x === b));
+      })
   );
   o.querySelector('#ok').onclick = () => {
     const n = o.querySelector('#se1').value.trim();
@@ -437,6 +445,11 @@ function shopEdit(s) {
       price: pnum(o.querySelector('#se3').value) || 0
     });
     if (s.bc) S.shopBC[s.bc] = s.name; // escaneado: la próxima vez sale con este nombre
+    if (st) s.st = st;
+    else delete s.st;
+    const nk = (S.shopN[shopKey(s.name)] ||= { n: s.name, c: 1, t: TD() }); // la tienda se recuerda para la próxima vez que se añada
+    if (st) nk.st = st;
+    else delete nk.st;
     o.remove();
     ch();
   };

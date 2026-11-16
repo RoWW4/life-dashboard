@@ -49,17 +49,35 @@ const SHOP_IC = [
 ];
 const shopIco = n => pickIco(SHOP_IC, n, [0, 'shopping-basket', '#34c77b']);
 let shopQEdit = false; // «Quitar» en las más usadas: tocar una la borra de la lista de sugerencias (no se guarda)
+/* Tiendas: pestaña abierta ('' = todas; no se guarda) y color de cada una (las conocidas, el suyo; las demás, de una paleta). */
+let shopTab = '';
+const STC = {
+    mercadona: '#22a45a',
+    lidl: '#2f6fd6',
+    aldi: '#f08a24',
+    carrefour: '#3b82f6',
+    dia: '#e11d48',
+    eroski: '#dc2626',
+    alcampo: '#16a34a',
+    consum: '#f97316'
+  },
+  STP = ['#a78bfa', '#2dd4bf', '#f472b6', '#facc15', '#38bdf8', '#fb7185'];
+const stCol = n => STC[shopKey(n)] || STP[[...shopKey(n)].reduce((a, c) => a + c.charCodeAt(0), 0) % STP.length];
+const stChip = n => `<span class="chip stc" style="--c:${stCol(n)}">${esc(n)}</span>`;
 function vCompra() {
-  const P = S.shop.filter(s => !s.done),
+  if (shopTab && !S.stores.includes(shopTab)) shopTab = '';
+  const P0 = S.shop.filter(s => !s.done),
+    P = shopTab ? P0.filter(s => !s.st || s.st === shopTab) : P0,
     D = S.shop.filter(s => s.done),
     est = P.reduce((a, s) => a + (s.price || 0) * s.qty, 0),
     real = D.reduce((a, s) => a + (s.price || 0) * s.qty, 0);
   const row = s =>
-    `<div class="row ${s.done ? 'is-done' : ''}"><input type="checkbox" class="ck" data-a="ts" data-i="${s.id}" ${s.done ? 'checked' : ''} aria-label="Comprado">${(([, ic, c]) => tile(ic, c))(shopIco(s.name))}<button class="link g" data-a="es" data-i="${s.id}" title="Editar"><span class="tt">${esc(s.name)}</span> ${s.qty > 1 ? `<span class="mu">×${s.qty}</span>` : ''}</button><span class="amt mu">${s.price ? eur(s.price * s.qty) : ''}</span><button class="ib" data-a="ds" data-i="${s.id}" aria-label="Eliminar">${I('x')}</button></div>`;
+    `<div class="row ${s.done ? 'is-done' : ''}"><input type="checkbox" class="ck" data-a="ts" data-i="${s.id}" ${s.done ? 'checked' : ''} aria-label="Comprado">${(([, ic, c]) => tile(ic, c))(shopIco(s.name))}<button class="link g" data-a="es" data-i="${s.id}" title="Editar"><span class="tt">${esc(s.name)}</span> ${s.qty > 1 ? `<span class="mu">×${s.qty}</span>` : ''}${s.st && !shopTab && !s.done ? stChip(s.st) : ''}</button><span class="amt mu">${s.price ? eur(s.price * s.qty) : ''}</span><button class="ib" data-a="ds" data-i="${s.id}" aria-label="Eliminar">${I('x')}</button></div>`;
+  const tabs = `<div class="stbar"><div class="sttabs" role="tablist" aria-label="Tienda"><button class="sttab${shopTab ? '' : ' on'}" role="tab" aria-selected="${!shopTab}" data-a="stt" data-i="">Todas</button>${S.stores.map(n => `<button class="sttab${shopTab === n ? ' on' : ''}" role="tab" aria-selected="${shopTab === n}" style="--c:${stCol(n)}" data-a="stt" data-i="${esc(n)}">${esc(n)}${(c => (c ? ` <b>${c}</b>` : ''))(P0.filter(x => x.st === n).length)}</button>`).join('')}</div><button class="sttab ed" data-a="stm" aria-label="Añadir o quitar tiendas" title="Añadir o quitar tiendas">${I('settings', 'sm')}</button></div>`;
   return `<div class="hdr"><div><h2>Lista de la compra</h2><div class="sub">Estimado pendiente ${eur(est)} · Comprado ${eur(real)}</div></div></div>
   <div class="card"><div class="f shf"><span class="shin"><input id="s1" placeholder="Producto…" aria-label="Producto"><button class="inb" data-a="vs" aria-label="Dictar" title="Dictar">${I('mic')}</button></span><input id="s2" type="number" min="1" value="1" aria-label="Cantidad"><input id="s3" type="number" step="0.01" min="0" placeholder="Precio/ud (opcional)" aria-label="Precio por unidad"><button class="btn" data-a="as">Añadir</button></div>${SCAN_OK ? `<button class="btn shscan" data-a="scan">${I('scan-barcode')} Escanear productos</button>` : ''}${(() => {
     // Más usadas: las 10 que más veces se han añadido (y que no están ya pendientes).
-    const pend = new Set(P.map(x => shopKey(x.name))),
+    const pend = new Set(P0.map(x => shopKey(x.name))),
       Q = Object.entries(S.shopN)
         .filter(([k]) => !pend.has(k))
         .sort(([, a], [, b]) => b.c - a.c || (b.t || '').localeCompare(a.t || ''))
@@ -74,7 +92,7 @@ function vCompra() {
         'compra',
         'pend',
         `${I('shopping-cart')} Pendientes <span class="cnt">· ${P.length}</span>`,
-        P.length ? P.map(row).join('') : empty('Lista vacía')
+        tabs + (P.length ? P.map(row).join('') : empty(shopTab ? 'Nada pendiente para ' + esc(shopTab) + '.' : 'Lista vacía'))
       ),
       hecho: panel(
         'compra',
@@ -114,16 +132,30 @@ function offName(p) {
   if (!n) n = full;
   return n.length > 42 ? n.slice(0, 42).replace(/\s+\S*$/, '') : n;
 }
-/* '' si no lo conoce; lanza error si no hay conexión. */
+/* Tienda por el código: las marcas propias llevan el prefijo de la cadena (Hacendado 8480000, Lidl 4056489, Aldi 4061458/4047247). */
+const BCST = [
+  [/^8480000/, 'Mercadona'],
+  [/^4056489/, 'Lidl'],
+  [/^(4061458|4047247)/, 'Aldi']
+];
+const bcStore = (code, offSt = '') =>
+  (BCST.find(([r]) => r.test(code)) || [])[1] ||
+  S.stores.find(n =>
+    String(offSt)
+      .split(',')
+      .some(x => shopKey(x).replace(/^\w+:/, '') === shopKey(n))
+  ) ||
+  '';
+/* {n: nombre, st: tiendas según Open Food Facts}; n = '' si no lo conoce; lanza error si no hay conexión. */
 async function offLook(code) {
-  const r = await fetch(OFF_API + encodeURIComponent(code) + '.json?fields=product_name,product_name_es,generic_name_es,brands');
-  if (r.status === 404) return '';
+  const r = await fetch(OFF_API + encodeURIComponent(code) + '.json?fields=product_name,product_name_es,generic_name_es,brands,stores');
+  if (r.status === 404) return { n: '' };
   if (!r.ok) throw new Error('Open Food Facts: HTTP ' + r.status);
   const j = await r.json();
-  return j.status === 1 && j.product ? offName(j.product) : '';
+  return j.status === 1 && j.product ? { n: offName(j.product), st: j.product.stores || '' } : { n: '' };
 }
 /* Añade lo escaneado (o suma 1 si ya está pendiente). Devuelve el texto del aviso y cómo deshacerlo. */
-function scanAdd(code, name) {
+function scanAdd(code, name, offSt) {
   name = cap(String(name).trim());
   S.shopBC[code] = name;
   const p = S.shop.find(x => !x.done && (x.bc === code || shopKey(x.name) === shopKey(name)));
@@ -141,7 +173,7 @@ function scanAdd(code, name) {
       }
     };
   }
-  shopAdd(name, 1, 0);
+  shopAdd(name, 1, 0, bcStore(code, offSt));
   const it = S.shop[S.shop.length - 1];
   it.bc = code;
   ch();
@@ -230,11 +262,12 @@ async function scanOpen() {
     busy = true;
     try {
       let name = S.shopBC[code],
+        offSt = '',
         off = false;
       if (!name) {
         msg.textContent = 'Buscando ' + code + '…';
         try {
-          name = await offLook(code);
+          ({ n: name, st: offSt } = await offLook(code));
         } catch (e) {
           off = true;
           name = '';
@@ -249,7 +282,7 @@ async function scanOpen() {
           }
         }
       }
-      done(scanAdd(code, name));
+      done(scanAdd(code, name, offSt));
     } finally {
       busy = false;
       seen = Date.now();
@@ -328,4 +361,39 @@ async function scanOpen() {
     setTimeout(tick, 180);
   };
   tick();
+}
+
+/* ---------- Tiendas: añadir y quitar ---------- */
+function storesEdit() {
+  const body = () =>
+    `<h3>Tiendas</h3><div class="mu" style="margin-bottom:10px">Salen como pestañas en Pendientes. Lo que no tiene tienda se ve en todas.</div><div class="stlist">${S.stores.map((n, i) => `<div class="row">${stChip(n)}<span class="g"></span><button class="ib" data-x="${i}" aria-label="Quitar ${esc(n)}">${I('x')}</button></div>`).join('') || empty('Sin tiendas.')}</div><div class="f" style="margin:12px 0 0"><input id="stn" placeholder="Nueva tienda (p. ej. Carrefour)" aria-label="Nueva tienda"><button class="btn" id="stadd">Añadir</button></div><div class="acts"><span class="sp"></span><button class="btn" data-close>Hecho</button></div>`;
+  const o = modal(body()),
+    wire = () => {
+      const inp = o.querySelector('#stn');
+      o.querySelector('#stadd').onclick = () => {
+        const n = cap(inp.value.trim().slice(0, 30));
+        if (!n) return inp.focus();
+        if (S.stores.some(x => shopKey(x) === shopKey(n))) return toast('Ya está');
+        S.stores.push(n);
+        ch();
+        o.querySelector('.dlg').innerHTML = body();
+        wire();
+        o.querySelector('#stn').focus();
+      };
+      o.querySelectorAll('[data-x]').forEach(
+        b =>
+          (b.onclick = () => {
+            const n = S.stores[+b.dataset.x],
+              c = S.shop.filter(x => x.st === n).length;
+            CF(`¿Quitar «${n}»?${c ? ` Sus ${c} producto(s) se quedan en la lista, sin tienda.` : ''}`, () => {
+              S.stores = S.stores.filter(x => x !== n);
+              S.shop.forEach(x => x.st === n && delete x.st);
+              Object.values(S.shopN).forEach(x => x.st === n && delete x.st);
+              ch();
+              storesEdit();
+            });
+          })
+      );
+    };
+  wire();
 }

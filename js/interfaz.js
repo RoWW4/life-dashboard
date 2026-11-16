@@ -903,11 +903,13 @@ function countUp() {
    Cada producto que se añade (a mano, por voz o compartido) suma uno en S.shopN = {clave: {n, c (veces), t (última vez), p (precio)}}.
    La sección Compra enseña las más usadas como botones para añadirlas de un toque. */
 const shopKey = n => String(n).trim().toLowerCase();
-function shopAdd(name, qty = 1, price = 0) {
+/* Tienda: la pestaña abierta en Compra; si no, la que se recuerda de ese producto; si no, guess (p. ej. la del escáner). */
+function shopAdd(name, qty = 1, price = 0, guess = '') {
   name = cap(String(name).trim());
-  S.shop.push({ id: id(), name, qty, price, done: false });
   const k = shopKey(name),
     o = S.shopN[k] || { c: 0 },
-    p = price || o.p;
-  S.shopN[k] = { n: name, c: o.c + 1, t: TD(), ...(p ? { p } : {}) };
+    p = price || o.p,
+    st = [view === 'compra' && shopTab, o.st, guess].find(x => x && S.stores.includes(x));
+  S.shop.push({ id: id(), name, qty, price, done: false, ...(st ? { st } : {}) });
+  S.shopN[k] = { n: name, c: o.c + 1, t: TD(), ...(p ? { p } : {}), ...(o.st ? { st: o.st } : {}) };
 }

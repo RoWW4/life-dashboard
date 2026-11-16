@@ -341,6 +341,11 @@ const A = {
     toast('🛒 ' + o.n + ' añadido');
   },
   scan: () => scanOpen(),
+  stt: i => {
+    shopTab = i || '';
+    render();
+  },
+  stm: () => storesEdit(),
   sqe: () => {
     shopQEdit = !shopQEdit;
     render();

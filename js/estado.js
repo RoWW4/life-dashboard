@@ -28,6 +28,7 @@ const def = () => ({
   goals: [],
   shopN: {},
   shopBC: {},
+  stores: [],
   bar: null,
   _ts: 0
 });
@@ -47,7 +48,8 @@ function normalize(o) {
     'localHol',
     'periods',
     'bankSeen',
-    'goals'
+    'goals',
+    'stores'
   ])
     if (!Array.isArray(s[k])) s[k] = [];
   if (!s.order || typeof s.order !== 'object') s.order = {};
@@ -120,6 +122,10 @@ function seed() {
     };
   ren([S.tx, S.rules, S.fixed]);
   // «Más usadas» de la compra: se empieza con lo que ya hay en la lista.
+  // Tiendas de la compra (se pueden añadir y quitar en Compra).
+  once('stores-v1', () => {
+    if (!S.stores.length) S.stores = ['Mercadona', 'Lidl', 'Aldi'];
+  });
   once('shopN-v1', () =>
     S.shop.forEach(x => {
       const k = shopKey(x.name),
