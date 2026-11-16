@@ -159,16 +159,18 @@ async function scanOpen() {
   o.setAttribute('role', 'dialog');
   o.setAttribute('aria-label', 'Escanear productos');
   o.innerHTML = `<video playsinline muted autoplay></video><div class="scfr" aria-hidden="true"><i></i></div>
-    <div class="sctop"><button class="scb" data-x="torch" hidden aria-label="Linterna" title="Linterna">${I('flashlight')}</button><span class="sp"></span><button class="btn" data-x="end">Listo</button></div>
+    
     <div class="scbot"><div class="scmsg" aria-live="polite">Abriendo la cámara…</div>
     <form class="scask" hidden><label for="scn"></label><input id="scn" placeholder="Nombre del producto" autocomplete="off"><div class="acts"><button type="button" class="btn ghost" data-x="skip">Saltar</button><button class="btn">Añadir</button></div></form>
-    <div class="scok" hidden><span class="tt"></span><button class="link" data-x="undo">Deshacer</button></div></div>`;
+    <div class="scok" hidden><span class="tt"></span><button class="link" data-x="undo">Deshacer</button></div>
+    <div class="scend"><button class="scb" data-x="torch" hidden aria-label="Linterna" title="Linterna">${I('flashlight')}</button><button class="btn" data-x="end">Listo</button></div></div>`;
   document.body.appendChild(o);
   document.body.classList.add('scanning');
   const v = o.querySelector('video'),
     msg = o.querySelector('.scmsg'),
     ask = o.querySelector('.scask'),
-    okEl = o.querySelector('.scok');
+    okEl = o.querySelector('.scok'),
+    endEl = o.querySelector('.scend');
   let stream = null,
     alive = true,
     busy = false,
@@ -200,6 +202,7 @@ async function scanOpen() {
   const askName = (code, off) =>
     new Promise(res => {
       ask.hidden = false;
+      endEl.hidden = true;
       okEl.hidden = true;
       msg.textContent = '';
       ask.querySelector('label').textContent = off
@@ -210,6 +213,7 @@ async function scanOpen() {
       inp.focus();
       const fin = name => {
         ask.hidden = true;
+        endEl.hidden = false;
         ask.onsubmit = null;
         ask.querySelector('[data-x=skip]').onclick = null;
         res(name);

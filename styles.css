@@ -1260,10 +1260,10 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 .scfr{position:absolute;left:50%;top:40%;width:min(80vw,340px);height:min(36vw,150px);transform:translate(-50%,-50%);border-radius:18px;box-shadow:0 0 0 100vmax rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.85);overflow:hidden}
 .scfr i{position:absolute;left:8%;right:8%;top:50%;height:2px;background:#34c77b;box-shadow:0 0 12px #34c77b;animation:scl 1.8s ease-in-out infinite alternate}
 @keyframes scl{from{top:18%}to{top:82%}}
-.sctop{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px}
-.sctop .sp{flex:1}
-.scb{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.scb.on{background:#fbbf24;color:#1a1300}
+.scend{display:flex;gap:10px}
+.scend .btn{flex:1;padding:14px 16px;font-size:16px}
+.scb{flex:none;display:grid;place-items:center;width:50px;height:50px;border-radius:50%;border:1px solid var(--bd2);background:var(--card2);color:var(--tx);cursor:pointer}
+.scb.on{background:#fbbf24;color:#1a1300;border-color:#fbbf24}
 .scbot{position:absolute;left:0;right:0;bottom:0;padding:18px 18px calc(20px + env(safe-area-inset-bottom,0px));background:var(--card);color:var(--tx);border-radius:22px 22px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.35);display:grid;gap:10px}
 .scmsg{font-size:14.5px;color:var(--tx2);text-align:center}.scmsg:empty{display:none}
 .scok{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,#34c77b 14%,var(--card2));font-weight:600}
