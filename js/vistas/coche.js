@@ -406,11 +406,11 @@ function carEstado(lv) {
           `<button class="btn sm ghost" data-a="xp" data-i="carmap" aria-expanded="${!!exp.carmap}">${I(exp.carmap ? 'chevron-up' : 'map-pin', 'sm')} ${exp.carmap ? 'Ocultar' : 'Ver en el mapa'}</button>`
         ) + (exp.carmap ? carMap(+lv.loc.lat, +lv.loc.lon) : '')
       : '') +
-    `<div class="sact" style="margin-top:8px"><span class="mu">${I('clock', 'sm')} ${
+    `<div class="mu carup"><span>${
       carSync.on
-        ? 'Actualizando… (tarda un minuto)'
+        ? 'Actualizando…'
         : `Datos del coche ${ago(lv.at)}${carJob() && carJob().last_ok ? ` · comprobado ${ago(carJob().last_ok)}` : ''}`
-    }</span><button class="btn ghost" data-a="carup" ${carSync.on ? 'disabled' : ''}>${I('refresh-cw')} Actualizar</button></div>`
+    }</span><button class="ib${carSync.on ? ' gira' : ''}" data-a="carup" aria-label="Actualizar ahora" title="Actualizar ahora" ${carSync.on ? 'disabled' : ''}>${I('refresh-cw')}</button></div>`
   );
 }
 /* Tarjeta «Conducción»: cifras (semana, mes, día que más, entre semana), calendario del mes con los km de cada día

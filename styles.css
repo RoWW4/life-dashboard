@@ -1232,3 +1232,11 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 .pvq{display:flex;flex-wrap:nowrap;margin:-2px 0 2px}.pvq button{flex:1;text-align:center;padding:5px 2px;white-space:nowrap;font-size:12.5px}
 @media(max-width:760px){.peth{padding:20px 16px 18px}.peth .pav.lg{width:104px;height:104px}.petn{font-size:26px}.petage{font-size:15px}}
 .pgr{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-bottom:1px solid var(--sep)}.pgrb{display:flex;align-items:flex-end;gap:10px}.pgrb label{flex:1}
+/* Coche: «Actualizar» sutil (flechas en círculo) junto a la hora de los datos; gira mientras actualiza. */
+.carup{display:flex;align-items:center;gap:2px;margin-top:8px}
+.carup .ib{padding:4px}
+.carup .ib .i{width:14px;height:14px}
+.ib.gira{cursor:default}
+.ib.gira .i{animation:gira 1s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.ib.gira .i{animation-duration:3s}}
