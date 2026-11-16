@@ -18,7 +18,7 @@ const carR = () => {
   const c = S.car && typeof S.car === 'object' ? S.car : {};
   return { info: c.info || {}, km: c.km || [], mt: Array.isArray(c.mt) ? c.mt : CAR_MT0, vis: c.vis || [] };
 };
-/* Lo que manda el coche por Kia Connect (robot kia-km, cada 3 h): S.car.live = estado (at: hora del dato, fuel %, low,
+/* Lo que manda el coche por Kia Connect (robot kia-km, cada hora de 7 a 23 h y con «Actualizar»): S.car.live = estado (at: hora del dato, fuel %, low,
    range km, warn: avisos, locked, open: lo que está abierto, loc: {lat, lon}) y S.car.trips = {days: {fecha: {km, min}},
    months: {AAAA-MM: {km, min, spd}}}. Lo escribe la base de datos (ldb_car_live); la app solo lo lee. */
 const CAR_AV = {
@@ -37,6 +37,58 @@ const carFuel = lv => carFuelReal(lv) ?? (hasN(lv.range) ? Math.min(100, ((+lv.r
 const carFuelLvl = p => (p > 50 ? 'ok' : p > 25 ? 'wa' : 'er');
 const CAR_AB = { doors: 'puertas', windows: 'ventanillas', trunk: 'maletero', hood: 'capó' };
 const carLive = () => (S.car && S.car.live && typeof S.car.live === 'object' ? S.car.live : null);
+/* «Actualizar»: pide a Supabase que lance el robot del coche (ldb_car_refresh, como mucho cada 5 min) y espera
+   (hasta ~3 min) a que termine según su latido (job_health «kia-km»); luego trae los datos. Al abrir Coche se hace
+   solo si la última lectura tiene más de 30 min. El robot lee lo último que mandó el coche: no lo despierta. */
+const CAR_OLD = 30 * 60000;
+let carT = 0;
+const carJob = () => (OPS && OPS.jobs ? OPS.jobs.find(j => j.job === 'kia-km') : null);
+const carRepaint = () => {
+  if (view === 'coche') render();
+};
+async function carSync(manual) {
+  if (carSync.on) return;
+  if (!sb || !user) return manual && toast('Inicia sesión para actualizar el coche');
+  carSync.on = 1;
+  carRepaint();
+  let msg = '';
+  try {
+    const { data, error } = await sb.rpc('ldb_car_refresh');
+    if (error) throw error;
+    if (data.st === 'sin-token') msg = 'Falta el permiso de GitHub en Supabase';
+    else {
+      const desde = new Date(data.at).getTime() - 2000;
+      msg = 'Kia Connect no ha respondido aún; prueba en un rato';
+      for (let i = 0; i < 24; i++) {
+        await new Promise(r => setTimeout(r, i < 3 ? 15000 : 8000));
+        const { data: j } = await sb.from('job_health').select('last_ok,last_error,last_error_at').eq('job', 'kia-km').maybeSingle();
+        if (j && j.last_ok && new Date(j.last_ok) >= desde) {
+          msg = 'Coche al día';
+          break;
+        }
+        if (j && j.last_error_at && new Date(j.last_error_at) >= desde) {
+          msg = 'No se pudo leer el coche: ' + String(j.last_error || '').slice(0, 100);
+          break;
+        }
+      }
+    }
+    await pull();
+  } catch (e) {
+    logErr('coche', e);
+    msg = 'No se pudo actualizar: ' + ((e && e.message) || e);
+  } finally {
+    carSync.on = 0;
+  }
+  carRepaint();
+  if (manual) toast(msg);
+}
+/* Al abrir Coche (como mucho una vez por minuto): si la última lectura del robot es vieja, pide otra sin avisar. */
+function carOpen() {
+  if (!sb || !user || !OPS || carSync.on || Date.now() - carT < 60000) return;
+  carT = Date.now();
+  const j = carJob();
+  if (!j || !j.last_ok || Date.now() - new Date(j.last_ok) > CAR_OLD) carSync(false);
+}
 const carTrips = () => {
   const t = (S.car && S.car.trips) || {};
   return { days: t.days || {}, months: t.months || {} };
@@ -354,7 +406,11 @@ function carEstado(lv) {
           `<button class="btn sm ghost" data-a="xp" data-i="carmap" aria-expanded="${!!exp.carmap}">${I(exp.carmap ? 'chevron-up' : 'map-pin', 'sm')} ${exp.carmap ? 'Ocultar' : 'Ver en el mapa'}</button>`
         ) + (exp.carmap ? carMap(+lv.loc.lat, +lv.loc.lon) : '')
       : '') +
-    `<div class="mu" style="margin-top:8px">Datos de Kia Connect · ${ago(lv.at)}</div>`
+    `<div class="sact" style="margin-top:8px"><span class="mu">${I('clock', 'sm')} ${
+      carSync.on
+        ? 'Actualizando… (tarda un minuto)'
+        : `Datos del coche ${ago(lv.at)}${carJob() && carJob().last_ok ? ` · comprobado ${ago(carJob().last_ok)}` : ''}`
+    }</span><button class="btn ghost" data-a="carup" ${carSync.on ? 'disabled' : ''}>${I('refresh-cw')} Actualizar</button></div>`
   );
 }
 /* Tarjeta «Conducción»: cifras (semana, mes, día que más, entre semana), calendario del mes con los km de cada día
@@ -512,6 +568,7 @@ const carVisRow = v => {
 };
 
 function vCoche() {
+  setTimeout(carOpen);
   const c = carR(),
     K = carKm(c),
     i = c.info,

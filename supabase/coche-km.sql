@@ -63,3 +63,37 @@ begin
 end $$;
 revoke all on function public.ldb_car_live(jsonb, jsonb, jsonb) from public, anon, authenticated;
 grant execute on function public.ldb_car_live(jsonb, jsonb, jsonb) to service_role;
+
+-- «Actualizar» del coche desde la app (16/11/2026): lanza el workflow kia-km por la API de GitHub, con el mismo token
+-- de Vault que pg_cron. Solo la dueña del panel, y como mucho una vez cada 5 minutos (si no, devuelve la hora de la
+-- última vez, para que la app espere a esa). Devuelve {st: 'lanzado'|'reciente'|'sin-token', at}.
+create table if not exists public.ldb_car_refresh_at (id int primary key default 1 check (id = 1), at timestamptz not null);
+alter table public.ldb_car_refresh_at enable row level security;
+revoke all on public.ldb_car_refresh_at from public, anon, authenticated;
+
+create or replace function public.ldb_car_refresh() returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare t timestamptz;
+begin
+  if auth.uid() is null or auth.uid() is distinct from ldb_owner() then raise exception 'ldb_car_refresh: solo la dueña del panel'; end if;
+  select at into t from ldb_car_refresh_at where id = 1;
+  if t is not null and t > now() - interval '5 minutes' then return jsonb_build_object('st', 'reciente', 'at', t); end if;
+  if not exists (select 1 from vault.decrypted_secrets where name = 'github_dispatch_token') then
+    return jsonb_build_object('st', 'sin-token');
+  end if;
+  insert into ldb_car_refresh_at (id, at) values (1, now()) on conflict (id) do update set at = excluded.at;
+  perform net.http_post(
+    url := 'https://api.github.com/repos/RoWW4/life-dashboard/actions/workflows/kia-km.yml/dispatches',
+    body := '{"ref":"main"}'::jsonb,
+    headers := jsonb_build_object(
+      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'github_dispatch_token'),
+      'Accept', 'application/vnd.github+json',
+      'X-GitHub-Api-Version', '2022-11-28',
+      'User-Agent', 'panel-rocio-supabase-cron',
+      'Content-Type', 'application/json'),
+    timeout_milliseconds := 10000
+  );
+  return jsonb_build_object('st', 'lanzado', 'at', now());
+end $$;
+revoke all on function public.ldb_car_refresh() from public, anon;
+grant execute on function public.ldb_car_refresh() to authenticated;
