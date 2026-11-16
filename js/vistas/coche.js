@@ -401,7 +401,7 @@ function carEstado(lv) {
       carSync.on
         ? 'Actualizando…'
         : `Datos del coche ${ago(lv.at)}${carJob() && carJob().last_ok ? ` · comprobado ${ago(carJob().last_ok)}` : ''}`
-    }</span><button class="ib${carSync.on ? ' gira' : ''}" data-a="carup" aria-label="Actualizar ahora" title="Actualizar ahora" ${carSync.on ? 'disabled' : ''}>${I('refresh-cw')}</button></div>`
+    }</span></div>`
   );
 }
 /* Tarjeta «Conducción»: cifras (semana, mes, día que más, entre semana), calendario del mes con los km de cada día
@@ -590,8 +590,8 @@ function vCoche() {
               ? `<span class="carfu ${lv.low ? 'er' : carFuelLvl(carFuel(lv))}" title="${carFuelReal(lv) == null ? `Calculado con la autonomía: depósito de ${CAR_TANK} l y consumo medio de ${String(CAR_L100).replace('.', ',')} l/100 km` : 'Dato del coche'}"><span class="carfb"><i style="width:${Math.max(3, carFuel(lv)).toFixed(0)}%"></i></span>${I('fuel', 'sm')} ${carFuelReal(lv) == null ? '≈ ' : ''}${Math.round(carFuel(lv))} %${hasN(lv.range) ? `<span class="carfa"><span class="carfr">${kmf(lv.range)} km</span> de autonomía</span>` : ''}</span>`
               : ''
           }`
-        : `<b class="carh0">Sin apuntar</b><span class="carhs">Toca el lápiz para poner los km del coche.</span>`
-    }</div><button class="carhb" data-a="ckm" aria-label="Actualizar los km" title="Actualizar los km">${I('pencil')}</button></section>`;
+        : `<b class="carh0">Sin apuntar</b><span class="carhs">Toca las flechas para leer los km del coche.</span>`
+    }</div><button class="carhb${carSync.on ? ' gira' : ''}" data-a="carup" aria-label="Actualizar los datos del coche" title="${carSync.on ? 'Actualizando… (tarda un minuto)' : 'Actualizar los datos del coche'}" ${carSync.on ? 'disabled' : ''}>${I('refresh-cw')}</button></section>`;
     C = {
       prox: panel(
         'coche',
