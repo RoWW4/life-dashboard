@@ -53,6 +53,23 @@ select cron.schedule('savings-sync', '13 6 * * *', $
   where exists (select 1 from vault.decrypted_secrets where name = 'github_dispatch_token');
 $);
 
+-- Coche (Kia Connect): lanza «Coche (Kia Connect)» cada hora (≈ de 07:00 a 23:00 en invierno).
+-- Desde el 16/11/2026; antes lo lanzaba el «schedule» de GitHub cada 3 h, con retrasos.
+select cron.schedule('kia-km', '0 6-22 * * *', $$
+  select net.http_post(
+    url := 'https://api.github.com/repos/RoWW4/life-dashboard/actions/workflows/kia-km.yml/dispatches',
+    body := '{"ref":"main"}'::jsonb,
+    headers := jsonb_build_object(
+      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'github_dispatch_token'),
+      'Accept', 'application/vnd.github+json',
+      'X-GitHub-Api-Version', '2022-11-28',
+      'User-Agent', 'panel-rocio-supabase-cron',
+      'Content-Type', 'application/json'),
+    timeout_milliseconds := 10000
+  )
+  where exists (select 1 from vault.decrypted_secrets where name = 'github_dispatch_token');
+$$);
+
 -- Wallet: desactivada desde el 04/11/2026 (el banco entra por Enable Banking). Reactivar: select cron.alter_job(1, active := true);
 select cron.schedule('sync-wallet', '17 5,9,13,17,21 * * *', $$
   select net.http_post(
