@@ -5,6 +5,27 @@ const V = i => {
   const e = document.getElementById(i);
   return e ? e.value.trim() : '';
 };
+/* Cambiar de día una tarea (pasar a mañana o soltarla en un día del calendario). El aviso de Telegram se mueve con ella
+   (si quedara en el pasado, se quita y avisa 1 día antes) y las repetitivas mensuales toman el nuevo día del mes. */
+function taskMove(i, nd) {
+  const t = S.tasks.find(x => x.id === i);
+  if (!t || t.due === nd) return;
+  const was = { due: t.due, rem: t.rem, rd: t.rd };
+  if (t.rem && t.due) {
+    const r = addD(t.rem.slice(0, 10), dd(nd, t.due)) + t.rem.slice(10);
+    if (r < TD() + 'T' + new Date().toTimeString().slice(0, 5)) delete t.rem;
+    else t.rem = r;
+  }
+  delete t.rd;
+  t.due = nd;
+  ch();
+  toast(nd === addD(TD(), 1) ? 'Pasada a mañana' : 'Movida al ' + fd(nd), () => {
+    const x = S.tasks.find(y => y.id === i);
+    if (!x) return;
+    Object.entries(was).forEach(([k, v]) => (v === undefined ? delete x[k] : (x[k] = v)));
+    ch();
+  });
+}
 const A = {
   go: i => {
     // Al entrar en Finanzas desde el menú, vuelve a la última pestaña abierta.
@@ -245,17 +266,30 @@ const A = {
   et: i => taskForm(S.tasks.find(x => x.id === i)),
   tt: i => {
     const t = S.tasks.find(x => x.id === i);
+    if (!t) return;
     t.done = !t.done;
     // Confeti si con esta ya no queda nada para hoy (ni atrasado).
     const td = TD();
     if (t.done && t.due && t.due <= td && !S.tasks.some(x => !x.done && x.due && x.due <= td)) setTimeout(confeti, 150);
     if (t.done) t.doneAt = TD();
     else delete t.doneAt;
-    if (t.done && t.rep && t.due) {
-      const nd = nextDue(t.due, t.rep);
+    // Desmarcada por error: se quita la siguiente que se creó al marcarla (si sigue pendiente).
+    if (!t.done && t.nx) {
+      S.tasks = S.tasks.filter(x => !(x.id === t.nx && !x.done && !x.notes));
+      delete t.nx;
+    }
+    let msg = t.done ? 'Completada' : '';
+    if (t.done && t.rep) {
+      // La siguiente nunca queda atrasada: si la tarea iba con retraso, se salta hasta después de hoy (manteniendo su ritmo).
+      // Sin fecha, se cuenta desde hoy.
+      const base = t.due || td,
+        day = t.rd || +base.slice(8);
+      let nd = nextDue(base, t.rep, day);
+      for (let k = 0; nd <= td && k < 1000; k++) nd = nextDue(nd, t.rep, day);
       if (!S.tasks.some(x => !x.done && x.title === t.title && x.due === nd)) {
+        const nid = id();
         S.tasks.push({
-          id: id(),
+          id: nid,
           title: t.title,
           due: nd,
           pr: t.pr,
@@ -263,17 +297,30 @@ const A = {
           rep: t.rep,
           tm: t.tm || '',
           done: false,
-          ...(t.rem ? { rem: addD(nd, dd(t.rem.slice(0, 10), t.due)) + t.rem.slice(10) } : {})
+          ...(t.rep === 'Mensual' || t.rep === 'Anual' ? { rd: day } : {}),
+          ...(t.rem && t.due ? { rem: addD(nd, dd(t.rem.slice(0, 10), t.due)) + t.rem.slice(10) } : {})
         });
-        toast('🔁 Próxima: ' + fd(nd));
+        t.nx = nid;
+        msg = '🔁 Próxima: ' + fd(nd);
       }
     }
     ch();
+    // Al completar, unos segundos para deshacerlo (también quita la siguiente que se haya creado).
+    if (msg) toast(msg, () => A.tt(i));
   },
+  // Pasar a mañana una tarea de hoy o atrasada; el aviso de Telegram se mueve con ella.
+  tpp: i => taskMove(i, addD(TD(), 1)),
   dt: i =>
     CF('¿Eliminar esta tarea definitivamente?', () => {
-      S.tasks = S.tasks.filter(x => x.id !== i);
+      const k = S.tasks.findIndex(x => x.id === i),
+        t = S.tasks[k];
+      if (!t) return;
+      S.tasks.splice(k, 1);
       ch();
+      toast('Tarea eliminada', () => {
+        if (!S.tasks.some(x => x.id === i)) S.tasks.splice(Math.min(k, S.tasks.length), 0, t);
+        ch();
+      });
     }),
   as: () => {
     if (!V('s1')) return toast('Escribe un producto');
@@ -332,8 +379,15 @@ const A = {
     ),
   dx: i => {
     CF('¿Eliminar este movimiento?', () => {
-      S.tx = S.tx.filter(y => y.id !== i);
+      const k = S.tx.findIndex(y => y.id === i),
+        x = S.tx[k];
+      if (!x) return;
+      S.tx.splice(k, 1);
       ch();
+      toast('Movimiento eliminado', () => {
+        if (!S.tx.some(y => y.id === i)) S.tx.splice(Math.min(k, S.tx.length), 0, x);
+        ch();
+      });
     });
   },
   txc: (i, el) => {
@@ -649,9 +703,20 @@ const A = {
   ed: i => docForm(S.docs.find(x => x.id === i)),
   dd: i =>
     CF('¿Quitar este documento de la lista? (No se borra ningún archivo)', () => {
-      S.docs = S.docs.filter(x => x.id !== i);
+      const k = S.docs.findIndex(x => x.id === i),
+        d = S.docs[k];
+      if (!d) return;
+      S.docs.splice(k, 1);
       ch();
+      toast('Documento quitado', () => {
+        if (!S.docs.some(x => x.id === i)) S.docs.splice(Math.min(k, S.docs.length), 0, d);
+        ch();
+      });
     }),
+  dren: i => {
+    const d = S.docs.find(x => x.id === i);
+    if (d) docRenew(d);
+  },
   th: i => {
     S.theme = i;
     ch();

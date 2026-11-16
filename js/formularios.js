@@ -5,9 +5,27 @@ function taskForm(t, pre) {
   const n = !t;
   t = t || { title: '', due: '', tm: '', pr: 'Normal', area: 'Personal', rep: '', ...pre };
   const o = modal(
-    `<h3>${n ? (t.area === 'Cumpleaños' ? 'Nuevo cumpleaños' : 'Nueva tarea') : 'Editar tarea'}</h3><div class="fs"><label>Título<input id="ft1" value="${esc(t.title)}" placeholder="${t.area === 'Cumpleaños' ? 'Ej. Cumpleaños de …' : '¿Qué hay que hacer?'}"></label><div class="two"><label>Fecha<input id="ft2" type="date" value="${t.due || ''}"></label><label>Hora<input id="ft3" type="time" value="${t.tm || ''}"></label></div><div class="two"><label>Prioridad<select id="ft4">${opts(PR, t.pr)}</select></label><label>Área<select id="ft5">${opts(AREAS, t.area)}</select></label></div><label>Repetir<select id="ft6"><option value="">No se repite</option>${opts(REP, t.rep)}</select></label><label>Aviso por Telegram<input id="ft7" type="datetime-local" value="${t.rem || ''}"></label><div class="mu" style="margin-top:-4px">Vacío: te avisa 1 día antes (a las 9:00 si la tarea no tiene hora). Puede llegar hasta unos 15 min tarde.</div><div class="notes"><h4>${I('message-square', 'sm')} Notas y enlaces</h4><div id="fnl"></div><div class="nadd"><input id="fn1" class="in" placeholder="Escribe una nota o pega un enlace"><button class="btn sm" id="fn2" aria-label="Añadir nota">${I('plus', 'sm')}</button></div></div></div><div class="acts">${n ? '' : '<button class="btn ghost danger" id="fdel">Eliminar</button>'}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">${n ? 'Añadir' : 'Guardar'}</button></div>`
+    `<h3>${n ? (t.area === 'Cumpleaños' ? 'Nuevo cumpleaños' : 'Nueva tarea') : 'Editar tarea'}</h3><div class="fs"><label>Título<input id="ft1" value="${esc(t.title)}" placeholder="${t.area === 'Cumpleaños' ? 'Ej. Cumpleaños de …' : '¿Qué hay que hacer?'}"></label><div class="two"><label>Fecha<input id="ft2" type="date" value="${t.due || ''}"><span class="qd">${[
+      [0, 'Hoy'],
+      [1, 'Mañana'],
+      [7, '+1 semana']
+    ]
+      .map(([k, l]) => `<button type="button" class="chip" data-d="${k}">${l}</button>`)
+      .join(
+        ''
+      )}</span></label><label>Hora<input id="ft3" type="time" value="${t.tm || ''}"></label></div><div class="two"><label>Prioridad<select id="ft4">${opts(PR, t.pr)}</select></label><label>Área<select id="ft5">${opts(AREAS, t.area)}</select></label></div><label>Repetir<select id="ft6"><option value="">No se repite</option>${opts(REP, t.rep)}</select></label><label>Aviso por Telegram<input id="ft7" type="datetime-local" value="${t.rem || ''}"></label><div class="mu" style="margin-top:-4px">Vacío: te avisa 1 día antes (a las 9:00 si la tarea no tiene hora). Puede llegar hasta unos 15 min tarde.</div><div class="notes"><h4>${I('message-square', 'sm')} Notas y enlaces</h4><div id="fnl"></div><div class="nadd"><input id="fn1" class="in" placeholder="Escribe una nota o pega un enlace"><button class="btn sm" id="fn2" aria-label="Añadir nota">${I('plus', 'sm')}</button></div></div></div><div class="acts">${n ? '' : '<button class="btn ghost danger" id="fdel">Eliminar</button>'}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">${n ? 'Añadir' : 'Guardar'}</button></div>`
   );
   const v = i => o.querySelector(i).value.trim();
+  // Atajos de fecha: Hoy y Mañana desde hoy; «+1 semana», desde la fecha puesta (o desde hoy si no hay).
+  o.querySelectorAll('.qd [data-d]').forEach(
+    b =>
+      (b.onclick = e => {
+        e.preventDefault();
+        const f = o.querySelector('#ft2'),
+          k = +b.dataset.d;
+        f.value = k === 7 ? addD(f.value || TD(), 7) : addD(TD(), k);
+      })
+  );
   /* Notas: en una tarea ya creada se guardan al momento; en una nueva, al pulsar «Añadir». */
   let nl = [...(t.notes || [])];
   const cur = () => S.tasks.find(x => x.id === t.id) || t; // por si la nube ha cambiado el objeto mientras la ventana estaba abierta
@@ -91,9 +109,16 @@ function taskForm(t, pre) {
     if (!d.title) return toast('Escribe un título');
     if (d.area === 'Cumpleaños' && !d.rep) d.rep = 'Anual'; // los cumpleaños se repiten cada año
     // Aviso por Telegram a una fecha y hora concretas (t.rem = 'AAAA-MM-DDTHH:MM'); sustituye al aviso de 1 día antes.
-    const rem = v('#ft7');
-    if (rem && rem !== (t.rem || '') && rem < TD() + 'T' + new Date().toTimeString().slice(0, 5))
-      return toast('La hora del aviso ya ha pasado');
+    let rem = v('#ft7');
+    const now = TD() + 'T' + new Date().toTimeString().slice(0, 5);
+    if (rem && rem !== (t.rem || '') && rem < now) return toast('La hora del aviso ya ha pasado');
+    // Si cambia la fecha y el aviso no se ha tocado, el aviso se mueve los mismos días (si queda en el pasado, se quita: avisa 1 día antes).
+    if (!n && rem && rem === (t.rem || '') && t.due && d.due && d.due !== t.due) {
+      rem = addD(rem.slice(0, 10), dd(d.due, t.due)) + rem.slice(10);
+      if (rem < now) rem = '';
+    }
+    // Fecha cambiada a mano: el día del mes de las repetitivas pasa a ser el nuevo.
+    if (!n && d.due !== t.due) delete cur().rd;
     if (rem) d.rem = rem;
     else if (!n) delete cur().rem;
     const pend = v('#fn1');
@@ -119,7 +144,7 @@ function taskForm(t, pre) {
 }
 function txForm() {
   const o = modal(
-    `<h3>Nuevo movimiento</h3><div class="fs"><div class="seg" id="ftt"><button class="on" data-t="g">${I('arrow-down-left', 'sm')} Gasto</button><button data-t="i">${I('arrow-up-right', 'sm')} Ingreso</button></div><div class="two"><label>Importe (€)<input id="fx2" inputmode="decimal" placeholder="0,00"></label><label>Fecha<input id="fx4" type="date" value="${TD()}"></label></div><label>Descripción<input id="fx5" placeholder="Ej. Mercadona"></label><label>Categoría<select id="fx3">${opts(GCATS, 'Otros')}</select></label>${devChk('fx6', true)}<div class="mu" id="fxh" style="margin-top:-4px" hidden></div></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Añadir</button></div>`
+    `<h3>Nuevo movimiento</h3><div class="fs"><div class="seg" id="ftt"><button class="on" data-t="g">${I('arrow-down-left', 'sm')} Gasto</button><button data-t="i">${I('arrow-up-right', 'sm')} Ingreso</button></div><div class="two"><label>Importe (€)<input id="fx2" inputmode="decimal" placeholder="0,00"></label><label>Fecha<input id="fx4" type="date" value="${TD()}"></label></div><label>Descripción<input id="fx5" placeholder="Ej. Mercadona"></label><label>Categoría<select id="fx3">${opts(GCATS, 'Otros')}</select></label>${devChk('fx6', true)}<div class="mu" id="fxh" style="margin-top:-4px" hidden></div><label>Nota<input id="fx7" placeholder="Opcional"></label><label class="chk" id="fx8l"><input type="checkbox" id="fx8"> Gasto extraordinario <span class="mu">(no cuenta en el gasto del mes)</span></label></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Añadir</button></div>`
   );
   let t = 'g',
     touched = false;
@@ -128,6 +153,7 @@ function txForm() {
     hUpd = () => {
       const c = o.querySelector('#fx3').value;
       h.hidden = t !== 'i';
+      o.querySelector('#fx8l').hidden = t === 'i';
       o.querySelector('#fx6l').hidden = t !== 'i' || ICAT3.includes(c);
       if (t === 'i')
         h.innerHTML = txHint(
@@ -162,7 +188,8 @@ function txForm() {
     const a = pnum(o.querySelector('#fx2').value),
       dt = o.querySelector('#fx4').value;
     if (!(a > 0) || !dt) return toast('Introduce un importe válido y una fecha');
-    const c = o.querySelector('#fx3').value;
+    const c = o.querySelector('#fx3').value,
+      note = o.querySelector('#fx7').value.trim();
     S.tx.push({
       id: id(),
       t,
@@ -170,6 +197,8 @@ function txForm() {
       cat: c,
       date: dt,
       desc: o.querySelector('#fx5').value.trim(),
+      ...(note ? { note } : {}),
+      ...(t === 'g' && o.querySelector('#fx8').checked ? { ex: true } : {}),
       ...(t === 'i' && !ICAT3.includes(c) && !o.querySelector('#fx6').checked ? { nodev: true } : {})
     });
     o.remove();
@@ -202,7 +231,7 @@ function txEdit(x) {
             .map(p => (p.enc ? 'Encargo' : esc(p.cat)) + ' ' + eur(p.amt))
             .join(' · ')}</div>`
         : `<label>Categoría<select id="ex4">${opts(cats, d.cat)}</select></label>${gi ? '' : devChk('ex8', !x.nodev) + '<div class="mu" id="exh" style="margin-top:-4px"></div>'}`
-    }<label>Nota<input id="ex5" value="${esc(d.note)}" placeholder="Opcional"></label>${gi ? `<div class="chkr"><label class="chk"><input type="checkbox" id="ex6" ${x.ex ? 'checked' : ''}> Gasto extraordinario</label><button type="button" class="ib inf" aria-label="Qué es un gasto extraordinario" aria-expanded="false">${I('info', 'sm')}</button></div><div class="infx mu" hidden>Se ve en la lista, pero no cuenta en el gasto del mes ni en las comparaciones (p. ej. un pago grande y puntual).</div>${sp ? '' : `<div class="chkr"><label class="chk"><input type="checkbox" id="ex7" ${x.enc ? 'checked' : ''}> Encargo</label><button type="button" class="ib inf" aria-label="Qué es un encargo" aria-expanded="false">${I('info', 'sm')}</button></div><div class="infx mu" hidden>Compra para otra persona que te paga en mano: no cuenta como gasto tuyo. Si solo una parte es encargo, usa «Dividir».</div>`}` : ''}</div><div class="acts">${gi ? `<button class="btn ghost" id="fspl" title="Repartir el importe en varias categorías o separar la parte que es encargo">${I('split', 'sm')} ${sp ? 'Cambiar división' : 'Dividir'}</button>` : ''}${x.billId ? '' : `<button class="btn ghost" id="fmkf">${I('repeat', 'sm')} ${x.fid ? 'Quitar de Facturas' : 'Añadir a Facturas'}</button>`}</div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div><div class="acts"><button class="btn ghost danger" id="fdel">${I('trash-2', 'sm')} Eliminar movimiento</button></div>`
+    }<label>Nota<input id="ex5" value="${esc(d.note)}" placeholder="Opcional"></label>${gi ? `<div class="chkr"><label class="chk"><input type="checkbox" id="ex6" ${x.ex ? 'checked' : ''}> Gasto extraordinario</label><button type="button" class="ib inf" aria-label="Qué es un gasto extraordinario" aria-expanded="false">${I('info', 'sm')}</button></div><div class="infx mu" hidden>Se ve en la lista, pero no cuenta en el gasto del mes ni en las comparaciones (p. ej. un pago grande y puntual).</div>${sp ? '' : `<div class="chkr"><label class="chk"><input type="checkbox" id="ex7" ${x.enc ? 'checked' : ''}> Encargo</label><button type="button" class="ib inf" aria-label="Qué es un encargo" aria-expanded="false">${I('info', 'sm')}</button></div><div class="infx mu" hidden>Compra para otra persona que te paga en mano: no cuenta como gasto tuyo. Si solo una parte es encargo, usa «Dividir».</div>`}` : ''}</div><div class="acts">${gi ? `<button class="btn ghost" id="fspl" title="Repartir el importe en varias categorías o separar la parte que es encargo">${I('split', 'sm')} ${sp ? 'Cambiar división' : 'Dividir'}</button>` : ''}${bk || sp ? '' : `<button class="btn ghost" id="ftyp">${I('arrow-left-right', 'sm')} Es un ${gi ? 'ingreso' : 'gasto'}</button>`}${x.billId ? '' : `<button class="btn ghost" id="fmkf">${I('repeat', 'sm')} ${x.fid ? 'Quitar de Facturas' : 'Añadir a Facturas'}</button>`}</div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div><div class="acts"><button class="btn ghost danger" id="fdel">${I('trash-2', 'sm')} Eliminar movimiento</button></div>`
   );
   const v = i => o.querySelector(i).value.trim();
   // En un ingreso, una frase dice qué hará la categoría elegida: devolución (resta de ese gasto), ingreso o no cuenta.
@@ -259,6 +288,30 @@ function txEdit(x) {
     o.remove();
     A.dx(x.id);
   };
+  // Gasto ↔ ingreso (apuntado a mano con el tipo equivocado): se cambia y se vuelve a abrir la ficha con el otro tipo.
+  // Un gasto pasa a ingreso en «Otros» (si no, contaría como devolución); un ingreso pasa a gasto con su categoría (Nómina → Otros).
+  const ty = o.querySelector('#ftyp');
+  if (ty)
+    ty.onclick = () => {
+      const a = pnum(v('#ex2')),
+        dt = v('#ex3');
+      if (!(a > 0) || !dt) return toast('Introduce un importe válido y una fecha');
+      const w = { t: x.t, cat: x.cat, ex: x.ex, enc: x.enc, nodev: x.nodev, pdev: x.pdev, amt: x.amt, date: x.date, desc: x.desc };
+      x.desc = v('#ex1');
+      x.amt = a;
+      x.date = dt;
+      x.t = gi ? 'i' : 'g';
+      x.cat = gi ? 'Otros' : GCATS.includes(x.cat) ? x.cat : 'Otros';
+      ['ex', 'enc', 'nodev', 'pdev'].forEach(k => delete x[k]);
+      o.remove();
+      ch();
+      txEdit(x);
+      toast(gi ? 'Ahora es un ingreso: elige su categoría' : 'Ahora es un gasto', () => {
+        document.querySelectorAll('.ov').forEach(z => z.remove());
+        Object.entries(w).forEach(([k, val]) => (val === undefined ? delete x[k] : (x[k] = val)));
+        ch();
+      });
+    };
   const spb = o.querySelector('#fspl');
   if (spb)
     spb.onclick = () => {
@@ -673,6 +726,9 @@ function docForm(d, pre) {
     if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u;
     const x = { name: v('#fd1'), cat: v('#fd2'), url: u, notes: v('#fd5'), exp: v('#fd4') };
     if (!x.name) return toast('Indica el nombre');
+    // Un enlace tiene que parecer una dirección web (dominio con punto y sin espacios).
+    if (u && !/^https?:\/\/[^\s\/:]+\.[a-z]{2,}(?:[\/?#:]\S*)?$/i.test(u))
+      return toast('Ese enlace no parece una dirección web: cópialo de Drive (Compartir → Copiar enlace)');
     if (n) S.docs.push({ id: id(), ...x });
     else Object.assign(d, x);
     o.remove();
@@ -680,6 +736,25 @@ function docForm(d, pre) {
     toast(n ? 'Documento añadido' : 'Guardado');
   };
   o.querySelector(!n && !d.url ? '#fd3' : '#fd1').focus();
+}
+/* «Renovado»: nueva fecha de vencimiento (de serie, un año después de la anterior). */
+function docRenew(d) {
+  const o = modal(
+    `<h3>${esc(d.name)} renovado</h3><div class="fs"><label>Nueva fecha de vencimiento<input id="fr1" type="date" value="${addM(d.exp, 12)}"></label><div class="mu">Si el documento ya no caduca, deja la fecha vacía.</div></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`
+  );
+  o.querySelector('#ok').onclick = () => {
+    const nd = o.querySelector('#fr1').value;
+    if (nd && nd <= TD()) return toast('La nueva fecha tiene que ser futura');
+    const was = d.exp;
+    d.exp = nd;
+    o.remove();
+    ch();
+    toast(nd ? 'Vence el ' + fd(nd) : 'Ya no tiene fecha de vencimiento', () => {
+      d.exp = was;
+      ch();
+    });
+  };
+  o.querySelector('#fr1').focus();
 }
 
 /* Meta de ahorro (ver goalsCard en vistas/finanzas.js): nombre, objetivo, lo apartado, mes y color. */
@@ -740,6 +815,7 @@ function goalMove(g) {
   o.querySelector('#ok').onclick = () => {
     const v = pnum(o.querySelector('#fm1').value);
     if (!(v > 0)) return toast('Indica la cantidad');
+    if (sg < 0 && v > g.amt + 0.005) return toast('Solo hay ' + eur(g.amt) + ' apartados en esta meta');
     const was = g.amt >= g.obj;
     g.amt = Math.max(0, Math.round((g.amt + sg * v) * 100) / 100);
     o.remove();

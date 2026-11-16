@@ -1,28 +1,34 @@
 'use strict';
 /* Secciones «Documentos» y «Ajustes», y pantalla de inicio de sesión. */
+/* Buscador (no se guarda) y lista de Documentos por carpetas. En cada carpeta, primero los que vencen antes; luego por nombre. */
+let docQ = '';
+function docsHTML() {
+  const q = nt(docQ).trim(),
+    L = S.docs.filter(d => !q || nt(d.name + ' ' + (d.notes || '') + ' ' + d.cat).includes(q)),
+    g = {};
+  L.forEach(d => (g[d.cat] = g[d.cat] || []).push(d));
+  const so = a => a.sort((x, y) => (x.exp || '9').localeCompare(y.exp || '9') || x.name.localeCompare(y.name, 'es'));
+  if (!L.length) return `<div class="card">${empty(S.docs.length ? 'Ningún documento con ese nombre.' : 'Sin documentos todavía.')}</div>`;
+  return (VIS.docs = ord(
+    'docs',
+    DC.filter(c => g[c])
+  ))
+    .map(c =>
+      panel(
+        'docs',
+        c,
+        `<span style="color:${DCOL[c]}">${I(DI[c])}</span> ${c} <span class="cnt">· ${g[c].length}</span>`,
+        so(g[c]).map(docRow).join(''),
+        'hl dcat',
+        '--c:' + DCOL[c]
+      )
+    )
+    .join('');
+}
 function vDocs() {
-  const g = {};
-  S.docs.forEach(d => (g[d.cat] = g[d.cat] || []).push(d));
   return `<div class="hdr"><div><h2>Documentos</h2><div class="sub help">Enlaces a tus archivos de Drive: se abren con tu cuenta de Google.</div></div><div class="hact"><a class="btn ghost" href="${'https://drive.google.com/drive/my-drive'}" target="_blank" rel="noopener noreferrer">${I('hard-drive')} Abrir Drive</a><button class="btn" data-a="nd">${I('plus')} Documento</button></div></div>
-  ${
-    S.docs.length
-      ? `<div class="grid">${(VIS.docs = ord(
-          'docs',
-          DC.filter(c => g[c])
-        ))
-          .map(c =>
-            panel(
-              'docs',
-              c,
-              `<span style="color:${DCOL[c]}">${I(DI[c])}</span> ${c} <span class="cnt">· ${g[c].length}</span>`,
-              g[c].map(docRow).join(''),
-              'hl dcat',
-              '--c:' + DCOL[c]
-            )
-          )
-          .join('')}</div>`
-      : `<div class="card">${empty('Sin documentos todavía.')}</div>`
-  }
+  ${S.docs.length > 3 ? `<div class="txf docf"><input id="docq" class="in" type="search" placeholder="Buscar documento…" value="${esc(docQ)}" aria-label="Buscar documento"></div>` : ''}
+  <div class="grid" id="docgrid">${docsHTML()}</div>
   <div class="mu">No guardes aquí números de DNI, contraseñas ni certificados digitales: solo el enlace al archivo.</div>`;
 }
 

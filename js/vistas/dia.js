@@ -135,11 +135,14 @@ function vDia() {
   });
   const imp = [
     ...open.filter(t => t.due && dayDiff(t.due) <= 1).map(t => [t.due, ico(t), t.title, AC[t.area], t.id]),
-    ...fxDue(7).map(o => [o.d, 'receipt', o.f.name + ' · ' + eur(o.f.amt), col(o.f.cat)]),
-    ...S.docs.filter(d => d.exp && dayDiff(d.exp) <= 30).map(d => [d.exp, DI[d.cat] || 'file-text', 'Vence: ' + d.name, DCOL[d.cat]]),
-    ...carWarn().map(o => [o.d, 'car', o.n + (/km/.test(o.pill) ? ' · ' + o.pill : ''), CARC]),
-    ...petWarn().map(o => [o.d, o.ic, o.t, PETC]),
-    ...bankAlerts()
+    // Lo que no es una tarea lleva a su sección al tocarlo (6.º dato).
+    ...fxDue(7).map(o => [o.d, 'receipt', o.f.name + ' · ' + eur(o.f.amt), col(o.f.cat), '', 'fact']),
+    ...S.docs
+      .filter(d => d.exp && dayDiff(d.exp) <= 30)
+      .map(d => [d.exp, DI[d.cat] || 'file-text', 'Vence: ' + d.name, DCOL[d.cat], '', 'docs']),
+    ...carWarn().map(o => [o.d, 'car', o.n + (/km/.test(o.pill) ? ' · ' + o.pill : ''), CARC, '', 'coche']),
+    ...petWarn().map(o => [o.d, o.ic, o.t, PETC, '', 'mascotas']),
+    ...bankAlerts().map(a => [...a, '', 'ajus'])
   ].sort((a, b) => a[0].localeCompare(b[0]));
   const b7 = fxDue(7),
     m = MN(now);
@@ -157,8 +160,8 @@ function vDia() {
       imp.length
         ? imp
             .map(
-              ([d, n, t, c, ti]) =>
-                `<div class="row">${ti ? `<input type="checkbox" class="ck" data-a="tt" data-i="${ti}" aria-label="Completar «${esc(t)}»">` : ''}${tile(n, c)}${ti ? `<button class="link" data-a="et" data-i="${ti}"><span class="tt">${esc(t)}</span></button>` : `<span class="g">${esc(t)}</span>`}${when(d)}</div>`
+              ([d, n, t, c, ti, go]) =>
+                `<div class="row"${ti && NATIVE_DRAG ? ` draggable="true" data-tid="${ti}"` : ''}>${ti ? `<input type="checkbox" class="ck" data-a="tt" data-i="${ti}" aria-label="Completar «${esc(t)}»">` : ''}${tile(n, c)}${ti ? `<button class="link" data-a="et" data-i="${ti}"><span class="tt">${esc(t)}</span></button>` : go ? `<button class="link" data-a="go" data-i="${go}" title="Abrir su sección"><span class="tt">${esc(t)}</span></button>` : `<span class="g">${esc(t)}</span>`}${when(d)}${ti ? tppBtn(S.tasks.find(x => x.id === ti)) : ''}</div>`
             )
             .join('')
         : empty('Nada urgente para hoy ni mañana.'),

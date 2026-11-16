@@ -35,6 +35,11 @@ document.addEventListener('input', e => {
     txf.q = e.target.value;
     txRefresh();
   }
+  if (e.target.id === 'docq') {
+    docQ = e.target.value;
+    const g = document.getElementById('docgrid');
+    if (g) g.innerHTML = docsHTML();
+  }
   if (e.target.id === 'savap') {
     savAp = Math.max(0, pnum(e.target.value) || 0);
     savPzRefresh();
@@ -130,6 +135,37 @@ document.addEventListener('dragstart', e => {
 });
 document.addEventListener('dragover', e => {
   if (drag && e.target.closest && e.target.closest('.card[data-k]')) e.preventDefault();
+});
+/* Ordenador: arrastrar una tarea y soltarla en un día del calendario la cambia a ese día. */
+let tDrag = null;
+const calDay = e => e.target.closest && e.target.closest('.cal button[data-i]');
+document.addEventListener('dragstart', e => {
+  const r = e.target.closest && !e.target.closest('.hd') && e.target.closest('[data-tid]');
+  if (!r) return;
+  tDrag = r.dataset.tid;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', tDrag);
+  document.body.classList.add('tdrag');
+});
+document.addEventListener('dragover', e => {
+  const c = tDrag && calDay(e);
+  document.querySelectorAll('.cal .dropto').forEach(x => x !== c && x.classList.remove('dropto'));
+  if (!c) return;
+  e.preventDefault();
+  c.classList.add('dropto');
+});
+document.addEventListener('drop', e => {
+  const c = tDrag && calDay(e);
+  if (!c) return;
+  e.preventDefault();
+  const i = tDrag;
+  tDrag = null;
+  taskMove(i, c.dataset.i);
+});
+document.addEventListener('dragend', () => {
+  tDrag = null;
+  document.body.classList.remove('tdrag');
+  document.querySelectorAll('.cal .dropto').forEach(x => x.classList.remove('dropto'));
 });
 // Soltar la tarjeta arrastrada sobre otra de la misma sección: se coloca en su sitio y se guarda el orden.
 const dropOn = c => {

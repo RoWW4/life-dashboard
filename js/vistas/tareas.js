@@ -4,6 +4,9 @@
    Se añaden con «Añadir cumpleaños» (o como una tarea con el área Cumpleaños) y se repiten cada año solos. */
 const CUMPLE = 'Cumpleaños';
 function cumplePanel(v) {
+  return cumplePanel0(v).replace(v === 'tareasf' ? /<span class="hd"[^>]*>.*?<\/span>/ : /^$/, '');
+}
+function cumplePanel0(v) {
   const c = S.tasks.filter(t => t.area === CUMPLE && !t.done).sort((a, b) => (a.due || '9').localeCompare(b.due || '9'));
   return panel(
     v,

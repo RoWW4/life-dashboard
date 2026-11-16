@@ -1,12 +1,23 @@
 'use strict';
 /* Piezas comunes de la interfaz: avisos, ventanas, dictado, iconos, filas, gráfico de gasto, festivos y calendario. */
 /* ---------- interfaz: piezas comunes ---------- */
-function toast(t) {
+/* Aviso abajo. undo: si se pasa, sale un botón «Deshacer» durante 6 s que lo ejecuta. */
+function toast(t, undo) {
   const e = $('#toast');
   e.textContent = t;
+  e.classList.toggle('undo', !!undo);
+  if (undo) {
+    const b = document.createElement('button');
+    b.textContent = 'Deshacer';
+    b.onclick = () => {
+      e.classList.remove('on', 'undo');
+      undo();
+    };
+    e.append(' ', b);
+  }
   e.classList.add('on');
   clearTimeout(toast.t);
-  toast.t = setTimeout(() => e.classList.remove('on'), 2800);
+  toast.t = setTimeout(() => e.classList.remove('on', 'undo'), undo ? 6000 : 2800);
 }
 function modal(html) {
   document.querySelectorAll('.ov').forEach(o => o.remove());
@@ -235,7 +246,14 @@ const byCat = m => {
     .sort((a, b) => b[1] - a[1]);
 };
 const col = c => PAL[c] || '#94a3b8';
-const nextDue = (d, r) => (r === 'Anual' ? addM(d, 12) : r === 'Mensual' ? addM(d, 1) : addD(d, r === 'Semanal' ? 7 : 1));
+/* Siguiente fecha de una tarea repetitiva. day: día del mes original (las mensuales y anuales del 29, 30 o 31 vuelven a su día
+   cuando el mes lo tiene, en vez de quedarse en el 28 tras pasar por febrero). */
+const nextDue = (d, r, day) => {
+  if (r !== 'Anual' && r !== 'Mensual') return addD(d, r === 'Semanal' ? 7 : 1);
+  const n = addM(d.slice(0, 8) + '01', r === 'Anual' ? 12 : 1),
+    last = new Date(+n.slice(0, 4), +n.slice(5, 7), 0).getDate();
+  return n.slice(0, 8) + p2(Math.min(day || +d.slice(8), last));
+};
 const ord = (v, keys) => {
   const o = S.order[v] || [];
   return [...keys].sort((a, b) => {
@@ -445,14 +463,20 @@ const taskRow = (t, sa) => {
     late = !t.done && n !== null && n < 0;
   // Prioridad, repetición, aviso y notas: en la lista «Por fecha», junto a la etiqueta del área (en la misma línea).
   const ex = `${prChip(t.pr)}${t.rep ? `<span class="mu" title="Se repite ${t.rep.toLowerCase()}">${I('repeat', 'sm')}</span>` : ''}${t.rem && !t.done ? `<span class="mu" title="Aviso por Telegram: ${fdc(t.rem.slice(0, 10))} a las ${t.rem.slice(11, 16)}">${I('bell', 'sm')}</span>` : ''}${t.notes && t.notes.length ? `<span class="mu nc" title="${t.notes.length} nota${t.notes.length > 1 ? 's' : ''}">${I('message-square', 'sm')}${t.notes.length}</span>` : ''}`;
-  return `<div class="row ${t.done ? 'is-done' : ''}${sa ? ' tstripe" style="--c:' + (AC[t.area] || 'var(--mu)') : ''}"><input type="checkbox" class="ck" data-a="tt" data-i="${t.id}" ${t.done ? 'checked' : ''} aria-label="Completar «${esc(t.title)}»">${tile(ico(t), AC[t.area])}<button class="link" data-a="et" data-i="${t.id}">${sa ? `<span class="tt">${esc(t.title)}</span><span class="meta">${areaChip(t.area)}${ex}</span>` : `<span class="tt">${glue(t.title, ex)}</span>`}</button><span class="when ${late ? 'er' : n === 0 && !t.done ? 'ac' : ''}">${cap(rel(t.due))}${t.tm ? ' · ' + t.tm : ''}</span></div>`;
+  // En el ordenador, una tarea pendiente se puede arrastrar a un día del calendario de Mi día (eventos.js).
+  return `<div class="row ${t.done ? 'is-done' : ''}${sa ? ' tstripe" style="--c:' + (AC[t.area] || 'var(--mu)') : ''}"${NATIVE_DRAG && !t.done ? ` draggable="true" data-tid="${t.id}"` : ''}><input type="checkbox" class="ck" data-a="tt" data-i="${t.id}" ${t.done ? 'checked' : ''} aria-label="Completar «${esc(t.title)}»">${tile(ico(t), AC[t.area])}<button class="link" data-a="et" data-i="${t.id}">${sa ? `<span class="tt">${esc(t.title)}</span><span class="meta">${areaChip(t.area)}${ex}</span>` : `<span class="tt">${glue(t.title, ex)}</span>`}</button><span class="when ${late ? 'er' : n === 0 && !t.done ? 'ac' : ''}">${cap(rel(t.due))}${t.tm ? ' · ' + t.tm : ''}</span>${tppBtn(t)}</div>`;
 };
+/* Botón para pasar a mañana una tarea pendiente de hoy o atrasada (sin abrir la ventana). */
+const tppBtn = t =>
+  !t.done && t.due && dayDiff(t.due) <= 0
+    ? `<button class="ib tpp" data-a="tpp" data-i="${t.id}" aria-label="Pasar «${esc(t.title)}» a mañana" title="Pasar a mañana">${I('redo-2', 'sm')}</button>`
+    : '';
 const expChip = d =>
   d.exp
-    ? `<span class="chip ${dayDiff(d.exp) < 0 ? 'er' : dayDiff(d.exp) <= 60 ? 'wa' : ''}">${dayDiff(d.exp) < 0 ? 'Caducó' : 'Vence'} ${fdc(d.exp)}</span>`
+    ? `<span class="chip ${dayDiff(d.exp) < 0 ? 'er' : dayDiff(d.exp) <= 30 ? 'wa' : ''}">${dayDiff(d.exp) < 0 ? 'Caducó' : 'Vence'} ${fdc(d.exp)}</span>`
     : '';
 const docRow = d =>
-  `<div class="row">${tile(DI[d.cat] || 'file-text', DCOL[d.cat])}<span class="g">${d.url ? `<a class="dl" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">${esc(d.name)}${I('external-link', 'sm')}</a>` : `<span>${esc(d.name)}</span> <button class="btn sm ghost" data-a="ed" data-i="${d.id}">${I('link', 'sm')} Añadir enlace</button>`}${d.notes || d.exp ? `<span class="meta">${expChip(d)}${d.notes ? `<span class="mu">${esc(cap(d.notes))}</span>` : ''}</span>` : ''}</span><button class="ib" data-a="ed" data-i="${d.id}" aria-label="Editar">${I('pencil')}</button><button class="ib" data-a="dd" data-i="${d.id}" aria-label="Quitar">${I('x')}</button></div>`;
+  `<div class="row">${tile(DI[d.cat] || 'file-text', DCOL[d.cat])}<span class="g">${d.url ? `<a class="dl" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">${esc(d.name)}${I('external-link', 'sm')}</a>` : `<span>${esc(d.name)}</span> <button class="btn sm ghost" data-a="ed" data-i="${d.id}">${I('link', 'sm')} Añadir enlace</button>`}${d.notes || d.exp ? `<span class="meta">${expChip(d)}${d.exp && dayDiff(d.exp) <= 30 ? `<button class="chip" data-a="dren" data-i="${d.id}" title="Ya lo has renovado: pon la nueva fecha">${I('calendar-check', 'sm')} Renovado</button>` : ''}${d.notes ? `<span class="mu">${esc(cap(d.notes))}</span>` : ''}</span>` : ''}</span><button class="ib" data-a="ed" data-i="${d.id}" aria-label="Editar">${I('pencil')}</button><button class="ib" data-a="dd" data-i="${d.id}" aria-label="Quitar">${I('x')}</button></div>`;
 function donut(cats, budget, sp, rem) {
   const R = 54,
     C = 2 * Math.PI * R,

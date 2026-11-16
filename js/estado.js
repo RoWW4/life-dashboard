@@ -189,6 +189,14 @@ function seed() {
       delete S[k];
       c++;
     }
+  // Tareas completadas hace más de 6 meses: se borran (cada repetitiva dejaba una copia cada vez y la lista no paraba de crecer).
+  // Como mucho un tercio de las tareas de una vez: la nube rechaza un guardado que pierda más de la mitad (ldb_state_guard).
+  const viejas = S.tasks.filter(t => t.done && (t.doneAt || t.due) && dayDiff(t.doneAt || t.due) < -183),
+    quita = new Set(viejas.slice(0, Math.floor(S.tasks.length / 3)).map(t => t.id));
+  if (quita.size) {
+    S.tasks = S.tasks.filter(t => !quita.has(t.id));
+    c++;
+  }
   c += fxLearn();
   if (S.theme === 'auto') S.theme = 'dark';
   return c > 0;
