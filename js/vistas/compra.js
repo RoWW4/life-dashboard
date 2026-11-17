@@ -120,6 +120,14 @@ function vCompra() {
    La cámara sigue abierta para escanear varios seguidos; el mismo código no se vuelve a añadir hasta que sale de la imagen. */
 const SCAN_OK = 'BarcodeDetector' in window && !!navigator.mediaDevices?.getUserMedia;
 const OFF_API = 'https://world.openfoodfacts.org/api/v2/product/';
+/* El último dígito del código es de control: si no cuadra, la cámara lo ha leído mal. */
+function bcValid(c) {
+  if (!/^(\d{8}|\d{12,14})$/.test(c)) return false;
+  const d = c.split('').map(Number),
+    k = d.pop();
+  const s = d.reverse().reduce((a, x, i) => a + x * (i % 2 ? 1 : 3), 0);
+  return (10 - (s % 10)) % 10 === k;
+}
 /* Nombre corto para la lista: sin la marca ni la cantidad («Leche semidesnatada»). */
 function offName(p) {
   const full = String(p.product_name_es || p.product_name || p.generic_name_es || '')
@@ -214,6 +222,7 @@ async function scanOpen() {
     busy = false,
     last = '',
     seen = 0,
+    cand = '',
     n = 0,
     undo = null,
     torch = false;
@@ -351,8 +360,11 @@ async function scanOpen() {
     if (!alive) return;
     if (!busy && v.readyState >= 2) {
       try {
-        const c = (await det.detect(v)).find(b => /^\d{6,14}$/.test(b.rawValue));
-        if (c && alive) {
+        const c = (await det.detect(v)).find(b => bcValid(b.rawValue));
+        /* Solo vale si sale igual en dos lecturas seguidas (evita números mal leídos). */
+        const ok = c && c.rawValue === cand;
+        cand = c ? c.rawValue : '';
+        if (ok && alive) {
           const now = Date.now();
           if (c.rawValue === last && now - seen < 1500)
             seen = now; // sigue delante: no repetir
