@@ -63,6 +63,13 @@ const NUMW = {
 const num = s => +s || NUMW[nt(s).trim()] || 0;
 /* Día del mes dicho con número o con letras («30», «treinta», «treinta y uno»). */
 const DW = String.raw`(\d{1,2}|treinta\s+y\s+uno|primero|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|trece|catorce|quince|diecis[eé]is|diecisiete|dieciocho|diecinueve|veinte|veinti[uú]no?|veintid[oó]s|veintitr[eé]s|veinticuatro|veinticinco|veintis[eé]is|veintisiete|veintiocho|veintinueve|treinta)`;
+/* Año detrás de la fecha: «de 2027», «del 2027», «2027», «de 2.027», «del año 2027», «de dos mil veintisiete». */
+const YW = String.raw`(?:\s+(?:del?\s+)?(?:a[ñn]o\s+)?(\d\.?\d{3}|dos\s+mil\s+${DW.replace(String.raw`(\d{1,2}|`, '(?:')}))?`;
+const yr = s => {
+  if (!s) return 0;
+  const m = nt(s).trim().match(/^dos\s+mil\s+(.+)/);
+  return m ? 2000 + num(m[1]) : +s.replace('.', '');
+};
 const AREA_SYN = [
   ['Mascotas', /^(mascotas?|gatos?|perros?)\b/],
   ['Salud y bienestar', /^(salud( y bienestar)?|bienestar|deporte)\b/],
@@ -84,7 +91,8 @@ function parseTask(src) {
   let t =
       ' ' +
       String(src)
-        .replace(/[.!?¿¡"«»]+/g, ' ')
+        .replace(/(\d)\.(\d{3})\b/g, '$1$2')
+        .replace(/[!?¿¡"«»]+|\.(?!\d)/g, ' ')
         .replace(/\s+/g, ' ')
         .trim() +
       ' ',
@@ -174,8 +182,8 @@ function parseTask(src) {
     String.raw`(?:el\s+)?(?:pr[oó]ximo\s+)?(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)(?:\s+(?:que\s+viene|pr[oó]ximo))?\b`,
     r => addD(TD(), (DOW.indexOf(nt(r[1]).trim()) - dow + 7) % 7 || 7)
   );
-  D(String.raw`(?:el\s+)?(?:d[ií]a\s+)?${DW}\s+de\s+(${MESES.join('|')})(?:\s+(?:de|del)\s+(\d{4}))?\b`, r => {
-    let d = (r[3] || today.getFullYear()) + '-' + p2(MESES.indexOf(r[2].toLowerCase()) + 1) + '-' + p2(num(r[1]));
+  D(String.raw`(?:el\s+)?(?:d[ií]a\s+)?${DW}\s+de\s+(${MESES.join('|')})${YW}\b`, r => {
+    let d = (yr(r[3]) || today.getFullYear()) + '-' + p2(MESES.indexOf(r[2].toLowerCase()) + 1) + '-' + p2(num(r[1]));
     if (!r[3] && d < TD()) d = addM(d, 12);
     return d;
   });
