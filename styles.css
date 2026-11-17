@@ -815,6 +815,10 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
   .nv.on .badge{background:var(--acs);color:var(--ac2);box-shadow:none}
   .navfoot{margin:auto 4px 0;padding:10px 12px;border:1px solid var(--bd);border-radius:14px;background:var(--card);box-shadow:var(--sh)}
   main{padding-top:34px}
+  /* Ordenador: + y micrófono abajo en el menú lateral, para no tapar las tarjetas */
+  nav{padding-bottom:84px}
+  .fabs{left:18px;right:auto;bottom:18px;width:204px}
+  .fab{flex:1}
 }
 /* Móvil: la barra de abajo, más sólida; la sección abierta con su icono en un círculo de su color */
 @media(max-width:760px){

@@ -182,7 +182,8 @@ function vDia() {
   const sp = spent(m),
     B = S.budget || 0,
     pc = B ? Math.round((sp / B) * 100) : 0,
-    b7t = b7.reduce((a, o) => a + o.f.amt, 0);
+    b7t = b7.reduce((a, o) => a + o.f.amt, 0),
+    b7v = b7.filter(o => dayDiff(o.d) < 0).length;
   const pl = (n, s, p) => n + ' ' + (n === 1 ? s : p);
   const ring = p => {
     const R = 15,
@@ -209,7 +210,7 @@ function vDia() {
   </section>
   <div class="hst">
     ${hs('tareas', 'list-checks', '#9b87f5', 'Tareas hoy', tt.length, late ? `<span class="hwarn">${pl(late, 'atrasada', 'atrasadas')}</span>` : tt.length ? 'Sin atrasos' : 'Nada pendiente')}
-    ${hs('fact', 'receipt', '#f0a83a', 'Facturas 7 días', b7.length, b7.length ? eur(b7t) : 'Nada a la vista')}
+    ${hs('fact', 'receipt', '#f0a83a', 'Por pagar', b7.length, b7v ? `<span class="hwarn">${pl(b7v, 'vencida', 'vencidas')}</span> · ${eur(b7t)}` : b7.length ? 'En 7 días · ' + eur(b7t) : 'Nada a la vista')}
     ${B ? hs('fin', 'wallet', '#22c3b4', 'Gasto del mes', pc + '<small>%</small>', 'De tu tope · ' + eur(sp), ring(pc)) : hs('fin', 'wallet', '#22c3b4', 'Gasto del mes', `<span class="hsm">${eur(sp)}</span>`, 'Sin tope definido')}
   </div>
   <div class="grid dgrid">

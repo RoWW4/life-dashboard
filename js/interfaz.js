@@ -523,11 +523,13 @@ function gastoBody(m) {
     : 'Define un tope en Ajustes';
   const gx = `<div class="gx">${B ? donut(cats, B, sp, rem) : ''}<div class="gxi"><div class="mu">Gastado ${cur ? 'este mes' : 'en ' + MS[+m.slice(5)]}</div><div class="big">${eur(sp)}</div><div class="mu">${info}</div>${fl ? `<div class="mu gxfl">Facturas por pagar: <b class="er">${eur(fl)}</b>${B ? ` · <span class="nw">Te quedarán <b class="${rem - fl < 0 ? 'er' : 'ok'}">${eur(rem - fl)}</b></span>` : ''}</div>` : ''}</div></div>`;
   const txm = TXP().filter(x => mon(x.date) === m),
-    mx = Math.max(1, ...cats.map(c => c[1]));
+    mx = Math.max(1, ...cats.map(c => c[1])),
+    // % sobre la suma de las categorías que se ven (una devolución grande puede dejar el total en 0 y daría «Infinity%»)
+    cs = cats.reduce((a, c) => a + c[1], 0);
   const bars = cats
     .map(([c, v]) => {
       const n = txm.filter(x => x.t === 'g' && x.cat === c).length;
-      return `<button class="catrow" data-a="cd" data-i="${esc(c)}">${tile(CI[c] || 'package', col(c))}<span>${c}<span class="mu" style="display:block;font-size:12px;line-height:1.2">${n} mov. · ${Math.round((v / sp) * 100)}% del gasto</span></span><b class="amt">${eur(v)}</b>${I('chevron-right', 'cr')}<div class="bar"><div style="width:${(v / mx) * 100}%;background:${col(c)}"></div></div></button>`;
+      return `<button class="catrow" data-a="cd" data-i="${esc(c)}">${tile(CI[c] || 'package', col(c))}<span>${c}<span class="mu" style="display:block;font-size:12px;line-height:1.2">${n} mov. · ${Math.round((v / cs) * 100)}% del gasto</span></span><b class="amt">${eur(v)}</b>${I('chevron-right', 'cr')}<div class="bar"><div style="width:${(v / mx) * 100}%;background:${col(c)}"></div></div></button>`;
     })
     .join('');
   return `<div class="gxf">${gx}<div class="gxc">${bars || '<div class="mu">Aún sin gastos este mes.</div>'}</div></div>`;
