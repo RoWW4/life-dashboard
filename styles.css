@@ -1293,9 +1293,15 @@ body.scanning{overflow:hidden}
 .stpick .chip{--c:var(--ac);cursor:pointer;font-size:13.5px;padding:6px 11px;border-radius:7px;border:0;background:var(--card2)}
 .stpick .chip.on{box-shadow:inset 0 0 0 1px var(--c);background:color-mix(in srgb,var(--c) 20%,var(--card2));color:var(--tx)}
 .stlist .row .chip.stc{font-size:13.5px;padding:5px 11px}
-.stadd{display:flex;gap:8px;margin:16px 0 20px}.stadd input{flex:1;min-width:0}.stadd .btn{flex:none;padding:9px 18px}
+.stadd{display:flex;gap:8px;margin:16px 0 10px}.stadd input{flex:1;min-width:0}.stadd .btn{flex:none;padding:9px 18px}
 :root[data-theme=light] :is(.chip.stc,.sttab:not(.on) b,.stpick .chip.on){color:color-mix(in srgb,var(--c) 62%,#000)}
 /* Compra: grupos por tienda y − unidades + */
+.stcb{all:unset;cursor:pointer;border-radius:999px}.stcb:focus-visible{outline:2px solid var(--ac)}
+.stpal{display:grid;grid-template-columns:repeat(10,minmax(0,30px));justify-content:space-between;gap:6px;padding:6px 4px 14px}
+.stpal button{all:unset;cursor:pointer;width:100%;aspect-ratio:1;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.stpal button[aria-checked=true]{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--c)}
+.stpal button:focus-visible{outline:2px solid var(--ac);outline-offset:3px}
+.sthl{font-size:12.5px;margin-bottom:6px}
 .shgh{--c:var(--mu);display:flex;align-items:center;gap:7px;padding:14px 0 6px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--c);border-bottom:1px solid var(--sep)}
 .shgh i{width:8px;height:8px;border-radius:50%;background:var(--c)}.shgh span{color:var(--mu);font-weight:600}
 :root[data-theme=light] .shgh[style]{color:color-mix(in srgb,var(--c) 62%,#000)}

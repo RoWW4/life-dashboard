@@ -29,6 +29,7 @@ const def = () => ({
   shopN: {},
   shopBC: {},
   stores: [],
+  stCol: {},
   bar: null,
   _ts: 0
 });
@@ -54,6 +55,7 @@ function normalize(o) {
     if (!Array.isArray(s[k])) s[k] = [];
   if (!s.order || typeof s.order !== 'object') s.order = {};
   if (!s.shopN || typeof s.shopN !== 'object' || Array.isArray(s.shopN)) s.shopN = {};
+  if (!s.stCol || typeof s.stCol !== 'object' || Array.isArray(s.stCol)) s.stCol = {}; // color elegido de cada tienda
   if (!s.shopBC || typeof s.shopBC !== 'object' || Array.isArray(s.shopBC)) s.shopBC = {}; // códigos de barras aprendidos: código → nombre
   return s;
 }

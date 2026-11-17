@@ -62,7 +62,11 @@ const STC = {
     consum: '#f97316'
   },
   STP = ['#a78bfa', '#2dd4bf', '#f472b6', '#facc15', '#38bdf8', '#fb7185'];
-const stCol = n => STC[shopKey(n)] || STP[[...shopKey(n)].reduce((a, c) => a + c.charCodeAt(0), 0) % STP.length];
+/* Colores para elegir al añadir o cambiar una tienda (S.stCol: tienda → color elegido). */
+const STPAL = ['#e5392f', '#f97316', '#f5c400', '#16a34a', '#2dd4bf', '#38bdf8', '#3b82f6', '#a78bfa', '#f472b6', '#9ca3af'];
+const stCol = n => S.stCol[shopKey(n)] || STC[shopKey(n)] || STP[[...shopKey(n)].reduce((a, c) => a + c.charCodeAt(0), 0) % STP.length];
+const stPal = (sel, x) =>
+  `<div class="stpal" role="radiogroup" aria-label="Color">${STPAL.map(c => `<button role="radio" aria-checked="${c === sel}" aria-label="Color ${c}" style="--c:${c}" data-pc="${c}"${x != null ? ` data-px="${x}"` : ''}></button>`).join('')}</div>`;
 /* --c: color de la tienda · --ct: texto encima de ese color (oscuro si el color es claro, como el amarillo). */
 const stVar = n =>
   (c =>
@@ -396,11 +400,22 @@ async function scanOpen() {
   tick();
 }
 
-/* ---------- Tiendas: añadir y quitar ---------- */
+/* ---------- Tiendas: añadir, quitar y elegir color ----------
+   Tocar una tienda abre sus colores debajo; al añadir una nueva, se elige el color (sale marcado uno que no use otra). */
 function storesEdit() {
+  let abierta = -1,
+    nueva = '';
+  const libre = () => STPAL.find(c => !S.stores.some(n => stCol(n) === c)) || STPAL[0];
   const body = () =>
-    `<h3>Tiendas</h3><div class="mu" style="margin-bottom:10px">Salen como pestañas en Pendientes. Lo que no tiene tienda se ve en todas.</div><div class="stlist">${S.stores.map((n, i) => `<div class="row">${stChip(n)}<span class="g"></span><button class="ib" data-x="${i}" aria-label="Quitar ${esc(n)}">${I('x')}</button></div>`).join('') || empty('Sin tiendas.')}</div><div class="stadd"><input id="stn" class="in" placeholder="Nueva tienda (p. ej. Carrefour)" aria-label="Nueva tienda"><button class="btn" id="stadd">Añadir</button></div><div class="acts"><span class="sp"></span><button class="btn" data-close>Hecho</button></div>`;
+    `<h3>Tiendas</h3><div class="mu" style="margin-bottom:10px">Salen como pestañas en Pendientes. Lo que no tiene tienda se ve en todas. Toca una para cambiar su color.</div><div class="stlist">${S.stores.map((n, i) => `<div class="row"><button class="stcb" data-o="${i}" aria-expanded="${abierta === i}" aria-label="Color de ${esc(n)}">${stChip(n)}</button><span class="g"></span><button class="ib" data-x="${i}" aria-label="Quitar ${esc(n)}">${I('x')}</button></div>${abierta === i ? stPal(stCol(n), i) : ''}`).join('') || empty('Sin tiendas.')}</div><div class="stadd"><input id="stn" class="in" placeholder="Nueva tienda (p. ej. Carrefour)" aria-label="Nueva tienda"><button class="btn" id="stadd">Añadir</button></div><div class="sthl mu">Color de la nueva</div>${stPal(nueva)}<div class="acts"><span class="sp"></span><button class="btn" data-close>Hecho</button></div>`;
+  nueva = libre();
   const o = modal(body()),
+    redo = () => {
+      const v = o.querySelector('#stn').value;
+      o.querySelector('.dlg').innerHTML = body();
+      wire();
+      o.querySelector('#stn').value = v;
+    },
     wire = () => {
       const inp = o.querySelector('#stn');
       o.querySelector('#stadd').onclick = () => {
@@ -408,11 +423,32 @@ function storesEdit() {
         if (!n) return inp.focus();
         if (S.stores.some(x => shopKey(x) === shopKey(n))) return toast('Ya está');
         S.stores.push(n);
+        S.stCol[shopKey(n)] = nueva;
         ch();
+        abierta = -1;
+        nueva = libre();
         o.querySelector('.dlg').innerHTML = body();
         wire();
         o.querySelector('#stn').focus();
       };
+      o.querySelectorAll('[data-o]').forEach(
+        b =>
+          (b.onclick = () => {
+            abierta = abierta === +b.dataset.o ? -1 : +b.dataset.o;
+            redo();
+          })
+      );
+      o.querySelectorAll('[data-pc]').forEach(
+        b =>
+          (b.onclick = () => {
+            if (b.dataset.px == null) nueva = b.dataset.pc;
+            else {
+              S.stCol[shopKey(S.stores[+b.dataset.px])] = b.dataset.pc;
+              ch();
+            }
+            redo();
+          })
+      );
       o.querySelectorAll('[data-x]').forEach(
         b =>
           (b.onclick = () => {
@@ -420,6 +456,7 @@ function storesEdit() {
               c = S.shop.filter(x => x.st === n).length;
             CF(`¿Quitar «${n}»?${c ? ` Sus ${c} producto(s) se quedan en la lista, sin tienda.` : ''}`, () => {
               S.stores = S.stores.filter(x => x !== n);
+              delete S.stCol[shopKey(n)];
               S.shop.forEach(x => x.st === n && delete x.st);
               Object.values(S.shopN).forEach(x => x.st === n && delete x.st);
               ch();
