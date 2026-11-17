@@ -360,6 +360,28 @@ const A = {
     S.shop = S.shop.filter(x => x.id !== i);
     ch();
   },
+  // − y + de las unidades; con 1, el − borra (con «Deshacer» por si acaso).
+  sqp: i => {
+    const s = S.shop.find(x => x.id === i);
+    if (!s) return;
+    s.qty = (s.qty || 1) + 1;
+    ch();
+  },
+  sqm: i => {
+    const k = S.shop.findIndex(x => x.id === i),
+      s = S.shop[k];
+    if (!s) return;
+    if (s.qty > 1) {
+      s.qty--;
+      return ch();
+    }
+    S.shop.splice(k, 1);
+    ch();
+    toast('🗑️ ' + s.name + ' quitado', () => {
+      S.shop.splice(Math.min(k, S.shop.length), 0, s);
+      ch();
+    });
+  },
   cs: () =>
     CF('¿Quitar los productos comprados?', () => {
       S.shop = S.shop.filter(x => !x.done);

@@ -1295,3 +1295,11 @@ body.scanning{overflow:hidden}
 .stlist .row .chip.stc{font-size:13.5px;padding:5px 11px}
 .stadd{display:flex;gap:8px;margin:16px 0 20px}.stadd input{flex:1;min-width:0}.stadd .btn{flex:none;padding:9px 18px}
 :root[data-theme=light] :is(.chip.stc,.sttab:not(.on) b,.stpick .chip.on){color:color-mix(in srgb,var(--c) 62%,#000)}
+/* Compra: grupos por tienda y − unidades + */
+.shgh{--c:var(--mu);display:flex;align-items:center;gap:7px;padding:14px 0 6px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--c);border-bottom:1px solid var(--sep)}
+.shgh i{width:8px;height:8px;border-radius:50%;background:var(--c)}.shgh span{color:var(--mu);font-weight:600}
+:root[data-theme=light] .shgh[style]{color:color-mix(in srgb,var(--c) 62%,#000)}
+.shstp{flex:none;display:flex;align-items:center;border:1px solid var(--bd);border-radius:12px;background:var(--bg2)}
+.shstp button{all:unset;cursor:pointer;display:grid;place-items:center;width:36px;height:36px;color:var(--mu);border-radius:11px}
+.shstp button:hover{color:var(--tx);background:var(--hov)}.shstp button:focus-visible{outline:2px solid var(--ac)}
+.shstp b{min-width:18px;text-align:center;font-size:15px;font-variant-numeric:tabular-nums}

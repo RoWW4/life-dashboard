@@ -77,8 +77,23 @@ function vCompra() {
     D = S.shop.filter(s => s.done),
     est = P.reduce((a, s) => a + (s.price || 0) * s.qty, 0),
     real = D.reduce((a, s) => a + (s.price || 0) * s.qty, 0);
+  // Pendientes: − unidades + a la derecha (con 1, el − es una papelera). Comprados: unidades en pequeño y la X.
   const row = s =>
-    `<div class="row ${s.done ? 'is-done' : ''}"><input type="checkbox" class="ck" data-a="ts" data-i="${s.id}" ${s.done ? 'checked' : ''} aria-label="Comprado">${(([, ic, c]) => tile(ic, c))(shopIco(s.name))}<button class="link g" data-a="es" data-i="${s.id}" title="Editar"><span class="tt">${esc(s.name)}</span> ${s.qty > 1 ? `<span class="mu">×${s.qty}</span>` : ''}${s.st && !shopTab && !s.done ? stChip(s.st) : ''}</button><span class="amt mu">${s.price ? eur(s.price * s.qty) : ''}</span><button class="ib" data-a="ds" data-i="${s.id}" aria-label="Eliminar">${I('x')}</button></div>`;
+    `<div class="row ${s.done ? 'is-done' : ''}"><input type="checkbox" class="ck" data-a="ts" data-i="${s.id}" ${s.done ? 'checked' : ''} aria-label="Comprado">${(([, ic, c]) => tile(ic, c))(shopIco(s.name))}<button class="link g" data-a="es" data-i="${s.id}" title="Editar"><span class="tt">${esc(s.name)}</span>${s.done && s.qty > 1 ? ` <span class="mu">×${s.qty}</span>` : ''}${s.price ? `<em class="mu">${eur(s.price * s.qty)}${s.qty > 1 ? ` · ${eur(s.price)}/ud` : ''}</em>` : ''}</button>${s.done ? `<button class="ib" data-a="ds" data-i="${s.id}" aria-label="Eliminar">${I('x')}</button>` : `<span class="shstp"><button data-a="sqm" data-i="${s.id}" aria-label="${s.qty > 1 ? 'Una menos' : 'Eliminar'}">${I(s.qty > 1 ? 'minus' : 'trash-2', 'sm')}</button><b>${s.qty}</b><button data-a="sqp" data-i="${s.id}" aria-label="Una más">${I('plus', 'sm')}</button></span>`}</div>`;
+  // Pendientes agrupados por tienda (en el orden de las pestañas) y al final lo que vale cualquier tienda.
+  const grupos = () => {
+    if (!S.stores.length) return P.map(row).join('');
+    const G = [
+      ...(shopTab ? [shopTab] : S.stores).map(n => [n, P.filter(x => x.st === n)]),
+      ['', P.filter(x => !x.st || !S.stores.includes(x.st))]
+    ];
+    return G.filter(([, L]) => L.length)
+      .map(
+        ([n, L]) =>
+          `<div class="shgh" style="${n ? stVar(n) : ''}">${n ? `<i></i>${esc(n)}` : 'Cualquier tienda'} <span>· ${L.length}</span></div>${L.map(row).join('')}`
+      )
+      .join('');
+  };
   const tabs = `<div class="stbar"><div class="sttabs" role="tablist" aria-label="Tienda"><button class="sttab${shopTab ? '' : ' on'}" role="tab" aria-selected="${!shopTab}" data-a="stt" data-i="">Todas</button>${S.stores.map(n => `<button class="sttab${shopTab === n ? ' on' : ''}" role="tab" aria-selected="${shopTab === n}" style="${stVar(n)}" data-a="stt" data-i="${esc(n)}">${esc(n)}${(c => (c ? ` <b>${c}</b>` : ''))(P0.filter(x => x.st === n).length)}</button>`).join('')}</div><button class="sttab ed" data-a="stm" aria-label="Añadir o quitar tiendas" title="Añadir o quitar tiendas">${I('settings', 'sm')}</button></div>`;
   return `<div class="hdr"><div><h2>Lista de la compra</h2><div class="sub">Estimado pendiente ${eur(est)} · Comprado ${eur(real)}</div></div></div>
   <div class="card"><div class="f shf"><span class="shin"><input id="s1" placeholder="Producto…" aria-label="Producto"><button class="inb" data-a="vs" aria-label="Dictar" title="Dictar">${I('mic')}</button></span><input id="s2" type="number" min="1" value="1" aria-label="Cantidad"><input id="s3" type="number" step="0.01" min="0" placeholder="Precio/ud (opcional)" aria-label="Precio por unidad"><button class="btn" data-a="as">Añadir</button></div>${SCAN_OK ? `<button class="btn shscan" data-a="scan">${I('scan-barcode')} Escanear productos</button>` : ''}${(() => {
@@ -98,7 +113,7 @@ function vCompra() {
         'compra',
         'pend',
         `${I('shopping-cart')} Pendientes <span class="cnt">· ${P.length}</span>`,
-        tabs + (P.length ? P.map(row).join('') : empty(shopTab ? 'Nada pendiente para ' + esc(shopTab) + '.' : 'Lista vacía'))
+        tabs + (P.length ? grupos() : empty(shopTab ? 'Nada pendiente para ' + esc(shopTab) + '.' : 'Lista vacía'))
       ),
       hecho: panel(
         'compra',
