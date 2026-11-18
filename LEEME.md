@@ -106,6 +106,9 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
 - Si se edita a la vez en el móvil y en el ordenador, gana el último cambio guardado.
 - Protección: si un dispositivo intenta subir muchos menos datos que los de la nube (menos de la mitad), no se suben sin confirmar. Al iniciar sesión siempre manda la nube.
 
+## Piezas quitadas que se pueden recuperar
+- **Tres cifras de Mi día** (quitadas en v192, commit `eb27cc0`): tres tarjetas bajo el saludo, montadas encima del borde de la cabecera. «Tareas hoy» (pendientes con fecha de hoy o antes, en rojo las atrasadas), «Por pagar» (facturas de los próximos 7 días y su total, en rojo las vencidas) y «Gasto del mes» (porcentaje del tope con un anillo pequeño, o lo gastado si no hay tope). Cada una llevaba a su sección. Para volver a ponerlas: `git revert eb27cc0` (o copiar `js/vistas/dia.js` y `styles.css` del commit anterior, `bf8c947`, en la parte de `.hst`/`.hs` y el `padding` de `.hero`).
+
 ## Archivos
 | Archivo | Para qué sirve |
 |---|---|

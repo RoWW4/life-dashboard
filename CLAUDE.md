@@ -41,4 +41,5 @@ En ningún archivo del repositorio (código, comentarios, ejemplos, `PENDIENTES.
 Archivo nuevo: añadirlo en `index.html` (en su sitio) y en `SHELL` de `sw.js`. El número de versión lo sube `subir.mjs`.
 El código de `js/` está formateado con Prettier (`.prettierrc.json`); si está instalado, `prettier --write "js/**/*.js"` antes de subir.
 Cómo está montado todo (Supabase, robots, Wallet, Telegram): `LEEME.md`, solo si hace falta.
+Si pide recuperar algo que se quitó del panel: «Piezas quitadas que se pueden recuperar» en `LEEME.md`.
 Si algo falla: primero `ops_log`, `job_health` y `ops_alerts` en Supabase (ver «Vigilancia y registro de errores» en `LEEME.md`). El vigilante está autorizado por Rocío (09/11/2026).

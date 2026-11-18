@@ -1061,7 +1061,7 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 @media(min-width:761px){.carh{max-width:520px}}
 .carfu{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-top:8px;max-width:260px;font-size:12.5px;color:var(--hero-mu)}
 .carfb{width:84px;height:7px;border-radius:3px;background:rgba(255,255,255,.18);overflow:hidden;flex:none}
-.carfa{flex-basis:100%}.carfu .carfr{color:var(--hero-tx);font-weight:650}.carfb i{display:block;height:100%;border-radius:3px;background:#3ddc97}
+.carfa{flex-basis:100%}.carfu .carfr{color:var(--hero-tx);font-weight:650}.carfb i{display:block;height:100%;background:#3ddc97}
 /* Depósito: verde (más de la mitad), naranja (hasta 1/4), rojo (1/4 o menos) */
 .carfu.wa .carfb i{background:#f5a524}.carfu.er .carfb i{background:#ff6b6b}.carfu.er{color:#ffb3b3}
 .cmap{position:relative;height:260px;margin:2px 0 8px;border-radius:16px;overflow:hidden;background:#0d0f13;border:1px solid var(--bd);isolation:isolate;z-index:0;animation:fo .25s}
