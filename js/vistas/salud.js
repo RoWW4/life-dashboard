@@ -48,7 +48,7 @@ async function hlLoad() {
       .select('day,steps,kcal,sleep_min,rhr,awake_min,light_min,deep_min,rem_min,bed_at,wake_at')
       .gte('day', addD(TD(), -13))
       .order('day'),
-    sb.from('health_status').select('last_sync,last_error,sync_url').eq('user_id', user.id).maybeSingle()
+    sb.from('health_status').select('last_sync,last_error,sync_url,battery_level,battery_at').eq('user_id', user.id).maybeSingle()
   ]);
   HL = a.error ? HL || [] : a.data || [];
   if (!b.error) HLS = b.data || null;
@@ -201,8 +201,14 @@ function hlHTML() {
             : 'Cuando el programa de Google Health esté instalado, aquí saldrán tus pasos, kcal y sueño.'
         )) +
     (HLS && HLS.last_error ? `<div class="mu wa" style="margin-top:8px">${I('triangle-alert', 'sm')} ${esc(HLS.last_error)}</div>` : '') +
-    `<div class="sact"><span class="mu">${I('clock', 'sm')} ${st}</span><button class="btn ghost" data-a="hls" ${hlSync.on ? 'disabled' : ''}>${I('refresh-cw')} Sincronizar ahora</button></div>`
+    `<div class="sact"><span class="mu">${I('clock', 'sm')} ${st}</span>${hlBat()}<button class="btn ghost" data-a="hls" ${hlSync.on ? 'disabled' : ''}>${I('refresh-cw')} Sincronizar ahora</button></div>`
   );
+}
+/* Batería del reloj (la lee el script de Google Health). Rojo al 25 % o menos, cuando también avisa por Telegram. */
+function hlBat() {
+  const lv = HLS && HLS.battery_level;
+  if (lv == null) return '';
+  return `<span class="chip ${lv <= 25 ? 'er' : lv <= 50 ? 'wa' : 'ok'}" title="Batería del reloj${HLS.battery_at ? ' · ' + ago(HLS.battery_at) : ''}">${I('battery', 'sm')} Reloj ${lv} %</span>`;
 }
 /* ---------- Histórico (ventana) ----------
    Elige el dato (pasos, sueño, kcal, pulso) y el periodo (30 días, 3 meses, 1 año). Hasta 3 meses, una barra por día;

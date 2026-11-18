@@ -3,8 +3,8 @@
  *
  * Cada hora (y cuando el panel pulsa «Sincronizar ahora») lee de Google Health los últimos días:
  *   pasos y kcal (dailyRollUp), sueño (sesiones, sin siestas: minutos, fases y horas) y pulso en reposo,
- * y los deja en Supabase: tabla health_daily (un día por fila) y health_status (hora, error y la dirección
- * de esta app web, que el panel usa para el botón «Sincronizar ahora»).
+ * y los deja en Supabase: tabla health_daily (un día por fila) y health_status (hora, error, batería del reloj
+ * y la dirección de esta app web, que el panel usa para el botón «Sincronizar ahora»).
  *
  * Necesita un proyecto de Google Cloud propio con «Google Health API» habilitada y la pantalla de consentimiento
  * «En producción» (si se queda en «Prueba», el permiso caduca cada 7 días). El manifiesto es scripts/google-health-appsscript.json.
@@ -135,6 +135,25 @@ function pulso(desde, hasta) {
   return out;
 }
 
+/* Batería del reloj (dispositivos vinculados). Google Health la da como dato del dispositivo, no como tipo de dato.
+   Si hay varios (p. ej. una báscula), se elige el reloj/pulsera; si no, el primero con batería. */
+function bateria() {
+  const r = UrlFetchApp.fetch('https://health.googleapis.com/v4/users/me/pairedDevices', {
+    headers: { Authorization: 'Bearer ' + token() }, muteHttpExceptions: true });
+  if (r.getResponseCode() !== 200) throw new Error('dispositivos → ' + r.getResponseCode() + ' ' + r.getContentText().slice(0, 300));
+  const j = JSON.parse(r.getContentText() || '{}'), lista = j.pairedDevices || j.devices || [];
+  const nivel = d => d.batteryLevel != null ? d.batteryLevel : d.battery_level;
+  const conBat = lista.filter(d => nivel(d) != null);
+  const d = conBat.find(x => /TRACKER|WATCH/i.test(String(x.deviceType || x.device_type || x.type || ''))) || conBat[0];
+  if (!d) return null;
+  const sync = d.lastSyncTime || d.last_sync_time;
+  return {
+    battery_level: Math.round(Number(nivel(d))),
+    battery_status: String(d.batteryStatus || d.battery_status || d.battery || '') || null,
+    battery_at: sync && !isNaN(new Date(sync)) ? new Date(sync).toISOString() : new Date().toISOString(),
+  };
+}
+
 /* ---------- Supabase ---------- */
 /* Sesión del panel: se renueva con el token de renovación guardado (REFRESH_PANEL), sin volver a usar la contraseña ni
    abrir sesiones nuevas cada vez. Solo si no hay o ya no vale, se entra con EMAIL y PASSWORD (y se guarda el nuevo). */
@@ -183,10 +202,11 @@ function sincronizar() {
   let token = null;
   try {
     const hoy = dia(new Date()); token = entrar();
-    const avisos = leerYGuardar(token, sumar(hoy, -(DIAS - 1)), sumar(hoy, 1));
+    const avisos = leerYGuardar(token, sumar(hoy, -(DIAS - 1)), sumar(hoy, 1)), estado0 = {};
     let url = ''; try { url = urlApp() || ''; } catch (e) {}
     if (/\/dev$/.test(url)) url = '';
-    const estado = { last_sync: new Date().toISOString(), last_error: avisos.length ? avisos.join(' · ').slice(0, 500) : null };
+    try { const b = bateria(); if (b) Object.assign(estado0, b); } catch (e) { avisos.push('batería: ' + e.message); }
+    const estado = Object.assign(estado0, { last_sync: new Date().toISOString(), last_error: avisos.length ? avisos.join(' · ').slice(0, 500) : null });
     if (url) estado.sync_url = url;
     guardar(token, 'health_status', [estado], 'user_id');
     if (avisos.length) console.warn(avisos.join('\n'));

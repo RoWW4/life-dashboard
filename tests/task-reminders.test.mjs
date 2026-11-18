@@ -13,7 +13,7 @@ const madrid = m => {
 };
 
 /* Lanza el robot contra un Supabase y un Telegram simulados. tg(texto, intento) decide la respuesta de Telegram. */
-async function run(tasks, tg, extra = {}) {
+async function run(tasks, tg, extra = {}, { hs = [], sent = [] } = {}) {
   const calls = [], tries = {};
   const srv = createServer((q, r) => {
     let b = ''; q.on('data', c => b += c); q.on('end', () => {
@@ -24,7 +24,8 @@ async function run(tasks, tg, extra = {}) {
         return json(code, v);
       }
       if (q.method === 'GET' && q.url.startsWith('/rest/v1/ldb_state')) return json(200, [{ data: { tasks, ...extra } }]);
-      if (q.method === 'GET' && q.url.startsWith('/rest/v1/task_reminders')) return json(200, []);
+      if (q.method === 'GET' && q.url.startsWith('/rest/v1/task_reminders')) return json(200, sent.map(key => ({ key })));
+      if (q.method === 'GET' && q.url.startsWith('/rest/v1/health_status')) return json(200, hs);
       json(q.method === 'POST' ? 201 : 204);
     });
   });
@@ -86,4 +87,25 @@ test('coche: avisa 7 días antes de una fecha de «Lo próximo» y no si falta m
   else assert.deepEqual(k, [], 'antes de las 9:00 no avisa');
   const msg = calls.find(c => c.u.startsWith('/botTEST/sendMessage') && /Coche/.test(c.body.text));
   if (h >= 9) assert.match(msg.body.text, /Prueba ITV/);
+});
+
+test('batería del reloj: avisa una vez al bajar del 25 % y vuelve a avisar tras cargarlo', async () => {
+  const ok = () => [200, { ok: true, result: { message_id: 3 } }];
+  const h = +new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', hour: '2-digit', hourCycle: 'h23' }).format(new Date());
+  const at = '2026-01-01T10:00:00Z';
+  // Al 20 % y sin avisar todavía: avisa (de 8:00 a 23:00).
+  let { code, calls } = await run([], ok, {}, { hs: [{ battery_level: 20, battery_at: at }] });
+  assert.equal(code, 0);
+  const tx = calls.find(c => c.u.startsWith('/botTEST/sendMessage') && /Batería/.test(c.body.text));
+  if (h >= 8 && h < 23) { assert.match(tx.body.text, /20 %/); assert.deepEqual(marks(calls).filter(k => k.startsWith('bat:')), ['bat:' + at]); }
+  else assert.ok(!tx, 'de noche no avisa');
+  // Ya avisado: no repite.
+  ({ calls } = await run([], ok, {}, { hs: [{ battery_level: 18, battery_at: at }], sent: ['bat:' + at] }));
+  assert.ok(!calls.some(c => c.u.startsWith('/botTEST/') && /Batería/.test(c.body.text)), 'no se repite');
+  // Cargado (más del 25 %): borra el apunte para avisar en la siguiente descarga.
+  ({ calls } = await run([], ok, {}, { hs: [{ battery_level: 80, battery_at: at }], sent: ['bat:' + at] }));
+  assert.ok(calls.some(c => c.m === 'DELETE' && c.u.includes('key=like.bat')), 'borra el apunte');
+  // Al 30 %, sin apunte: ni avisa ni borra.
+  ({ calls } = await run([], ok, {}, { hs: [{ battery_level: 30, battery_at: at }] }));
+  assert.ok(!calls.some(c => (c.m === 'DELETE' && c.u.includes('bat')) || (c.u.startsWith('/botTEST/') && /Batería/.test(c.body.text))));
 });

@@ -2,7 +2,7 @@
 //  · aviso a la fecha y hora elegidas en la tarea (t.rem) o, si no tiene, 1 día antes (24 h antes de la hora de la tarea;
 //    si no tiene hora, como si fuera a las 9:00);
 //  · resumen a las 7:00 con las tareas de hoy, las atrasadas y los cumpleaños (si no hay nada, no se manda);
-//  · Salud (3 días antes), documentos que caducan y fechas del coche (ver apartados 3, 4 y 5).
+//  · Salud (3 días antes), documentos que caducan, fechas del coche y batería del reloj (ver apartados 3 a 6).
 // La lanza Supabase cada 15 minutos (pg_cron, tarea «task-reminders»). Lo ya avisado se apunta en la tabla
 // task_reminders para no repetirlo.
 import { env, sb, uid, summary } from './eb.mjs';
@@ -163,6 +163,18 @@ if (+P.hour >= 9) for (const x of carMt) {
   const nm = x.ld && /^primera itv$/i.test(x.n.trim()) ? 'ITV' : x.n;
   await send(key, left === 0 ? `🚗 Coche: hoy toca «${nm}».` : `🚗 Coche: «${nm}» toca el ${fecha} (en ${left} día${left === 1 ? '' : 's'}).`, 'Aviso del coche');
 }
+
+// 6) Batería del reloj (la deja el script de Google Health en health_status): aviso al llegar al 25 % o menos, una sola vez
+//    por descarga (de 8:00 a 23:00). Al cargarlo (más del 25 %) se borra el apunte para volver a avisar en la siguiente.
+const BAT = 25;
+try {
+  const hs = ((await sb(`health_status?user_id=eq.${uid()}&select=battery_level,battery_at`)) || [])[0];
+  const lv = hs && hs.battery_level;
+  const bk = [...sent].filter(k => k.startsWith('bat:'));
+  if (lv != null && lv > BAT && bk.length) await sb(`task_reminders?user_id=eq.${uid()}&key=like.bat:*`, { method: 'DELETE' });
+  else if (lv != null && lv <= BAT && !bk.length && +P.hour >= 8 && +P.hour < 23)
+    await send('bat:' + (hs.battery_at || today), `⌚ Batería del reloj al ${lv} %. Toca cargarlo.`, 'Aviso de batería');
+} catch (e) { fails.push(e.message); await log('ERROR', 'task-reminders', 'No se pudo revisar la batería del reloj', { process: 'Aviso de batería', func: 'bateria', err: e }); }
 
 // Limpieza: lo avisado hace más de 60 días ya no hace falta.
 await sb(`task_reminders?user_id=eq.${uid()}&sent_at=lt.${new Date(Date.now() - 60 * DAY).toISOString()}`, { method: 'DELETE' });
