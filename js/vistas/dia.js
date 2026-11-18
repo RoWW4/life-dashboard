@@ -1,5 +1,5 @@
 'use strict';
-/* Sección «Mi día»: versión mínima. Portada (fecha, saludo, una frase y tres cifras), «Lo más importante», el calendario
+/* Sección «Mi día»: versión mínima. Portada (fecha, saludo y tiempo), «Lo más importante», el calendario
    con los próximos días y accesos a las secciones. Facturas y gasto se ven en su sección. */
 /* ---------- vistas ---------- */
 let gOff = 0; // meses hacia atrás en «Gasto del mes» (acción 'gm'; no se guarda)
@@ -114,8 +114,6 @@ function vDia() {
     g = h < 6 ? 'Buenas noches' : h < 13 ? 'Buenos días' : h < 21 ? 'Buenas tardes' : 'Buenas noches',
     td = TD(),
     open = S.tasks.filter(t => !t.done);
-  const tt = open.filter(t => t.due && t.due <= td).sort((a, b) => (a.due + (a.tm || '')).localeCompare(b.due + (b.tm || ''))),
-    late = tt.filter(t => t.due < td).length;
   // Calendario: los próximos 7 días agrupados por día. Las tareas de mañana ya salen en «Lo más importante», así que aquí empiezan pasado mañana.
   const up = [
     ...open.filter(t => t.due && dayDiff(t.due) >= 2 && dayDiff(t.due) <= 7).map(t => [t.due, t.tm || '', taskRow(t)]),
@@ -144,8 +142,6 @@ function vDia() {
     ...petWarn().map(o => [o.d, o.ic, o.t, PETC, '', 'mascotas']),
     ...bankAlerts().map(a => [...a, '', 'ajus'])
   ].sort((a, b) => a[0].localeCompare(b[0]));
-  const b7 = fxDue(7),
-    m = MN(now);
   const P = S.shop.filter(s => !s.done);
   // Etiqueta de cuándo: rojo si está atrasado, acento si es hoy y gris si es más adelante.
   const when = d => {
@@ -178,21 +174,6 @@ function vDia() {
   VIS.dia = ord('dia', DIA);
   // «Lo más importante» va primero mientras no se haya movido a mano (en un orden guardado antes de existir quedaría al final).
   if (!(S.order.dia || []).includes('imp')) VIS.dia = ['imp', ...VIS.dia.filter(k => k !== 'imp')];
-  // Portada: fecha, saludo, una frase con lo que hay hoy y tres cifras (tareas, facturas y gasto del mes) que llevan a su sección.
-  const sp = spent(m),
-    B = S.budget || 0,
-    pc = B ? Math.round((sp / B) * 100) : 0,
-    b7t = b7.reduce((a, o) => a + o.f.amt, 0),
-    b7v = b7.filter(o => dayDiff(o.d) < 0).length;
-  const pl = (n, s, p) => n + ' ' + (n === 1 ? s : p);
-  const ring = p => {
-    const R = 15,
-      C = 2 * Math.PI * R;
-    return `<svg class="hring" viewBox="0 0 36 36" aria-hidden="true"><circle r="${R}" cx="18" cy="18"/><circle r="${R}" cx="18" cy="18" class="${p >= 100 ? 'over' : p >= 80 ? 'near' : ''}" stroke-dasharray="${((C * Math.min(p, 100)) / 100).toFixed(1)} ${C.toFixed(1)}"/></svg>`;
-  };
-  // Cada cifra lleva el icono y el color de su sección (--c).
-  const hs = (go, ic, c, k, v, d, extra = '') =>
-    `<button class="hs" style="--c:${c}" data-a="go" data-i="${go}"><span class="hk"><span class="hico">${I(ic)}</span>${k}</span><span class="hv">${v}${extra}</span><span class="hd2">${d}</span></button>`;
   // Accesos a todas las secciones (en el orden del menú): cuadrícula de iconos con su color; Compra lleva cuántos productos faltan.
   const QCOL = { tareas: '#9b87f5', compra: '#34c77b', fin: '#22c3b4', docs: '#e0b416', salud: 'var(--rose)', coche: CARC, mascotas: PETC };
   const quick = `<div class="qgrid" role="navigation" aria-label="Ir a una sección">${secs()
@@ -208,11 +189,6 @@ function vDia() {
       <h2>${g}${S.name ? ', ' + esc(S.name) : ''}</h2></div>
     ${S.wxOff ? '' : `<div id="hwx" class="haside">${wxHTML()}</div>`}
   </section>
-  <div class="hst">
-    ${hs('tareas', 'list-checks', '#9b87f5', 'Tareas hoy', tt.length, late ? `<span class="hwarn">${pl(late, 'atrasada', 'atrasadas')}</span>` : tt.length ? 'Sin atrasos' : 'Nada pendiente')}
-    ${hs('fact', 'receipt', '#f0a83a', 'Por pagar', b7.length, b7v ? `<span class="hwarn">${pl(b7v, 'vencida', 'vencidas')}</span> · ${eur(b7t)}` : b7.length ? 'En 7 días · ' + eur(b7t) : 'Nada a la vista')}
-    ${B ? hs('fin', 'wallet', '#22c3b4', 'Gasto del mes', pc + '<small>%</small>', 'De tu tope · ' + eur(sp), ring(pc)) : hs('fin', 'wallet', '#22c3b4', 'Gasto del mes', `<span class="hsm">${eur(sp)}</span>`, 'Sin tope definido')}
-  </div>
   <div class="grid dgrid">
   ${VIS.dia.map(k => C[k]).join('')}
   ${quick}</div>`;
