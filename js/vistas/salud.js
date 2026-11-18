@@ -22,15 +22,16 @@ function salDays() {
   for (let i = 1; i <= 3; i++) mark(addD(st.last, st.avg * i), true);
   return M;
 }
-/* Anillo: la parte llena es lo que ya ha pasado del ciclo; en el centro, lo que falta para el siguiente. */
+/* Anillo: la parte llena es lo que ya ha pasado del ciclo; en el centro, lo que falta para el siguiente.
+   Con retraso, el anillo rosa queda lleno y encima crece un tramo frambuesa (un trozo por día de retraso). */
 function salRing(st, n) {
   const R = 54,
     C = 2 * Math.PI * R,
     late = n < 0,
     p = late ? 1 : Math.min(1, (st.day - 1) / st.avg);
   const col = 'var(--rose)';
-  return `<div class="sring"><svg viewBox="0 0 128 128" role="img" aria-label="Días que faltan para el próximo inicio"><g transform="rotate(-90 64 64)"><circle r="${R}" cx="64" cy="64" fill="none" stroke="var(--roses)" stroke-width="12"/><circle r="${R}" cx="64" cy="64" fill="none" stroke="${col}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(C * p).toFixed(1)} ${C.toFixed(1)}"/></g></svg>
-    <div class="c">${late ? `<b class="wa">+${-n}</b><span>${-n === 1 ? 'Día' : 'Días'} de<br>retraso</span>` : n === 0 ? `<b>Hoy</b><span>Próximo<br>previsto</span>` : `<b>${n}</b><span>${n === 1 ? 'Día' : 'Días'} para<br>el próximo</span>`}</div></div>`;
+  return `<div class="sring"><svg viewBox="0 0 128 128" role="img" aria-label="Días que faltan para el próximo inicio"><g transform="rotate(-90 64 64)"><circle r="${R}" cx="64" cy="64" fill="none" stroke="var(--roses)" stroke-width="12"/><circle r="${R}" cx="64" cy="64" fill="none" stroke="${col}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(C * p).toFixed(1)} ${C.toFixed(1)}"/>${late ? `<circle r="${R}" cx="64" cy="64" fill="none" stroke="var(--rose2)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(C * Math.min(1, -n / st.avg)).toFixed(1)} ${C.toFixed(1)}"/>` : ''}</g></svg>
+    <div class="c">${late ? `<b class="late">+${-n}</b><span>${-n === 1 ? 'Día' : 'Días'} de<br>retraso</span>` : n === 0 ? `<b class="hoy">Hoy</b><span>Próximo<br>previsto</span>` : `<b>${n}</b><span>${n === 1 ? 'Día' : 'Días'} para<br>el próximo</span>`}</div></div>`;
 }
 /* ---------- Actividad (Google Health) ----------
    Un Google Apps Script de la cuenta de Google (scripts/google-health.gs) deja cada hora en Supabase los pasos, kcal,
@@ -335,8 +336,8 @@ function vSalud() {
       st.last
         ? `<div class="gx">${salRing(st, n)}<div class="sinf">
           <div class="mu">Próximo previsto</div><div class="big">${fd(st.next)}</div><div class="mu swd">${cap(new Intl.DateTimeFormat('es-ES', { weekday: 'long' }).format(new Date(st.next + 'T12:00')))}</div>
-          <div class="schips"><span class="schip on">Día <b>${st.day}</b> de ${st.avg}</span><span class="schip">Empezó el <b>${fdc(st.last)}</b></span></div>
-          <div class="mu">Ciclo de ${st.avg} días · ${st.gaps.length ? 'Media de los últimos ' + st.gaps.length : 'duración habitual'}</div>
+          <div class="schips"><span class="schip on">Día <b>${st.day}</b>${st.day <= st.avg ? ' de ' + st.avg : ''}</span><span class="schip">Empezó el <b>${fdc(st.last)}</b></span></div>
+          <div class="mu">Ciclo de ${st.avg} días · ${st.gaps.length ? (st.gaps.length === 1 ? 'Según el último ciclo' : 'Media de los últimos ' + st.gaps.length) : 'duración habitual'}</div>
           <div class="mu">${I('clock', 'sm')} Aviso por Telegram 3 días antes.</div></div></div>
         ${add}<div class="sact"><button class="btn ghost" data-a="sah">${I('calendar-days')} Ver histórico</button><button class="link txl mu" data-a="sad" data-i="${st.last}">Quitar la última fecha (${fd(st.last)})</button></div>`
         : empty('Apunta el día de inicio para empezar a calcular el siguiente.') + add,
