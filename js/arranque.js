@@ -34,18 +34,25 @@ function afterLoad() {
   $('#fabMic').innerHTML = I('mic');
   if ('serviceWorker' in navigator && location.protocol.startsWith('http'))
     navigator.serviceWorker.register('sw.js').catch(e => logErr('sw', e));
-  let r = 'local';
-  try {
-    r = await cloudInit();
-  } catch (e) {
+  // Si la nube tarda (mala cobertura, o la sesión se queda colgada al volver a la app), no se espera más de 5 s:
+  // se abre con lo guardado en este dispositivo y, cuando la nube contesta, se juntan los cambios y se repinta.
+  const ini = cloudInit().catch(() => {
     setSync('⚠️ Sin sincronizar');
-  }
-  if (r === 'login') {
+    return 'local';
+  });
+  const hayLocal = !!localStorage.getItem(K);
+  const r = await (hayLocal ? Promise.race([ini, new Promise(ok => setTimeout(() => ok('tarde'), 5000))]) : ini);
+  const login = () => {
     $('#nav').innerHTML = '';
     $('.fabs').hidden = true;
     $('#m').innerHTML = vLogin();
     $('#le').focus();
-    return;
-  }
+  };
+  if (r === 'login') return login();
   afterLoad();
+  if (r !== 'tarde') return;
+  setSync('⏳ Conectando…');
+  const r2 = await ini;
+  if (r2 === 'login') login();
+  else if (r2 === 'ok') render();
 })();

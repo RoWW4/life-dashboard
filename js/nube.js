@@ -276,7 +276,9 @@ async function cloudInit() {
     setSync('⚠️ Sin conexión');
     return 'offline';
   }
-  sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+  // Cada llamada a Supabase se corta a los 20 s: con mala cobertura podía quedarse esperando para siempre.
+  const fetchT = (u, o = {}) => (o.signal || !AbortSignal.timeout ? fetch(u, o) : fetch(u, { ...o, signal: AbortSignal.timeout(20000) }));
+  sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, { global: { fetch: fetchT } });
   const { data } = await sb.auth.getSession();
   if (!data.session) return 'login';
   user = data.session.user;
