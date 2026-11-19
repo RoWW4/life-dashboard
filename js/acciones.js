@@ -515,15 +515,32 @@ const A = {
     ch();
     toast('Apuntado');
   },
+  /* Calendario: último día de esa vez, en un día de los marcados o poco después. */
+  dmf: d => {
+    document.querySelectorAll('.ov').forEach(o => o.remove());
+    const i = salIni(d);
+    if (!i) return;
+    S.salud.fin = { ...(S.salud.fin || {}), [i]: d };
+    ch();
+    toast('Ajustado: ' + (dd(d, i) + 1) + ' días');
+  },
   sad: i =>
     CF('¿Quitar esta fecha?', () => {
       S.salud.ini = S.salud.ini.filter(d => d !== i);
+      if (S.salud.fin && S.salud.fin[i]) {
+        const f = { ...S.salud.fin };
+        delete f[i];
+        S.salud.fin = f;
+      }
       ch();
     }),
   sah: () => {
     const R = salStats().L.slice().reverse();
     modal(
-      `<h3>Histórico · ${R.length}</h3><div class="shist">${R.map((d, i) => `<span>${fd(d)}${R[i + 1] ? ` <i>${dd(d, R[i + 1])} d</i>` : ''}</span>`).join('')}</div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button></div>`
+      `<h3>Histórico · ${R.length}</h3><div class="shist">${R.map((d, i) => {
+        const f = (S.salud.fin || {})[d];
+        return `<span>${fd(d)}${f ? ` <i>duró ${dd(f, d) + 1} d</i>` : ''}${R[i + 1] ? ` <i>${dd(d, R[i + 1])} d</i>` : ''}</span>`;
+      }).join('')}</div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button></div>`
     );
   },
   hls: () => hlSync(true),

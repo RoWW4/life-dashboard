@@ -16,3 +16,14 @@ function salPrevision(ini, len) {
     next = last ? new Date((day(last) + avg) * 864e5).toISOString().slice(0, 10) : '';
   return { L, gaps, avg, last, next };
 }
+/* Duración prevista: media de las últimas 6 veces con el fin apuntado (fin = {inicio: 'AAAA-MM-DD' del último día}).
+   Sin ninguna apuntada, la duración habitual de Ajustes. Así se adapta sola si una vez dura un día más o uno menos. */
+function salDuracion(fin, dur) {
+  const day = s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 864e5;
+  const D = Object.keys(fin || {})
+    .sort()
+    .map(i => Math.round(day(fin[i]) - day(i)) + 1)
+    .filter(n => n >= 1 && n <= 12)
+    .slice(-6);
+  return { durs: D, dur: D.length ? Math.round(D.reduce((a, n) => a + n, 0) / D.length) : dur || SAL_DUR };
+}

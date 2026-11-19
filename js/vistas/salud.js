@@ -5,7 +5,29 @@
 function salStats() {
   const s = S.salud || { ini: [], len: SAL_LEN },
     p = salPrevision(s.ini, s.len);
-  return { ...p, day: p.last ? dd(TD(), p.last) + 1 : 0, len: s.len || SAL_LEN, dur: s.dur || SAL_DUR };
+  const fin = s.fin || {},
+    d = salDuracion(fin, s.dur),
+    day = p.last ? dd(TD(), p.last) + 1 : 0,
+    f = fin[p.last] || '',
+    finP = p.last ? f || addD(p.last, d.dur - 1) : '',
+    // «Ahora»: del inicio al último día (el ajustado o, si no, el de la media).
+    now = !!p.last && TD() <= finP;
+  return {
+    ...p,
+    ...d,
+    fin,
+    day,
+    f,
+    now,
+    finP,
+    len: s.len || SAL_LEN,
+    durHab: s.dur || SAL_DUR
+  };
+}
+/* Inicio al que pertenece un día (hasta 11 días después de un inicio), para ajustar en el calendario dónde termina. */
+function salIni(d) {
+  const L = ((S.salud || {}).ini || []).filter(i => i < d && dd(d, i) <= 11).sort();
+  return L[L.length - 1] || '';
 }
 /* Días a marcar en el calendario: los apuntados y los 3 siguientes previstos, cada uno con su duración. */
 function salDays() {
@@ -13,7 +35,8 @@ function salDays() {
     M = new Map();
   if (!st.last) return M;
   const mark = (d, prev) => {
-    for (let i = 0; i < st.dur; i++) {
+    const n = st.fin[d] ? dd(st.fin[d], d) + 1 : st.dur;
+    for (let i = 0; i < n; i++) {
       const k = addD(d, i);
       if (!M.has(k) || !prev) M.set(k, prev);
     }
@@ -336,8 +359,13 @@ function vSalud() {
       st.last
         ? `<div class="gx">${salRing(st, n)}<div class="sinf">
           <div class="mu">Próximo previsto</div><div class="big">${fd(st.next)}</div><div class="mu swd">${cap(new Intl.DateTimeFormat('es-ES', { weekday: 'long' }).format(new Date(st.next + 'T12:00')))}</div>
-          <div class="schips"><span class="schip on">Día <b>${st.day}</b>${st.day <= st.avg ? ' de ' + st.avg : ''}</span><span class="schip">Empezó el <b>${fdc(st.last)}</b></span></div>
+          <div class="schips">${
+            st.now
+              ? `<span class="schip on">Día <b>${st.day}</b> de ${dd(st.finP, st.last) + 1}</span><span class="schip">Termina el <b>${fdc(st.finP)}</b>${dd(st.finP, TD()) > 0 ? ` · quedan ${dd(st.finP, TD())}` : ''}</span>`
+              : `<span class="schip on">Día <b>${st.day}</b>${st.day <= st.avg ? ' de ' + st.avg : ''}</span><span class="schip">Empezó el <b>${fdc(st.last)}</b></span>`
+          }</div>
           <div class="mu">Ciclo de ${st.avg} días · ${st.gaps.length ? (st.gaps.length === 1 ? 'Según el último ciclo' : 'Media de los últimos ' + st.gaps.length) : 'duración habitual'}</div>
+          
           <div class="mu">${I('clock', 'sm')} Aviso por Telegram 3 días antes.</div></div></div>
         ${add}<div class="sact"><button class="btn ghost" data-a="sah">${I('calendar-days')} Ver histórico</button><button class="link txl mu" data-a="sad" data-i="${st.last}">Quitar la última fecha (${fd(st.last)})</button></div>`
         : empty('Apunta el día de inicio para empezar a calcular el siguiente.') + add,
@@ -347,7 +375,7 @@ function vSalud() {
       'salud',
       'conf',
       `${I('settings')} Duración habitual`,
-      `<div class="fs"><label>Días entre un inicio y el siguiente<input id="sa2" type="number" min="15" max="60" value="${st.len}"></label><div class="mu">Se usa mientras no haya al menos dos fechas apuntadas.</div><label>Días que se marcan en el calendario<input id="sa3" type="number" min="1" max="10" value="${st.dur}"></label></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-a="sal">Guardar</button></div>`,
+      `<div class="fs"><label>Días entre un inicio y el siguiente<input id="sa2" type="number" min="15" max="60" value="${st.len}"></label><div class="mu">Se usa mientras no haya al menos dos fechas apuntadas.</div><label>Días que dura (habitual)<input id="sa3" type="number" min="1" max="10" value="${st.durHab}"></label><div class="mu">Se usa hasta que ajustes en el calendario dónde terminó alguna vez; luego, la media de las últimas veces.</div></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-a="sal">Guardar</button></div>`,
       'wide'
     )
   };

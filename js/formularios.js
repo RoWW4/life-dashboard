@@ -723,6 +723,21 @@ function dayMenu(d) {
             fut ? 'Solo hoy o días pasados' : `Marca este día y los ${salStats().dur - 1} siguientes`,
             fut
           )) +
+      (() => {
+        const i = !ini && !fut && salIni(d);
+        if (!i) return '';
+        const st = salStats(),
+          f = st.fin[i] || addD(i, st.dur - 1);
+        return f === d
+          ? ''
+          : o(
+              'dmf',
+              'heart-pulse',
+              'var(--rose)',
+              d < f ? 'Terminó este día' : 'Alargar hasta este día',
+              `Esa vez: ${dd(d, i) + 1} días (cuenta para la media)`
+            );
+      })() +
       o('dmv', 'sun', '#2fcf7a', 'Vacaciones o día libre', 'Desde este día') +
       o('dmh', 'sparkles', '#ff5d5d', 'Festivo local', 'Solo este día') +
       `</div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button></div>`
