@@ -4,10 +4,10 @@ Rocío trabaja el panel desde el ordenador (`D:\Claude\life-dashboard`, copia de
 
 ## Cómo se trabaja
 1. Al empezar: `git pull`. Si hay cambios locales sin subir, `git pull --rebase --autostash`. No hace falta leer nada más.
-2. Cambios en local, sin commit ni push. No preguntar si se sube: se sube solo cuando Rocío lo pida. `PENDIENTES.md` solo se lee si lo pedido tiene que ver con algo pendiente.
+2. Al terminar cada cambio (y comprobarlo), subirlo directamente con el paso 4, sin preguntar. `PENDIENTES.md` solo se lee si lo pedido tiene que ver con algo pendiente.
 3. Si el cambio es estructural o estético importante, enseñarle capturas del resultado (datos de mentira) al terminar. Comprobar con lo mínimo. La vista previa (localhost:8765) solo para cambios visuales que lo necesiten, **sin iniciar sesión** y con `localStorage.clear()` al acabar: probar con datos de mentira y luego iniciar sesión en el mismo navegador borró los datos reales el 31/10/2026.
-4. Cuando diga «súbelo» (o «ya está», «publícalo»): `node scripts/subir.mjs "qué se ha cambiado (una frase)"`. Trae lo de la otra sesión, sube la versión si cambió CSS o JS, pasa `scripts/comprobar.mjs` y hace un commit y push a `main` (GitHub Pages publica desde ahí). Si algo falla, no sube y dice por qué. Antes, mirar `git status` por si hay archivos que no deben subirse.
-5. Si Rocío se despide o cambia de dispositivo con cambios sin subir, recordárselo.
+4. Para subir: `node scripts/subir.mjs "qué se ha cambiado (una frase)"`. Trae lo de la otra sesión, sube la versión si cambió CSS o JS, pasa `scripts/comprobar.mjs` y hace un commit y push a `main` (GitHub Pages publica desde ahí). Si algo falla, no sube y dice por qué. Antes, mirar `git status` por si hay archivos que no deben subirse.
+5. Si algo no se pudo subir, decírselo a Rocío.
 
 El historial de cambios es el de git (`git log --oneline`); `HISTORIAL.md` y `HISTORIAL-antiguo.md` son solo archivo hasta el 01/11/2026.
 `PENDIENTES.md`: solo lo importante por decidir o hacer, sin listas de ideas. «Apúntalo en pendientes» = añadirlo sin hacerlo. Al hacer uno, quitarlo de ahí.
