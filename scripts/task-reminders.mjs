@@ -1,5 +1,6 @@
 // Avisos de las tareas por Telegram (hora de España):
-//  · aviso a la fecha y hora elegidas en la tarea (t.rem) o, si no tiene, 1 día antes (24 h antes de la hora de la tarea;
+//  · aviso a la fecha y hora elegidas en la tarea (t.rem) o, si no tiene, 1 día antes (24 h antes de la hora de la tarea,
+//    no se repite al aplazarla a menos de 24 h;
 //    si no tiene hora, como si fuera a las 9:00);
 //  · resumen a las 7:00 con las tareas de hoy, las atrasadas y los cumpleaños (si no hay nada, no se manda);
 //  · Salud (3 días antes), documentos que caducan, fechas del coche y batería del reloj (ver apartados 3 a 6).
@@ -79,6 +80,9 @@ for (const t of tasks.filter(t => /^\d{4}-\d{2}-\d{2}$/.test(t.due) && !REM.test
   const hm = /^\d{1,2}:\d{2}$/.test(t.tm || '') ? t.tm : '', tm = hm || DEF_TM;
   const w = at(t.due, tm), key = `tk:${t.id}:${t.due}T${tm}`;
   if (w <= nowL || w - nowL > DAY || sent.has(key)) continue;
+  // Tarea aplazada a una fecha que ya está a menos de 24 h (ya se avisó con la fecha anterior): no se repite el aviso
+  // al momento de aplazarla; el resumen de las 7:00 ya la recuerda.
+  if (DAY - (w - nowL) > 36e5 && [...sent].some(k => k.startsWith(`tk:${t.id}:`))) continue;
   const cuando = t.due === today ? 'Hoy' : t.due === iso(nowL + DAY) ? 'Mañana' : `El ${DOW[new Date(w).getUTCDay()]} ${fd(t.due)}`;
   await send(key, `${t.area === 'Cumpleaños' ? '🎂' : '⏰'} ${cuando}${hm ? ' a las ' + hm : ''}: ${t.title}`, 'Aviso de tarea');
 }
