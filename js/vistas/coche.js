@@ -30,7 +30,7 @@ const CAR_AV = {
 /* % del depósito. Este coche no lo manda (Kia Connect da 0 aunque haya autonomía): con 0 % y autonomía de más de 30 km se toma como «sin dato»
    y se calcula con la autonomía: litros que quedan = km × consumo medio / 100, sobre la capacidad del depósito (ficha técnica del modelo). */
 const CAR_TANK = 45, // litros
-  CAR_L100 = 6.7; // l/100 km: el que usa el coche para su autonomía (ajustado comparando con la aguja del depósito, 16/11/2026)
+  CAR_L100 = 7; // l/100 km: el que usa el coche para su autonomía (ajustado comparando con la aguja del depósito, 19/11/2026)
 const carFuelReal = lv => (!hasN(lv.fuel) || (+lv.fuel === 0 && hasN(lv.range) && +lv.range > 30) ? null : +lv.fuel);
 const carFuel = lv => carFuelReal(lv) ?? (hasN(lv.range) ? Math.min(100, ((+lv.range * CAR_L100) / 100 / CAR_TANK) * 100) : null);
 /* Color de la barra: verde por encima de la mitad, naranja hasta 1/4 y rojo en 1/4 o menos. */
