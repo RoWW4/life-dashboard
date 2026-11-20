@@ -201,7 +201,7 @@ const DCOL = {
 };
 const DIA = ['imp', 'cal'];
 /* Orden inicial de los paneles movibles de cada sección (cada uno se puede reordenar y se guarda en S.order). */
-const FIN = ['plan', 'gasto', 'anio', 'sinc', 'metas', 'mov', 'reglas'];
+const FIN = ['plan', 'ahist', 'gasto', 'anio', 'sinc', 'metas', 'mov', 'reglas'];
 const AJ = [
   ['Personalizar', ['midia', 'apar', 'menu', 'fest', 'dict']],
   ['Dinero', ['dinero', 'bank']],

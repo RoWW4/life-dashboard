@@ -28,6 +28,7 @@ document.addEventListener('change', e => {
   }
   if (t.id === 'plr') {
     S.budget = +t.value;
+    S.topeH[MN(new Date())] = S.budget;
     planSim = null;
     ch();
   }

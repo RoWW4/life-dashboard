@@ -824,6 +824,64 @@ function yearCard() {
   );
 }
 
+/* ---------- Tu ahorro mes a mes ----------
+   Cada mes: lo que entró, lo que se gastó (fijos + día a día; sin traspasos ni extraordinarios), lo ahorrado (la diferencia),
+   lo que se mandó a la cuenta de ahorro (aportaciones que trae el banco de esa cuenta) y si se cumplió el tope de ese mes
+   (S.topeH guarda el tope de cada mes al cambiarlo; un mes sin apunte usa el último anterior).
+   Arriba: ahorrado este año, saldo de la cuenta de ahorro con sus intereses y racha de meses dentro del tope. */
+const topeOf = m => {
+  const k = Object.keys(S.topeH || {})
+    .filter(x => x <= m)
+    .sort()
+    .pop();
+  return k ? S.topeH[k] : null;
+};
+function savHistCard() {
+  if (!S.tx.length) return '';
+  const now = new Date(),
+    cm = MN(now),
+    first = S.tx.reduce((a, x) => (x.date < a ? x.date : a), TD()).slice(0, 7),
+    ms = [...Array(12)].map((_, i) => mAdd(cm, i - 11)).filter(m => m >= first),
+    mv = SAVT.filter(t => t.kind === 'aporte' || t.kind === 'retirada'),
+    R = ms.map(m => {
+      const inc = income(m).reduce((a, x) => a + x.amt, 0),
+        sp = spent(m),
+        tp = topeOf(m),
+        sv = spentVar(m),
+        sent = mv.filter(t => mon(t.d) === m).reduce((a, t) => a + t.amt, 0);
+      return { m, inc, sp, sav: inc - sp, tp, sv, ok: tp == null ? null : sv <= tp, sent, cur: m === cm };
+    });
+  const yr = String(now.getFullYear()),
+    savY = R.filter(r => r.m.startsWith(yr) && !r.cur).reduce((a, r) => a + r.sav, 0),
+    sentT = mv.reduce((a, t) => a + t.amt, 0),
+    intT = SAVT.filter(t => t.kind === 'interes').reduce((a, t) => a + t.amt, 0),
+    bal = SAVD.length ? SAVD[SAVD.length - 1].bal : (savSnaps().slice(-1)[0] || {}).bal,
+    T = R.filter(r => r.ok != null && !r.cur);
+  let racha = 0;
+  for (let i = T.length - 1; i >= 0 && T[i].ok; i--) racha++;
+  const mx = Math.max(1, ...R.map(r => Math.abs(r.sav)));
+  const bars = R.map(r => {
+    const h = ((Math.abs(r.sav) / mx) * 100).toFixed(1),
+      tip = `${cap(mLabel(r.m))}${r.cur ? ' (en curso)' : ''}: ahorrado ${eur(r.sav)}${r.sent ? ` · enviado a la cuenta de ahorro ${eur(r.sent)}` : ''}`;
+    return `<div class="ahb${r.cur ? ' on' : ''}${r.sav < 0 ? ' neg' : ''}" title="${tip}" aria-label="${tip}"><div class="tr"><i style="height:${r.sav ? Math.max(3, h) : 0}%"></i></div><em>${MS[+r.m.slice(5)].slice(0, 1).toUpperCase()}</em></div>`;
+  }).join('');
+  const rows = [...R]
+    .reverse()
+    .map(
+      r =>
+        `<div class="ahr${r.cur ? ' cur' : ''}"><span class="g"><b>${cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date(r.m + '-01T00:00')))}${r.m.startsWith(yr) ? '' : ' ' + r.m.slice(0, 4)}</b><span class="mu">Entró ${eur(r.inc)} · Gastado ${eur(r.sp)}${r.cur ? ' · en curso' : ''}</span></span><span class="ahv"><b class="${r.sav < 0 ? 'er' : 'ok'}">${r.sav >= 0 ? '+' : ''}${eur(r.sav)}</b>${r.sent ? `<span class="mu">${I('piggy-bank', 'sm')} ${r.sent >= 0 ? 'Enviado' : 'Sacado'} ${eur(Math.abs(r.sent))}</span>` : ''}</span>${r.ok == null ? '<span></span>' : r.cur ? `<span class="chip" title="Tope de este mes">Tope ${eurR(r.tp)}</span>` : r.ok ? `<span class="chip ok" title="Gastaste ${eur(r.sv)} de ${eur(r.tp)} (sin fijos)">${I('check', 'sm')} Tope</span>` : `<span class="chip er" title="Gastaste ${eur(r.sv)} de ${eur(r.tp)} (sin fijos)">+${eur(r.sv - r.tp)}</span>`}</div>`
+    );
+  return panel(
+    'fin',
+    'ahist',
+    `${I('piggy-bank')} Tu ahorro mes a mes`,
+    `<div class="ahk"><div><span class="mu">Ahorrado en ${yr}</span><b class="${savY < 0 ? 'er' : 'ok'}">${eurR(savY)}</b><small>Meses ya cerrados</small></div>${bal != null ? `<div><span class="mu">En la cuenta de ahorro</span><b>${eurR(bal)}</b><small>${intT ? `+${eur(intT)} de intereses` : sentT ? `Aportado ${eurR(sentT)}` : ''}</small></div>` : ''}${T.length ? `<div><span class="mu">Racha dentro del tope</span><b>${racha} ${racha === 1 ? 'mes' : 'meses'}</b><small>${T.filter(r => r.ok).length} de ${T.length} meses cumplidos</small></div>` : `<div><span class="mu">Racha dentro del tope</span><b>—</b><small>Empieza a contar desde este mes</small></div>`}</div>
+    <div class="ahbars" role="img" aria-label="Ahorrado cada mes" style="grid-template-columns:repeat(${R.length},minmax(0,1fr))">${bars}</div>
+    <div class="ahrs">${fold('ahr', rows, 4)}</div>
+    <div class="mu ahn">Ahorrado = lo que entró menos lo gastado (fijos y día a día). No cuentan los traspasos ni los gastos extraordinarios.</div>`,
+    'wide'
+  );
+}
 /* ---------- Plan del mes ----------
    Lo que entra en el mes se reparte en tres: pagos fijos (los de Facturas, calculados solos), el gasto del día a día
    (el tope, S.budget, que pone ella) y el ahorro (lo que sobra). Arriba, el reparto; debajo, cómo va el gasto del día a día
@@ -931,6 +989,7 @@ function vFin() {
   ${(() => {
     const C = {
       plan: cur ? planCard() : '',
+      ahist: savHistCard(),
       gasto: panel('fin', 'gasto', `${I('wallet')} Gasto del mes`, gastoHTML(m, 'fm'), 'wide'),
       anio: yearCard(),
       mov: panel(

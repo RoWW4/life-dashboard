@@ -27,6 +27,7 @@ const def = () => ({
   sav: null,
   goals: [],
   wish: [],
+  topeH: {},
   shopN: {},
   shopBC: {},
   stores: [],
@@ -56,6 +57,7 @@ function normalize(o) {
   ])
     if (!Array.isArray(s[k])) s[k] = [];
   if (!s.order || typeof s.order !== 'object') s.order = {};
+  if (!s.topeH || typeof s.topeH !== 'object' || Array.isArray(s.topeH)) s.topeH = {}; // tope de gasto de cada mes: 'AAAA-MM' → €
   if (!s.shopN || typeof s.shopN !== 'object' || Array.isArray(s.shopN)) s.shopN = {};
   if (!s.stCol || typeof s.stCol !== 'object' || Array.isArray(s.stCol)) s.stCol = {}; // color elegido de cada tienda
   if (!s.shopBC || typeof s.shopBC !== 'object' || Array.isArray(s.shopBC)) s.shopBC = {}; // códigos de barras aprendidos: código → nombre

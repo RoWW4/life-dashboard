@@ -660,6 +660,7 @@ const A = {
         const a = pnum(v);
         if (!(a >= 0)) return toast('Importe no válido');
         S.budget = a;
+        S.topeH[MN(new Date())] = a;
         planSim = null;
         ch();
       },
