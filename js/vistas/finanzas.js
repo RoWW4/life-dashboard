@@ -824,6 +824,90 @@ function yearCard() {
   );
 }
 
+/* ---------- Plan del mes ----------
+   Lo que entra en el mes se reparte en tres: pagos fijos (los de Facturas, calculados solos), el gasto del día a día
+   (el tope, S.budget, que pone ella) y el ahorro (lo que sobra). Arriba, el reparto; debajo, cómo va el gasto del día a día
+   frente al tope (lo que queda, cuánto se puede gastar al día y a qué ritmo va) y lo que se ahorrará de verdad a este ritmo. */
+let planSim = null; // tope mientras se mueve la barra (aún sin guardar)
+function planData() {
+  const now = new Date(),
+    m = MN(now),
+    day = now.getDate(),
+    dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(),
+    fx = fxMonth(),
+    incReal = income(m).reduce((a, x) => a + x.amt, 0),
+    // Ingresos previstos en Facturas (la nómina) por si aún no ha llegado; si no hay, lo que entró el mes pasado.
+    incPrev = S.fixed
+      .filter(f => f.t === 'i' && fxLive(f))
+      .reduce((a, f) => a + (f.var ? f.amt : fxOcc(f, m + '-01', m + '-31').length * f.amt), 0),
+    inc = Math.max(incReal, incPrev) || income(mAdd(m, -1)).reduce((a, x) => a + x.amt, 0),
+    tope = planSim != null ? planSim : S.budget || 0,
+    sv = spentVar(m),
+    left = tope - sv,
+    daysLeft = dim - day + 1,
+    proj = day >= 5 ? (sv / day) * dim : null,
+    sav = inc - fx.tot - tope,
+    savReal = inc - fx.tot - Math.max(sv, proj != null ? proj : sv),
+    sent = S.tx.filter(x => x.t === 'g' && x.cat === NOCNT && mon(x.date) === m).reduce((a, x) => a + x.amt, 0);
+  return { m, day, dim, fx, inc, incReal, tope, sv, left, daysLeft, proj, sav, savReal, sent };
+}
+function planBody() {
+  const d = planData(),
+    { inc, fx, tope, sv, left, daysLeft, proj, sav } = d,
+    base = Math.max(inc, fx.tot + tope, 1),
+    w = v => ((Math.max(0, v) / base) * 100).toFixed(2),
+    pc = tope ? (sv / tope) * 100 : 0,
+    st = pc >= 100 ? 'er' : pc >= 80 ? 'wa' : 'ok',
+    ideal = tope ? Math.min(100, (d.day / d.dim) * 100) : 0;
+  const ritmo =
+    !tope || proj == null
+      ? ''
+      : proj > tope
+        ? `<div class="plr wa">${I('trending-up', 'sm')} A este ritmo acabarás el mes en <b>${eur(proj)}</b>: ${eur(proj - tope)} más del tope.</div>`
+        : `<div class="plr ok">${I('circle-check', 'sm')} Vas bien: a este ritmo acabarás en <b>${eur(proj)}</b>, por debajo del tope.</div>`;
+  const last = TXP()
+    .filter(x => mon(x.date) === d.m && !isFixTx(x) && gAmt(x) > 0)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 5);
+  const top = `<div class="plbar" role="img" aria-label="Reparto: fijos ${eur(fx.tot)}, gasto ${eur(tope)}, ahorro ${eur(sav)}"><i class="fx" style="width:${w(fx.tot)}%"></i><i class="gv" style="width:${w(tope)}%"></i><i class="sv" style="width:${w(sav)}%"></i></div>
+  <div class="plk">
+    <div class="fx"><span><i></i>Fijos</span><b>${eur(fx.tot)}</b><small>${fx.tot - fx.paid > 0.005 ? `Faltan ${eur(fx.tot - fx.paid)} por cobrar` : 'Todo cobrado'}</small></div>
+    <div class="gv"><span><i></i>Para gastar</span><b>${eur(tope)}</b><small><a href="#" data-a="eb2">Cambiar ${I('pencil', 'sm')}</a></small></div>
+    <div class="sv"><span><i></i>Ahorro</span><b class="${sav < 0 ? 'er' : ''}">${eur(sav)}</b><small>${inc ? `${Math.round((sav / inc) * 100)} % de ${eur(inc)}${d.incReal ? '' : ' (previsto)'}` : 'Sin ingresos este mes'}</small></div>
+  </div>
+`;
+  const rest = `${sav < 0 ? `<div class="plr er">${I('triangle-alert', 'sm')} Con este tope gastarías más de lo que entra.</div>` : ''}
+  <div class="plg">
+    <div class="plgh"><span class="mu">Llevas gastado (sin fijos)</span><span class="mu">${tope ? `${Math.round(pc)} %` : ''}</span></div>
+    <div class="plgv"><b class="${st}">${eur(sv)}</b><span class="mu">de ${eur(tope)}</span></div>
+    ${tope ? `<div class="plp ${st}" role="progressbar" aria-valuenow="${Math.round(pc)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.min(100, pc).toFixed(1)}%"></i><em style="left:${ideal.toFixed(1)}%" title="Donde deberías ir hoy para llegar justa a fin de mes"></em></div>` : ''}
+    ${tope ? (left >= 0 ? `<div class="plq">Te quedan <b>${eur(left)}</b> · <b>${eur(left / daysLeft)}</b> al día durante ${daysLeft} día${daysLeft === 1 ? '' : 's'}</div>` : `<div class="plq er">Te has pasado <b>${eur(-left)}</b> del tope</div>`) : '<div class="mu">Pon un tope para empezar.</div>'}
+    ${ritmo}
+  </div>
+  <div class="pls"><span>Ahorro real a este ritmo <b class="${d.savReal < 0 ? 'er' : 'ok'}">${eur(d.savReal)}</b></span>${d.sent ? `<span>Ya enviado a ahorro o traspasos <b>${eur(d.sent)}</b></span>` : ''}</div>
+  ${last.length ? `<div class="pll"><div class="mu">Últimos gastos del día a día</div>${last.map(x => `<div class="row"><span class="g"><span class="tt">${esc(x.desc || x.cat)}</span><span class="mu">${fd(x.date)} · ${esc(x.cat)}</span></span><span class="amt neg">−${eur(gAmt(x))}</span></div>`).join('')}</div>` : ''}`;
+  return { top, rest, tope };
+}
+/* Al mover la barra del tope: se repinta solo el plan (sin perder el dedo en la barra). */
+function planRefresh() {
+  const t = document.getElementById('pltop'),
+    r = document.getElementById('plrest');
+  if (!t || !r) return;
+  const b = planBody();
+  t.innerHTML = b.top;
+  r.innerHTML = b.rest;
+}
+const planCard = () => {
+  const b = planBody();
+  return panel(
+    'fin',
+    'plan',
+    `${I('target')} Plan de ${new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date())}`,
+    `<div id="pltop">${b.top}</div><label class="plsl"><span>Mueve para ver cuánto ahorrarías</span><input id="plr" type="range" min="0" max="${Math.max(1000, Math.ceil(b.tope / 50) * 50)}" step="25" value="${b.tope}" aria-label="Tope de gasto del mes"></label><div id="plrest">${b.rest}</div>`,
+    'wide'
+  );
+};
+
 function vFin() {
   const now = new Date(),
     base = new Date(now.getFullYear(), now.getMonth() + finOff, 1),
@@ -833,7 +917,8 @@ function vFin() {
     inc = incL.reduce((a, x) => a + x.amt, 0),
     sp = spent(m),
     cur = m === MN(now),
-    ps = spent(pm, cur ? now.getDate() : 31);
+    ps = spent(pm, cur ? now.getDate() : 31),
+    spv = spentVar(m);
   const ml = mLabel(m);
   return `<div class="hdr finh"><div><h2>Finanzas</h2><div class="sub help">${user && BANK && BANK.session_id ? `${I('landmark', 'sm')} Conectado al banco · ${cap(ago(BANK.last_sync))}` : 'Movimientos manuales, fijos e importados'}</div></div><div class="hact"><button class="btn ghost sm ico" data-a="fm" data-i="-1" aria-label="Mes anterior">${I('chevron-left')}</button><b style="min-width:130px;text-align:center">${ml}</b><button class="btn ghost sm ico" data-a="fm" data-i="1" aria-label="Mes siguiente" ${finOff >= 0 ? 'disabled style="opacity:.4"' : ''}>${I('chevron-right')}</button></div></div>
   <div class="fintop">${acctHTML()}
@@ -841,10 +926,11 @@ function vFin() {
     <div class="kpi" style="--c:var(--ok)"><span class="k"><span class="hico">${I('arrow-up-right')}</span>Ingresos</span><span class="v ok">${eur(inc)}</span><span class="d">${incL.length} movimiento${incL.length === 1 ? '' : 's'}</span></div>
     <div class="kpi" style="--c:var(--er)"><span class="k"><span class="hico">${I('arrow-down-left')}</span>Gastos</span><span class="v">${eur(sp)}</span><span class="d ${sp > ps ? 'wa' : 'ok'}">${I(sp > ps ? 'trending-up' : 'trending-down', 'sm')} ${eur(Math.abs(sp - ps))} ${cur ? `vs ${MS[+pm.slice(5)]} a día ${now.getDate()}` : 'vs mes anterior'}</span></div>
     <div class="kpi" style="--c:var(--ac)"><span class="k"><span class="hico">${I('scale')}</span>Balance</span><span class="v ${inc - sp < 0 ? 'er' : 'ok'}">${eur(inc - sp)}</span><span class="d">Ingresos − gastos</span></div>
-    <div class="kpi" style="--c:#22c3b4"><span class="k"><span class="hico">${I('target')}</span>Tope mensual</span><span class="v">${eur(S.budget)}</span>${S.budget ? `<span class="kbar ${sp >= S.budget ? 'over' : sp >= S.budget * 0.8 ? 'near' : ''}" title="Gastado ${Math.round((sp / S.budget) * 100)} % del tope"><i style="width:${Math.min(100, (sp / S.budget) * 100).toFixed(1)}%"></i></span>` : ''}<span class="d"><a href="#" data-a="eb2">Cambiar</a></span></div>
+    <div class="kpi" style="--c:#22c3b4"><span class="k"><span class="hico">${I('target')}</span>Tope del mes</span><span class="v">${eur(S.budget)}</span>${S.budget ? `<span class="kbar ${spv >= S.budget ? 'over' : spv >= S.budget * 0.8 ? 'near' : ''}" title="Gastado ${Math.round((spv / S.budget) * 100)} % del tope (sin fijos)"><i style="width:${Math.min(100, (spv / S.budget) * 100).toFixed(1)}%"></i></span>` : ''}<span class="d">${S.budget ? `${eur(spv)} sin fijos · ` : ''}<a href="#" data-a="eb2">Cambiar</a></span></div>
   </div></div>
   ${(() => {
     const C = {
+      plan: cur ? planCard() : '',
       gasto: panel('fin', 'gasto', `${I('wallet')} Gasto del mes`, gastoHTML(m, 'fm'), 'wide'),
       anio: yearCard(),
       mov: panel(

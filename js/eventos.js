@@ -26,6 +26,11 @@ document.addEventListener('change', e => {
     };
     r.readAsText(t.files[0]);
   }
+  if (t.id === 'plr') {
+    S.budget = +t.value;
+    planSim = null;
+    ch();
+  }
   if (t.id === 'bgfile' && t.files[0]) bgFile(t.files[0]);
   if (t.id === 'petfile' && t.files[0]) petPhotoSet(t.dataset.i, t.files[0]);
   if (t.id === 'bankfile' && t.files[0]) importFile(t.files[0]).catch(() => toast('No se pudo leer el archivo'));
@@ -39,6 +44,11 @@ document.addEventListener('input', e => {
     docQ = e.target.value;
     const g = document.getElementById('docgrid');
     if (g) g.innerHTML = docsHTML();
+  }
+  // Plan del mes: al mover el tope se ve al momento cómo cambia el ahorro (se guarda al soltar).
+  if (e.target.id === 'plr') {
+    planSim = +e.target.value;
+    planRefresh();
   }
   if (e.target.id === 'savap') {
     savAp = Math.max(0, pnum(e.target.value) || 0);

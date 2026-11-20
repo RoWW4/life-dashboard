@@ -245,6 +245,24 @@ const spent = (m, d = 31) =>
 const incMon = x =>
   x.cat === 'Nómina' && +x.date.slice(8) >= 25 ? MN(new Date(+x.date.slice(0, 4), +x.date.slice(5, 7), 1)) : mon(x.date);
 // x.pdev: devolución que aún espera categoría (bandeja «Sin clasificar»): tampoco cuenta como ingreso.
+/* Gasto de pagos fijos (enlazados a Facturas) y gasto del día a día (todo lo demás que cuenta) de un mes. */
+const isFixTx = x => !!(x.fid || x.billId);
+const spentFix = m =>
+  Math.max(
+    0,
+    TXP()
+      .filter(x => mon(x.date) === m && isFixTx(x))
+      .reduce((a, x) => a + gAmt(x), 0)
+  );
+const spentVar = (m, d = 31) =>
+  Math.max(
+    0,
+    TXP()
+      .filter(x => mon(x.date) === m && +x.date.slice(8) <= d && !isFixTx(x))
+      .reduce((a, x) => a + gAmt(x), 0)
+  );
+/* Fijos del mes: el mes en curso, lo previsto en Facturas (con el importe real de lo ya cobrado); otro mes, lo cobrado. */
+const fixOf = m => (m === MN(new Date()) ? fxMonth().tot : spentFix(m));
 const income = m => S.tx.filter(x => x.t === 'i' && x.cat !== NOCNT && !isDev(x) && !x.pdev && incMon(x) === m);
 const byCat = m => {
   const o = {};
@@ -531,7 +549,8 @@ function gastoBody(m) {
     cur = m === MN(now),
     sp = spent(m),
     cats = byCat(m),
-    B = S.budget || 0,
+    // S.budget es el tope del día a día (sin fijos): el total permitido del mes son los fijos más ese tope.
+    B = S.budget ? S.budget + fixOf(m) : 0,
     fl = cur ? fxLeft() : 0,
     rem = B - sp,
     pc = B ? (sp / B) * 100 : 0;

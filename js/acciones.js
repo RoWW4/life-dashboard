@@ -655,11 +655,12 @@ const A = {
     }),
   eb2: () =>
     CF(
-      'Tope de gasto mensual (€)',
+      'Tope de gasto del mes, sin contar los pagos fijos (€)',
       v => {
         const a = pnum(v);
         if (!(a >= 0)) return toast('Importe no válido');
         S.budget = a;
+        planSim = null;
         ch();
       },
       String(S.budget || '')
