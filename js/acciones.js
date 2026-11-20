@@ -342,6 +342,7 @@ const A = {
       },
       String(S.planTope || '')
     ),
+  pnl: i => panelsForm(i),
   shs: i => {
     shopSec = i === 'deseos' ? 'deseos' : 'lista';
     try {

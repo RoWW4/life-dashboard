@@ -427,6 +427,7 @@ function catDetail(c, sel) {
     finOff = +m.slice(0, 4) * 12 + +m.slice(5, 7) - (n.getFullYear() * 12 + n.getMonth() + 1);
     txf = { ...txf, cat: c, t: 'g', q: '' };
     o.remove();
+    view = 'fin';
     render();
     const e = $('#txcard');
     if (e) e.scrollIntoView({ behavior: 'smooth' });
@@ -503,6 +504,7 @@ function catYear(c, Y) {
     finOff = cur ? 0 : Y * 12 + 12 - (n.getFullYear() * 12 + n.getMonth() + 1);
     txf = { ...txf, cat: c, t: 'g', q: '', per: 'anio' };
     o.remove();
+    view = 'fin';
     render();
     const e = $('#txcard');
     if (e) e.scrollIntoView({ behavior: 'smooth' });
@@ -982,9 +984,7 @@ function vFin() {
   ${(() => {
     const C = {
       plan: cur ? planCard() : '',
-      ahist: savHistCard(),
       gasto: panel('fin', 'gasto', `${I('wallet')} Gasto del mes`, gastoHTML(m, 'fm'), 'wide'),
-      anio: yearCard(),
       mov: panel(
         'fin',
         'mov',
@@ -1021,6 +1021,16 @@ function vFin() {
   })()}`;
 }
 
+/* Pestaña «Resumen»: lo que se mira de vez en cuando (ahorro mes a mes y resumen del año). */
+function vRes() {
+  const C = { ahist: savHistCard(), anio: yearCard() };
+  VIS.res = ord(
+    'res',
+    ['ahist', 'anio'].filter(k => C[k])
+  );
+  return `<div class="hdr"><div><h2>Resumen</h2><div class="sub help">Tu ahorro y el año, para mirarlo de vez en cuando</div></div></div>
+  <div class="grid">${VIS.res.map(k => C[k]).join('') || empty('Aún no hay movimientos.')}</div>`;
+}
 function vInv() {
   const C = { ahorro: savCard() };
   VIS.inv = ord('inv', ['ahorro']);

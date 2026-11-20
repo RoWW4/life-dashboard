@@ -1377,3 +1377,15 @@ body.scanning{overflow:hidden}
 @media (max-width:420px){.ahk{gap:6px}.ahk>div{padding:10px}.ahk b{font-size:16px}.ahbars{gap:3px}}
 .dtabs .cnt{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-left:5px;border-radius:9px;font-size:11px;font-weight:600;background:var(--hov);color:var(--mu)}.dtabs button.on .cnt{background:color-mix(in srgb,var(--ac) 22%,transparent);color:inherit}
 .shsub{margin:-8px 0 14px;color:var(--mu);font-size:13px}
+/* Mostrar u ocultar paneles */
+.pnlb{display:flex;justify-content:center;margin:4px 0 24px}.pnlb .btn{font-size:12.5px;color:var(--mu)}
+.pnls{display:flex;flex-direction:column}
+.pnlr{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 2px;border-bottom:1px solid var(--bd);cursor:pointer;font-size:15px}
+.pnlr:last-child{border-bottom:0}
+/* Interruptor (casilla con aspecto de interruptor) */
+input.sw{appearance:none;-webkit-appearance:none;flex:none;width:44px;height:26px;margin:0;border-radius:13px;background:var(--bd2);position:relative;cursor:pointer;transition:background .2s}
+input.sw::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+input.sw:checked{background:var(--ok)}input.sw:checked::after{transform:translateX(18px)}
+input.sw:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.dtabs.seg{flex-wrap:nowrap}.dtabs.seg button{min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:760px){.dtabs.seg button{flex:1 1 auto;padding:6px 3px;font-size:12.5px}}

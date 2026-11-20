@@ -282,13 +282,22 @@ const nextDue = (d, r, day) => {
     last = new Date(+n.slice(0, 4), +n.slice(5, 7), 0).getDate();
   return n.slice(0, 8) + p2(Math.min(day || +d.slice(8), last));
 };
+/* Paneles de cada sección: ALLK[v] = todas sus claves (también las ocultas) y PT['v:k'] = su título, para la ventana
+   «Mostrar u ocultar paneles». Los que se ocultan (S.hidP[v]) no se pintan. ord.last = la última sección ordenada. */
+const ALLK = {},
+  PT = {};
 const ord = (v, keys) => {
-  const o = S.order[v] || [];
-  return [...keys].sort((a, b) => {
-    const x = o.indexOf(a),
-      y = o.indexOf(b);
-    return (x < 0 ? 1e3 + keys.indexOf(a) : x) - (y < 0 ? 1e3 + keys.indexOf(b) : y);
-  });
+  const o = S.order[v] || [],
+    hid = (S.hidP && S.hidP[v]) || [];
+  ALLK[v] = [...keys];
+  if (v !== 'nav') ord.last = v; // el orden del menú no es una sección con paneles
+  return [...keys]
+    .filter(k => !hid.includes(k))
+    .sort((a, b) => {
+      const x = o.indexOf(a),
+        y = o.indexOf(b);
+      return (x < 0 ? 1e3 + keys.indexOf(a) : x) - (y < 0 ? 1e3 + keys.indexOf(b) : y);
+    });
 };
 const pend = () => ({
   t: S.tasks.filter(t => !t.done && t.due && dayDiff(t.due) <= 0).length,
@@ -457,6 +466,11 @@ const NATIVE_DRAG = !matchMedia('(pointer: coarse)').matches;
 /* Panel movible: título a la izquierda; a la derecha, el botón del ancho y el asa para arrastrarlo. */
 const panel = (v, k, title, inner, cls = '', st = '') => {
   const z = SZ[v + ':' + k];
+  PT[v + ':' + k] = String(title)
+    .replace(/<button[\s\S]*$/, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/\s*·\s*\d+\s*$/, '')
+    .trim();
   return `<div class="card ${cls}${z ? ' sz' + z : ''}" data-v="${v}" data-k="${esc(k)}"${st ? ` style="${st}"` : ''}><h3><span class="t">${title}</span><span class="pa"><button class="ib szb" data-a="sz" data-i="${esc(v + ':' + k)}" title="Ancho del panel${z ? ': ' + SZN[z] : ''} (toca para cambiarlo)" aria-label="Cambiar el ancho del panel">${I('move-horizontal')}</button><span class="hd" draggable="${NATIVE_DRAG}" title="Mantén pulsado y arrastra para mover">${I('grip-vertical')}</span></span></h3>${inner}</div>`;
 };
 /* Mensaje de error plegado: se ve que hay un error (t) y el texto entero solo al tocarlo. extra: algo más tras el texto (p. ej. un enlace). */
@@ -949,4 +963,22 @@ function shopAdd(name, qty = 1, price = 0, guess = '') {
     st = [view === 'compra' && shopTab, o.st, guess].find(x => x && S.stores.includes(x));
   S.shop.push({ id: id(), name, qty, price, done: false, ...(st ? { st } : {}) });
   S.shopN[k] = { n: name, c: o.c + 1, t: TD(), ...(p ? { p } : {}), ...(o.st ? { st: o.st } : {}) };
+}
+
+/* Ventana para elegir qué paneles se ven en una sección (se guarda en S.hidP y sirve en todos los dispositivos). */
+function panelsForm(v) {
+  const K = (ALLK[v] || []).filter(k => PT[v + ':' + k]);
+  if (!K.length) return;
+  const hid = new Set((S.hidP && S.hidP[v]) || []);
+  const o = modal(
+    `<h3>Paneles de esta sección</h3><div class="mu" style="margin:-4px 0 10px">Los que apagues no se muestran hasta que los vuelvas a encender.</div><div class="pnls">${K.map(k => `<label class="pnlr"><span>${esc(PT[v + ':' + k])}</span><input type="checkbox" class="sw" data-k="${esc(k)}" ${hid.has(k) ? '' : 'checked'}></label>`).join('')}</div><div class="acts"><span class="sp"></span><button class="btn" id="ok">Hecho</button></div>`
+  );
+  o.querySelector('#ok').onclick = () => {
+    const off = [...o.querySelectorAll('input[data-k]')].filter(x => !x.checked).map(x => x.dataset.k);
+    S.hidP = S.hidP || {};
+    if (off.length) S.hidP[v] = off;
+    else delete S.hidP[v];
+    o.remove();
+    ch();
+  };
 }

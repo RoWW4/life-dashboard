@@ -9,6 +9,7 @@ const V_ = {
   fact: vFact,
   docs: vDocs,
   inv: vInv,
+  res: vRes,
   salud: vSalud,
   coche: vCoche,
   mascotas: vMascotas,
@@ -56,7 +57,14 @@ function render() {
   const y = window.scrollY,
     same = render.last === view;
   if (!V_[view]) view = 'dia';
+  ord.last = null;
   let h = V_[view]();
+  // Al final de la sección: elegir qué paneles se ven (si tiene más de uno).
+  const pv = ord.last,
+    pk = pv ? (ALLK[pv] || []).filter(k => PT[pv + ':' + k]) : [],
+    nh = pv ? ((S.hidP || {})[pv] || []).filter(k => pk.includes(k)).length : 0;
+  if (pk.length > 1)
+    h += `<div class="pnlb"><button class="btn ghost sm" data-a="pnl" data-i="${esc(pv)}">${I('eye', 'sm')} Mostrar u ocultar paneles${nh ? ` <span class="mu">· ${nh} oculto${nh === 1 ? '' : 's'}</span>` : ''}</button></div>`;
   // Finanzas: título común y pestañas; cada vista conserva su cabecera (subtítulo y botones) sin su título.
   if (DIN.some(x => x[0] === view)) {
     dinLast = view;

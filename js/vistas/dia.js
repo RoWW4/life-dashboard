@@ -181,7 +181,7 @@ function vDia() {
   };
   VIS.dia = ord('dia', DIA);
   // «Lo más importante» va primero mientras no se haya movido a mano (en un orden guardado antes de existir quedaría al final).
-  if (!(S.order.dia || []).includes('imp')) VIS.dia = ['imp', ...VIS.dia.filter(k => k !== 'imp')];
+  if (!(S.order.dia || []).includes('imp') && VIS.dia.includes('imp')) VIS.dia = ['imp', ...VIS.dia.filter(k => k !== 'imp')];
   // Accesos a todas las secciones (en el orden del menú): cuadrícula de iconos con su color; Compra lleva cuántos productos faltan.
   const QCOL = { tareas: '#9b87f5', compra: '#34c77b', fin: '#22c3b4', docs: '#e0b416', salud: 'var(--rose)', coche: CARC, mascotas: PETC };
   const quick = `<div class="qgrid" role="navigation" aria-label="Ir a una sección">${secs()

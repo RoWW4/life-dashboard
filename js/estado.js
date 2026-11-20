@@ -28,6 +28,7 @@ const def = () => ({
   goals: [],
   wish: [],
   topeH: {},
+  hidP: {}, // paneles ocultos de cada sección: {sección: [claves]}
   planTope: 0, // «Para gastar» del Plan del mes (sin fijos); aparte del Tope mensual (budget)
   shopN: {},
   shopBC: {},
@@ -58,6 +59,7 @@ function normalize(o) {
   ])
     if (!Array.isArray(s[k])) s[k] = [];
   if (!s.order || typeof s.order !== 'object') s.order = {};
+  if (!s.hidP || typeof s.hidP !== 'object' || Array.isArray(s.hidP)) s.hidP = {};
   if (!s.topeH || typeof s.topeH !== 'object' || Array.isArray(s.topeH)) s.topeH = {}; // tope de gasto de cada mes: 'AAAA-MM' → €
   if (!s.shopN || typeof s.shopN !== 'object' || Array.isArray(s.shopN)) s.shopN = {};
   if (!s.stCol || typeof s.stCol !== 'object' || Array.isArray(s.stCol)) s.stCol = {}; // color elegido de cada tienda

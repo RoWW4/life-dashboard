@@ -201,7 +201,7 @@ const DCOL = {
 };
 const DIA = ['imp', 'cal'];
 /* Orden inicial de los paneles movibles de cada sección (cada uno se puede reordenar y se guarda en S.order). */
-const FIN = ['plan', 'ahist', 'gasto', 'anio', 'sinc', 'metas', 'mov', 'reglas'];
+const FIN = ['gasto', 'sinc', 'mov', 'plan', 'metas', 'reglas'];
 const AJ = [
   ['Personalizar', ['midia', 'apar', 'menu', 'fest', 'dict']],
   ['Dinero', ['dinero', 'bank']],
@@ -236,11 +236,13 @@ const navOffL = () => S.navOff || ['compra'],
   navOffPcL = () => S.navOffPc || navOffL();
 const navOff = k => k !== secOf(view) && navOffL().includes(k);
 const navOffPc = k => k !== secOf(view) && navOffPcL().includes(k);
-/* «Finanzas» junta tres vistas con pestañas: Movimientos (fin), Facturas (fact) e Inversiones (inv). En el menú cuentan como «fin». */
+/* «Finanzas» junta cuatro vistas con pestañas: Movimientos (fin), Facturas (fact), Inversiones (inv) y Resumen (res: ahorro mes a mes
+   y resumen del año, para mirarlo de vez en cuando). En el menú cuentan como «fin». */
 const DIN = [
   ['fin', 'Movimientos'],
   ['fact', 'Facturas'],
-  ['inv', 'Inversiones']
+  ['inv', 'Inversiones'],
+  ['res', 'Resumen']
 ];
 const secOf = v => (DIN.some(x => x[0] === v) ? 'fin' : v);
 let dinLast = 'fin'; // última pestaña de Finanzas abierta (para volver a ella)
