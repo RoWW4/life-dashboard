@@ -110,7 +110,7 @@ function vCompra() {
   const nW = S.wish.filter(w => !w.done).length,
     secTabs = `<div class="seg dtabs" role="tablist" aria-label="Compra">${[
       ['lista', 'Lista de la compra', P0.length],
-      ['deseos', 'Deseos', nW]
+      ['deseos', 'Lista de deseados', nW]
     ]
       .map(
         ([k, l, n]) =>
