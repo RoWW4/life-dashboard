@@ -142,7 +142,7 @@ function vAjus() {
           .map(([k, n]) => `<option value="${k}" ${S.cur === k ? 'selected' : ''}>${n}</option>`)
           .join(
             ''
-          )}</select></div><div class="row"><span class="g">Tope de gasto del día a día<span class="mu" style="display:block;font-size:12px">Sin contar los pagos fijos</span></span><button class="btn sm ghost" data-a="eb2">${eur(S.budget)} ${I('pencil', 'sm')}</button></div>`
+          )}</select></div><div class="row"><span class="g">Tope de gasto mensual</span><button class="btn sm ghost" data-a="eb2">${eur(S.budget)} ${I('pencil', 'sm')}</button></div>`
       ),
       bank: bankCard('ajus'),
       robots: robotsCard(),

@@ -28,6 +28,7 @@ const def = () => ({
   goals: [],
   wish: [],
   topeH: {},
+  planTope: 0, // «Para gastar» del Plan del mes (sin fijos); aparte del Tope mensual (budget)
   shopN: {},
   shopBC: {},
   stores: [],

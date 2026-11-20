@@ -549,8 +549,7 @@ function gastoBody(m) {
     cur = m === MN(now),
     sp = spent(m),
     cats = byCat(m),
-    // S.budget es el tope del día a día (sin fijos): el total permitido del mes son los fijos más ese tope.
-    B = S.budget ? S.budget + fixOf(m) : 0,
+    B = S.budget || 0,
     fl = cur ? fxLeft() : 0,
     rem = B - sp,
     pc = B ? (sp / B) * 100 : 0;

@@ -27,8 +27,8 @@ document.addEventListener('change', e => {
     r.readAsText(t.files[0]);
   }
   if (t.id === 'plr') {
-    S.budget = +t.value;
-    S.topeH[MN(new Date())] = S.budget;
+    S.planTope = +t.value;
+    S.topeH[MN(new Date())] = S.planTope;
     planSim = null;
     ch();
   }

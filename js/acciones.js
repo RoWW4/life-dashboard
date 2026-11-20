@@ -327,6 +327,21 @@ const A = {
         ch();
       });
     }),
+  // Plan del mes: lo que te permites gastar en el día a día (sin fijos). Es solo para calcular el ahorro;
+  // no cambia el «Tope mensual» (S.budget) que usan «Gasto del mes» y la tarjeta de arriba.
+  ptope: () =>
+    CF(
+      'Para gastar este mes, sin contar los fijos (€)',
+      v => {
+        const a = pnum(v);
+        if (!(a >= 0)) return toast('Importe no válido');
+        S.planTope = a;
+        S.topeH[MN(new Date())] = a;
+        planSim = null;
+        ch();
+      },
+      String(S.planTope || '')
+    ),
   shs: i => {
     shopSec = i === 'deseos' ? 'deseos' : 'lista';
     try {
@@ -663,13 +678,11 @@ const A = {
     }),
   eb2: () =>
     CF(
-      'Tope de gasto del mes, sin contar los pagos fijos (€)',
+      'Tope de gasto mensual (€)',
       v => {
         const a = pnum(v);
         if (!(a >= 0)) return toast('Importe no válido');
         S.budget = a;
-        S.topeH[MN(new Date())] = a;
-        planSim = null;
         ch();
       },
       String(S.budget || '')
