@@ -172,6 +172,7 @@ const A = {
     finOff = Math.min(0, finOff + +i);
     render();
   },
+  cy: (i, el) => catYear(i, +el.dataset.y),
   yr: i => {
     yrOff = Math.min(0, yrOff + +i);
     render();
