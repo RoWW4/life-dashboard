@@ -327,6 +327,55 @@ const A = {
         ch();
       });
     }),
+  wa: () => {
+    const n = V('w1');
+    if (!n) return toast('Escribe qué te gustaría');
+    const p = pnum(V('w2')) || 0;
+    S.wish.push({ id: id(), n: n.slice(0, 80), p, need: false, lv: 2, at: TD() });
+    ch();
+    $('#w1') && $('#w1').focus();
+    toast(`💭 Apuntado · se piensa ${wWait(p)} días`);
+  },
+  we: i => {
+    const w = S.wish.find(x => x.id === i);
+    if (w) wishForm(w);
+  },
+  wn: i => {
+    const w = S.wish.find(x => x.id === i);
+    if (!w) return;
+    w.need = !w.need;
+    ch();
+  },
+  wl: i => {
+    const w = S.wish.find(x => x.id === i);
+    if (!w) return;
+    w.lv = ((w.lv || 2) % 3) + 1;
+    ch();
+  },
+  wd: i => {
+    const w = S.wish.find(x => x.id === i);
+    if (!w) return;
+    w.done = TD();
+    ch();
+    toast('🎉 ¡Disfrútalo!', () => {
+      delete w.done;
+      ch();
+    });
+  },
+  wu: i => {
+    const w = S.wish.find(x => x.id === i);
+    if (!w) return;
+    delete w.done;
+    ch();
+  },
+  wg: i => {
+    const w = S.wish.find(x => x.id === i);
+    if (w) goalForm(null, { n: w.n, obj: +w.p || 0 }, gid => (w.goal = gid));
+  },
+  wsrt: i => {
+    wSort = i;
+    render();
+  },
   as: () => {
     if (!V('s1')) return toast('Escribe un producto');
     shopAdd(V('s1'), Math.max(1, +V('s2') || 1), pnum(V('s3')) || 0);

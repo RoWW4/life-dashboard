@@ -787,9 +787,10 @@ function docRenew(d) {
 }
 
 /* Meta de ahorro (ver goalsCard en vistas/finanzas.js): nombre, objetivo, lo apartado, mes y color. */
-function goalForm(g) {
+/* pre: datos para empezar una meta nueva (p. ej. desde la lista de deseos) · made(id): se llama al crearla. */
+function goalForm(g, pre, made) {
   const n = !g;
-  g = g || { n: '', obj: 0, amt: 0, d: '', c: GCOL[S.goals.length % GCOL.length] };
+  g = g || { n: '', obj: 0, amt: 0, d: '', c: GCOL[S.goals.length % GCOL.length], ...(pre || {}) };
   const num = v => (v ? String(v).replace('.', ',') : '');
   const o = modal(
     `<h3>${n ? 'Nueva meta de ahorro' : 'Editar meta'}</h3><div class="fs"><label>Nombre<input id="fg1" value="${esc(g.n)}" placeholder="Ej. Viaje, colchón, ordenador…"></label><div class="two"><label>Objetivo (€)<input id="fg2" inputmode="decimal" value="${num(g.obj)}" placeholder="0,00"></label><label>Ya apartado (€)<input id="fg3" inputmode="decimal" value="${num(g.amt)}" placeholder="0,00"></label></div><label>Para cuándo (opcional)<input id="fg4" type="month" value="${g.d || ''}"></label><div class="gcols" role="radiogroup" aria-label="Color">${GCOL.map(c => `<button type="button" role="radio" aria-checked="${c === g.c}" aria-label="Color ${c}" data-c="${c}" style="--gc:${c}"></button>`).join('')}</div><div class="mu">Es un reparto del saldo de la cuenta dentro del panel: no se mueve dinero en el banco.</div></div><div class="acts">${n ? '' : '<button class="btn ghost danger" id="fdel">Eliminar</button>'}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">${n ? 'Crear' : 'Guardar'}</button></div>`
@@ -811,8 +812,11 @@ function goalForm(g) {
     if (!(obj > 0)) return toast('Indica cuánto quieres juntar');
     if (!(amt >= 0)) return toast('Revisa lo apartado');
     const was = !n && g.amt >= g.obj;
-    if (n) S.goals.push({ id: id(), n: nm, obj, amt, d, c, c0: TD(), a0: amt });
-    else Object.assign(g, { n: nm, obj, amt, d, c });
+    if (n) {
+      const gid = id();
+      S.goals.push({ id: gid, n: nm, obj, amt, d, c, c0: TD(), a0: amt });
+      if (made) made(gid);
+    } else Object.assign(g, { n: nm, obj, amt, d, c });
     if (!n && !was && amt >= obj) setTimeout(confeti, 150);
     o.remove();
     ch();
@@ -1361,5 +1365,40 @@ function petGrpForm() {
     o.remove();
     ch();
     toast('Pestañas guardadas');
+  };
+}
+
+/* Editar un deseo: nombre, precio, enlace a la tienda, nota, si lo necesitas y cuánto lo quieres. */
+function wishForm(w) {
+  const num = v => (v ? String(v).replace('.', ',') : '');
+  const o = modal(
+    `<h3>Editar deseo</h3><div class="fs"><label>Qué es<input id="fw1" value="${esc(w.n)}" maxlength="80"></label><label>Precio (€)<input id="fw2" inputmode="decimal" value="${num(w.p)}" placeholder="0,00"></label><label>Enlace a la tienda (opcional)<input id="fw3" type="url" inputmode="url" value="${esc(w.url || '')}" placeholder="https://…"></label><label>Nota (opcional)<input id="fw4" value="${esc(w.note || '')}" maxlength="120" placeholder="Talla, color, dónde lo viste…"></label><label class="chk"><input type="checkbox" id="fw5" ${w.need ? 'checked' : ''}> Lo necesito (no es solo un capricho)</label></div><div class="acts"><button class="btn ghost danger" id="fdel">${I('x', 'sm')} Ya no lo quiero</button><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`
+  );
+  o.querySelector('#ok').onclick = () => {
+    const n = o.querySelector('#fw1').value.trim(),
+      p = o.querySelector('#fw2').value.trim(),
+      u = o.querySelector('#fw3').value.trim();
+    if (!n) return toast('Ponle un nombre');
+    if (p && !(pnum(p) >= 0)) return toast('Revisa el precio');
+    if (u && !/^https?:\/\//i.test(u) && !/^[\w-]+(\.[\w-]+)+/.test(u)) return toast('Revisa el enlace');
+    Object.assign(w, { n: n.slice(0, 80), p: p ? pnum(p) : 0, need: o.querySelector('#fw5').checked });
+    const url = u && !/^https?:\/\//i.test(u) ? 'https://' + u : u,
+      note = o.querySelector('#fw4').value.trim();
+    url ? (w.url = url) : delete w.url;
+    note ? (w.note = note) : delete w.note;
+    o.remove();
+    ch();
+    toast('Guardado');
+  };
+  o.querySelector('#fdel').onclick = () => {
+    const k = S.wish.indexOf(w);
+    if (k < 0) return;
+    S.wish.splice(k, 1);
+    o.remove();
+    ch();
+    toast('Quitado de la lista', () => {
+      S.wish.splice(k, 0, w);
+      ch();
+    });
   };
 }

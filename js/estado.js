@@ -26,6 +26,7 @@ const def = () => ({
   gacct: '',
   sav: null,
   goals: [],
+  wish: [],
   shopN: {},
   shopBC: {},
   stores: [],
@@ -50,6 +51,7 @@ function normalize(o) {
     'periods',
     'bankSeen',
     'goals',
+    'wish',
     'stores'
   ])
     if (!Array.isArray(s[k])) s[k] = [];

@@ -119,6 +119,7 @@ function vCompra() {
         `${I('shopping-cart')} Pendientes <span class="cnt">· ${P.length}</span>`,
         tabs + (P.length ? grupos() : empty(shopTab ? 'Nada pendiente para ' + esc(shopTab) + '.' : 'Lista vacía'))
       ),
+      deseos: wishCard(),
       hecho: panel(
         'compra',
         'hecho',
@@ -128,7 +129,7 @@ function vCompra() {
           : empty('Nada comprado aún.')
       )
     };
-    VIS.compra = ord('compra', ['pend', 'hecho']);
+    VIS.compra = ord('compra', ['pend', 'deseos', 'hecho']);
     return `<div class="grid2">${VIS.compra.map(k => C[k]).join('')}</div>`;
   })()}`;
 }
@@ -466,4 +467,75 @@ function storesEdit() {
       );
     };
   wire();
+}
+
+/* ---------- Lista de deseos ----------
+   Cosas que te gustaría comprar (o no): S.wish = [{id, n, p (precio), url, note, need (lo necesito), lv (cuánto lo quieres, 1-3),
+   at (cuándo se apuntó), done (fecha en que se compró), goal (id de la meta de ahorro creada para él)}].
+   Para no comprar por impulso, cada deseo «se piensa» unos días según lo que cuesta (como la regla de los 30 días):
+   menos de 30 €, 2 días; hasta 100 €, 7; desde 100 €, 30. Pasado ese tiempo sale «Ya puedes decidir». */
+let wSort = 'pri';
+const WSORT = [
+  ['pri', 'Prioridad'],
+  ['precio', 'Precio'],
+  ['ant', 'Antigüedad']
+];
+const WISH_IC0 = [
+  [/\b(ropa|camiseta|camisa|vestido|pantalon|falda|abrigo|chaqueta|jersey|sudadera|bolso|mochila|zapat|bota|deportiva)/, 'shopping-bag'],
+  [/\b(auricular|cascos|consola|playstation|switch|xbox|camara|altavoz|kindle)/, 'laptop'],
+  [/\b(reloj|pendiente|collar|pulsera|anillo)/, 'gem'],
+  [/\b(perfume|crema|maquillaje|serum)/, 'sparkles'],
+  [/\b(planta|lampara|cojin|alfombra|cortina|vela)/, 'sofa'],
+  [/\b(cafetera|freidora|robot|aspirador|thermomix)/, 'coffee']
+];
+const wishIc = () => [...WISH_IC0, ...GOAL_IC]; // GOAL_IC está en finanzas.js, que se carga después
+const wWait = p => (p >= 100 ? 30 : p >= 30 ? 7 : 2);
+const wHost = u => {
+  try {
+    return new URL(u).hostname.replace(/^www\./, '');
+  } catch (e) {
+    return '';
+  }
+};
+const wUrl = u => (/^https?:\/\//i.test(u) ? u : '');
+function wishCard() {
+  const L = S.wish.filter(w => !w.done),
+    D = S.wish.filter(w => w.done).sort((a, b) => b.done.localeCompare(a.done)),
+    tot = L.reduce((a, w) => a + (+w.p || 0), 0),
+    nec = L.filter(w => w.need).reduce((a, w) => a + (+w.p || 0), 0);
+  const cmp = {
+    pri: (a, b) => !!b.need - !!a.need || (b.lv || 2) - (a.lv || 2) || (+a.p || 0) - (+b.p || 0),
+    precio: (a, b) => (+a.p || 0) - (+b.p || 0),
+    ant: (a, b) => (a.at || '').localeCompare(b.at || '')
+  }[wSort];
+  const item = w => {
+    const [, ic] = pickIco(wishIc(), w.n, [0, 'gift']),
+      c = w.need ? 'var(--ac)' : '#e879a6',
+      left = wWait(+w.p || 0) - Math.max(0, -dayDiff(w.at || TD())),
+      g = w.goal && S.goals.find(x => x.id === w.goal),
+      u = wUrl(w.url || ''),
+      lv = w.lv || 2;
+    const hearts = [1, 2, 3].map(k => I('heart', k <= lv ? 'on' : '')).join('');
+    return `<div class="wi" style="--wc:${c}">
+      <div class="wit">${tile(ic, c)}<div class="wig"><button class="link wn" data-a="we" data-i="${w.id}" title="Editar">${esc(w.n)}</button><div class="wim">${u ? `<a class="wlk" href="${esc(u)}" target="_blank" rel="noopener noreferrer">${I('external-link', 'sm')} ${esc(wHost(u) || 'Enlace')}</a>` : ''}${w.note ? `<span class="mu">${esc(w.note)}</span>` : ''}</div></div><b class="wip">${w.p ? eur(+w.p) : '<span class="mu">Sin precio</span>'}</b></div>
+      <div class="wib"><button class="chip wnd${w.need ? ' on' : ''}" data-a="wn" data-i="${w.id}" title="Toca para cambiar">${w.need ? 'Lo necesito' : 'Capricho'}</button><button class="whr" data-a="wl" data-i="${w.id}" aria-label="Cuánto lo quieres: ${lv} de 3 (toca para cambiar)" title="Cuánto lo quieres (toca para cambiar)">${hearts}</button>${left > 0 ? `<span class="chip wwt" title="Para no comprar por impulso: espera ${wWait(+w.p || 0)} días antes de decidir">${I('hourglass', 'sm')} Pensándolo · ${left} d</span>` : `<span class="chip ok wwt" title="Ya ha pasado el tiempo de pensarlo">${I('sparkles', 'sm')} Ya puedes decidir</span>`}<span class="wact">${g ? `<button class="chip wgl" data-a="goaled" data-i="${g.id}" title="Meta de ahorro: ${eur(g.amt)} de ${eur(g.obj)}">${I('piggy-bank', 'sm')} ${Math.min(100, Math.round((g.amt / (g.obj || 1)) * 100))} %</button>` : `<button class="ib" data-a="wg" data-i="${w.id}" title="Ahorrar para esto (crea una meta)" aria-label="Ahorrar para ${esc(w.n)}">${I('piggy-bank')}</button>`}<button class="btn sm wbuy" data-a="wd" data-i="${w.id}">${I('check', 'sm')} Comprado</button></span></div>
+    </div>`;
+  };
+  const done = D.map(
+    w =>
+      `<div class="row wdn"><span class="g"><span class="tt">${esc(w.n)}</span><span class="mu">Comprado el ${fd(w.done)}</span></span><span class="amt">${w.p ? eur(+w.p) : ''}</span><button class="ib" data-a="wu" data-i="${w.id}" title="Volver a la lista" aria-label="Volver a la lista">${I('refresh-cw')}</button></div>`
+  );
+  return panel(
+    'compra',
+    'deseos',
+    `${I('heart')} Lista de deseos <span class="cnt">· ${L.length}</span>`,
+    `<div class="f wadd"><input id="w1" placeholder="¿Qué te gustaría?" aria-label="Deseo"><input id="w2" inputmode="decimal" placeholder="Precio" aria-label="Precio"><button class="btn" data-a="wa">${I('plus', 'sm')} Añadir</button></div>` +
+      (L.length
+        ? `<div class="wsum"><div><span class="mu">Total</span><b>${eur(tot)}</b></div>${nec ? `<div><span class="mu">Lo necesario</span><b>${eur(nec)}</b></div>` : ''}<div class="seg wsrt" role="group" aria-label="Ordenar">${WSORT.map(([k, n]) => `<button class="${wSort === k ? 'on' : ''}" data-a="wsrt" data-i="${k}" aria-pressed="${wSort === k}">${n}</button>`).join('')}</div></div>
+      <div class="wl">${[...L].sort(cmp).map(item).join('')}</div>`
+        : empty('Apunta aquí lo que te gustaría tener. Cada deseo se «piensa» unos días antes de comprarlo.')) +
+      (D.length
+        ? `<details class="wdone"><summary>${I('circle-check', 'sm')} Comprados · ${D.length}${D.some(w => w.p) ? ' · ' + eur(D.reduce((a, w) => a + (+w.p || 0), 0)) : ''}</summary>${done.join('')}</details>`
+        : '')
+  );
 }
