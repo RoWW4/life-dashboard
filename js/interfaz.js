@@ -73,7 +73,7 @@ const SRE = {
 };
 function listen(cb, hint, pv) {
   const o = modal(
-    `<h3>Dictar</h3><p>${hint}</p><div class="vz"><button class="vbtn" id="vb" aria-label="Escuchar">${I('mic')}</button><div id="vs">Preparando el micrófono…</div></div><input id="vt" class="in" style="width:100%;margin-bottom:10px" placeholder="Aquí aparece lo que digas (puedes corregirlo)"><div class="vprev" id="vp" aria-live="polite"></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Añadir</button></div>`
+    `<h3>Dictar</h3><p>${hint}</p><div class="vz"><button class="vbtn" id="vb" aria-label="Mantén pulsado para hablar">${I('mic')}</button><div id="vs">Mantén pulsado el micrófono mientras hablas y suéltalo al acabar.</div></div><input id="vt" class="in" style="width:100%;margin-bottom:10px" placeholder="Aquí aparece lo que digas (puedes corregirlo)"><div class="vprev" id="vp" aria-live="polite"></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Añadir</button></div>`
   );
   const vt = o.querySelector('#vt'),
     vs = o.querySelector('#vs'),
@@ -81,16 +81,14 @@ function listen(cb, hint, pv) {
     R = window.SpeechRecognition || window.webkitSpeechRecognition;
   let r = null,
     on = false,
-    want = false,
-    heard = 0;
+    want = false;
   const upd = () => {
     if (pv) o.querySelector('#vp').innerHTML = pv(vt.value);
   };
   vt.addEventListener('input', upd);
-  // El móvil corta el dictado tras una pausa corta: mientras no se pare a mano, se vuelve a escuchar solo,
-  // hasta 2 s seguidos sin oír nada (o 2 minutos en total).
-  const QUIET = 2000,
-    MAXT = 120000;
+  // Solo escucha mientras se mantiene pulsado el botón. El móvil corta el dictado tras una pausa corta:
+  // mientras siga pulsado, se vuelve a escuchar solo (como mucho 2 minutos).
+  const MAXT = 120000;
   let t0 = 0;
   const stop = () => {
     want = false;
@@ -104,8 +102,8 @@ function listen(cb, hint, pv) {
     vb.classList.remove('on');
     vs.className = '';
     vs.textContent = vt.value.trim()
-      ? 'Revisa el texto y pulsa «Añadir» (o toca el micrófono para seguir).'
-      : 'No he oído nada. Toca el micrófono para volver a intentarlo.';
+      ? 'Revisa el texto y pulsa «Añadir» (o mantén pulsado el micrófono para seguir).'
+      : 'No he oído nada. Mantén pulsado el micrófono mientras hablas.';
     if (vt.value.trim()) o.querySelector('#ok').focus();
   };
   const run = () => {
@@ -119,10 +117,9 @@ function listen(cb, hint, pv) {
       on = true;
       vb.classList.add('on');
       vs.className = '';
-      vs.textContent = 'Escuchando… habla ahora (toca para parar)';
+      vs.textContent = 'Escuchando… suelta el botón al acabar';
     };
     r.onresult = e => {
-      heard = Date.now();
       vt.value = cap(
         fixText(
           (base ? base + ' ' : '') +
@@ -145,12 +142,12 @@ function listen(cb, hint, pv) {
         vs.className = 'er';
         return;
       }
-      vs.textContent = SRE[e.error] || 'No se pudo dictar (' + e.error + '). Toca el micrófono para reintentar o escribe.';
+      vs.textContent = SRE[e.error] || 'No se pudo dictar (' + e.error + '). Mantén pulsado el micrófono para reintentar o escribe.';
       vs.className = 'er';
     };
     r.onend = () => {
       const t = Date.now();
-      if (want && o.isConnected && t - heard < QUIET && t - t0 < MAXT) {
+      if (want && o.isConnected && t - t0 < MAXT) {
         try {
           run();
           return;
@@ -180,13 +177,26 @@ function listen(cb, hint, pv) {
       vt.focus();
       return;
     }
-    if (on || want) return stop();
+    if (want) return;
     want = true;
-    t0 = heard = Date.now();
+    t0 = Date.now();
     vs.className = '';
-    run();
+    if (!on) run();
   };
-  vb.onclick = start;
+  // Pulsar y mantener: escucha; soltar: para. Con el teclado (Enter o espacio) funciona como interruptor.
+  vb.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    try {
+      vb.setPointerCapture(e.pointerId);
+    } catch (x) {}
+    start();
+  });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => vb.addEventListener(ev, () => want && stop()));
+  vb.addEventListener('contextmenu', e => e.preventDefault());
+  vb.onclick = e => {
+    if (e.detail) return; // ya lo llevan pointerdown/pointerup
+    want ? stop() : start();
+  };
   o.querySelector('#ok').onclick = () => {
     const t = vt.value.trim();
     if (!t) return toast('Di o escribe algo');
@@ -201,7 +211,7 @@ function listen(cb, hint, pv) {
       mo.disconnect();
     }
   }).observe(document.body, { childList: true });
-  start();
+  if (!R) start(); // sin dictado del navegador: avisa y deja escribir
 }
 const I = (n, c = '') => `<svg class="i ${c}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ICONS.package}</svg>`;
 const tile = (n, c) => `<span class="ic" style="--c:${c || 'var(--mu)'}">${I(n)}</span>`;

@@ -67,7 +67,9 @@ const DW = String.raw`(\d{1,2}|treinta\s+y\s+uno|primero|uno|dos|tres|cuatro|cin
 const YW = String.raw`(?:\s+(?:del?\s+)?(?:a[ñn]o\s+)?(\d\.?\d{3}|dos\s+mil\s+${DW.replace(String.raw`(\d{1,2}|`, '(?:')}))?`;
 const yr = s => {
   if (!s) return 0;
-  const m = nt(s).trim().match(/^dos\s+mil\s+(.+)/);
+  const m = nt(s)
+    .trim()
+    .match(/^dos\s+mil\s+(.+)/);
   return m ? 2000 + num(m[1]) : +s.replace('.', '');
 };
 const AREA_SYN = [
@@ -178,9 +180,22 @@ function parseTask(src) {
     String.raw`(?:en|dentro\s+de)\s+(\d+|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|quince|veinte)\s+(d[ií]as?|semanas?|mes(?:es)?)\b`,
     r => (/mes/i.test(r[2]) ? addM(TD(), num(r[1])) : addD(TD(), num(r[1]) * (/seman/i.test(r[2]) ? 7 : 1)))
   );
+  // «el jueves», «el jueves que viene» y también «jueves 26», «jueves día 26» o «jueves veintiséis» o «jueves 26 de noviembre» (manda el número del día).
   D(
-    String.raw`(?:el\s+)?(?:pr[oó]ximo\s+)?(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)(?:\s+(?:que\s+viene|pr[oó]ximo))?\b`,
-    r => addD(TD(), (DOW.indexOf(nt(r[1]).trim()) - dow + 7) % 7 || 7)
+    String.raw`(?:el\s+)?(?:pr[oó]ximo\s+)?(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)(?:\s+(?:que\s+viene|pr[oó]ximo))?(?:\s+(?:(?:el\s+)?d[ií]a\s+)?${DW}(?:\s+de\s+(${MESES.join('|')})${YW})?)?\b`,
+    r => {
+      if (r[2] && r[3]) {
+        let d = (yr(r[4]) || today.getFullYear()) + '-' + p2(MESES.indexOf(r[3].toLowerCase()) + 1) + '-' + p2(num(r[2]));
+        if (!r[4] && d < TD()) d = addM(d, 12);
+        return d;
+      }
+      if (r[2]) {
+        let d = MN(today) + '-' + p2(num(r[2]));
+        if (d < TD()) d = addM(d, 1);
+        return d;
+      }
+      return addD(TD(), (DOW.indexOf(nt(r[1]).trim()) - dow + 7) % 7 || 7);
+    }
   );
   D(String.raw`(?:el\s+)?(?:d[ií]a\s+)?${DW}\s+de\s+(${MESES.join('|')})${YW}\b`, r => {
     let d = (yr(r[3]) || today.getFullYear()) + '-' + p2(MESES.indexOf(r[2].toLowerCase()) + 1) + '-' + p2(num(r[1]));
