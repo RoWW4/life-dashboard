@@ -180,9 +180,11 @@ function parseTask(src) {
     String.raw`(?:en|dentro\s+de)\s+(\d+|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|quince|veinte)\s+(d[ií]as?|semanas?|mes(?:es)?)\b`,
     r => (/mes/i.test(r[2]) ? addM(TD(), num(r[1])) : addD(TD(), num(r[1]) * (/seman/i.test(r[2]) ? 7 : 1)))
   );
-  // «el jueves», «el jueves que viene» y también «jueves 26», «jueves día 26» o «jueves veintiséis» o «jueves 26 de noviembre» (manda el número del día).
+  // «el jueves», «el jueves que viene» y también «jueves 26», «jueves día 26», «jueves veintiséis» o «jueves 26 de noviembre»
+  // (manda el número del día). El número solo cuenta si va al final o seguido de «a», «de», «por»…:
+  // en «el jueves dos veces», «dos» no es el día 2.
   D(
-    String.raw`(?:el\s+)?(?:pr[oó]ximo\s+)?(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)(?:\s+(?:que\s+viene|pr[oó]ximo))?(?:\s+(?:(?:el\s+)?d[ií]a\s+)?${DW}(?:\s+de\s+(${MESES.join('|')})${YW})?)?\b`,
+    String.raw`(?:el\s+)?(?:pr[oó]ximo\s+)?(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)(?:\s+(?:que\s+viene|pr[oó]ximo))?(?:\s+(?:(?:el\s+)?d[ií]a\s+)?${DW}(?:\s+de\s+(${MESES.join('|')})${YW})?(?=\s*$|\s+(?:a|al|sobre|hacia|por|de|en|y|para|antes|despu[eé]s|que)\b|\s*[,;:]))?\b`,
     r => {
       if (r[2] && r[3]) {
         let d = (yr(r[4]) || today.getFullYear()) + '-' + p2(MESES.indexOf(r[3].toLowerCase()) + 1) + '-' + p2(num(r[2]));

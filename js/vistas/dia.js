@@ -135,6 +135,14 @@ function vDia() {
     ...open.filter(t => t.due && dayDiff(t.due) <= 1).map(t => [t.due, ico(t), t.title, AC[t.area], t.id]),
     // Lo que no es una tarea lleva a su sección al tocarlo (6.º dato).
     ...fxDue(7).map(o => [o.d, 'receipt', o.f.name + ' · ' + eur(o.f.amt), col(o.f.cat), '', 'fact']),
+    ...fxPausedHit().map(o => [
+      o.x.date,
+      'receipt',
+      `${o.f.name} está en pausa, pero el banco lo cobró el ${fdc(o.x.date)} (${eur(o.x.amt)})`,
+      '#f2b13d',
+      '',
+      'fact'
+    ]),
     ...S.docs
       .filter(d => d.exp && dayDiff(d.exp) <= 30)
       .map(d => [d.exp, DI[d.cat] || 'file-text', 'Vence: ' + d.name, DCOL[d.cat], '', 'docs']),

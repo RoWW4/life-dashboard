@@ -56,6 +56,15 @@ const fxVar = (f, m) => {
   return { n: L.length, s: L.reduce((a, x) => a + x.amt, 0) };
 };
 const fxLive = f => !f.pause && (!f.until || f.until >= TD());
+/* Pagos en pausa que el banco ha cobrado en los últimos 10 días (¿se ha vuelto a pagar o es un cobro que no toca?). */
+const fxPausedHit = () =>
+  S.fixed
+    .filter(f => f.pause)
+    .map(f => ({
+      f,
+      x: S.tx.filter(x => x.fid === f.id && fromBank(x) && dayDiff(x.date) >= -10).sort((a, b) => b.date.localeCompare(a.date))[0]
+    }))
+    .filter(o => o.x);
 /* Pagos que piden atención en los próximos n días (o atrasados en el último mes). */
 const fxDue = n =>
   S.fixed
@@ -65,7 +74,28 @@ const fxDue = n =>
     .sort((a, b) => a.d.localeCompare(b.d));
 /* Palabras con las que un pago reconoce sus cargos: la principal (f.k) y, en los variables, las extra (f.kx). */
 const fxWords = f => [f.k, ...(f.kx || [])].filter(Boolean);
-const fxHas = (f, c) => fxWords(f).some(w => c.includes(' ' + w + ' '));
+/* Parte fija de un concepto del banco: las palabras antes del primer número (los recibos suelen llevar detrás números de
+   recibo o referencias que cambian cada mes), sin letras sueltas. Si solo quedan palabras genéricas («recibo», «compra»…),
+   no sirve para reconocer el pago y se usa el concepto entero. */
+const FXGEN = new Set(
+  'recibo compra pago cargo tarjeta transferencia bizum de a en el la del con por concepto ref favor sl sa slu'.split(' ')
+);
+const fxKeyW = c => {
+  const w = String(c || '')
+    .trim()
+    .split(/\s+/);
+  const i = w.findIndex(t => /\d/.test(t)),
+    pre = (i < 0 ? w : w.slice(0, i)).filter(t => t.length > 1),
+    ws = pre.some(t => !FXGEN.has(t)) ? pre : w.filter(t => t.length > 1 && !/\d/.test(t));
+  return ws.some(t => !FXGEN.has(t)) ? ws : null;
+};
+const fxKey = c => (fxKeyW(c) || [String(c || '').trim()]).join(' ');
+/* Un cargo es de este pago si su concepto tiene todas las palabras fijas de alguna de sus palabras clave. */
+const fxHas = (f, c) =>
+  fxWords(f).some(w => {
+    const ws = fxKeyW(w);
+    return ws ? ws.every(t => c.includes(' ' + t + ' ')) : c.includes(' ' + w.trim() + ' ');
+  });
 /* Un movimiento nuevo del banco: si es un pago de la lista, se enlaza con él (y aprende su concepto). */
 function fxMatch(x) {
   if (x.fid || x.cat === NOCNT) return;
@@ -83,7 +113,7 @@ function fxMatch(x) {
     S.fixed.find(f => f.t === x.t && !f.k && Math.abs(f.amt - x.amt) < 0.01 && fxOcc(f, addD(x.date, -3), addD(x.date, 3)).length); // mismo importe exacto aunque el banco le ponga otra categoría
   if (!f || (!f.var && S.tx.some(y => y !== x && y.fid === f.id && Math.abs(dd(y.date, x.date)) <= 10))) return;
   x.fid = f.id;
-  if (!f.k) f.k = c.trim();
+  if (!f.k) f.k = fxKey(c);
 }
 /* Cargos del banco que se repiten (mismo concepto en 3 meses o más, importe parecido) y aún no están en la lista. */
 function fxDetect() {
@@ -92,7 +122,7 @@ function fxDetect() {
   S.tx
     .filter(x => fromBank(x) && x.t === 'g' && !x.fid && x.cat !== NOCNT && x.cat !== 'Traspasos' && x.date >= from)
     .forEach(x => {
-      const k = nt(concept(x)).trim();
+      const k = fxKey(nt(concept(x)));
       if (k) (g[k] = g[k] || []).push(x);
     });
   return Object.entries(g)
@@ -103,8 +133,8 @@ function fxDetect() {
       if (
         ms.size < 3 ||
         L.length > ms.size * 1.2 ||
-        S.fxIgn.includes(k) ||
-        S.fixed.some(f => f.k === k) ||
+        S.fxIgn.some(w => w === k || fxKey(w) === k) ||
+        S.fixed.some(f => f.k && fxKey(f.k) === k) ||
         a.some(v => Math.abs(v - med) > med * 0.2)
       )
         return [];
