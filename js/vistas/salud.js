@@ -173,7 +173,7 @@ function hlNoche(r) {
     `<div class="hln" style="--c:${HLC.sueno}"><div class="hlnh"><span class="hico">${I('bed')}</span><b>Última noche</b>${hrs}</div>` +
     (tot
       ? `<div class="hlst" role="img" aria-label="Fases del sueño">${F.map(([k, n, c]) => (r[k] ? `<i style="flex:${r[k]};--c:${c}" title="${n}: ${hlH(r[k])}"></i>` : '')).join('')}</div>
-      <div class="hlleg">${F.map(([k, n, c]) => `<div style="--c:${c}"><span><i></i>${n}</span><b>${hlD(r[k])}</b><small>${Math.round((r[k] / tot) * 100)} %</small></div>`).join('')}</div>`
+      <div class="hlleg">${F.map(([k, n, c]) => `<div style="--c:${c};--w:${Math.round((r[k] / tot) * 100)}%" title="${Math.round((r[k] / tot) * 100)} % de la noche"><span><i></i>${n}</span><b>${hlD(r[k])}</b><small>${Math.round((r[k] / tot) * 100)} %</small></div>`).join('')}</div>`
       : '') +
     `</div>`
   );

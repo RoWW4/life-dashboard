@@ -313,6 +313,24 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 @media (max-width:760px){.hlg{grid-template-columns:repeat(2,minmax(0,1fr))}.hlleg{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:420px){.hlk b{font-size:23px}.hlz{padding:1px 4px;font-size:10.5px;white-space:nowrap}.hlwh b{flex:1 0 auto}.hlwh .hlxb{margin-left:0}.hlwh span,.hlwh .hlmeta{order:2}.hlwh::after{content:'';flex-basis:100%;order:1}.hlbars{gap:3px}}
 @media (max-width:760px){.hlg{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Actividad y sueño sin cajas dentro de cajas: «Última noche» y «Últimos 7 días» son apartados separados por una línea,
+   y las fases del sueño, una lista con su barra; así los datos usan todo el ancho y se ven más grandes. */
+.hln,.hlw{margin-top:20px;padding:18px 0 0;border:0;border-top:1px solid var(--bd);border-radius:0;background:none}
+.hlnh,.hlwh{font-size:15.5px}
+.hln .hico{width:32px;height:32px}
+.hlhr{font-size:15px}
+.hlst{height:18px;margin-top:16px;gap:4px}.hlst>i{border-radius:6px}
+.hlleg{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+.hlleg>div{display:grid;grid-template-columns:minmax(92px,auto) 1fr auto;grid-template-areas:'n b v';align-items:center;column-gap:14px;padding:0;background:none;border-radius:0}
+.hlleg>div>span{grid-area:n;font-size:15px;color:var(--tx2)}
+.hlleg span i{width:10px;height:10px}
+.hlleg>div::after{content:'';grid-area:b;height:8px;border-radius:9px;background:linear-gradient(90deg,var(--c) var(--w),color-mix(in srgb,var(--c) 14%,transparent) var(--w))}
+.hlleg>div>b{grid-area:v;font-size:20px;text-align:right}
+.hlleg>div>small{display:none} /* el % se ve en la barra (y al pasar el ratón) */
+.hlbars{--th:120px}.hlb .tr{height:120px}
+.hlb small{font-size:12px}.hlb em{font-size:13px}.hlz{font-size:12px}
+.hlk b{font-size:30px}
+@media (max-width:420px){.hlk b{font-size:27px}.hlk{padding:14px}.hlz{font-size:11px}.hlleg>div{grid-template-columns:auto 1fr auto;column-gap:12px}}
 .shist{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;max-height:60vh;overflow:auto}.shist span{background:var(--card2);border-radius:8px;padding:6px 9px;font-size:13px;font-variant-numeric:tabular-nums}.shist i{font-style:normal;color:var(--mu);font-size:12px}
 /* Cifra destacada: tamaño y peso, sin efectos */
 .big{font-size:32px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.15}
