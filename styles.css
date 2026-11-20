@@ -82,6 +82,7 @@ nav{width:224px;flex-shrink:0;position:sticky;top:14px;height:calc(100vh - 28px)
 .dinh{margin-bottom:12px}
 .dtabs{display:flex;width:100%;max-width:460px;box-sizing:border-box;flex-wrap:nowrap;margin-bottom:18px}
 .dtabs.seg button{flex:1 1 0;text-align:center;white-space:nowrap}
+.dtabs .badge{display:inline-grid;margin-left:6px;vertical-align:1px;background:var(--er);color:#fff;box-shadow:none;min-width:16px;height:16px;font-size:10px;padding:0 4px}
 /* Hoja «Más» del móvil: cuadrícula de secciones */
 .msecs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
 .msecs button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 4px;border-radius:16px;background:var(--hov);font-size:12.5px;font-weight:500;text-align:center;color:var(--tx)}

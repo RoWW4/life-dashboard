@@ -267,6 +267,13 @@ const pend = () => ({
   s: S.shop.filter(s => !s.done).length,
   b: fxDue(7).length
 });
+/* Qué significa el número de cada sección (se ve al pasar el ratón o lo lee el lector de pantalla). */
+const badgeTxt = (k, n) =>
+  ({
+    t: n === 1 ? '1 tarea para hoy o atrasada' : n + ' tareas para hoy o atrasadas',
+    s: n === 1 ? '1 cosa por comprar' : n + ' cosas por comprar',
+    b: n === 1 ? '1 recibo vence esta semana o está sin pagar' : n + ' recibos vencen esta semana o están sin pagar'
+  })[k];
 
 /* Fondo (se elige en cada dispositivo): ninguno, estrellas (hecho con CSS), el planeta (img/fondo-planeta.jpg, el de serie) o una imagen propia.
    La imagen propia no se sube a ningún sitio.

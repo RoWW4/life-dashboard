@@ -23,6 +23,7 @@ function theme() {
 function nav() {
   const c = pend(),
     n = { tareas: c.t, compra: c.s, fin: c.b },
+    nt = { tareas: badgeTxt('t', c.t), compra: badgeTxt('s', c.s), fin: badgeTxt('b', c.b) },
     sv = secOf(view),
     bar = ['dia', 'ajus', ...barKeys()];
   $('#nav').classList.toggle('all', !!S.navAll);
@@ -32,7 +33,7 @@ function nav() {
       .filter(([k]) => !navOff(k) || !navOffPc(k))
       .map(
         ([k, e, l, s]) =>
-          `<button class="nv ${sv === k ? 'on' : ''}${bar.includes(k) ? '' : ' xb'}${navOff(k) ? ' moff' : ''}${navOffPc(k) ? ' pcoff' : ''}" data-a="go" data-i="${k}" title="Arrastra para cambiar el orden" aria-label="${l}" ${sv === k ? 'aria-current="page"' : ''}><span class="e">${I(e)}</span><span class="l">${l}</span><span class="s">${s}</span>${n[k] ? `<i class="badge">${n[k]}</i>` : ''}</button>`
+          `<button class="nv ${sv === k ? 'on' : ''}${bar.includes(k) ? '' : ' xb'}${navOff(k) ? ' moff' : ''}${navOffPc(k) ? ' pcoff' : ''}" data-a="go" data-i="${k}" title="${n[k] ? nt[k] + ' · ' : ''}Arrastra para cambiar el orden" aria-label="${l}${n[k] ? ': ' + nt[k] : ''}" ${sv === k ? 'aria-current="page"' : ''}><span class="e">${I(e)}</span><span class="l">${l}</span><span class="s">${s}</span>${n[k] ? `<i class="badge" title="${nt[k]}">${n[k]}</i>` : ''}</button>`
       )
       .join('') +
     // Móvil: «Más» abre las secciones que no van en la barra (en el ordenador no se ve).
@@ -60,8 +61,12 @@ function render() {
   if (DIN.some(x => x[0] === view)) {
     dinLast = view;
     h =
-      `<div class="hdr dinh"><div><h2>Finanzas</h2></div></div><div class="seg dtabs" role="tablist" aria-label="Finanzas">${DIN.map(([k, l]) => `<button role="tab" class="${view === k ? 'on' : ''}" aria-selected="${view === k}" data-a="go" data-i="${k}">${l}</button>`).join('')}</div>` +
-      h.replace(/<h2>[^<]*<\/h2>/, '');
+      `<div class="hdr dinh"><div><h2>Finanzas</h2></div></div><div class="seg dtabs" role="tablist" aria-label="Finanzas">${DIN.map(
+        ([k, l]) => {
+          const b = k === 'fact' ? pend().b : 0;
+          return `<button role="tab" class="${view === k ? 'on' : ''}" aria-selected="${view === k}" data-a="go" data-i="${k}"${b ? ` title="${badgeTxt('b', b)}"` : ''}>${l}${b ? `<i class="badge" aria-label="${badgeTxt('b', b)}">${b}</i>` : ''}</button>`;
+        }
+      ).join('')}</div>` + h.replace(/<h2>[^<]*<\/h2>/, '');
   }
   $('#m').innerHTML = h;
   // Al cambiar de sección, las tarjetas entran en cascada y las barras crecen desde cero (clase .enter, solo un momento).
