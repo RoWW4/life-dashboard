@@ -1,6 +1,6 @@
 'use strict';
 /* Sección «Facturas»: pagos e ingresos que se repiten. */
-/* Una fila de Facturas: estado del último cobro y acciones. Etiquetas: pagado/cobrado (verde) · próximo (aún no toca) ·
+/* Una fila de Facturas: estado del último cobro y acciones. Etiquetas: pagado/cobrado (verde) · próximo (aún no toca; naranja si es un pago de esta semana) ·
    pendiente (pasó la fecha hace ≤5 días: el banco suele tardar) · vencido (más de 5 días) · terminado (ya no hay más cobros). */
 /* Pago con fecha de fin: hasta qué mes y cuántos cobros quedan desde el próximo. */
 const fxEnd = (f, next) => {
@@ -21,7 +21,7 @@ const fxItem = f => {
     : s.paid
       ? `<span class="chip ok">${f.t === 'i' ? 'Cobrado' : 'Pagado'} ${fdc(s.paid.date)}</span>`
       : s.next
-        ? `<span class="chip">Próximo ${fdc(s.next)}</span>`
+        ? `<span class="chip${f.t === 'g' && dayDiff(s.next) <= 7 ? ' wa' : ''}">Próximo ${fdc(s.next)}</span>`
         : '<span class="chip">Terminado</span>';
   return `<div class="row brow">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><button class="link tt fxn" data-a="fxinf" data-i="${f.id}" title="Ver lo que cuesta al año">${esc(f.name)}</button><span class="mu">${fxFreq(f)}${fxEnd(f, s.next)}${s.paid ? (fromBank(s.paid) ? ' · Llegó del banco' : ' · Apuntado en el panel, aún sin cargo del banco') + (s.next && Math.abs(dd(s.paid.date, s.next)) > 10 ? ' · Próximo ' + fdc(s.next) : '') : ''}</span></span>${chip}<span class="amt ${f.t === 'i' ? 'ok' : ''}">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
 };
