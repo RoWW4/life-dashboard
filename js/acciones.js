@@ -331,7 +331,7 @@ const A = {
     const n = V('w1');
     if (!n) return toast('Escribe qué te gustaría');
     const p = pnum(V('w2')) || 0;
-    S.wish.push({ id: id(), n: n.slice(0, 80), p, need: false, lv: 2, at: TD() });
+    S.wish.push({ id: id(), n: n.slice(0, 80), p, need: false, cu: 'pronto', at: TD() });
     ch();
     $('#w1') && $('#w1').focus();
     toast(`💭 Apuntado · se piensa ${wWait(p)} días`);
@@ -349,7 +349,8 @@ const A = {
   wl: i => {
     const w = S.wish.find(x => x.id === i);
     if (!w) return;
-    w.lv = ((w.lv || 2) % 3) + 1;
+    w.cu = WCU[(wCuI(w) + 1) % WCU.length][0];
+    delete w.lv;
     ch();
   },
   wd: i => {
