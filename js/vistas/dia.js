@@ -134,7 +134,7 @@ function vDia() {
   const imp = [
     ...open.filter(t => t.due && dayDiff(t.due) <= 1).map(t => [t.due, ico(t), t.title, AC[t.area], t.id]),
     // Lo que no es una tarea lleva a su sección al tocarlo (6.º dato).
-    ...fxDue(7).map(o => [o.d, 'receipt', 'Pago: ' + o.f.name + ' · ' + eur(o.f.amt), col(o.f.cat), '', 'fact']),
+    ...fxDue(7).map(o => [o.d, 'receipt', o.f.name + ' · ' + eur(o.f.amt), col(o.f.cat), '', 'fact']),
     ...S.docs
       .filter(d => d.exp && dayDiff(d.exp) <= 30)
       .map(d => [d.exp, DI[d.cat] || 'file-text', 'Vence: ' + d.name, DCOL[d.cat], '', 'docs']),
