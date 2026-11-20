@@ -172,6 +172,10 @@ const A = {
     finOff = Math.min(0, finOff + +i);
     render();
   },
+  yr: i => {
+    yrOff = Math.min(0, yrOff + +i);
+    render();
+  },
   gm: i => {
     gOff = Math.min(0, gOff + +i);
     render();

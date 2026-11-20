@@ -410,9 +410,9 @@ function catDetail(c, sel) {
   const ry = rec.reduce((a, r) => a + r.y, 0);
   const o =
     modal(`<div class="cdw" style="--cc:${col(c)}"><h3 class="cdh">${tile(CI[c] || 'package', col(c))}<span>${esc(c)}<span class="mu">${mLabel(m)}</span></span></h3>
-    <div class="cdk"><div><b>${eur(tot)}</b><span>${dvt > 0 ? 'Te ha costado' : m === MN(new Date()) ? 'Este mes' : 'En ' + MS[+m.slice(5)]}</span></div><div><b>${all ? Math.round((tot / all) * 100) : 0}%</b><span>De tu gasto</span></div><div><b>${L.length}</b><span>Movimientos</span></div></div>
+    <div class="cdk"><div><b>${eurR(tot)}</b><span>${dvt > 0 ? 'Te ha costado' : m === MN(new Date()) ? 'Este mes' : 'En ' + MS[+m.slice(5)]}</span></div><div><b>${all ? Math.round((tot / all) * 100) : 0}%</b><span>De tu gasto</span></div><div><b>${L.length}</b><span>Movimientos</span></div></div>
     <div class="hist">${ms.map((k, i) => `<button class="hb ${k === m ? 'on' : ''}" data-m="${k}" title="${mLabel(k)}: ${eur(hv[i])}" aria-label="Ver ${mLabel(k)}"><i style="height:${Math.max(3, (hv[i] / hmax) * 100)}%;background:${k === m ? col(c) : 'var(--bd2)'}"></i><span>${cap(MS[+k.slice(5)])}</span></button>`).join('')}</div>
-    ${dvt > 0 ? `<div class="cdsum"><div><span>Gastado</span><b>${eur(gst)}</b></div><div class="ok"><span>Te han devuelto</span><b>− ${eur(dvt)}</b></div><div class="t"><span>Te ha costado a ti</span><b>${eur(tot)}</b></div></div>` : ''}
+    ${dvt > 0 ? `<div class="cdsum"><div><span>Gastado</span><b>${eur(gst)}</b></div><div class="ok"><span>Te han devuelto</span><b>− ${eur(dvt)}</b></div><div class="t"><span>Te ha costado a ti</span><b>${eurR(tot)}</b></div></div>` : ''}
     <h4>Por concepto</h4>${rows.length ? rows.map(r => `<div class="row cdr${r.dev ? ' dev' : ''}"><span class="g">${esc(r.n)}<span class="meta">${r.c > 1 ? `<span class="mu">${r.c} veces</span>` : ''}${r.of ? `<span class="chip" title="Es solo una parte de un movimiento dividido">${I('split', 'sm')} Compra dividida</span>` : ''}<span class="mu">${fd(r.last)}</span>${r.fx ? `<span class="chip">${I('repeat', 'sm')} Fijo</span>` : ''}${r.dev ? `<span class="chip ok" title="Te devuelven parte de un gasto: resta de esta categoría">${I('arrow-down-left', 'sm')} Te devuelven</span>` : r.bank ? `<span class="chip">${I('landmark', 'sm')} Banco</span>` : ''}</span></span><b class="amt">${r.dev ? '+' + eur(-r.s) : eur(r.s)}</b>${r.ofs.map(o => splitBreak(o, c)).join('')}</div>`).join('') : empty('Sin gastos este mes.')}
     ${rec.length ? `<h4>Recurrentes · ${eur(ry)}/año <span class="mu">(≈ ${eur(ry / 12)}/mes)</span></h4><div class="mu" style="margin-bottom:4px">¿Sigues usando todas? Dar de baja una te ahorra su coste anual.</div>${rec.map(r => `<div class="row cdr"><span class="g">${esc(r.n)}<span class="meta"><span class="mu">${r.d}</span></span></span><span class="amt">${eur(r.y)}<span class="mu">/año</span></span></div>`).join('')}` : ''}
     <div class="acts" style="margin-top:14px"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button><button class="btn" id="ok">${I('list-checks')} Ver movimientos</button></div></div>`);
@@ -659,6 +659,95 @@ function goalsCard() {
   );
 }
 
+/* ---------- Resumen del año ----------
+   Lo gastado (con el mismo criterio que «Gastos»: sin traspasos, extraordinarios ni encargos, y las devoluciones restan),
+   lo ingresado y lo ahorrado en el año, mes a mes y por categoría, comparado con el mismo periodo del año anterior
+   (solo si de ese periodo hay movimientos desde el principio). */
+let yrOff = 0; // 0 = este año, -1 = el anterior…
+/* Euros sin céntimos (para las cifras grandes del resumen, que en el móvil no caben). */
+const eurR = n =>
+  new Intl.NumberFormat('es-ES', { style: 'currency', currency: S.cur || 'EUR', maximumFractionDigits: 0, useGrouping: 'always' }).format(
+    n || 0
+  );
+function yearCard() {
+  const now = new Date(),
+    Y = now.getFullYear() + yrOff,
+    cur = yrOff === 0,
+    first = S.tx.reduce((a, x) => (x.date < a ? x.date : a), TD()),
+    fy = +first.slice(0, 4);
+  if (!S.tx.length) return '';
+  const lastM = cur ? now.getMonth() + 1 : 12,
+    md = cur ? TD().slice(5) : '12-31', // hasta qué día del año se cuenta (para comparar el mismo periodo)
+    ms = y => [...Array(lastM)].map((_, i) => y + '-' + p2(i + 1)),
+    spM = (y, m, i) => spent(m, cur && i === lastM - 1 ? now.getDate() : 31),
+    G = ms(Y).map((m, i) => spM(Y, m, i)),
+    P = ms(Y - 1).map((m, i) => spM(Y - 1, m, i)),
+    P12 = [...Array(12)].map((_, i) => spent(Y - 1 + '-' + p2(i + 1))),
+    tot = G.reduce((a, v) => a + v, 0),
+    ptot = P.reduce((a, v) => a + v, 0),
+    // Comparar solo si hay movimientos desde el principio del periodo del año anterior.
+    cmp = first <= Y - 1 + '-01-31' && ptot > 0,
+    inc = ms(Y).reduce((a, m) => a + income(m).reduce((b, x) => b + x.amt, 0), 0),
+    sav = inc - tot;
+  const inY = (x, y) => x.date >= y + '-01-01' && x.date.slice(0, 4) === String(y) && x.date.slice(5) <= md,
+    catsOf = y => {
+      const o = {};
+      TXP()
+        .filter(x => inY(x, y) && gAmt(x))
+        .forEach(x => (o[x.cat] = (o[x.cat] || 0) + gAmt(x)));
+      return o;
+    },
+    C = catsOf(Y),
+    PC = catsOf(Y - 1),
+    cats = Object.entries(C)
+      .filter(([, v]) => v > 0.005)
+      .sort((a, b) => b[1] - a[1]),
+    cs = cats.reduce((a, c) => a + c[1], 0) || 1,
+    mx = Math.max(1, ...cats.map(c => c[1]));
+  // Meses con movimientos (el primer año puede empezar a mitad) para la media.
+  const live = G.map((v, i) => [v, ms(Y)[i]]).filter(([, m]) => m >= first.slice(0, 7)),
+    avg = live.length ? live.reduce((a, [v]) => a + v, 0) / live.length : 0,
+    full = live.filter(([, m]) => !cur || m < MN(now)),
+    hi = full.length ? full.reduce((a, b) => (b[0] > a[0] ? b : a)) : null,
+    lo = full.length ? full.reduce((a, b) => (b[0] < a[0] ? b : a)) : null;
+  const pct = (a, b) => (b ? Math.round(((a - b) / b) * 100) : 0),
+    delta = (a, b, up = 'wa') => {
+      const d = pct(a, b);
+      return `<span class="yrd ${d > 0 ? up : d < 0 ? (up === 'wa' ? 'ok' : 'wa') : ''}">${I(d > 0 ? 'trending-up' : d < 0 ? 'trending-down' : 'minus', 'sm')} ${d > 0 ? '+' : ''}${d} %</span>`;
+    };
+  const per = cur ? `del 1 de enero al ${fd(TD())}` : 'todo el año';
+  const ex = S.tx.filter(x => x.ex && x.t === 'g' && x.date.slice(0, 4) === String(Y) && x.date.slice(5) <= md);
+  const bmx = Math.max(1, ...G, ...(cmp ? P12 : []));
+  const bars = [...Array(12)]
+    .map((_, i) => {
+      const m = Y + '-' + p2(i + 1),
+        v = i < lastM ? G[i] : null,
+        pv = cmp ? P12[i] : 0,
+        tip = `${cap(mLabel(m))}: ${v == null ? 'aún no ha llegado' : eur(v)}${cmp ? ` · ${Y - 1}: ${eur(pv)}` : ''}`;
+      return `<div class="yrb${cur && i === lastM - 1 ? ' on' : ''}${hi && hi[1] === m ? ' hi' : ''}" title="${tip}" aria-label="${tip}"><div class="tr">${cmp ? `<i class="pv" style="height:${((pv / bmx) * 100).toFixed(1)}%"></i>` : ''}${v != null ? `<i style="height:${Math.max(v ? 2 : 0, (v / bmx) * 100).toFixed(1)}%"></i>` : ''}</div><em>${MS[i + 1].slice(0, 1).toUpperCase()}</em></div>`;
+    })
+    .join('');
+  const rows = cats.map(([c, v]) => {
+    const pv = PC[c] || 0;
+    return `<div class="yrc">${tile(CI[c] || 'package', col(c))}<span class="g"><span>${c}</span><span class="mu">${Math.round((v / cs) * 100)} % del gasto · ${eur(v / Math.max(1, live.length))}/mes</span></span><span class="yrv"><b>${eur(v)}</b>${cmp ? (pv ? delta(v, pv) : '<span class="yrd mu">Nuevo</span>') : ''}</span><div class="bar"><div style="width:${((v / mx) * 100).toFixed(1)}%;background:${col(c)}"></div></div></div>`;
+  });
+  const hdr = `<div class="calh"><button class="ib" data-a="yr" data-i="-1" aria-label="Año anterior" ${Y <= fy ? 'disabled style="opacity:.4"' : ''}>${I('chevron-left')}</button><b>${Y}</b><button class="ib" data-a="yr" data-i="1" aria-label="Año siguiente" ${cur ? 'disabled style="opacity:.4"' : ''}>${I('chevron-right')}</button></div>`;
+  return panel(
+    'fin',
+    'anio',
+    `${I('calendar-days')} Resumen del año`,
+    hdr +
+      `<div class="mu yrp">${cap(per)}${cmp ? ` · comparado con lo mismo de ${Y - 1}` : Y - 1 >= fy ? ` · sin datos completos de ${Y - 1} para comparar` : ''}</div>
+    <div class="yrk"><div><span class="mu">Gastado</span><b>${eurR(tot)}</b>${cmp ? delta(tot, ptot) : ''}</div><div><span class="mu">Ingresado</span><b class="ok">${eurR(inc)}</b></div><div><span class="mu">Ahorrado</span><b class="${sav < 0 ? 'er' : 'ok'}">${eurR(sav)}</b>${inc > 0 ? `<span class="mu">${Math.round((sav / inc) * 100)} % de lo ingresado</span>` : ''}</div></div>
+    <div class="yrbars" role="img" aria-label="Gasto de cada mes de ${Y}">${bars}</div>
+    <div class="yrl"><span><i></i>${Y}</span>${cmp ? `<span><i class="pv"></i>${Y - 1}</span>` : ''}</div>
+    <div class="yrs"><span>Media al mes <b>${eur(avg)}</b></span>${hi && full.length > 1 ? `<span>Mes más caro <b>${MS[+hi[1].slice(5)]} · ${eur(hi[0])}</b></span><span>Más barato <b>${MS[+lo[1].slice(5)]} · ${eur(lo[0])}</b></span>` : ''}</div>
+    ${rows.length ? `<div class="yrcs">${fold('yrc', rows, 6)}</div>` : '<div class="mu">Sin gastos este año.</div>'}
+    ${ex.length ? `<div class="mu yrx">${I('sparkles', 'sm')} No cuentan ${ex.length} gasto${ex.length === 1 ? '' : 's'} extraordinario${ex.length === 1 ? '' : 's'} (${eur(ex.reduce((a, x) => a + x.amt, 0))})</div>` : ''}`,
+    'wide'
+  );
+}
+
 function vFin() {
   const now = new Date(),
     base = new Date(now.getFullYear(), now.getMonth() + finOff, 1),
@@ -681,6 +770,7 @@ function vFin() {
   ${(() => {
     const C = {
       gasto: panel('fin', 'gasto', `${I('wallet')} Gasto del mes`, gastoHTML(m, 'fm'), 'wide'),
+      anio: yearCard(),
       mov: panel(
         'fin',
         'mov',
