@@ -869,16 +869,15 @@ function savHistCard() {
     .reverse()
     .map(
       r =>
-        `<div class="ahr${r.cur ? ' cur' : ''}"><span class="g"><b>${cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date(r.m + '-01T00:00')))}${r.m.startsWith(yr) ? '' : ' ' + r.m.slice(0, 4)}</b><span class="mu">Entró ${eur(r.inc)} · Gastado ${eur(r.sp)}${r.cur ? ' · en curso' : ''}</span></span><span class="ahv"><b class="${r.sav < 0 ? 'er' : 'ok'}">${r.sav >= 0 ? '+' : ''}${eur(r.sav)}</b>${r.sent ? `<span class="mu">${I('piggy-bank', 'sm')} ${r.sent >= 0 ? 'Enviado' : 'Sacado'} ${eur(Math.abs(r.sent))}</span>` : ''}</span>${r.ok == null ? '<span></span>' : r.cur ? `<span class="chip" title="Tope de este mes">Tope ${eurR(r.tp)}</span>` : r.ok ? `<span class="chip ok" title="Gastaste ${eur(r.sv)} de ${eur(r.tp)} (sin fijos)">${I('check', 'sm')} Tope</span>` : `<span class="chip er" title="Gastaste ${eur(r.sv)} de ${eur(r.tp)} (sin fijos)">+${eur(r.sv - r.tp)}</span>`}</div>`
+        `<div class="ahr${r.cur ? ' cur' : ''}" title="Entró ${eur(r.inc)} · Gastado ${eur(r.sp)}"><span class="g"><b>${cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date(r.m + '-01T00:00')))}${r.m.startsWith(yr) ? '' : ' ' + r.m.slice(0, 4)}</b>${r.cur ? '<span class="mu">En curso</span>' : ''}</span><span class="ahv"><b class="${r.sav < 0 ? 'er' : 'ok'}">${r.sav >= 0 ? '+' : ''}${eurR(r.sav)}</b>${r.sent ? `<span class="mu">${I('piggy-bank', 'sm')} ${r.sent >= 0 ? '' : '−'}${eurR(Math.abs(r.sent))}</span>` : ''}</span>${r.ok == null ? '<span></span>' : r.cur ? `<span class="chip" title="Tope de este mes">Tope ${eurR(r.tp)}</span>` : r.ok ? `<span class="chip ok" title="Gastaste ${eur(r.sv)} de ${eur(r.tp)} (sin fijos)">${I('check', 'sm')} Tope</span>` : `<span class="chip er" title="Gastaste ${eur(r.sv)} de ${eur(r.tp)} (sin fijos)">+${eur(r.sv - r.tp)}</span>`}</div>`
     );
   return panel(
     'fin',
     'ahist',
     `${I('piggy-bank')} Tu ahorro mes a mes`,
-    `<div class="ahk"><div><span class="mu">Ahorrado en ${yr}</span><b class="${savY < 0 ? 'er' : 'ok'}">${eurR(savY)}</b><small>Meses ya cerrados</small></div>${bal != null ? `<div><span class="mu">En la cuenta de ahorro</span><b>${eurR(bal)}</b><small>${intT ? `+${eur(intT)} de intereses` : sentT ? `Aportado ${eurR(sentT)}` : ''}</small></div>` : ''}${T.length ? `<div><span class="mu">Racha dentro del tope</span><b>${racha} ${racha === 1 ? 'mes' : 'meses'}</b><small>${T.filter(r => r.ok).length} de ${T.length} meses cumplidos</small></div>` : `<div><span class="mu">Racha dentro del tope</span><b>—</b><small>Empieza a contar desde este mes</small></div>`}</div>
+    `<div class="ahk"><div><span class="mu">Ahorrado en ${yr}</span><b class="${savY < 0 ? 'er' : 'ok'}">${eurR(savY)}</b></div>${bal != null ? `<div><span class="mu">Cuenta de ahorro</span><b>${eurR(bal)}</b><small>${intT ? `+${eur(intT)} intereses` : ''}</small></div>` : ''}${T.length ? `<div><span class="mu">Racha en el tope</span><b>${racha} ${racha === 1 ? 'mes' : 'meses'}</b><small>${T.filter(r => r.ok).length}/${T.length} cumplidos</small></div>` : `<div><span class="mu">Racha en el tope</span><b>—</b><small>Desde este mes</small></div>`}</div>
     <div class="ahbars" role="img" aria-label="Ahorrado cada mes" style="grid-template-columns:repeat(${R.length},minmax(0,1fr))">${bars}</div>
-    <div class="ahrs">${fold('ahr', rows, 4)}</div>
-    <div class="mu ahn">Ahorrado = lo que entró menos lo gastado (fijos y día a día). No cuentan los traspasos ni los gastos extraordinarios.</div>`,
+    <div class="ahrs">${fold('ahr', rows, 3)}</div>`,
     'wide'
   );
 }
@@ -921,29 +920,24 @@ function planBody() {
     !tope || proj == null
       ? ''
       : proj > tope
-        ? `<div class="plr wa">${I('trending-up', 'sm')} A este ritmo acabarás el mes en <b>${eur(proj)}</b>: ${eur(proj - tope)} más del tope.</div>`
-        : `<div class="plr ok">${I('circle-check', 'sm')} Vas bien: a este ritmo acabarás en <b>${eur(proj)}</b>, por debajo del tope.</div>`;
-  const last = TXP()
-    .filter(x => mon(x.date) === d.m && !isFixTx(x) && gAmt(x) > 0)
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 5);
+        ? `<div class="plr wa">${I('trending-up', 'sm')} A este ritmo te pasarás <b>${eurR(proj - tope)}</b></div>`
+        : `<div class="plr ok">${I('circle-check', 'sm')} Vas bien de ritmo</div>`;
   const top = `<div class="plbar" role="img" aria-label="Reparto: fijos ${eur(fx.tot)}, gasto ${eur(tope)}, ahorro ${eur(sav)}"><i class="fx" style="width:${w(fx.tot)}%"></i><i class="gv" style="width:${w(tope)}%"></i><i class="sv" style="width:${w(sav)}%"></i></div>
   <div class="plk">
-    <div class="fx"><span><i></i>Fijos</span><b>${eur(fx.tot)}</b><small>${fx.tot - fx.paid > 0.005 ? `Faltan ${eur(fx.tot - fx.paid)} por cobrar` : 'Todo cobrado'}</small></div>
+    <div class="fx"><span><i></i>Fijos</span><b>${eur(fx.tot)}</b><small>${fx.tot - fx.paid > 0.005 ? `Faltan ${eurR(fx.tot - fx.paid)}` : 'Todo pagado'}</small></div>
     <div class="gv"><span><i></i>Para gastar</span><b>${eur(tope)}</b><small><a href="#" data-a="eb2">Cambiar ${I('pencil', 'sm')}</a></small></div>
-    <div class="sv"><span><i></i>Ahorro</span><b class="${sav < 0 ? 'er' : ''}">${eur(sav)}</b><small>${inc ? `${Math.round((sav / inc) * 100)} % de ${eur(inc)}${d.incReal ? '' : ' (previsto)'}` : 'Sin ingresos este mes'}</small></div>
+    <div class="sv"><span><i></i>Ahorro</span><b class="${sav < 0 ? 'er' : ''}">${eur(sav)}</b><small>${inc ? `${Math.round((sav / inc) * 100)} % de lo que entra` : 'Sin ingresos'}</small></div>
   </div>
 `;
-  const rest = `${sav < 0 ? `<div class="plr er">${I('triangle-alert', 'sm')} Con este tope gastarías más de lo que entra.</div>` : ''}
+  const rest = `${sav < 0 ? `<div class="plr er">${I('triangle-alert', 'sm')} Gastarías más de lo que entra</div>` : ''}
   <div class="plg">
-    <div class="plgh"><span class="mu">Llevas gastado (sin fijos)</span><span class="mu">${tope ? `${Math.round(pc)} %` : ''}</span></div>
+    <div class="plgh"><span class="mu">Gastado del tope</span><span class="mu">${tope ? `${Math.round(pc)} %` : ''}</span></div>
     <div class="plgv"><b class="${st}">${eur(sv)}</b><span class="mu">de ${eur(tope)}</span></div>
     ${tope ? `<div class="plp ${st}" role="progressbar" aria-valuenow="${Math.round(pc)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.min(100, pc).toFixed(1)}%"></i><em style="left:${ideal.toFixed(1)}%" title="Donde deberías ir hoy para llegar justa a fin de mes"></em></div>` : ''}
-    ${tope ? (left >= 0 ? `<div class="plq">Te quedan <b>${eur(left)}</b> · <b>${eur(left / daysLeft)}</b> al día durante ${daysLeft} día${daysLeft === 1 ? '' : 's'}</div>` : `<div class="plq er">Te has pasado <b>${eur(-left)}</b> del tope</div>`) : '<div class="mu">Pon un tope para empezar.</div>'}
+    ${tope ? (left >= 0 ? `<div class="plq">Te quedan <b>${eur(left)}</b> · <b>${eur(left / daysLeft)}</b>/día</div>` : `<div class="plq er">Te has pasado <b>${eur(-left)}</b></div>`) : '<div class="mu">Pon un tope para empezar.</div>'}
     ${ritmo}
   </div>
-  <div class="pls"><span>Ahorro real a este ritmo <b class="${d.savReal < 0 ? 'er' : 'ok'}">${eur(d.savReal)}</b></span>${d.sent ? `<span>Ya enviado a ahorro o traspasos <b>${eur(d.sent)}</b></span>` : ''}</div>
-  ${last.length ? `<div class="pll"><div class="mu">Últimos gastos del día a día</div>${last.map(x => `<div class="row"><span class="g"><span class="tt">${esc(x.desc || x.cat)}</span><span class="mu">${fd(x.date)} · ${esc(x.cat)}</span></span><span class="amt neg">−${eur(gAmt(x))}</span></div>`).join('')}</div>` : ''}`;
+  <div class="pls"><span>Ahorrarás a este ritmo <b class="${d.savReal < 0 ? 'er' : 'ok'}">${eur(d.savReal)}</b></span>${d.sent ? `<span>Ya enviado <b>${eur(d.sent)}</b></span>` : ''}</div>`;
   return { top, rest, tope };
 }
 /* Al mover la barra del tope: se repinta solo el plan (sin perder el dedo en la barra). */
@@ -961,7 +955,7 @@ const planCard = () => {
     'fin',
     'plan',
     `${I('target')} Plan de ${new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date())}`,
-    `<div id="pltop">${b.top}</div><label class="plsl"><span>Mueve para ver cuánto ahorrarías</span><input id="plr" type="range" min="0" max="${Math.max(1000, Math.ceil(b.tope / 50) * 50)}" step="25" value="${b.tope}" aria-label="Tope de gasto del mes"></label><div id="plrest">${b.rest}</div>`,
+    `<div id="pltop">${b.top}</div><label class="plsl"><span>Mueve para ver cuánto ahorras</span><input id="plr" type="range" min="0" max="${Math.max(1000, Math.ceil(b.tope / 50) * 50)}" step="25" value="${b.tope}" aria-label="Tope de gasto del mes"></label><div id="plrest">${b.rest}</div>`,
     'wide'
   );
 };
