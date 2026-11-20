@@ -327,6 +327,14 @@ const A = {
         ch();
       });
     }),
+  shs: i => {
+    shopSec = i === 'deseos' ? 'deseos' : 'lista';
+    try {
+      localStorage.setItem('ldb-shopsec', shopSec);
+    } catch (e) {}
+    render();
+    scrollTo(0, 0);
+  },
   wa: () => {
     const n = V('w1');
     if (!n) return toast('Escribe qué te gustaría');

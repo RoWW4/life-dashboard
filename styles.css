@@ -1375,3 +1375,5 @@ body.scanning{overflow:hidden}
 .ahr .chip.er{color:var(--er);background:var(--ers)}
 .ahn{font-size:12px;margin-top:10px}
 @media (max-width:420px){.ahk{gap:6px}.ahk>div{padding:10px}.ahk b{font-size:16px}.ahbars{gap:3px}}
+.dtabs .cnt{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-left:5px;border-radius:9px;font-size:11px;font-weight:600;background:var(--hov);color:var(--mu)}.dtabs button.on .cnt{background:color-mix(in srgb,var(--ac) 22%,transparent);color:inherit}
+.shsub{margin:-8px 0 14px;color:var(--mu);font-size:13px}

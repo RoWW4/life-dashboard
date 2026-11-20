@@ -51,6 +51,14 @@ const shopIco = n => pickIco(SHOP_IC, n, [0, 'shopping-basket', '#34c77b']);
 let shopQEdit = false; // «Quitar» en las más usadas: tocar una la borra de la lista de sugerencias (no se guarda)
 /* Tiendas: pestaña abierta ('' = todas; no se guarda) y color de cada una (las conocidas, el suyo; las demás, de una paleta). */
 let shopTab = '';
+/* Pestañas de Compra: «Lista de la compra» o «Deseos» (se recuerda en este dispositivo). */
+let shopSec = (() => {
+  try {
+    return localStorage.getItem('ldb-shopsec') === 'deseos' ? 'deseos' : 'lista';
+  } catch (e) {
+    return 'lista';
+  }
+})();
 const STC = {
     mercadona: '#e5392f',
     lidl: '#f5c400',
@@ -99,7 +107,21 @@ function vCompra() {
       .join('');
   };
   const tabs = `<div class="stbar"><div class="sttabs" role="tablist" aria-label="Tienda"><button class="sttab${shopTab ? '' : ' on'}" role="tab" aria-selected="${!shopTab}" data-a="stt" data-i="">Todas</button>${S.stores.map(n => `<button class="sttab${shopTab === n ? ' on' : ''}" role="tab" aria-selected="${shopTab === n}" style="${stVar(n)}" data-a="stt" data-i="${esc(n)}">${esc(n)}${(c => (c ? ` <b>${c}</b>` : ''))(P0.filter(x => x.st === n).length)}</button>`).join('')}</div><button class="sttab ed" data-a="stm" aria-label="Añadir o quitar tiendas" title="Añadir o quitar tiendas">${I('settings', 'sm')}</button></div>`;
-  return `<div class="hdr"><div><h2>Lista de la compra</h2><div class="sub">Estimado pendiente ${eur(est)} · Comprado ${eur(real)}</div></div></div>
+  const nW = S.wish.filter(w => !w.done).length,
+    secTabs = `<div class="seg dtabs" role="tablist" aria-label="Compra">${[
+      ['lista', 'Lista de la compra', P0.length],
+      ['deseos', 'Deseos', nW]
+    ]
+      .map(
+        ([k, l, n]) =>
+          `<button role="tab" class="${shopSec === k ? 'on' : ''}" aria-selected="${shopSec === k}" data-a="shs" data-i="${k}">${l}${n ? ` <span class="cnt">${n}</span>` : ''}</button>`
+      )
+      .join('')}</div>`;
+  if (shopSec === 'deseos') {
+    VIS.compra = ['deseos'];
+    return `<div class="hdr dinh"><div><h2>Compra</h2></div></div>${secTabs}<div class="grid2">${wishCard().replace('class="card ', 'class="card wide ')}</div>`;
+  }
+  return `<div class="hdr dinh"><div><h2>Compra</h2></div></div>${secTabs}<div class="sub shsub">Estimado pendiente ${eur(est)} · Comprado ${eur(real)}</div>
   <div class="card"><div class="f shf"><span class="shin"><input id="s1" placeholder="Producto…" aria-label="Producto"><button class="inb" data-a="vs" aria-label="Dictar" title="Dictar">${I('mic')}</button></span><input id="s2" type="number" min="1" value="1" aria-label="Cantidad"><input id="s3" type="number" step="0.01" min="0" placeholder="Precio/ud (opcional)" aria-label="Precio por unidad"><button class="btn" data-a="as">Añadir</button></div>${SCAN_OK ? `<button class="btn shscan" data-a="scan">${I('scan-barcode')} Escanear productos</button>` : ''}${(() => {
     // Más usadas: las 10 que más veces se han añadido (y que no están ya pendientes).
     const pend = new Set(P0.map(x => shopKey(x.name))),
@@ -119,7 +141,6 @@ function vCompra() {
         `${I('shopping-cart')} Pendientes <span class="cnt">· ${P.length}</span>`,
         tabs + (P.length ? grupos() : empty(shopTab ? 'Nada pendiente para ' + esc(shopTab) + '.' : 'Lista vacía'))
       ),
-      deseos: wishCard(),
       hecho: panel(
         'compra',
         'hecho',
@@ -129,7 +150,7 @@ function vCompra() {
           : empty('Nada comprado aún.')
       )
     };
-    VIS.compra = ord('compra', ['pend', 'deseos', 'hecho']);
+    VIS.compra = ord('compra', ['pend', 'hecho']);
     return `<div class="grid2">${VIS.compra.map(k => C[k]).join('')}</div>`;
   })()}`;
 }
