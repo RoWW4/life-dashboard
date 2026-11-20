@@ -1382,6 +1382,10 @@ function wishForm(w) {
     if (p && !(pnum(p) >= 0)) return toast('Revisa el precio');
     if (u && !/^https?:\/\//i.test(u) && !/^[\w-]+(\.[\w-]+)+/.test(u)) return toast('Revisa el enlace');
     Object.assign(w, { n: n.slice(0, 80), p: p ? pnum(p) : 0, need: o.querySelector('#fw5').checked });
+    // Su meta de ahorro sigue al deseo (nombre y precio); si no tenía y ahora tiene precio, se crea.
+    const g = wGoal(w);
+    if (g) Object.assign(g, { n: w.n, obj: w.p || g.obj });
+    else wGoalNew(w);
     const url = u && !/^https?:\/\//i.test(u) ? 'https://' + u : u,
       note = o.querySelector('#fw4').value.trim();
     url ? (w.url = url) : delete w.url;
@@ -1394,10 +1398,12 @@ function wishForm(w) {
     const k = S.wish.indexOf(w);
     if (k < 0) return;
     S.wish.splice(k, 1);
+    const back = wGoalDrop(w);
     o.remove();
     ch();
     toast('Quitado de la lista', () => {
       S.wish.splice(k, 0, w);
+      if (back) back();
       ch();
     });
   };

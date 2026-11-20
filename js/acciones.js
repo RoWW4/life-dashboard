@@ -355,7 +355,9 @@ const A = {
     const n = V('w1');
     if (!n) return toast('Escribe qué te gustaría');
     const p = pnum(V('w2')) || 0;
-    S.wish.push({ id: id(), n: n.slice(0, 80), p, need: false, cu: 'pronto', at: TD() });
+    const w = { id: id(), n: n.slice(0, 80), p, need: false, cu: 'pronto', at: TD() };
+    S.wish.push(w);
+    wGoalNew(w);
     ch();
     $('#w1') && $('#w1').focus();
     toast(`💭 Apuntado · se piensa ${wWait(p)} días`);
@@ -381,9 +383,11 @@ const A = {
     const w = S.wish.find(x => x.id === i);
     if (!w) return;
     w.done = TD();
+    const back = wGoalDrop(w);
     ch();
     toast('🎉 ¡Disfrútalo!', () => {
       delete w.done;
+      if (back) back();
       ch();
     });
   },
@@ -395,7 +399,12 @@ const A = {
   },
   wg: i => {
     const w = S.wish.find(x => x.id === i);
-    if (w) goalForm(null, { n: w.n, obj: +w.p || 0 }, gid => (w.goal = gid));
+    if (!w) return;
+    if (+w.p > 0) {
+      wGoalNew(w);
+      ch();
+      toast('🐷 Meta de ahorro creada');
+    } else goalForm(null, { n: w.n, obj: 0 }, gid => (w.goal = gid));
   },
   wsrt: i => {
     wSort = i;

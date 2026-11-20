@@ -518,6 +518,22 @@ const WCU = [
 ];
 const wCu = w => w.cu || (w.lv === 3 ? 'ya' : w.lv === 1 ? 'algun' : 'pronto');
 const wCuI = w => WCU.findIndex(x => x[0] === wCu(w));
+/* Meta de ahorro de cada deseo: se crea sola al apuntarlo con precio; lo apartado en Metas se ve en el deseo.
+   Al comprarlo o quitarlo, su meta se quita (se guarda para poder deshacer). */
+const wGoal = w => (w.goal && S.goals.find(g => g.id === w.goal)) || null;
+function wGoalNew(w) {
+  if (!(+w.p > 0) || wGoal(w)) return;
+  const gid = id();
+  S.goals.push({ id: gid, n: w.n, obj: +w.p, amt: 0, d: '', c: GCOL[S.goals.length % GCOL.length], c0: TD(), a0: 0 });
+  w.goal = gid;
+}
+function wGoalDrop(w) {
+  const g = wGoal(w);
+  if (!g) return null;
+  const k = S.goals.indexOf(g);
+  S.goals.splice(k, 1);
+  return () => S.goals.splice(Math.min(k, S.goals.length), 0, g);
+}
 const wWait = p => (p >= 100 ? 30 : p >= 30 ? 7 : 2);
 const wHost = u => {
   try {
@@ -545,8 +561,8 @@ function wishCard() {
       u = wUrl(w.url || ''),
       [, cuN, cuI, cuC] = WCU[wCuI(w)];
     return `<div class="wi" style="--wc:${c}">
-      <div class="wit">${tile(ic, c)}<div class="wig"><button class="link wn" data-a="we" data-i="${w.id}" title="Editar">${esc(w.n)}</button><div class="wim">${u ? `<a class="wlk" href="${esc(u)}" target="_blank" rel="noopener noreferrer">${I('external-link', 'sm')} ${esc(wHost(u) || 'Enlace')}</a>` : ''}${w.note ? `<span class="mu">${esc(w.note)}</span>` : ''}</div></div><b class="wip">${w.p ? eur(+w.p) : '<span class="mu">Sin precio</span>'}</b></div>
-      <div class="wib"><button class="chip wnd${w.need ? ' on' : ''}" data-a="wn" data-i="${w.id}" title="Toca para cambiar">${w.need ? 'Lo necesito' : 'Capricho'}</button><button class="chip wcu" data-a="wl" data-i="${w.id}" style="--cc:${cuC}" title="Cuándo lo quieres (toca para cambiar)" aria-label="Cuándo lo quieres: ${cuN} (toca para cambiar)">${I(cuI, 'sm')} ${cuN}</button>${left > 0 ? `<span class="chip wwt" title="Para no comprar por impulso: espera ${wWait(+w.p || 0)} días antes de decidir">${I('hourglass', 'sm')} Pensándolo · ${left} d</span>` : `<span class="chip ok wwt" title="Ya ha pasado el tiempo de pensarlo">${I('sparkles', 'sm')} Ya puedes decidir</span>`}<span class="wact">${g ? `<button class="chip wgl" data-a="goaled" data-i="${g.id}" title="Meta de ahorro: ${eur(g.amt)} de ${eur(g.obj)}">${I('piggy-bank', 'sm')} ${Math.min(100, Math.round((g.amt / (g.obj || 1)) * 100))} %</button>` : `<button class="ib" data-a="wg" data-i="${w.id}" title="Ahorrar para esto (crea una meta)" aria-label="Ahorrar para ${esc(w.n)}">${I('piggy-bank')}</button>`}<button class="btn sm wbuy" data-a="wd" data-i="${w.id}">${I('check', 'sm')} Comprado</button></span></div>
+      <div class="wit">${tile(ic, c)}<div class="wig"><button class="link wn" data-a="we" data-i="${w.id}" title="Editar">${esc(w.n)}</button><div class="wim">${u ? `<a class="wlk" href="${esc(u)}" target="_blank" rel="noopener noreferrer">${I('external-link', 'sm')} ${esc(wHost(u) || 'Enlace')}</a>` : ''}${w.note ? `<span class="mu">${esc(w.note)}</span>` : ''}</div></div><b class="wip">${w.p ? eur(+w.p) : '<span class="mu">Sin precio</span>'}</b></div>${g ? `<div class="wsv"><div class="wsvb"><i style="width:${Math.min(100, (g.amt / (g.obj || 1)) * 100).toFixed(1)}%"></i></div><span>Ahorrado <b>${eur(g.amt)}</b> de ${eur(g.obj)}</span></div>` : ''}
+      <div class="wib"><button class="chip wnd${w.need ? ' on' : ''}" data-a="wn" data-i="${w.id}" title="Toca para cambiar">${w.need ? 'Lo necesito' : 'Capricho'}</button><button class="chip wcu" data-a="wl" data-i="${w.id}" style="--cc:${cuC}" title="Cuándo lo quieres (toca para cambiar)" aria-label="Cuándo lo quieres: ${cuN} (toca para cambiar)">${I(cuI, 'sm')} ${cuN}</button>${left > 0 ? `<span class="chip wwt" title="Para no comprar por impulso: espera ${wWait(+w.p || 0)} días antes de decidir">${I('hourglass', 'sm')} Pensándolo · ${left} d</span>` : `<span class="chip ok wwt" title="Ya ha pasado el tiempo de pensarlo">${I('sparkles', 'sm')} Ya puedes decidir</span>`}<span class="wact">${g ? `<button class="btn sm ghost wap" data-a="goalmv" data-i="${g.id}" title="Apartar dinero para este deseo">${I('piggy-bank', 'sm')} Apartar</button>` : `<button class="btn sm ghost wap" data-a="wg" data-i="${w.id}" title="Crear una meta de ahorro para este deseo">${I('piggy-bank', 'sm')} Ahorrar</button>`}<button class="btn sm wbuy" data-a="wd" data-i="${w.id}">${I('check', 'sm')} Comprado</button></span></div>
     </div>`;
   };
   const done = D.map(
