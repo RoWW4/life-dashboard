@@ -64,7 +64,7 @@ try {
     const accounts = (s.accounts || []).map(x => (typeof x === 'string' ? x : x.uid)).filter(Boolean);
     const vu = (s.access && s.access.valid_until) || null;
     await setStatus({ session_id: s.session_id, accounts, valid_until: vu, last_error: null, fail_count: 0 }, id);
-    summary(`## ✅ ${bank} conectado\n\n${accounts.length} cuenta(s) vinculada(s). Permiso válido hasta **${vu ? vu.slice(0, 10).split('-').reverse().join('/') : '—'}**.\n\nAhora ejecuta ${C.purpose === 'ahorro' ? '«Sincronizar ahorro»' : '«Sincronizar banco»'} para traer los primeros datos (o espera a la próxima ejecución automática).`);
+    summary(`## ✅ ${bank} conectado\n\n${accounts.length} cuenta(s) vinculada(s). Permiso válido hasta **${vu ? vu.slice(0, 10).split('-').reverse().join('/') : '—'}**.\n\nAhora mismo, en esta misma ejecución, se traen los primeros datos (paso siguiente): no hace falta lanzar ${C.purpose === 'ahorro' ? '«Sincronizar ahorro»' : '«Sincronizar banco»'}.`);
   }
 } catch (e) {
   // Cada código del banco sirve una sola vez: si se lanza otra vez con el mismo, el banco ya quedó conectado antes.

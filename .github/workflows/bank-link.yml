@@ -22,7 +22,11 @@ permissions:
 jobs:
   link:
     runs-on: ubuntu-latest
-    timeout-minutes: 10   # si algo se cuelga, GitHub la corta en vez de esperar 6 h
+    timeout-minutes: 15   # si algo se cuelga, GitHub la corta en vez de esperar 6 h
+    # Mismo grupo que la sincronización de esa conexión: nunca a la vez que «Sincronizar banco» o «Sincronizar ahorro».
+    concurrency:
+      group: ${{ inputs.conexion == 'trade-republic' && 'savings-sync' || inputs.conexion == 'lista' && 'bank-link-lista' || 'bank-sync' }}
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -37,6 +41,28 @@ jobs:
           EB_APP_ID: ${{ secrets.EB_APP_ID }}
           EB_PRIVATE_KEY: ${{ secrets.EB_PRIVATE_KEY }}
           APP_URL: ${{ secrets.APP_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          LDB_USER_ID: ${{ secrets.LDB_USER_ID }}
+      # Con el código (paso 2), se traen los datos en el momento: con Openbank, el acceso solo funciona los primeros
+      # minutos después de autorizarlo (21/11/2026), así que esperar a la sincronización automática no sirve.
+      - name: Traer los primeros movimientos
+        if: ${{ inputs.code != '' && inputs.conexion == 'openbank' }}
+        run: node scripts/bank-sync.mjs
+        env:
+          EB_APP_ID: ${{ secrets.EB_APP_ID }}
+          EB_PRIVATE_KEY: ${{ secrets.EB_PRIVATE_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          LDB_USER_ID: ${{ secrets.LDB_USER_ID }}
+          SIN_CORREO: '1'
+      - name: Traer el primer saldo y movimientos del ahorro
+        if: ${{ inputs.code != '' && inputs.conexion == 'trade-republic' }}
+        run: node scripts/savings-sync.mjs
+        env:
+          SAV_CONN: trade-republic
+          EB_APP_ID: ${{ secrets.EB_APP_ID }}
+          EB_PRIVATE_KEY: ${{ secrets.EB_PRIVATE_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           LDB_USER_ID: ${{ secrets.LDB_USER_ID }}
