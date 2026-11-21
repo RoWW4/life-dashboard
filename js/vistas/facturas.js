@@ -51,16 +51,28 @@ function fxInfo(f) {
     L = S.tx.filter(x => x.fid === f.id).sort((a, b) => b.date.localeCompare(a.date)),
     LY = L.filter(x => x.date.startsWith(y)),
     hy = LY.reduce((a, x) => a + x.amt, 0),
+    // Con fecha de fin (p. ej. a plazos) no se habla de «al año»: lo que cuesta en total y lo que queda por pagar.
+    lim = !!f.until && !f.var && !f.once,
+    all = lim && f.from ? fxOcc(f, f.from + '-01', f.until) : [],
+    rest = lim ? fxOcc(f, addD(TD(), 1), f.until) : [],
+    tot = all.length * f.amt,
+    hl = L.reduce((a, x) => a + x.amt, 0),
     an = f.var ? f.amt * 12 : yearly(f),
-    p = an ? Math.min(100, (hy / an) * 100) : 0;
+    p = all.length ? Math.min(100, (hl / tot) * 100) : an ? Math.min(100, (hy / an) * 100) : 0;
+  const hero = f.once
+    ? `<b>${eur(f.amt)}</b><small>Una sola vez</small>`
+    : all.length
+      ? `<span class="fxhk">${G ? 'Te cuesta en total' : 'Te entra en total'}</span><b>${eur(tot)}</b><small>${all.length} pagos de ${eur(f.amt)} · el último el ${fdc(all[all.length - 1])}</small>`
+      : lim
+        ? `<span class="fxhk">${G ? 'Te queda por pagar' : 'Te queda por cobrar'}</span><b>${eur(rest.length * f.amt)}</b><small>${rest.length} pago${rest.length === 1 ? '' : 's'} de ${eur(f.amt)} · hasta ${MS[+f.until.slice(5, 7)]} ${f.until.slice(0, 4)}</small>`
+        : `<span class="fxhk">${G ? 'Te cuesta al año' : 'Te entra al año'}</span><b>${eur(an)}</b><small>${f.var ? 'Previsto: ' : ''}${eur(an / 12)} al mes</small>`;
+  const prog = all.length
+    ? `<div class="fxprog"><div class="fxpt"><span>${G ? 'Pagado' : 'Cobrado'} hasta ahora</span><b>${eur(hl)}</b></div><div class="fxpb"><i style="width:${p.toFixed(0)}%"></i></div><div class="mu">${L.length} de ${all.length} pagos${rest.length ? ` · quedan ${eur(rest.length * f.amt)}` : ' · terminado'}</div></div>`
+    : `<div class="fxprog"><div class="fxpt"><span>${G ? 'Pagado' : 'Cobrado'} en ${y}</span><b>${eur(hy)}</b></div>${f.once || lim ? '' : `<div class="fxpb"><i style="width:${p.toFixed(0)}%"></i></div>`}<div class="mu">${LY.length} cargo${LY.length === 1 ? '' : 's'}${an && !f.once && !lim ? ' · ' + Math.round(p) + ' % de lo previsto en el año' : ''}</div></div>`;
   const o = modal(
-    `<div class="fxinf" style="--c:${c}"><div class="fxhero">${tile(CI[f.cat] || 'receipt', c)}<h3>${esc(f.name)}</h3><span class="mu">${esc(f.cat || '')} · ${fxWhen(f)}</span>${
-      f.once
-        ? `<b>${eur(f.amt)}</b><small>Una sola vez</small>`
-        : `<span class="fxhk">${G ? 'Te cuesta al año' : 'Te entra al año'}</span><b>${eur(an)}</b><small>${f.var ? 'Previsto: ' : ''}${eur(an / 12)} al mes</small>`
-    }</div>
-    <div class="fxprog"><div class="fxpt"><span>${G ? 'Pagado' : 'Cobrado'} en ${y}</span><b>${eur(hy)}</b></div>${f.once ? '' : `<div class="fxpb"><i style="width:${p.toFixed(0)}%"></i></div>`}<div class="mu">${LY.length} cargo${LY.length === 1 ? '' : 's'}${an && !f.once ? ' · ' + Math.round(p) + ' % de lo previsto en el año' : ''}</div></div>
-    ${G && !f.once ? `<div class="mu" style="margin:10px 0 4px">¿Lo sigues usando? Darlo de baja te ahorra ${eur(an)} al año.</div>` : ''}
+    `<div class="fxinf" style="--c:${c}"><div class="fxhero">${tile(CI[f.cat] || 'receipt', c)}<h3>${esc(f.name)}</h3><span class="mu">${esc(f.cat || '')} · ${fxWhen(f)}</span>${hero}</div>
+    ${prog}
+    ${G && !f.once && !lim ? `<div class="mu" style="margin:10px 0 4px">¿Lo sigues usando? Darlo de baja te ahorra ${eur(an)} al año.</div>` : ''}
     ${
       L.length
         ? `<div class="dh" style="margin-top:12px">Últimos cargos</div>${L.slice(0, 6)

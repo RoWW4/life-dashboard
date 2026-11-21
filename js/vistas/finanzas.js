@@ -327,7 +327,13 @@ const concept = x => {
   const [a, b] = String(x.desc || x.cat).split(' · ');
   return (b && /\bplazos\b/i.test(b) ? a + ' · ' + b : a).trim();
 };
-const yearly = f => (f.once ? 0 : f.amt * (f.month ? 1 : f.every ? 12 / f.every : 12 * (f.days ? f.days.length : 1)));
+/* Lo que cuesta un pago en un año. Con fecha de fin, solo lo que queda de aquí a un año (un pago a plazos no cuesta lo mismo cada año). */
+const yearly = f =>
+  f.once
+    ? 0
+    : f.until && !f.var
+      ? f.amt * fxOcc(f, TD(), addD(TD(), 364)).length
+      : f.amt * (f.month ? 1 : f.every ? 12 / f.every : 12 * (f.days ? f.days.length : 1));
 let txf = { q: '', cat: '', per: 'mes', t: '' };
 /* Movimientos: 5 al principio; «Ver más» añade una tanda (10 en el móvil, 40 en el ordenador). Se vuelve a empezar al cambiar filtros o mes. */
 let txN = 0,
