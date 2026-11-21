@@ -9,13 +9,19 @@ import { execFileSync } from 'node:child_process';
 const args = process.argv.slice(2), prueba = args.includes('--prueba'), msg = args.filter(a => a !== '--prueba').join(' ').trim();
 const git = (...a) => execFileSync('git', a, { encoding: 'utf8' }).trim();
 const fin = m => { console.log('✘ ' + m + '\nNo se ha subido nada.'); process.exit(1); };
+// Tras subir desde la rama propia de una sesión en la nube, la copia pasa a main: así la rama no queda «sin subir»
+// y no acaba como una rama más en GitHub (ver scripts/empezar.mjs).
+const aMain = () => {
+  if (git('branch', '--show-current') === 'main') return;
+  try { git('checkout', '-q', '-B', 'main', 'HEAD'); git('branch', '-q', '--set-upstream-to=origin/main', 'main'); } catch (e) {}
+};
 if (!msg && !prueba) fin('Falta el mensaje: node scripts/subir.mjs "qué se ha cambiado"');
 
 // 1) Lo nuevo de la otra sesión
 git('fetch', '-q');
 const detras = +git('rev-list', '--count', 'HEAD..origin/main');
 if (detras) {
-  try { git('pull', '--rebase', '--autostash', '-q'); console.log(`✔ Traídos ${detras} cambio(s) de GitHub`); }
+  try { git('pull', '--rebase', '--autostash', '-q', 'origin', 'main');console.log(`✔ Traídos ${detras} cambio(s) de GitHub`); }
   catch (e) { fin('Al traer lo de GitHub hay cambios que chocan: resolverlos a mano.\n' + (e.stdout || '') + (e.stderr || '')); }
 }
 
@@ -25,7 +31,7 @@ if (!cambios.length && !pend) { console.log('Nada que subir.'); process.exit(0);
 if (!cambios.length) { // commit de una vez anterior que no llegó a subirse
   if (prueba) { console.log('Hay un commit sin subir; sin --prueba se sube.'); process.exit(0); }
   try { git('push', '-q', 'origin', 'HEAD:main'); } catch (e) { fin('El push ha fallado.\n' + (e.stderr || '')); }
-  console.log('✔ Subido: ' + git('log', '-1', '--format=%h %s')); process.exit(0);
+  aMain(); console.log('✔ Subido: ' + git('log', '-1', '--format=%h %s')); process.exit(0);
 }
 console.log('Archivos:\n  ' + cambios.join('\n  '));
 
@@ -50,6 +56,7 @@ git('add', '-A');
 git('commit', '-q', '-m', msg + (v ? ` (v${v})` : ''), '-m', 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>');
 try { git('push', '-q', 'origin', 'HEAD:main'); }
 catch (e) { fin('El commit está hecho pero el push ha fallado (¿la otra sesión acaba de subir?): repetir la orden.\n' + (e.stderr || '')); }
+aMain();
 console.log('\n✔ Subido: ' + git('log', '-1', '--format=%h %s'));
 
 // 5) Si cambió la app, comprobar que se publica.
