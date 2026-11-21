@@ -198,8 +198,24 @@ create policy "health_status propio" on public.health_status
 alter table public.health_daily add column if not exists awake_min int, add column if not exists light_min int, add column if not exists deep_min int, add column if not exists rem_min int, add column if not exists bed_at timestamptz, add column if not exists wake_at timestamptz;
 -- Batería del reloj (18/11/2026): la escribe el mismo script; el robot de avisos manda un Telegram al bajar del 25 %.
 alter table public.health_status add column if not exists battery_level int, add column if not exists battery_status text, add column if not exists battery_at timestamptz;
-grant select, insert, update on public.health_daily, public.health_status to authenticated;
-grant all on public.health_daily, public.health_status to service_role;
+-- Entrenos del reloj (21/11/2026): un entreno por fila, lo escribe el mismo script; Salud → Fitness los enseña.
+create table if not exists public.health_exercise (
+  user_id    uuid not null default auth.uid() references auth.users on delete cascade,
+  id         text not null,                                  -- identificador del entreno en Google Health
+  day        date not null,
+  start_at   timestamptz not null, end_at timestamptz,
+  type       text, name text,
+  dur_min    int, kcal int, dist_m int, avg_hr int, steps int,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, id)
+);
+create index if not exists health_exercise_day on public.health_exercise (user_id, day);
+alter table public.health_exercise enable row level security;
+drop policy if exists "health_exercise propio" on public.health_exercise;
+create policy "health_exercise propio" on public.health_exercise
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+grant select, insert, update on public.health_daily, public.health_status, public.health_exercise to authenticated;
+grant all on public.health_daily, public.health_status, public.health_exercise to service_role;
 
 -- Guardado sin pisar cambios (10/11/2026): la app guarda con ldb_save y solo se acepta si la nube sigue en la versión
 -- que leyó el dispositivo (p_base = su _ts). Si otro dispositivo guardó entre medias, devuelve ok=false y la app vuelve a

@@ -633,6 +633,24 @@ const A = {
   },
   hls: () => hlSync(true),
   hlx: () => hlxOpen(),
+  fitw: k => {
+    fitW = Math.min(0, fitW + +k);
+    const e = document.getElementById('hlbox');
+    if (e) e.innerHTML = hlHTML();
+  },
+  fitm: () => fitMOpen(),
+  fitmm: k => {
+    const [y, m] = fitM.m.split('-').map(Number),
+      x = new Date(y, m - 1 + +k, 1);
+    fitM = { m: x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0'), d: null };
+    const e = document.getElementById('fitm');
+    if (e) e.innerHTML = fitMHTML();
+  },
+  fitmd: k => {
+    fitM.d = fitM.d === k ? null : k;
+    const e = document.getElementById('fitm');
+    if (e) e.innerHTML = fitMHTML();
+  },
   hlb: k => {
     hlSel = hlSel === k ? null : k;
     const e = document.getElementById('hlbox');
