@@ -14,7 +14,9 @@ document.addEventListener('change', e => {
     const r = new FileReader();
     r.onload = () => {
       try {
-        const d = JSON.parse(r.result);
+        let d = JSON.parse(r.result);
+        // Copia diaria de Drive: el panel va dentro de ldb_state[0].data.
+        if (d && Array.isArray(d.ldb_state) && d.ldb_state[0] && d.ldb_state[0].data) d = d.ldb_state[0].data;
         if (!Array.isArray(d.tasks)) throw 0;
         S = normalize(d);
         seed();
