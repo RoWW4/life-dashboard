@@ -69,15 +69,23 @@ function cleanDesc(s) {
     .replace(/,?\s*con la tarjeta.*$/i, '')
     .replace(/,?\s*el \d{4}-\d{2}-\d{2}.*$/i, '')
     .replace(/^www\./i, '')
-    .replace(/\*.*$/, '') // "WWW.AMAZON* BT40X4DR4" → "AMAZON"
     .replace(/\s+\d{2}[a-z]{3}\s+\w+$/i, '') // "GLOVO 09OCT ELAT9KNEC" → "GLOVO"
     .replace(
       /^bizum (a favor de|de)\s+(.+?)\s+concepto:\s*(.*)$/i,
       (m, d, who, c) => `Bizum ${/favor/i.test(d) ? 'a' : 'de'} ${tcase(who)}${c ? ' · ' + c : ''}`
     )
     .trim();
+  // Lo que va tras el asterisco se guarda aparte: «AMAZON* BT40X4DR4» → «Amazon · BT40X4DR4» (la referencia tal cual),
+  // «PAYPAL *PAGO 3 PLAZOS» → «Paypal · Pago 3 plazos».
+  let ref = '';
+  const ai = s.indexOf('*');
+  if (ai > 0) {
+    ref = s.slice(ai + 1).trim();
+    s = s.slice(0, ai).trim();
+    if (/\s/.test(ref) && ref === ref.toUpperCase()) ref = cap(ref.toLowerCase());
+  }
   if (s && s === s.toUpperCase()) s = tcase(s);
-  return cap(s.slice(0, 90)) || 'Movimiento bancario';
+  return cap((s + (ref ? ' · ' + ref : '')).slice(0, 90)) || 'Movimiento bancario';
 }
 /* items: [{id, date, amt (negativo = gasto), desc}]. fld: 'bank' (API), 'xls' (archivo de la cuenta) o 'card' (archivo de la tarjeta prepago).
    Si ya existe un movimiento equivalente (manual, fijo o factura) se enlaza en vez de duplicarlo.

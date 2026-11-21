@@ -321,10 +321,12 @@ const finMonth = () => {
 };
 const mAdd = (m, n) => MN(new Date(+m.slice(0, 4), +m.slice(5, 7) - 1 + n, 1));
 const mLabel = m => cap(new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(new Date(m + '-01T00:00')));
-const concept = x =>
-  String(x.desc || x.cat)
-    .split(' · ')[0]
-    .trim();
+/* Concepto sin lo de detrás de « · » (referencias, concepto del Bizum…), salvo un pago a plazos («Paypal · Pago 3 plazos»):
+   así no se mezcla con las demás compras de esa tienda ni en Facturas ni en los resúmenes. */
+const concept = x => {
+  const [a, b] = String(x.desc || x.cat).split(' · ');
+  return (b && /\bplazos\b/i.test(b) ? a + ' · ' + b : a).trim();
+};
 const yearly = f => (f.once ? 0 : f.amt * (f.month ? 1 : f.every ? 12 / f.every : 12 * (f.days ? f.days.length : 1)));
 let txf = { q: '', cat: '', per: 'mes', t: '' };
 /* Movimientos: 5 al principio; «Ver más» añade una tanda (10 en el móvil, 40 en el ordenador). Se vuelve a empezar al cambiar filtros o mes. */

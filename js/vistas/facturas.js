@@ -2,9 +2,22 @@
 /* Sección «Facturas»: pagos e ingresos que se repiten. */
 /* Una fila de Facturas: estado del último cobro y acciones. Etiquetas: pagado/cobrado (verde) · próximo (aún no toca; naranja si es un pago de esta semana) ·
    pendiente (pasó la fecha hace ≤5 días: el banco suele tardar) · vencido (más de 5 días) · terminado (ya no hay más cobros). */
-/* Pago con fecha de fin: hasta qué mes y cuántos cobros quedan desde el próximo. */
+/* Pago con fecha de fin. Con mes de inicio: en qué plazo vas y cuándo es el último («Plazo 2 de 3 · último el 28 nov»).
+   Sin mes de inicio: hasta qué mes y cuántos cobros quedan desde el próximo. */
 const fxEnd = (f, next) => {
   if (!f.until) return '';
+  if (f.from && !f.once) {
+    const all = fxOcc(f, f.from + '-01', f.until),
+      k = all.filter(d => d <= TD()).length,
+      n = all.length,
+      ult = all[n - 1];
+    if (n > 1)
+      return k >= n
+        ? ` · Último plazo (${n} de ${n}) · ${fdc(ult)}`
+        : k
+          ? ` · Plazo ${k} de ${n} · último el ${fdc(ult)}`
+          : ` · ${n} plazos · el primero el ${fdc(all[0])}`;
+  }
   const n = next ? fxOcc(f, next, f.until).length : 0;
   return ` · Hasta ${MS[+f.until.slice(5, 7)]}${f.until.slice(0, 4) === TD().slice(0, 4) ? '' : ' ' + f.until.slice(0, 4)}${n ? ` · Quedan ${n} pago${n === 1 ? '' : 's'}` : ''}`;
 };

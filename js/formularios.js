@@ -639,15 +639,23 @@ function fixedForm(f, isNew) {
 /* Lleva un movimiento a Facturas: los anteriores con el mismo concepto quedan enlazados y los siguientes
    del banco se enlazarán solos. */
 function makeFixed(x) {
+  // Pago a plazos («Paypal · Pago 3 plazos»): empieza en el cargo más antiguo con ese concepto y se propone como fin el mes del último plazo.
+  const pz = +((concept(x).match(/(\d+)\s*plazos/i) || [])[1] || 0),
+    k0 = nt(concept(x)).trim(),
+    m0 = !pz
+      ? mon(x.date)
+      : S.tx.reduce((m, y) => (!y.fid && y.t === x.t && nt(concept(y)).trim() === k0 && mon(y.date) < m ? mon(y.date) : m), mon(x.date));
   const o = modal(
-    `<h3>Añadir a Facturas</h3><div class="fs"><label>Nombre<input id="mf1" value="${esc(concept(x))}"></label><div class="two"><label>Importe (€)<input id="mf2" inputmode="decimal" value="${x.amt}"></label><label>Día del mes<input id="mf3" type="number" min="1" max="31" value="${+x.date.slice(8)}"></label></div><label>Se repite<select id="mf4"><option value="m">Cada mes</option><option value="a">Cada año (en ${MS[+x.date.slice(5, 7)]})</option></select></label><div class="mu">Saldrá en Facturas. Cuando llegue el próximo cargo del banco se marcará como pagado solo.</div></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`
+    `<h3>Añadir a Facturas</h3><div class="fs"><label>Nombre<input id="mf1" value="${esc(concept(x))}"></label><div class="two"><label>Importe (€)<input id="mf2" inputmode="decimal" value="${x.amt}"></label><label>Día del mes<input id="mf3" type="number" min="1" max="31" value="${+x.date.slice(8)}"></label></div><label>Se repite<select id="mf4"><option value="m">Cada mes</option><option value="a">Cada año (en ${MS[+x.date.slice(5, 7)]})</option></select></label><label>Termina en (opcional)<input id="mf5" type="month" value="${pz ? mAdd(m0, pz - 1) : ''}"></label><div class="mu">Saldrá en Facturas. Cuando llegue el próximo cargo del banco se marcará como pagado solo. «Termina en» es el último mes que se paga; vacío = sin fin.${pz ? ` Rellenado con los ${pz} plazos del concepto, contando desde el primer cargo que hay en el panel.` : ''}</div></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`
   );
   o.querySelector('#ok').onclick = () => {
     const n = o.querySelector('#mf1').value.trim(),
       a = pnum(o.querySelector('#mf2').value),
       d = Math.min(31, Math.max(1, +o.querySelector('#mf3').value || 1)),
-      an = o.querySelector('#mf4').value === 'a';
+      an = o.querySelector('#mf4').value === 'a',
+      un = o.querySelector('#mf5').value;
     if (!n || !(a > 0)) return toast('Indica nombre e importe');
+    if (un && un < m0) return toast('«Termina en» no puede ser antes del primer cargo');
     const k = nt(concept(x)).trim(),
       f = {
         id: 'fx-' + id(),
@@ -656,9 +664,10 @@ function makeFixed(x) {
         amt: a,
         cat: x.cat,
         day: d,
-        from: mon(x.date),
+        from: m0,
         k,
-        ...(an ? { month: +x.date.slice(5, 7) } : {})
+        ...(an ? { month: +x.date.slice(5, 7) } : {}),
+        ...(un ? { until: un + '-' + p2(new Date(+un.slice(0, 4), +un.slice(5, 7), 0).getDate()) } : {})
       };
     S.tx.forEach(y => {
       if (y === x || (!y.fid && y.t === x.t && nt(concept(y)).trim() === k)) y.fid = f.id;
