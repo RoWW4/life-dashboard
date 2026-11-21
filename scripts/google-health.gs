@@ -135,41 +135,29 @@ function pulso(desde, hasta) {
   return out;
 }
 
-/* Entrenos que terminaron en [desde, hasta): tipo, nombre, inicio y fin, minutos activos, kcal, metros, pulso medio y pasos.
-   Los nombres de los campos se buscan por parecido (Google los anida en resúmenes); verEntreno() enseña uno tal cual. */
-function campo(o, re, prof) { // primer valor sencillo cuya clave cumple re (si es un objeto, su primer número; la clave lleva la unidad)
-  if (!o || typeof o !== 'object' || (prof || 0) > 4) return null;
-  for (const k in o) {
-    const v = o[k]; if (!re.test(k) || v == null) continue;
-    if (typeof v !== 'object') return { k: k, v: v };
-    for (const j in v) if (v[j] != null && typeof v[j] !== 'object' && !isNaN(parseFloat(v[j]))) return { k: k + '.' + j, v: v[j] };
-  }
-  for (const k in o) { const r = campo(o[k], re, (prof || 0) + 1); if (r) return r; }
-  return null;
-}
-const nume = c => (c && !isNaN(parseFloat(c.v)) ? parseFloat(c.v) : null);
+/* Entrenos que empezaron en [desde, hasta) (Google solo deja filtrar los entrenos por la hora de inicio): tipo, nombre,
+   inicio y fin, minutos activos (sin pausas), kcal, metros, pulso medio y pasos (del resumen metricsSummary). */
+const filtroEntrenos = (desde, hasta) => 'exercise.interval.civil_start_time >= "' + desde + '" AND exercise.interval.civil_start_time < "' + hasta + '"';
+const numero = v => (v == null || isNaN(parseFloat(v)) ? null : parseFloat(v)); // «1800s» → 1800
 function entrenos(desde, hasta) {
-  return lista('exercise', 'exercise.interval.civil_end_time >= "' + desde + 'T00:00:00" AND exercise.interval.civil_end_time < "' + hasta + 'T00:00:00"').map(p => {
-    const e = p.exercise || p, iv = e.interval || {}, ini = iv.startTime, fin = iv.endTime;
+  return lista('exercise', filtroEntrenos(desde, hasta)).map(p => {
+    const e = p.exercise || {}, iv = e.interval || {}, m = e.metricsSummary || {}, ini = iv.startTime, fin = iv.endTime;
     if (!ini) return null;
-    const dur = campo(e, /activeDuration|duration/i), km = campo(e, /distance/i), d = nume(km);
-    const seg = dur ? (/millis/i.test(dur.k) ? nume(dur) / 1000 : /min/i.test(dur.k) ? nume(dur) * 60 : nume(dur)) : fin ? (new Date(fin) - new Date(ini)) / 1000 : null;
-    const metros = d == null ? null : /milli/i.test(km.k) ? d / 1000 : /kilo|km/i.test(km.k) ? d * 1000 : /mile/i.test(km.k) ? d * 1609.34 : d;
+    const seg = numero(e.activeDuration) != null ? numero(e.activeDuration) : fin ? (new Date(fin) - new Date(ini)) / 1000 : null;
     const r = (x, f) => (x == null ? null : Math.round(x * (f || 1)));
-    const tipo = e.exerciseType || e.activityType || (campo(e, /exerciseType|activityType/i) || {}).v || null;
     return {
       id: String(p.name || ini), day: dia(new Date(ini)), start_at: ini, end_at: fin || null,
-      type: tipo ? String(tipo) : null, name: e.displayName ? String(e.displayName).slice(0, 80) : null,
-      dur_min: r(seg, 1 / 60), kcal: r(nume(campo(e, /calor|kcal|energy/i))), dist_m: r(metros),
-      avg_hr: r(nume(campo(e, /average.*(heart|bpm)|(heart|bpm).*av/i))), steps: r(nume(campo(e, /^steps$|stepCount|steps/i)))
+      type: e.exerciseType || null, name: e.displayName ? String(e.displayName).slice(0, 80) : null,
+      dur_min: r(seg, 1 / 60), kcal: r(numero(m.caloriesKcal)), dist_m: r(numero(m.distanceMillimeters), 1 / 1000),
+      avg_hr: r(numero(m.averageHeartRateBeatsPerMinute)), steps: r(numero(m.steps))
     };
   }).filter(x => x && (x.dur_min == null || x.dur_min > 0));
 }
-/** Ejecutar a mano si los entrenos salen raros: enseña en el registro el último entreno tal como lo manda Google. */
+/** Ejecutar a mano si los entrenos salen raros: enseña en el registro el último entreno tal como lo manda Google y cómo se guarda. */
 function verEntreno() {
-  const hoy = dia(new Date()), L = lista('exercise', 'exercise.interval.civil_end_time >= "' + sumar(hoy, -30) + 'T00:00:00"');
-  console.log(L.length ? JSON.stringify(L[L.length - 1], null, 1) : 'No hay entrenos en los últimos 30 días.');
-  if (L.length) console.log(JSON.stringify(entrenos(sumar(hoy, -30), sumar(hoy, 1)).slice(-1)[0], null, 1));
+  const hoy = dia(new Date()), L = lista('exercise', filtroEntrenos(sumar(hoy, -30), sumar(hoy, 1))); // del más reciente al más antiguo
+  console.log(L.length ? JSON.stringify(L[0], null, 1) : 'No hay entrenos en los últimos 30 días.');
+  if (L.length) console.log(JSON.stringify(entrenos(sumar(hoy, -30), sumar(hoy, 1))[0], null, 1));
 }
 
 /* Batería del reloj (dispositivos vinculados). Google Health la da como dato del dispositivo, no como tipo de dato.
