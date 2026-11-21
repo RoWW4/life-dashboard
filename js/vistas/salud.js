@@ -62,25 +62,34 @@ function salRing(st, n) {
    Aquí solo se leen; no se guardan en S. */
 let HL = null,
   HLS = null,
+  HLE = null, // entrenos de los últimos 60 días (health_exercise), del más reciente al más antiguo
   hlT = 0;
 const HL_OLD = 30 * 60 * 1000;
 async function hlLoad() {
   if (!sb || !user) return;
-  const [a, b] = await Promise.all([
+  const [a, b, c] = await Promise.all([
     sb
       .from('health_daily')
       .select('day,steps,kcal,sleep_min,rhr,awake_min,light_min,deep_min,rem_min,bed_at,wake_at')
       .gte('day', addD(TD(), -13))
       .order('day'),
-    sb.from('health_status').select('last_sync,last_error,sync_url').eq('user_id', user.id).maybeSingle()
+    sb.from('health_status').select('last_sync,last_error,sync_url').eq('user_id', user.id).maybeSingle(),
+    sb
+      .from('health_exercise')
+      .select('id,day,start_at,type,name,dur_min,kcal,dist_m,avg_hr')
+      .gte('day', addD(TD(), -60))
+      .order('start_at', { ascending: false })
   ]);
   HL = a.error ? HL || [] : a.data || [];
+  HLE = c.error ? HLE || [] : c.data || [];
   if (!b.error) HLS = b.data || null;
   hlT = Date.now();
 }
 const hlPaint = () => {
-  const e = document.getElementById('hlbox');
+  const e = document.getElementById('hlbox'),
+    f = document.getElementById('fitbox');
   if (e) e.innerHTML = hlHTML();
+  if (f) f.innerHTML = fitHTML();
 };
 /* Al abrir Salud: trae los datos (como mucho una vez por minuto) y, si la última sincronización es vieja, pide otra. */
 function hlOpen() {
@@ -228,6 +237,76 @@ function hlHTML() {
     `<div class="sact"><span class="mu">${I('clock', 'sm')} ${st}</span><button class="btn ghost" data-a="hls" ${hlSync.on ? 'disabled' : ''}>${I('refresh-cw')} Sincronizar ahora</button></div>`
   );
 }
+/* ---------- Fitness: entrenos del reloj (health_exercise) ----------
+   Esta semana (de lunes a hoy) frente a la anterior: entrenos, minutos activos (con los 150 a la semana que se
+   recomiendan) y kcal; debajo, los últimos 5 entrenos. */
+const FIT_T = [
+  [/walk|camin|pasear/i, 'Caminar', 'footprints', '#34d399'],
+  [/hik|sender|trek/i, 'Senderismo', 'route', '#22c55e'],
+  [/run|jog|corr|treadmill|cinta/i, 'Correr', 'footprints', '#f97316'],
+  [/bik|cycl|bici|spinning/i, 'Bici', 'bike', '#38bdf8'],
+  [/swim|nata|pool|piscina/i, 'Natación', 'droplet', '#0ea5e9'],
+  [/weight|strength|gym|fuerza|pesas|crossfit|hiit|circuit/i, 'Fuerza', 'dumbbell', '#a78bfa'],
+  [/yoga|pilates|stretch|estira/i, 'Yoga y pilates', 'heart', '#f472b6'],
+  [/danc|baile|zumba|aerob/i, 'Baile', 'sparkles', '#fbbf24'],
+  [/ellip|elípt|row|remo|stair/i, 'Cardio', 'heart-pulse', '#fb7185']
+];
+const FIT_META = 150; // minutos de actividad a la semana que se recomiendan
+function fitTipo(e) {
+  const t = String(e.type || '') + ' ' + String(e.name || ''),
+    f = FIT_T.find(([re]) => re.test(t));
+  return f ? { n: f[1], ic: f[2], c: f[3] } : { n: e.name || 'Ejercicio', ic: 'dumbbell', c: '#94a3b8' };
+}
+const fitMin = m => (m == null ? '—' : m >= 60 ? hlHm(m) : m + ' min');
+function fitCuando(e) {
+  const k = dd(TD(), e.day),
+    h = hlHM(e.start_at);
+  const d =
+    k === 0
+      ? 'Hoy'
+      : k === 1
+        ? 'Ayer'
+        : cap(new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(e.day + 'T12:00')).replace(/\./g, ''));
+  return d + (h ? ' · ' + h : '');
+}
+function fitHTML() {
+  if (!sb || !user) return empty('Inicia sesión para ver tus entrenos.');
+  if (HLE === null) return `<div class="mu">Cargando…</div>`;
+  if (!HLE.length) return empty('Aún no hay entrenos. Los que registre el reloj llegarán solos con Google Health.');
+  const td = TD(),
+    lun = addD(td, -((new Date(td + 'T12:00').getDay() + 6) % 7)),
+    lunA = addD(lun, -7),
+    hoyA = addD(td, -7);
+  // La semana pasada, hasta el mismo día de la semana que hoy, para que la comparación sea justa.
+  const sem = (a, b) => HLE.filter(e => e.day >= a && e.day <= b),
+    suma = (L, k) => L.reduce((t, e) => t + (e[k] || 0), 0);
+  const E = sem(lun, td),
+    A = sem(lunA, hoyA),
+    min = suma(E, 'dur_min'),
+    kc = suma(E, 'kcal'),
+    dias = new Set(E.map(e => e.day)).size;
+  const vs = (a, b, u) => {
+    if (!b && !a) return 'Igual que la semana pasada';
+    const x = a - b;
+    return x === 0 ? 'Igual que la semana pasada' : `${x > 0 ? '+' : '−'}${u(Math.abs(x))} que la semana pasada`;
+  };
+  const kpis =
+    `<div class="hlg fitg">` +
+    hlKpi('#a78bfa', 'dumbbell', 'Entrenos', E.length, `${dias} ${dias === 1 ? 'día' : 'días'} · ${vs(E.length, A.length, n => n)}`) +
+    hlKpi('#34d399', 'clock', 'Tiempo activo', fitMin(min), `${Math.round((min / FIT_META) * 100)} % de ${FIT_META} min a la semana`, (min / FIT_META) * 100) +
+    hlKpi(HLC.kcal, 'flame', 'Calorías', hlN(kc), vs(kc, suma(A, 'kcal'), n => hlN(n) + ' kcal')) +
+    `</div>`;
+  const fila = e => {
+    const t = fitTipo(e),
+      km = e.dist_m ? (e.dist_m / 1000).toFixed(e.dist_m < 10000 ? 1 : 0).replace('.', ',') + ' km' : '',
+      dat = [fitMin(e.dur_min), km, e.kcal ? hlN(e.kcal) + ' kcal' : '', e.avg_hr ? e.avg_hr + ' ppm' : ''].filter(x => x && x !== '—');
+    return `<li style="--c:${t.c}"><span class="hico">${I(t.ic)}</span><div class="fitn"><b>${esc(t.n)}</b><small>${fitCuando(e)}</small></div><div class="fitd">${dat.map(x => `<span>${x}</span>`).join('')}</div></li>`;
+  };
+  return (
+    kpis +
+    `<div class="fitw"><div class="hlwh"><b>Últimos entrenos</b></div><ul class="fitl">${HLE.slice(0, 5).map(fila).join('')}</ul></div>`
+  );
+}
 /* ---------- Histórico (ventana) ----------
    Elige el dato (pasos, sueño, kcal, pulso) y el periodo (30 días, 3 meses, 1 año). Hasta 3 meses, una barra por día;
    el año, la media de cada mes. Se lee de health_daily una vez (último año) y se filtra aquí. */
@@ -352,6 +431,7 @@ function vSalud() {
   const add = `<div class="f inl" style="margin-top:12px"><input id="sa1" type="date" value="${TD()}" max="${TD()}" aria-label="Fecha de inicio"><button class="btn" data-a="sai">${I('plus')} Apuntar inicio</button></div>`;
   const C = {
     act: panel('salud', 'act', `${I('footprints')} Actividad y sueño`, `<div id="hlbox">${hlHTML()}</div>`, 'wide'),
+    fit: panel('salud', 'fit', `${I('dumbbell')} Fitness`, `<div id="fitbox">${fitHTML()}</div>`, 'wide'),
     seg: panel(
       'salud',
       'seg',
@@ -379,7 +459,7 @@ function vSalud() {
       'wide'
     )
   };
-  VIS.salud = ord('salud', ['act', 'seg', 'conf']);
+  VIS.salud = ord('salud', ['act', 'fit', 'seg', 'conf']);
   return `<div class="hdr"><div><h2>Salud</h2><div class="sub help">Privado: los datos solo se guardan en tu cuenta.</div></div></div>
   <div class="grid2">${VIS.salud.map(k => C[k]).join('')}</div>`;
 }
