@@ -32,7 +32,7 @@ const civil = s => { const [y, m, d] = s.split('-').map(Number); return { date: 
 const deCivil = c => c && c.date ? c.date.year + '-' + ('0' + c.date.month).slice(-2) + '-' + ('0' + c.date.day).slice(-2) : '';
 
 /* ---------- Permiso de Google Health (OAuth aparte, solo con estos permisos) ---------- */
-const SCOPES = ['activity_and_fitness', 'sleep', 'health_metrics_and_measurements']
+const SCOPES = ['activity_and_fitness', 'sleep', 'health_metrics_and_measurements', 'settings'] // settings: dispositivos (batería del reloj)
   .map(s => 'https://www.googleapis.com/auth/googlehealth.' + s + '.readonly').join(' ');
 // Dirección /exec de la app web. Desde el editor getUrl() da la de pruebas (/dev), que solo vale con la sesión
 // de Google abierta, así que se guarda la buena en la propiedad APP_URL.
