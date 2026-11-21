@@ -238,26 +238,21 @@ function hlHTML() {
   );
 }
 /* ---------- Fitness: entrenos del reloj (health_exercise) ----------
-   Esta semana (de lunes a hoy) frente a la anterior: entrenos, minutos activos (con los 150 a la semana que se
-   recomiendan) y kcal; debajo, los últimos 5 entrenos. */
+   Sin objetivos ni marcas: lo que se ha hecho, por actividad (caminar, entrenamiento, ciclismo) y los últimos entrenos. */
 const FIT_T = [
-  [/walk|camin|pasear/i, 'Caminar', 'footprints', '#34d399'],
-  [/hik|sender|trek/i, 'Senderismo', 'route', '#22c55e'],
-  [/run|jog|corr|treadmill|cinta/i, 'Correr', 'footprints', '#f97316'],
-  [/bik|cycl|bici|spinning/i, 'Bici', 'bike', '#38bdf8'],
-  [/swim|nata|pool|piscina/i, 'Natación', 'droplet', '#0ea5e9'],
-  [/weight|strength|gym|fuerza|pesas|crossfit|hiit|circuit/i, 'Fuerza', 'dumbbell', '#a78bfa'],
-  [/yoga|pilates|stretch|estira/i, 'Yoga y pilates', 'heart', '#f472b6'],
-  [/danc|baile|zumba|aerob/i, 'Baile', 'sparkles', '#fbbf24'],
-  [/ellip|elípt|row|remo|stair/i, 'Cardio', 'heart-pulse', '#fb7185']
+  [/walk|camin|pasear|hik|sender|trek/i, 'walk', 'Caminar', 'footprints', '#34d399'],
+  [/bik|cycl|bici|spinning/i, 'bike', 'Ciclismo', 'bike', '#38bdf8'],
+  [/./, 'gym', 'Entrenamiento', 'dumbbell', '#a78bfa']
 ];
-const FIT_META = 150; // minutos de actividad a la semana que se recomiendan
+const FIT_A = FIT_T.map(([, k, n, ic, c]) => ({ k, n, ic, c }));
 function fitTipo(e) {
-  const t = String(e.type || '') + ' ' + String(e.name || ''),
-    f = FIT_T.find(([re]) => re.test(t));
-  return f ? { n: f[1], ic: f[2], c: f[3] } : { n: e.name || 'Ejercicio', ic: 'dumbbell', c: '#94a3b8' };
+  const t = String(e.type || '') + ' ' + String(e.name || '');
+  return FIT_A[FIT_T.findIndex(([re]) => re.test(t))];
 }
 const fitMin = m => (m == null ? '—' : m >= 60 ? hlHm(m) : m + ' min');
+const fitKm = m => (m / 1000).toFixed(m < 10000 ? 1 : 0).replace('.', ',') + ' km';
+const fitSum = (L, k) => L.reduce((t, e) => t + (e[k] || 0), 0);
+const fitLun = d => addD(d, -((new Date(d + 'T12:00').getDay() + 6) % 7));
 function fitCuando(e) {
   const k = dd(TD(), e.day),
     h = hlHM(e.start_at);
@@ -269,42 +264,68 @@ function fitCuando(e) {
         : cap(new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(e.day + 'T12:00')).replace(/\./g, ''));
   return d + (h ? ' · ' + h : '');
 }
+function fitLista(L) {
+  return `<ul class="fitl">${L.map(e => {
+    const t = fitTipo(e),
+      dat = [fitMin(e.dur_min), e.dist_m ? fitKm(e.dist_m) : '', e.kcal ? hlN(e.kcal) + ' kcal' : '', e.avg_hr ? e.avg_hr + ' ppm' : ''].filter(x => x && x !== '—');
+    return `<li style="--c:${t.c}"><span class="hico">${I(t.ic)}</span><div class="fitn"><b>${esc(t.n)}</b><small>${fitCuando(e)}</small></div><div class="fitd">${dat.map(x => `<span>${x}</span>`).join('')}</div></li>`;
+  }).join('')}</ul>`;
+}
+let fitV = 'b'; // propuesta que se enseña (a, b o c)
 function fitHTML() {
   if (!sb || !user) return empty('Inicia sesión para ver tus entrenos.');
   if (HLE === null) return `<div class="mu">Cargando…</div>`;
   if (!HLE.length) return empty('Aún no hay entrenos. Los que registre el reloj llegarán solos con Google Health.');
   const td = TD(),
-    lun = addD(td, -((new Date(td + 'T12:00').getDay() + 6) % 7)),
-    lunA = addD(lun, -7),
-    hoyA = addD(td, -7);
-  // La semana pasada, hasta el mismo día de la semana que hoy, para que la comparación sea justa.
-  const sem = (a, b) => HLE.filter(e => e.day >= a && e.day <= b),
-    suma = (L, k) => L.reduce((t, e) => t + (e[k] || 0), 0);
-  const E = sem(lun, td),
-    A = sem(lunA, hoyA),
-    min = suma(E, 'dur_min'),
-    kc = suma(E, 'kcal'),
-    dias = new Set(E.map(e => e.day)).size;
-  const vs = (a, b, u) => {
-    if (!b && !a) return 'Igual que la semana pasada';
-    const x = a - b;
-    return x === 0 ? 'Igual que la semana pasada' : `${x > 0 ? '+' : '−'}${u(Math.abs(x))} que la semana pasada`;
-  };
-  const kpis =
-    `<div class="hlg fitg">` +
-    hlKpi('#a78bfa', 'dumbbell', 'Entrenos', E.length, `${dias} ${dias === 1 ? 'día' : 'días'} · ${vs(E.length, A.length, n => n)}`) +
-    hlKpi('#34d399', 'clock', 'Tiempo activo', fitMin(min), `${Math.round((min / FIT_META) * 100)} % de ${FIT_META} min a la semana`, (min / FIT_META) * 100) +
-    hlKpi(HLC.kcal, 'flame', 'Calorías', hlN(kc), vs(kc, suma(A, 'kcal'), n => hlN(n) + ' kcal')) +
-    `</div>`;
-  const fila = e => {
-    const t = fitTipo(e),
-      km = e.dist_m ? (e.dist_m / 1000).toFixed(e.dist_m < 10000 ? 1 : 0).replace('.', ',') + ' km' : '',
-      dat = [fitMin(e.dur_min), km, e.kcal ? hlN(e.kcal) + ' kcal' : '', e.avg_hr ? e.avg_hr + ' ppm' : ''].filter(x => x && x !== '—');
-    return `<li style="--c:${t.c}"><span class="hico">${I(t.ic)}</span><div class="fitn"><b>${esc(t.n)}</b><small>${fitCuando(e)}</small></div><div class="fitd">${dat.map(x => `<span>${x}</span>`).join('')}</div></li>`;
-  };
+    lun = fitLun(td),
+    E = HLE.filter(e => e.day >= lun),
+    A = HLE.filter(e => e.day >= addD(lun, -7) && e.day <= addD(td, -7)),
+    ult = `<div class="fitw"><div class="hlwh"><b>Últimos entrenos</b></div>${fitLista(HLE.slice(0, 5))}</div>`;
+  const vs = (a, b, u) => (a === b ? 'Igual que la semana pasada' : `${a > b ? '+' : '−'}${u(Math.abs(a - b))} que la semana pasada`);
+  if (fitV === 'a') {
+    // A · Esta semana: tres cifras y la lista.
+    return (
+      `<div class="hlg fitg">` +
+      hlKpi('#a78bfa', 'dumbbell', 'Entrenos', E.length, vs(E.length, A.length, n => n)) +
+      hlKpi('#34d399', 'clock', 'Tiempo', fitMin(fitSum(E, 'dur_min')), vs(fitSum(E, 'dur_min'), fitSum(A, 'dur_min'), fitMin)) +
+      hlKpi(HLC.kcal, 'flame', 'Calorías', hlN(fitSum(E, 'kcal')), vs(fitSum(E, 'kcal'), fitSum(A, 'kcal'), n => hlN(n) + ' kcal')) +
+      `</div>` +
+      ult
+    );
+  }
+  if (fitV === 'b') {
+    // B · Por actividad, últimos 30 días: veces, tiempo y km (o kcal en entrenamiento) y cuándo fue la última.
+    const M = HLE.filter(e => e.day > addD(td, -30));
+    const card = a => {
+      const L = M.filter(e => fitTipo(e).k === a.k),
+        u = HLE.find(e => fitTipo(e).k === a.k),
+        km = fitSum(L, 'dist_m');
+      return `<div class="hlk fita" style="--c:${a.c}"><div class="hlkt"><span class="hico">${I(a.ic)}</span><span class="k">${a.n}</span></div><b>${L.length}<small>${L.length === 1 ? 'vez' : 'veces'}</small></b>
+        <div class="fitd"><span>${fitMin(fitSum(L, 'dur_min'))}</span>${a.k === 'gym' ? `<span>${hlN(fitSum(L, 'kcal'))} kcal</span>` : km ? `<span>${fitKm(km)}</span>` : ''}</div>
+        <small>${u ? 'Última: ' + fitCuando(u).split(' · ')[0].toLowerCase() : 'Sin entrenos'}</small></div>`;
+    };
+    return `<div class="mu fitsub">Últimos 30 días</div><div class="hlg fitg">${FIT_A.map(card).join('')}</div>` + ult;
+  }
+  // C · Semanas: barras de minutos de las últimas 8 semanas, cada actividad con su color, y la lista.
+  const S8 = [...Array(8)].map((_, i) => addD(lun, -7 * (7 - i)));
+  const W = S8.map(s => {
+    const L = HLE.filter(e => e.day >= s && e.day < addD(s, 7));
+    return { s, L, by: FIT_A.map(a => fitSum(L.filter(e => fitTipo(e).k === a.k), 'dur_min')) };
+  });
+  const mx = Math.max(60, ...W.map(w => w.by.reduce((a, v) => a + v, 0)));
+  const bars = W.map((w, i) => {
+    const tot = w.by.reduce((a, v) => a + v, 0),
+      dt = new Date(w.s + 'T12:00');
+    return `<div class="fitb${i === 7 ? ' on' : ''}" title="Semana del ${fd(w.s)}: ${fitMin(tot)}"><small>${tot ? fitMin(tot).replace(' min', '′') : ''}</small><div class="tr">${w.by
+      .map((v, j) => (v ? `<i style="height:${((v / mx) * 100).toFixed(1)}%;--c:${FIT_A[j].c}"></i>` : ''))
+      .join('')}</div><em>${i === 7 ? 'Esta' : dt.getDate() + ' ' + new Intl.DateTimeFormat('es-ES', { month: 'short' }).format(dt).replace('.', '')}</em></div>`;
+  }).join('');
+  const tw = W[7];
   return (
-    kpis +
-    `<div class="fitw"><div class="hlwh"><b>Últimos entrenos</b></div><ul class="fitl">${HLE.slice(0, 5).map(fila).join('')}</ul></div>`
+    `<div class="fitwk"><div class="hlwh"><b>Minutos por semana</b>${FIT_A.map(a => `<span><i style="--c:${a.c}"></i>${a.n}</span>`).join('')}</div>
+    <div class="fitbars">${bars}</div>
+    <div class="fitres">${FIT_A.map((a, j) => `<div style="--c:${a.c}"><span class="hico">${I(a.ic)}</span><div><b>${fitMin(tw.by[j])}</b><small>${tw.L.filter(e => fitTipo(e).k === a.k).length} esta semana</small></div></div>`).join('')}</div></div>` +
+    ult
   );
 }
 /* ---------- Histórico (ventana) ----------

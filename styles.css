@@ -1392,13 +1392,25 @@ input.sw:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .wsv{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--mu)}.wsv b{color:#22c3b4;font-weight:600}
 .wsvb{height:6px;border-radius:9px;background:color-mix(in srgb,#22c3b4 15%,transparent);overflow:hidden}.wsvb i{display:block;height:100%;border-radius:inherit;background:#22c3b4}
 .wap{padding:5px 10px}
-/* Salud · Fitness: 3 tarjetas de la semana y la lista de los últimos entrenos (icono de color, cuándo y sus datos) */
+/* Salud · Fitness: tarjetas, lista de los últimos entrenos y (propuesta C) barras de minutos por semana */
 .fitg{grid-template-columns:repeat(3,minmax(0,1fr))}
+.fitsub{margin:-4px 0 10px;font-size:13px}
 .fitw{margin-top:20px;padding-top:18px;border-top:1px solid var(--bd)}
 .fitl{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column}
 .fitl li{display:flex;align-items:center;gap:12px;padding:10px 0}.fitl li+li{border-top:1px solid var(--bd)}
 .fitn{display:flex;flex-direction:column;min-width:0;flex:1}.fitn b{font-size:15px}.fitn small{font-size:12.5px;color:var(--mu)}
 .fitd{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px 12px;font-size:13.5px;font-variant-numeric:tabular-nums;color:var(--tx2)}
 .fitd span:first-child{font-weight:600;color:var(--tx)}
-@media (max-width:760px){.fitg{grid-template-columns:repeat(2,minmax(0,1fr))}.fitg>.hlk:first-child{grid-column:1/-1}}
-@media (max-width:420px){.fitl li{flex-wrap:wrap}.fitd{flex-basis:100%;justify-content:flex-start;padding-left:42px}}
+.fita .fitd{justify-content:flex-start;font-size:14px}.fita b small{font-size:.5em}
+.fitwk .hlwh{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.fitwk .hlwh b{margin-right:auto}
+.fitwk .hlwh span{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mu)}.fitwk .hlwh span i{width:9px;height:9px;border-radius:3px;background:var(--c)}
+.fitbars{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;margin-top:14px}
+.fitb{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.fitb small{font-size:11.5px;color:var(--mu);height:14px;white-space:nowrap}
+.fitb .tr{width:100%;max-width:34px;height:120px;display:flex;flex-direction:column-reverse;gap:2px}
+.fitb .tr i{display:block;border-radius:5px;background:var(--c)}
+.fitb em{font-style:normal;font-size:12px;color:var(--mu);white-space:nowrap}.fitb.on em{color:var(--tx);font-weight:600}
+.fitres{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px}
+.fitres>div{display:flex;align-items:center;gap:10px;min-width:0}.fitres b{display:block;font-size:17px}.fitres small{font-size:12px;color:var(--mu)}
+@media (max-width:760px){.fitg{grid-template-columns:repeat(2,minmax(0,1fr))}.fitg>.hlk:first-child{grid-column:1/-1}.fitbars{gap:5px}}
+@media (max-width:420px){.fitl li{flex-wrap:wrap}.fitd{flex-basis:100%;justify-content:flex-start;padding-left:42px}.fita .fitd{padding-left:0}.fitres .hico{display:none}.fitres b{font-size:16px;color:var(--c)}.fitb small{font-size:10px}.fitb em{font-size:10.5px}}
