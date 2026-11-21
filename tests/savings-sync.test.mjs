@@ -110,8 +110,8 @@ test('clasificación de los movimientos de ahorro', () => {
   assert.equal(savKind(9.5, '', { date: '2026-12-01', balance: 0 }), 'aporte', 'sin saldo no se adivina');
 });
 
-// savSnaps tal cual está en la app (se extrae de js/vistas/finanzas.js).
-const src = readFileSync('js/vistas/finanzas.js', 'utf8');
+// savSnaps tal cual está en la app (se extrae de js/vistas/inversiones.js).
+const src = readFileSync('js/vistas/inversiones.js', 'utf8');
 const fn = src.slice(src.indexOf('function savSnaps'), src.indexOf('\nfunction savStats'));
 const { savSnaps } = vm.runInNewContext(`const S = { sav: null }, SAVD = [], SAVT = [];\n${fn}\n;({ savSnaps });`);
 const strip = L => JSON.parse(JSON.stringify(L.map(({ d, bal, dep, auto }) => ({ d, bal, dep, auto: !!auto }))));

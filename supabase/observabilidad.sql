@@ -145,7 +145,7 @@ declare
   u    uuid := ldb_owner();
   tok  text := (select decrypted_secret from vault.decrypted_secrets where name = 'telegram_bot_token');
   chat text := (select decrypted_secret from vault.decrypted_secrets where name = 'telegram_chat_id');
-  r record; c record; a record; bad int; msg text; nm text;
+  r record; c record; a record; bad int; msg text; nm text; sz bigint;
   checks jsonb := '[]'::jsonb;
 begin
   perform ldb_job('vigilante', 'start');
@@ -203,6 +203,16 @@ begin
         case when r.last_error is not null then 'Error: ' || left(ldb_redact(r.last_error), 200) end));
   end if;
 
+  -- Espacio de la base de datos (plan gratis: 500 MB). Avisa al pasar del 70 % (350 MB) con lo que más ocupa (21/11/2026).
+  sz := pg_database_size(current_database());
+  checks := checks || jsonb_build_object('key', 'espacio', 'title', 'El espacio de la base de datos',
+    'failing', sz > 350 * 1024 * 1024,
+    'detail', 'Ocupa ' || pg_size_pretty(sz) || ' de 500 MB (' || round(sz * 100.0 / (500 * 1024 * 1024)) || ' %). Lo que más ocupa: ' ||
+      (select string_agg(t.n || ' ' || pg_size_pretty(t.s), ', ') from (
+         select k.relname n, pg_total_relation_size(k.oid) s from pg_class k join pg_namespace ns on ns.oid = k.relnamespace
+          where k.relkind = 'r' and ns.nspname in ('public', 'cron', 'net') order by 2 desc limit 3) t) ||
+      '. Pide a Claude que haga una limpieza.');
+
   -- Abrir, actualizar o cerrar incidentes.
   for c in select * from jsonb_to_recordset(checks) as x(key text, title text, failing boolean, detail text) loop
     select * into a from ops_alerts where key = c.key;
@@ -213,7 +223,7 @@ begin
         on conflict (key) do update set title = excluded.title, detail = excluded.detail, open = true, opened_at = now(),
           closed_at = null, notified_open = false, notified_close = true;
         insert into ops_log (user_id, level, source, process, func, event, detail)
-        values (u, case when c.key like 'permiso:%' then 'WARNING' else 'ERROR' end, 'vigilante', c.key, 'ldb_watchdog', 'Incidente abierto: ' || c.title, c.detail);
+        values (u, case when c.key like 'permiso:%' or c.key = 'espacio' then 'WARNING' else 'ERROR' end, 'vigilante', c.key, 'ldb_watchdog', 'Incidente abierto: ' || c.title, c.detail);
       else
         update ops_alerts set detail = c.detail where key = c.key;
       end if;
@@ -238,6 +248,8 @@ begin
       when a.key like 'permiso:%' and a.open then '⏳ Panel: caduca el permiso de ' || substr(a.title, 15) || '.' || E'
 ' || coalesce(a.detail, '')
       when a.key like 'permiso:%' then '✅ Panel: ' || a.title || ' ya está renovado.'
+      when a.key = 'espacio' and a.open then '📦 Panel: la base de datos se está llenando.' || E'\n' || coalesce(a.detail, '')
+      when a.key = 'espacio' then '✅ Panel: la base de datos vuelve a tener espacio de sobra.'
       when a.open
       then '⚠️ Panel: ' || a.title || ' no funciona bien (desde ' || to_char(a.opened_at at time zone 'Europe/Madrid', 'DD/MM HH24:MI') || ').' || E'\n' || coalesce(a.detail, '')
       else '✅ Panel: ' || a.title || ' vuelve a funcionar (fallaba desde ' || to_char(a.opened_at at time zone 'Europe/Madrid', 'DD/MM HH24:MI') || ').' end;
@@ -252,6 +264,11 @@ begin
   end loop;
 
   delete from ops_log where ts < now() - interval '30 days';
+  -- Registro de ejecuciones de pg_cron: crece sin límite; basta con 7 días. Si no se puede borrar, el vigilante sigue.
+  begin
+    delete from cron.job_run_details where end_time < now() - interval '7 days';
+  exception when others then null;
+  end;
   perform ldb_job('vigilante', 'ok');
 exception when others then
   -- Si el propio vigilante falla, queda apuntado (y el panel avisa si lleva más de 3 h sin ejecutarse bien).

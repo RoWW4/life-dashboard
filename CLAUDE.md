@@ -31,12 +31,14 @@ En ningún archivo del repositorio (código, comentarios, ejemplos, `PENDIENTES.
 - `js/nube.js` · sincronización con Supabase
 - `js/banco.js` · clasificar, limpiar e importar movimientos del banco
 - `js/interfaz.js` · piezas comunes (ventanas, avisos, dictado, iconos, filas, calendario, gráfico de gasto)
-- `js/vistas/*.js` · una por sección: `dia`, `tareas`, `compra`, `finanzas` (+ Inversiones), `facturas`, `salud`, `ajustes` (+ Documentos e inicio de sesión)
+- `js/vistas/*.js` · una por sección: `dia`, `tareas`, `compra`, `finanzas` (+ Resumen), `inversiones`, `facturas`, `salud`, `coche`, `mascotas`, `ajustes` (+ Documentos e inicio de sesión)
 - `js/render.js` · pintar la sección, menú y tema
-- `js/formularios.js` · ventanas de añadir/editar
+- `js/formularios.js` · ventanas de añadir/editar (tareas, movimientos, compra, reglas, calendario, documentos, metas, compartir, deseos); las de `facturas`, `coche` y `mascotas` en `js/formularios-<sección>.js`
 - `js/voz.js` · entrada rápida y por voz
-- `js/acciones.js` · lo que hace cada botón (`data-a`)
+- `js/acciones.js` · lo que hace cada botón (`data-a`); los de `coche`, `mascotas` y `salud` en `js/acciones-<sección>.js` (se añaden a `A` con `Object.assign`)
 - `js/eventos.js` y `js/arranque.js` · eventos y arranque
+
+Para buscar el botón de algo: `grep -n "data-a=\"xx\"" js` (dónde se pinta) y `grep -n "  xx:" js/acciones*.js` (qué hace).
 
 Archivo nuevo: añadirlo en `index.html` (en su sitio) y en `SHELL` de `sw.js`. El número de versión lo sube `subir.mjs`.
 El código de `js/` está formateado con Prettier (`.prettierrc.json`); si está instalado, `prettier --write "js/**/*.js"` antes de subir.
