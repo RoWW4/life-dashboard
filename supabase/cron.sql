@@ -38,7 +38,7 @@ $$);
 
 -- Cuenta de ahorro (Trade Republic por Enable Banking): lanza «Sincronizar ahorro» una vez al día (≈ 07:13 en invierno).
 -- Desde el 10/11/2026.
-select cron.schedule('savings-sync', '13 6 * * *', $
+select cron.schedule('savings-sync', '13 6 * * *', $$
   select net.http_post(
     url := 'https://api.github.com/repos/RoWW4/life-dashboard/actions/workflows/savings-sync.yml/dispatches',
     body := '{"ref":"main"}'::jsonb,
@@ -89,3 +89,6 @@ select cron.alter_job((select jobid from cron.job where jobname = 'sync-wallet')
 
 -- Vigilante de errores (supabase/observabilidad.sql): cada hora, al minuto 41. Autorizado el 09/11/2026.
 select cron.schedule('vigilante', '41 * * * *', 'select public.ldb_watchdog();');
+
+-- Limpieza semanal del registro de ejecuciones de pg_cron (crece sin límite): domingos ≈ 05:29 en invierno, guarda 14 días.
+select cron.schedule('limpieza-cron', '29 4 * * 0', $$delete from cron.job_run_details where start_time < now() - interval '14 days'$$);
