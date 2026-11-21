@@ -51,7 +51,7 @@ select cron.schedule('savings-sync', '13 6 * * *', $$
     timeout_milliseconds := 10000
   )
   where exists (select 1 from vault.decrypted_secrets where name = 'github_dispatch_token');
-$);
+$$);
 
 -- Coche (Kia Connect): lanza «Coche (Kia Connect)» cada 3 h (≈ 07:00, 10:00, 13:00, 16:00, 19:00 y 22:00 en invierno).
 -- Desde el 16/11/2026; antes lo lanzaba el «schedule» de GitHub cada 3 h, con retrasos.
