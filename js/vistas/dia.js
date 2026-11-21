@@ -194,7 +194,7 @@ function vDia() {
   setTimeout(wxLoad);
   return `<section class="hero" aria-label="Resumen de hoy">${heroBg()}
     <div class="hmain"><div class="eyb">${cap(new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(now))}</div>
-      <h2>${g}${S.name ? ', ' + esc(S.name) : ''}</h2></div>
+      <h2>${g}${S.name ? `, <span class="hn">${esc(S.name)}</span>` : ''}</h2></div>
     ${S.wxOff ? '' : `<div id="hwx" class="haside">${wxHTML()}</div>`}
   </section>
   <div class="grid dgrid">
