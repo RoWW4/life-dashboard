@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status*)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(git pull*)",
+      "Bash(git fetch*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git checkout*)",
+      "Bash(git merge*)",
+      "Bash(git stash*)",
+      "Bash(node scripts/subir.mjs*)",
+      "Bash(node scripts/comprobar.mjs*)",
+      "Bash(npx prettier*)",
+      "Bash(python3 -m http.server 8765*)",
+      "mcp__Supabase__execute_sql",
+      "mcp__Supabase__list_tables"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)"
+    ]
+  }
+}
