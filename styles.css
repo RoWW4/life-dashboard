@@ -226,8 +226,6 @@ input[type=checkbox].ck:hover{border-color:var(--ac)}
 input[type=checkbox].ck:checked{background:var(--ac);border-color:var(--ac);animation:ckp .22s ease}
 input[type=checkbox].ck:checked::after{content:'';width:5px;height:10px;border:solid #fff;border-width:0 2.2px 2.2px 0;transform:translateY(-1px) rotate(45deg)}
 input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
-/* Las tareas se marcan con un círculo (las listas, como la compra, siguen con cuadrado) */
-input[type=checkbox].ck[data-a=tt]{border-radius:50%}
 @keyframes ckp{50%{transform:scale(.85)}}
 
 /* ---------- gasto ---------- */
@@ -395,8 +393,6 @@ input[type=checkbox].ck[data-a=tt]{border-radius:50%}
 .cal button:focus-visible{outline:2px solid var(--ac);outline-offset:0}
 .cal button.t{box-shadow:inset 0 0 0 1.5px var(--ac);color:var(--ac2);font-weight:700}
 .cal button.sel{background:var(--ac);color:#fff;font-weight:600}
-/* Días del calendario en círculo (también el de hoy y el elegido), como un calendario de bolsillo */
-.cal button{width:min(42px,100%);aspect-ratio:1;min-height:0;justify-self:center;justify-content:center;padding:0;border-radius:50%;gap:1px}
 .cal .dots{display:flex;gap:2px;height:5px}.cal .dots i{width:4px;height:4px;border-radius:50%;background:var(--ac)}.cal .dots i.b{background:var(--wa)}
 .cal button.sel .dots i{background:#fff}
 .cal .dots{align-items:center;height:10px}.cal .dots .i.bd{width:11px;height:11px;color:var(--bday);stroke-width:2.5}
@@ -642,8 +638,6 @@ input[type=checkbox].ck[data-a=tt]{border-radius:50%}
 .hero::after{content:'';position:absolute;z-index:-1;width:380px;height:380px;left:-140px;bottom:-260px;border-radius:50%;border:1px solid var(--hero-bd)}
 .hero .eyb{font-size:13px;font-weight:500;color:var(--hero-mu);margin-bottom:6px}
 .hero h2{font-size:36px;font-weight:600;letter-spacing:-.035em;line-height:1.1}
-/* Nombre del saludo en degradado, para que destaque sobre la portada */
-@media(min-width:761px){.hero h2 .hn{background:linear-gradient(90deg,#8ec5ff,#c4b5fd);-webkit-background-clip:text;background-clip:text;color:transparent}}
 
 /* ---------- Rejilla de paneles ---------- */
 /* Ordenador: 12 columnas. Por defecto .grid pone los paneles a 1/3 y .grid2 a 1/2; .wide y «Lo más importante» ocupan más.
