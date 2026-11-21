@@ -34,14 +34,14 @@ function afterLoad() {
   $('#fabMic').innerHTML = I('mic');
   if ('serviceWorker' in navigator && location.protocol.startsWith('http'))
     navigator.serviceWorker.register('sw.js').catch(e => logErr('sw', e));
-  // Si la nube tarda (mala cobertura, o la sesión se queda colgada al volver a la app), no se espera más de 5 s:
-  // se abre con lo guardado en este dispositivo y, cuando la nube contesta, se juntan los cambios y se repinta.
+  // Si ya hay datos en este dispositivo, no se espera a la nube más de 0,4 s: se abre con lo guardado aquí y,
+  // cuando la nube contesta, se juntan los cambios y se repinta. Así abre rápido aunque la nube tarde.
   const ini = cloudInit().catch(() => {
     setSync('⚠️ Sin sincronizar');
     return 'local';
   });
   const hayLocal = !!localStorage.getItem(K);
-  const r = await (hayLocal ? Promise.race([ini, new Promise(ok => setTimeout(() => ok('tarde'), 5000))]) : ini);
+  const r = await (hayLocal ? Promise.race([ini, new Promise(ok => setTimeout(() => ok('tarde'), 400))]) : ini);
   const login = () => {
     $('#nav').innerHTML = '';
     $('.fabs').hidden = true;
