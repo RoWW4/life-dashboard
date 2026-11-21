@@ -62,7 +62,7 @@ function salRing(st, n) {
    Aquí solo se leen; no se guardan en S. */
 let HL = null,
   HLS = null,
-  HLE = null, // entrenos de los últimos 60 días (health_exercise), del más reciente al más antiguo
+  HLE = null, // entrenos del último año (health_exercise), del más reciente al más antiguo
   hlT = 0;
 const HL_OLD = 30 * 60 * 1000;
 async function hlLoad() {
@@ -77,7 +77,7 @@ async function hlLoad() {
     sb
       .from('health_exercise')
       .select('id,day,start_at,type,name,dur_min,kcal,dist_m,avg_hr')
-      .gte('day', addD(TD(), -60))
+      .gte('day', addD(TD(), -400))
       .order('start_at', { ascending: false })
   ]);
   HL = a.error ? HL || [] : a.data || [];
@@ -257,26 +257,85 @@ function fitDia(d) {
       ? 'Ayer'
       : cap(new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(d + 'T12:00')).replace(/\./g, ''));
 }
+const fitLun = d => addD(d, -((new Date(d + 'T12:00').getDay() + 6) % 7));
+const fitDe = d => HLE.filter(e => e.day === d);
+/* Círculo de un día: vacío, o con el icono (y color) del primer entreno del día y, si hubo más, cuántos. */
+function fitDot(d) {
+  const L = fitDe(d),
+    t = L.length ? fitTipo(L[L.length - 1]) : null;
+  return t ? `<span class="fitdot ok" style="--c:${t.c}">${I(t.ic)}${L.length > 1 ? `<small>${L.length}</small>` : ''}</span>` : '<span class="fitdot"></span>';
+}
+function fitFila(e) {
+  const t = fitTipo(e),
+    dat = [hlHM(e.start_at), fitMin(e.dur_min), e.dist_m ? (e.dist_m / 1000).toFixed(e.dist_m < 10000 ? 2 : 1).replace('.', ',') + ' km' : ''].filter(Boolean);
+  const der = [e.kcal ? `<b>${hlN(e.kcal)}</b><small>kcal</small>` : '', e.avg_hr ? `<span>${I('heart-pulse', 'sm')} ${e.avg_hr} ppm</span>` : ''].join('');
+  return `<li style="--c:${t.c}"><span class="fitic">${I(t.ic)}</span><div class="fitn"><small>${fitDia(e.day)}</small><b>${t.n}</b><span>${dat.join(' · ')}</span></div><div class="fitr">${der}</div></li>`;
+}
+const fitMes = new Intl.DateTimeFormat('es-ES', { month: 'short' });
+let fitW = 0; // semana que se ve: 0 = esta, -1 = la anterior…
 function fitHTML() {
   if (!HLE || !HLE.length) return '';
   const td = TD(),
-    lun = addD(td, -((new Date(td + 'T12:00').getDay() + 6) % 7));
+    lun = addD(fitLun(td), 7 * fitW),
+    dom = addD(lun, 6);
   const semana = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
     .map((l, i) => {
       const d = addD(lun, i),
-        L = HLE.filter(e => e.day === d),
-        t = L.length ? fitTipo(L[L.length - 1]) : null; // el primero del día
+        L = fitDe(d);
       const tit = fitDia(d) + (L.length ? ': ' + L.map(e => fitTipo(e).n.toLowerCase()).join(', ') : ': sin entreno');
-      return `<div class="fitday${d === td ? ' on' : ''}${d > td ? ' fut' : ''}" title="${tit}" aria-label="${tit}">${t ? `<span class="fitdot ok" style="--c:${t.c}">${I(t.ic)}${L.length > 1 ? `<small>${L.length}</small>` : ''}</span>` : '<span class="fitdot"></span>'}<em>${l}</em></div>`;
+      return `<div class="fitday${d === td ? ' on' : ''}${d > td ? ' fut' : ''}" title="${tit}" aria-label="${tit}">${fitDot(d)}<em>${l}</em></div>`;
     })
     .join('');
-  const fila = e => {
-    const t = fitTipo(e),
-      dat = [hlHM(e.start_at), fitMin(e.dur_min), e.dist_m ? (e.dist_m / 1000).toFixed(e.dist_m < 10000 ? 2 : 1).replace('.', ',') + ' km' : ''].filter(Boolean);
-    const der = [e.kcal ? `<b>${hlN(e.kcal)}</b><small>kcal</small>` : '', e.avg_hr ? `<span>${I('heart-pulse', 'sm')} ${e.avg_hr} ppm</span>` : ''].join('');
-    return `<li style="--c:${t.c}"><span class="fitic">${I(t.ic)}</span><div class="fitn"><small>${fitDia(e.day)}</small><b>${t.n}</b><span>${dat.join(' · ')}</span></div><div class="fitr">${der}</div></li>`;
-  };
-  return `<div class="hlw fitw"><div class="hlwh"><b>Entrenos</b></div><div class="fitwk" role="group" aria-label="Entrenos de esta semana">${semana}</div><ul class="fitl">${HLE.slice(0, 5).map(fila).join('')}</ul></div>`;
+  // Esta semana: los últimos 5 entrenos; otra semana: los de esa semana.
+  const L = fitW ? HLE.filter(e => e.day >= lun && e.day <= dom) : HLE.slice(0, 5);
+  const a = new Date(lun + 'T12:00'),
+    b = new Date(dom + 'T12:00');
+  const rango =
+    fitW === 0
+      ? 'Esta semana'
+      : fitW === -1
+        ? 'Semana pasada'
+        : a.getMonth() === b.getMonth()
+          ? `${a.getDate()}–${b.getDate()} ${fitMes.format(b).replace('.', '')}`
+          : `${a.getDate()} ${fitMes.format(a).replace('.', '')} – ${b.getDate()} ${fitMes.format(b).replace('.', '')}`;
+  const viejo = lun <= addD(td, -400);
+  return `<div class="hlw fitw"><div class="hlwh fith"><b>Entrenos</b><div class="fitnav"><button class="btn ghost sm ico" data-a="fitw" data-i="-1" ${viejo ? 'disabled' : ''} aria-label="Semana anterior">${I('chevron-left', 'sm')}</button><span>${rango}</span><button class="btn ghost sm ico" data-a="fitw" data-i="1" ${fitW >= 0 ? 'disabled' : ''} aria-label="Semana siguiente">${I('chevron-right', 'sm')}</button></div><button class="btn ghost sm" data-a="fitm">${I('calendar-days', 'sm')} Mes</button></div>
+    <div class="fitwk" role="group" aria-label="Entrenos de la semana">${semana}</div>
+    ${fitW ? `<div class="mu fitsub">${L.length ? L.length + (L.length === 1 ? ' entreno esa semana' : ' entrenos esa semana') : 'Sin entrenos esa semana'}</div>` : `<div class="mu fitsub">Últimos entrenos</div>`}
+    <ul class="fitl">${L.map(fitFila).join('')}</ul></div>`;
+}
+/* ---------- Mes de entrenos (ventana) ----------
+   Calendario del mes (de lunes a domingo) con los días de entreno marcados; al tocar un día se ven sus entrenos. */
+let fitM = { m: '', d: null };
+function fitMOpen() {
+  fitM = { m: TD().slice(0, 7), d: null };
+  modal(`<div id="fitm">${fitMHTML()}</div>`);
+}
+function fitMHTML() {
+  const { m, d } = fitM,
+    td = TD(),
+    ini = m + '-01',
+    nd = new Date(+m.slice(0, 4), +m.slice(5, 7), 0).getDate(),
+    hueco = (new Date(ini + 'T12:00').getDay() + 6) % 7;
+  const mes = HLE.filter(e => e.day.startsWith(m)),
+    min = TD().slice(0, 7),
+    tope = addD(td, -400).slice(0, 7);
+  const cuenta = FIT_T.map(([, n, , c]) => [n, c, mes.filter(e => fitTipo(e).n === n).length]).filter(x => x[2]);
+  const celdas =
+    '<span></span>'.repeat(hueco) +
+    [...Array(nd)]
+      .map((_, i) => {
+        const k = m + '-' + String(i + 1).padStart(2, '0'),
+          n = fitDe(k).length;
+        return `<button class="fitc${k === td ? ' hoy' : ''}${k === d ? ' sel' : ''}${k > td ? ' fut' : ''}" ${n ? `data-a="fitmd" data-i="${k}"` : 'disabled'} aria-label="${fitDia(k)}${n ? ': ' + n + (n === 1 ? ' entreno' : ' entrenos') : ''}">${n ? fitDot(k) : `<span class="fitdot"></span>`}<em>${i + 1}</em></button>`;
+      })
+      .join('');
+  const sel = d ? fitDe(d) : [];
+  return `<div class="hlxh fitmh"><button class="btn ghost sm ico" data-a="fitmm" data-i="-1" ${m <= tope ? 'disabled' : ''} aria-label="Mes anterior">${I('chevron-left', 'sm')}</button><h3>${cap(new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(new Date(ini + 'T12:00')))}</h3><button class="btn ghost sm ico" data-a="fitmm" data-i="1" ${m >= min ? 'disabled' : ''} aria-label="Mes siguiente">${I('chevron-right', 'sm')}</button></div>
+    <div class="mu fitsub">${mes.length ? `${mes.length} ${mes.length === 1 ? 'entreno' : 'entrenos'}: ${cuenta.map(([n, c, k]) => `<span class="fitcnt" style="--c:${c}"><i></i>${k} ${n.toLowerCase()}</span>`).join(' ')}` : 'Sin entrenos este mes'}</div>
+    <div class="fitcal">${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(l => `<b>${l}</b>`).join('')}${celdas}</div>
+    ${sel.length ? `<ul class="fitl">${sel.map(fitFila).join('')}</ul>` : mes.length ? `<div class="hlxi mu">${I('info', 'sm')} Toca un día marcado para ver sus entrenos</div>` : ''}
+    <div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button></div>`;
 }
 /* ---------- Histórico (ventana) ----------
    Elige el dato (pasos, sueño, kcal, pulso) y el periodo (30 días, 3 meses, 1 año). Hasta 3 meses, una barra por día;
