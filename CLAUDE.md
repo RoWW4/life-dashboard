@@ -4,8 +4,8 @@ Rocío trabaja el panel desde el ordenador (`D:\Claude\life-dashboard`, copia de
 
 ## Cómo se trabaja
 1. Al empezar: `git pull`. Si hay cambios locales sin subir, `git pull --rebase --autostash`. No hace falta leer nada más.
-2. Al terminar cada cambio (y comprobarlo), subirlo directamente con el paso 4, sin preguntar. `PENDIENTES.md` solo se lee si lo pedido tiene que ver con algo pendiente.
-3. Si el cambio es estructural o estético importante, enseñarle capturas del resultado (datos de mentira) al terminar. Comprobar con lo mínimo. La vista previa (localhost:8765) solo para cambios visuales que lo necesiten, **sin iniciar sesión** y con `localStorage.clear()` al acabar: probar con datos de mentira y luego iniciar sesión en el mismo navegador borró los datos reales el 31/10/2026.
+2. Al terminar cada cambio (y comprobarlo), subirlo directamente con el paso 4, sin preguntar. **Excepción:** si es un cambio estético o un panel/sección nueva, enseñarle antes capturas del resultado (datos de mentira) y subirlo solo cuando dé el visto bueno. `PENDIENTES.md` solo se lee si lo pedido tiene que ver con algo pendiente.
+3. Capturas (paso 2): de ordenador y móvil, con datos de mentira. Comprobar con lo mínimo. La vista previa (localhost:8765) solo para cambios visuales que lo necesiten, **sin iniciar sesión** y con `localStorage.clear()` al acabar: probar con datos de mentira y luego iniciar sesión en el mismo navegador borró los datos reales el 31/10/2026.
 4. Para subir: `node scripts/subir.mjs "qué se ha cambiado (una frase)"`. Trae lo de la otra sesión, sube la versión si cambió CSS o JS, pasa `scripts/comprobar.mjs` y hace un commit y push a `main` (GitHub Pages publica desde ahí). Si algo falla, no sube y dice por qué. Antes, mirar `git status` por si hay archivos que no deben subirse.
 5. Si algo no se pudo subir, decírselo a Rocío.
 
