@@ -75,7 +75,7 @@ from ldb_state;
 
 ## Recuperar una versión anterior
 También hay una copia diaria de todo el panel en Google Drive, carpeta «Copias del panel» (`panel-AAAA-MM-DD.json`, 60 días).
-Antes de cada cambio, Supabase guarda la versión anterior en la tabla `ldb_state_hist` (30 días). Para ver las últimas:
+Antes de cada cambio, Supabase guarda la versión anterior en la tabla `ldb_state_hist` (14 días). Para ver las últimas:
 ```sql
 select id, saved_at, jsonb_array_length(data->'tasks') tareas, jsonb_array_length(data->'tx') movimientos from ldb_state_hist order by saved_at desc limit 20;
 ```

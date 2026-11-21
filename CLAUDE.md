@@ -14,7 +14,7 @@ El historial de cambios es el de git (`git log --oneline`); `HISTORIAL.md` y `HI
 
 ## Datos y seguridad
 - Los datos viven en Supabase (tabla `ldb_state`, columna `data`). Para cambiarlos por SQL, seguir `DATOS.md`.
-- Ya protegen solos: la base de datos rechaza vaciar una sección o perder más de la mitad de los datos (`ldb_state_guard`, no desactivarlo); copia de la versión anterior en cada cambio (`ldb_state_hist`, 30 días) y copia diaria en Google Drive (60 días); la app junta los cambios de los dos dispositivos (`merge3` en `js/nube.js`).
+- Ya protegen solos: la base de datos rechaza vaciar una sección o perder más de la mitad de los datos (`ldb_state_guard`, no desactivarlo); copia de la versión anterior en cada cambio (`ldb_state_hist`, 14 días) y copia diaria en Google Drive (60 días); la app junta los cambios de los dos dispositivos (`merge3` en `js/nube.js`).
 - Cualquier cambio en `js/nube.js` o `js/estado.js` se prueba antes simulando dos dispositivos.
 - No programar revisiones, comprobaciones ni avisos por iniciativa propia; revisar el panel solo cuando Rocío lo pida.
 - Nunca `git push --force` sin preguntar (la historia del repositorio se rehízo el 29/10/2026 para quitar datos personales).

@@ -79,7 +79,7 @@ create policy "wallet_log leer propio" on public.wallet_log for select using (au
 grant select on public.wallet_log to authenticated;
 grant all on public.wallet_log to service_role;
 
--- 6) Historial del panel: antes de cada cambio de ldb_state se guarda aquí la versión anterior (30 días).
+-- 6) Historial del panel: antes de cada cambio de ldb_state se guarda aquí la versión anterior (14 días).
 --    Sin acceso desde el panel; se consulta y restaura con SQL (ver DATOS.md).
 create table if not exists public.ldb_state_hist (
   id       bigint generated always as identity primary key,
@@ -97,7 +97,7 @@ language plpgsql security definer set search_path = public as $$
 begin
   if old.data is distinct from new.data then
     insert into public.ldb_state_hist (user_id, data) values (old.user_id, old.data);
-    delete from public.ldb_state_hist where user_id = old.user_id and saved_at < now() - interval '30 days';
+    delete from public.ldb_state_hist where user_id = old.user_id and saved_at < now() - interval '14 days';
   end if;
   return new;
 end $$;
