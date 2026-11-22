@@ -590,7 +590,7 @@ function yearCard() {
    lo que se mandó a la cuenta de ahorro (aportaciones que trae el banco de esa cuenta) y si se cumplió el tope de ese mes
    (S.topeH guarda el tope de cada mes al cambiarlo; un mes sin apunte usa el último anterior).
    Arriba: ahorrado este año, saldo de la cuenta de ahorro con sus intereses y racha de meses dentro del tope.
-   Si el panel «Plan del mes» está oculto, no se muestra nada del tope. */
+   Si el panel «Plan de ahorro» (Inversiones) está oculto, no se muestra nada del tope. */
 const topeOf = m => {
   const k = Object.keys(S.topeH || {})
     .filter(x => x <= m)
@@ -604,7 +604,7 @@ function savHistCard() {
     cm = MN(now),
     first = S.tx.reduce((a, x) => (x.date < a ? x.date : a), TD()).slice(0, 7),
     ms = [...Array(12)].map((_, i) => mAdd(cm, i - 11)).filter(m => m >= first),
-    planOn = !((S.hidP || {}).fin || []).includes('plan'), // con «Plan del mes» oculto no se usa el tope
+    planOn = !((S.hidP || {}).inv || []).includes('plan'), // con «Plan de ahorro» (en Inversiones) oculto no se usa el tope
     mv = SAVT.filter(t => t.kind === 'aporte' || t.kind === 'retirada'),
     R = ms.map(m => {
       const inc = income(m).reduce((a, x) => a + x.amt, 0),
@@ -644,7 +644,7 @@ function savHistCard() {
     'wide'
   );
 }
-/* ---------- Plan del mes ----------
+/* ---------- Plan de ahorro ----------
    Lo que entra en el mes se reparte en tres: pagos fijos (los de Facturas, calculados solos), el gasto del día a día
    («Para gastar», S.planTope, que pone ella; aparte del Tope mensual) y el ahorro (lo que sobra). Arriba, el reparto; debajo, cómo va el gasto del día a día
    frente al tope (lo que queda, cuánto se puede gastar al día y a qué ritmo va) y lo que se ahorrará de verdad a este ritmo. */
@@ -715,9 +715,9 @@ function planRefresh() {
 const planCard = () => {
   const b = planBody();
   return panel(
-    'fin',
+    'inv',
     'plan',
-    `${I('target')} Plan de ${new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date())}`,
+    `${I('target')} Plan de ahorro <span class="cnt">· ${cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date()))}</span>`,
     `<div id="pltop">${b.top}</div><label class="plsl"><span>Mueve para ver cuánto ahorras</span><input id="plr" type="range" min="0" max="${Math.max(1000, Math.ceil(b.tope / 50) * 50)}" step="25" value="${b.tope}" aria-label="Tope de gasto del mes"></label><div id="plrest">${b.rest}</div>`,
     'wide'
   );
@@ -744,7 +744,6 @@ function vFin() {
   </div></div>
   ${(() => {
     const C = {
-      plan: cur ? planCard() : '',
       gasto: panel('fin', 'gasto', `${I('wallet')} Gasto del mes`, gastoHTML(m, 'fm'), 'wide'),
       mov: panel(
         'fin',

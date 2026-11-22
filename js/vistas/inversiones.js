@@ -264,8 +264,8 @@ function savCard() {
   );
 }
 function vInv() {
-  const C = { ahorro: savCard() };
-  VIS.inv = ord('inv', ['ahorro']);
+  const C = { ahorro: savCard(), plan: planCard() }; // «Plan de ahorro» (del mes en curso) está en finanzas.js
+  VIS.inv = ord('inv', ['ahorro', 'plan']);
   return `<div class="hdr"><div><h2>Inversiones</h2><div class="sub help">Tus ahorros y lo que rinden · Los importes se muestran con el ojo</div></div></div>
   <div class="grid">${VIS.inv.map(k => C[k]).join('')}</div>`;
 }

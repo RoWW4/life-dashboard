@@ -230,7 +230,7 @@ const A = {
         ch();
       });
     }),
-  // Plan del mes: lo que te permites gastar en el día a día (sin fijos). Es solo para calcular el ahorro;
+  // Plan de ahorro: lo que te permites gastar en el día a día (sin fijos). Es solo para calcular el ahorro;
   // no cambia el «Tope mensual» (S.budget) que usan «Gasto del mes» y la tarjeta de arriba.
   ptope: () =>
     CF(

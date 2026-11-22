@@ -48,7 +48,7 @@ document.addEventListener('input', e => {
     const g = document.getElementById('docgrid');
     if (g) g.innerHTML = docsHTML();
   }
-  // Plan del mes: al mover el tope se ve al momento cómo cambia el ahorro (se guarda al soltar).
+  // Plan de ahorro: al mover el tope se ve al momento cómo cambia el ahorro (se guarda al soltar).
   if (e.target.id === 'plr') {
     planSim = +e.target.value;
     planRefresh();
