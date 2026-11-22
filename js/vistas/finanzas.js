@@ -589,7 +589,8 @@ function yearCard() {
    Cada mes: lo que entró, lo que se gastó (fijos + día a día; sin traspasos ni extraordinarios), lo ahorrado (la diferencia),
    lo que se mandó a la cuenta de ahorro (aportaciones que trae el banco de esa cuenta) y si se cumplió el tope de ese mes
    (S.topeH guarda el tope de cada mes al cambiarlo; un mes sin apunte usa el último anterior).
-   Arriba: ahorrado este año, saldo de la cuenta de ahorro con sus intereses y racha de meses dentro del tope. */
+   Arriba: ahorrado este año, saldo de la cuenta de ahorro con sus intereses y racha de meses dentro del tope.
+   Si el panel «Plan del mes» está oculto, no se muestra nada del tope. */
 const topeOf = m => {
   const k = Object.keys(S.topeH || {})
     .filter(x => x <= m)
@@ -603,11 +604,12 @@ function savHistCard() {
     cm = MN(now),
     first = S.tx.reduce((a, x) => (x.date < a ? x.date : a), TD()).slice(0, 7),
     ms = [...Array(12)].map((_, i) => mAdd(cm, i - 11)).filter(m => m >= first),
+    planOn = !((S.hidP || {}).fin || []).includes('plan'), // con «Plan del mes» oculto no se usa el tope
     mv = SAVT.filter(t => t.kind === 'aporte' || t.kind === 'retirada'),
     R = ms.map(m => {
       const inc = income(m).reduce((a, x) => a + x.amt, 0),
         sp = spent(m),
-        tp = topeOf(m),
+        tp = planOn ? topeOf(m) : null,
         sv = spentVar(m),
         sent = mv.filter(t => mon(t.d) === m).reduce((a, t) => a + t.amt, 0);
       return { m, inc, sp, sav: inc - sp, tp, sv, ok: tp == null ? null : sv <= tp, sent, cur: m === cm };
@@ -630,13 +632,13 @@ function savHistCard() {
     .reverse()
     .map(
       r =>
-        `<div class="ahr${r.cur ? ' cur' : ''}" title="Entró ${eur(r.inc)} · Gastado ${eur(r.sp)}"><span class="g"><b>${cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date(r.m + '-01T00:00')))}${r.m.startsWith(yr) ? '' : ' ' + r.m.slice(0, 4)}</b>${r.cur ? '<span class="mu">En curso</span>' : ''}</span><span class="ahv"><b class="${r.sav < 0 ? 'er' : 'ok'}">${r.sav >= 0 ? '+' : ''}${eurR(r.sav)}</b>${r.sent ? `<span class="mu">${I('piggy-bank', 'sm')} ${r.sent >= 0 ? '' : '−'}${eurR(Math.abs(r.sent))}</span>` : ''}</span>${r.ok == null ? '<span></span>' : r.cur ? `<span class="chip amt" title="Tope de este mes">Tope ${eurR(r.tp)}</span>` : r.ok ? `<span class="chip ok" title="Gastaste ${eur(r.sv)} de ${eur(r.tp)} (sin fijos)">${I('check', 'sm')} Tope</span>` : `<span class="chip er amt" title="Gastaste ${eur(r.sv)} de ${eur(r.tp)} (sin fijos)">+${eur(r.sv - r.tp)}</span>`}</div>`
+        `<div class="ahr${r.cur ? ' cur' : ''}" title="Entró ${eur(r.inc)} · Gastado ${eur(r.sp)}"><span class="g"><b>${cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date(r.m + '-01T00:00')))}${r.m.startsWith(yr) ? '' : ' ' + r.m.slice(0, 4)}</b>${r.cur ? '<span class="mu">En curso</span>' : ''}</span><span class="ahv"><b class="${r.sav < 0 ? 'er' : 'ok'}">${r.sav >= 0 ? '+' : ''}${eurR(r.sav)}</b>${r.sent ? `<span class="mu">${I('piggy-bank', 'sm')} ${r.sent >= 0 ? '' : '−'}${eurR(Math.abs(r.sent))}</span>` : ''}</span>${r.ok == null ? '<span></span>' : r.cur ? `<span class="chip" title="Tope de este mes">Tope ${eurR(r.tp)}</span>` : r.ok ? `<span class="chip ok" title="Gastaste ${eur(r.sv)} de ${eur(r.tp)} (sin fijos)">${I('check', 'sm')} Tope</span>` : `<span class="chip er" title="Gastaste ${eur(r.sv)} de ${eur(r.tp)} (sin fijos)">+${eur(r.sv - r.tp)}</span>`}</div>`
     );
   return panel(
     'fin',
     'ahist',
     `${I('piggy-bank')} Tu ahorro mes a mes`,
-    `<div class="ahk"><div><span class="mu">Ahorrado en ${yr}</span><b class="${savY < 0 ? 'er' : 'ok'}">${eurR(savY)}</b></div>${bal != null ? `<div><span class="mu">Cuenta de ahorro</span><b>${eurR(bal)}</b><small>${intT ? `+${eur(intT)} intereses` : ''}</small></div>` : ''}${T.length ? `<div><span class="mu">Racha en el tope</span><b>${racha} ${racha === 1 ? 'mes' : 'meses'}</b><small>${T.filter(r => r.ok).length}/${T.length} cumplidos</small></div>` : `<div><span class="mu">Racha en el tope</span><b>—</b><small>Desde este mes</small></div>`}</div>
+    `<div class="ahk"><div><span class="mu">Ahorrado en ${yr}</span><b class="${savY < 0 ? 'er' : 'ok'}">${eurR(savY)}</b></div>${bal != null ? `<div><span class="mu">Cuenta de ahorro</span><b>${eurR(bal)}</b><small>${intT ? `+${eur(intT)} intereses` : ''}</small></div>` : ''}${!planOn ? '' : T.length ? `<div><span class="mu">Racha en el tope</span><b>${racha} ${racha === 1 ? 'mes' : 'meses'}</b><small>${T.filter(r => r.ok).length}/${T.length} cumplidos</small></div>` : `<div><span class="mu">Racha en el tope</span><b>—</b><small>Desde este mes</small></div>`}</div>
     <div class="ahbars" role="img" aria-label="Ahorrado cada mes" style="grid-template-columns:repeat(${R.length},minmax(0,1fr))">${bars}</div>
     <div class="ahrs">${fold('ahr', rows, 3)}</div>`,
     'wide'
