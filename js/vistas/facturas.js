@@ -38,6 +38,10 @@ const fxSub = (f, s) => {
     return `<b class="fxpzb" style="--c:${col(f.cat)}">${pz.k ? `Plazo ${Math.min(pz.k, pz.n)} de ${pz.n}` : pz.n + ' plazos'}</b>${s.next ? (s.next === pz.ult ? ' · Último el ' : ' · Próximo ') + fdc(s.next) : ''}${man}`;
   return `${fxFreq(f)}${fxEnd(f, s.next)}${man}${s.paid && s.next && Math.abs(dd(s.paid.date, s.next)) > 10 ? ' · Próximo ' + fdc(s.next) : ''}`;
 };
+/* Fila de Facturas con la misma forma que un movimiento: a la izquierda nombre, nota y detalle (toca para ver la ficha,
+   que tiene «Editar»); a la derecha la etiqueta arriba, alineada con el nombre, y el importe debajo. */
+const fxRow = (f, sub, chip, amt, cls = '') =>
+  `<div class="row txrow fxrow${cls}">${tile(CI[f.cat] || 'receipt', col(f.cat))}<button class="g link txg" data-a="fxinf" data-i="${f.id}" title="Ver la ficha: lo que cuesta, cargos y editar"><span class="tt">${esc(f.name)}</span>${fxNoteL(f)}<span class="meta mu">${sub}</span></button><span class="txr"><span class="txc">${chip}</span><span class="txb"><span class="amt${f.t === 'i' ? ' ok' : ''}">${amt}</span></span></span></div>`;
 const fxItem = f => {
   if (f.var) return fxVarItem(f);
   const s0 = fxState(f),
@@ -53,11 +57,17 @@ const fxItem = f => {
       : s.next
         ? `<span class="chip${f.t === 'g' && dayDiff(s.next) <= 7 ? ' wa' : ''}">Próximo ${fdc(s.next)}</span>`
         : '<span class="chip">Terminado</span>';
-  return `<div class="row brow">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><button class="link tt fxn" data-a="fxinf" data-i="${f.id}" title="Ver lo que cuesta al año">${esc(f.name)}</button>${fxNoteL(f)}<span class="mu">${fxSub(f, s)}</span></span>${chip}<span class="amt ${f.t === 'i' ? 'ok' : ''}">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
+  return fxRow(f, fxSub(f, s), chip, eur(f.amt));
 };
 /* Fila de un pago en pausa (p. ej. lo paga otra persona por ahora): no cuenta; botón para quitar la pausa. */
 const fxPauseItem = f =>
-  `<div class="row brow fxpz">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><button class="link tt fxn" data-a="fxinf" data-i="${f.id}" title="Ver lo que cuesta al año">${esc(f.name)}</button>${fxNoteL(f)}<span class="mu">${fxFreq(f)} · No cuenta mientras esté en pausa</span></span><button class="btn sm ghost" data-a="fxp" data-i="${f.id}" title="Empezar a contarlo en tus pagos">Reanudar</button><span class="amt">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
+  fxRow(
+    f,
+    `${fxFreq(f)} · No cuenta mientras esté en pausa`,
+    `<button class="chip" data-a="fxp" data-i="${f.id}" title="Empezar a contarlo en tus pagos">Reanudar</button>`,
+    eur(f.amt),
+    ' fxpz'
+  );
 /* Ficha de un pago o ingreso (al tocar su nombre): cuánto supone al año y al mes, lo pagado este año y los últimos cargos. */
 /* Ficha de un pago o ingreso (al tocar su nombre), con el color de su categoría: cuánto supone al año y al mes,
    lo pagado este año (barra frente a lo previsto) y los últimos cargos. */
@@ -111,7 +121,12 @@ function fxInfo(f) {
 /* Fila de un pago variable: lo que lleva este mes frente a lo previsto. */
 const fxVarItem = f => {
   const v = fxVar(f, MN(new Date()));
-  return `<div class="row brow">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><button class="link tt fxn" data-a="fxinf" data-i="${f.id}" title="Ver lo que cuesta al año">${esc(f.name)}</button>${fxNoteL(f)}<span class="mu">${fxFreq(f)}${fxEnd(f)} · ${v.n} cargo${v.n === 1 ? '' : 's'} este mes</span></span><span class="chip ${v.s >= f.amt ? 'ok' : ''}">Llevas ${eur(v.s)}</span><span class="amt">≈ ${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
+  return fxRow(
+    f,
+    `${fxFreq(f)}${fxEnd(f)} · ${v.n} cargo${v.n === 1 ? '' : 's'} este mes`,
+    `<span class="chip ${v.s >= f.amt ? 'ok' : ''}">Llevas ${eur(v.s)}</span>`,
+    '≈ ' + eur(f.amt)
+  );
 };
 /* Pagos de Facturas de este mes: total previsto (lo real si ya llegó), lo pagado y la lista (incluye lo atrasado del mes anterior). */
 function fxMonth() {
@@ -209,7 +224,7 @@ function vFact() {
     pag: panel(
       'fact',
       'pag',
-      `${I('receipt')} Pagos <span class="cnt">· ${cap(mes)}: ${eur(tot)}</span>`,
+      `${I('receipt')} Pagos <span class="cnt">· ${cap(mes)}: <b class="neg">${eur(tot)}</b></span>`,
       pays.length || paus.length ? pag : empty('Sin pagos todavía.'),
       'wide'
     )
