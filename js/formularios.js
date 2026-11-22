@@ -221,7 +221,7 @@ const txHint = (c, a, date, nodev) => {
 function txEdit(x) {
   const bk = fromBank(x),
     sp = isSplit(x),
-    d = { t: x.t, desc: x.desc || '', amt: (+x.amt).toFixed(2).replace('.', ','), date: x.date, cat: x.cat, note: x.note || '' },
+    d = { t: x.t, desc: x.desc || '', amt: (+x.amt).toFixed(2).replace('.', ','), date: x.date, cat: x.cat, note: txNote(x) },
     gi = d.t === 'g';
   const cats = gi ? GCATS : CATS;
   const o = modal(
@@ -264,8 +264,16 @@ function txEdit(x) {
       x.amt = a;
       x.date = dt;
     }
-    const nt0 = v('#ex5');
-    if (nt0) x.note = nt0;
+    const nt0 = v('#ex5'),
+      fb = x.fid && S.fixed.find(f => f.id === x.fid);
+    if (fb) {
+      // Cargo de un pago fijo: la nota va al pago y la ven todos sus cargos (se quitan las copias iguales de cada cargo).
+      S.tx.forEach(y => {
+        if (y.fid === fb.id && (y === x || y.note === d.note)) delete y.note;
+      });
+      if (nt0) fb.note = nt0;
+      else delete fb.note;
+    } else if (nt0) x.note = nt0;
     else delete x.note;
     const ex = o.querySelector('#ex6');
     if (ex && ex.checked) x.ex = true;

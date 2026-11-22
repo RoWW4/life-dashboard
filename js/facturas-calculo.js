@@ -6,6 +6,12 @@
    pause: true = en pausa (de momento lo paga otra persona): no cuenta en ningún sitio hasta quitar la pausa.
    var: true = pago variable sin día fijo (amt es lo previsto al mes; se enlazan todos los cargos con su concepto k).
    La app no apunta gastos sola: un pago está hecho cuando hay un movimiento con su fid (del banco o marcado a mano). */
+/* Nota de un pago fijo (p. ej. de qué es un pago a plazos): se guarda en el pago y la comparten todos sus cargos.
+   Si aún no tiene, vale la de cualquiera de sus cargos (notas puestas antes en un solo movimiento). */
+const fxNote = f =>
+  !f ? '' : f.note || (S.tx.filter(x => x.fid === f.id && x.note).sort((a, b) => b.date.localeCompare(a.date))[0] || {}).note || '';
+/* Nota que se ve en un movimiento: la suya o, si es de un pago fijo, la del pago. */
+const txNote = x => x.note || (x.fid ? fxNote(S.fixed.find(f => f.id === x.fid)) : '');
 const mIdx = m => +m.slice(0, 4) * 12 + +m.slice(5, 7);
 const fxFq = f =>
   f.var ? 'Variable' : f.once ? 'Única' : f.every === 3 ? 'Trimestral' : f.every === 6 ? 'Semestral' : f.month ? 'Anual' : 'Mensual';

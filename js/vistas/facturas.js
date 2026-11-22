@@ -71,6 +71,7 @@ function fxInfo(f) {
     : `<div class="fxprog"><div class="fxpt"><span>${G ? 'Pagado' : 'Cobrado'} en ${y}</span><b>${eur(hy)}</b></div>${f.once || lim ? '' : `<div class="fxpb"><i style="width:${p.toFixed(0)}%"></i></div>`}<div class="mu">${LY.length} cargo${LY.length === 1 ? '' : 's'}${an && !f.once && !lim ? ' · ' + Math.round(p) + ' % de lo previsto en el año' : ''}</div></div>`;
   const o = modal(
     `<div class="fxinf" style="--c:${c}"><div class="fxhero">${tile(CI[f.cat] || 'receipt', c)}<h3>${esc(f.name)}</h3><span class="mu">${esc(f.cat || '')} · ${fxWhen(f)}</span>${hero}</div>
+    ${fxNote(f) ? `<div class="fxnote">${I('file-text', 'sm')} ${esc(cap(fxNote(f)))}</div>` : ''}
     ${prog}
     ${G && !f.once && !lim ? `<div class="mu" style="margin:10px 0 4px">¿Lo sigues usando? Darlo de baja te ahorra ${eur(an)} al año.</div>` : ''}
     ${

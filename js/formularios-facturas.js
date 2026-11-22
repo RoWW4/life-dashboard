@@ -43,6 +43,7 @@ function fixedForm(f, isNew) {
     <div class="mu r-v">Variable: varios cargos al mes sin día fijo (p. ej. gasolina). Pon en Importe lo que sueles gastar al mes; se juntan todos los cargos del banco con este nombre.</div>
     <label class="r-v">También reconoce (palabras separadas por comas)<input id="ff9" value="${esc((f.kx || []).join(', '))}" placeholder="Ej. gasolina, repsol"></label>
     <div class="two r-f"><label>Empieza en<input id="ff5" type="month" value="${f.from || ''}"></label><label>Termina en (opcional)<input id="ff10" type="month" value="${(f.until || '').slice(0, 7)}"></label></div>
+    <label>Nota (opcional)<input id="ff12" value="${esc(isNew ? '' : fxNote(f))}" placeholder="De qué es, p. ej. lo que se compró a plazos"></label>
     <div class="mu">Mientras no llegue el mes de inicio sale como previsto y no cuenta como gasto. Vacío = ya se está cobrando. «Termina en» es el último mes que se paga; vacío = sin fin. Cuando llega el cargo del banco se marca como pagado solo.</div><div class="chkr"><label class="chk"><input type="checkbox" id="ff11" ${f.pause ? 'checked' : ''}> En pausa</label><button type="button" class="ib inf" aria-label="Qué es en pausa" aria-expanded="false">${I('info', 'sm')}</button></div><div class="infx mu" hidden>Se queda guardado en Facturas pero no cuenta en los pagos, el disponible ni los avisos. Quita la pausa cuando empieces a pagarlo tú.</div></div><div class="acts">${isNew ? '' : `<button class="btn ghost danger" data-a="df" data-i="${f.id}">${I('trash-2', 'sm')} Quitar</button>`}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`);
   const v = s => o.querySelector(s).value.trim(),
     sh = () => {
@@ -87,6 +88,14 @@ function fixedForm(f, isNew) {
     const done = () => {
       ['day', 'days', 'month', 'every', 'once', 'from', 'until', 'var', 'kx'].forEach(k => delete f[k]);
       Object.assign(f, { name: n, amt: a, t: v('#ff0'), cat: v('#ff4') });
+      const nt0 = v('#ff12'),
+        nt1 = isNew ? '' : fxNote(f);
+      if (nt0 !== nt1)
+        S.tx.forEach(x => {
+          if (x.fid === f.id && x.note === nt1) delete x.note;
+        });
+      if (nt0) f.note = nt0;
+      else delete f.note;
       if (o.querySelector('#ff11').checked) f.pause = true;
       else delete f.pause;
       if (q === 'Variable') {
