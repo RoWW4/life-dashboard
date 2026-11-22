@@ -453,6 +453,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 /* Móvil: en las ventanas, los botones de cada fila se reparten el ancho a partes iguales (sin huecos ni botones
    descolgados) y el texto largo puede ir en dos líneas. */
 @media(max-width:760px){
+  .dlg .acts{align-items:stretch}
   .dlg .acts .sp{display:none}
   .dlg .acts>.btn{flex:1 1 0;min-width:0;white-space:normal;text-align:center;padding-left:10px;padding-right:10px;min-height:44px}
 }
