@@ -7,6 +7,11 @@ name: Sincronizar banco
 # También se puede lanzar a mano (Run workflow).
 on:
   workflow_dispatch:
+    inputs:
+      probar_retenciones:
+        description: 'Probar si el banco da las retenciones (una consulta más; usar solo a mano)'
+        type: boolean
+        default: false
 
 # Nunca dos sincronizaciones a la vez (p. ej. una manual y una programada).
 concurrency:
@@ -35,3 +40,4 @@ jobs:
           LDB_USER_ID: ${{ secrets.LDB_USER_ID }}
           # Correos de fallo en pausa desde el 08/11/2026: el error se sigue guardando y se ve en el panel. Para reactivarlos, poner '0'.
           SIN_CORREO: '1'
+          PROBAR_RETENCIONES: ${{ inputs.probar_retenciones }}

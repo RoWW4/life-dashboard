@@ -9,7 +9,7 @@ import { generateKeyPairSync } from 'node:crypto';
 const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
 const PEM = privateKey.export({ type: 'pkcs8', format: 'pem' });
 
-async function run({ supa503 = 0 } = {}) {
+async function run({ supa503 = 0, probar = '', pdngStatus = 200 } = {}) {
   const calls = []; let fails = supa503;
   const srv = createServer((q, r) => {
     let b = ''; q.on('data', c => b += c); q.on('end', () => {
@@ -17,6 +17,10 @@ async function run({ supa503 = 0 } = {}) {
       const json = (code, v) => { r.writeHead(code, { 'content-type': 'application/json' }); r.end(v === undefined ? '' : JSON.stringify(v)); };
       const u = q.url;
       if (u.startsWith('/sessions/')) return json(200, { status: 'AUTHORIZED', accounts: ['cuenta-prueba'], access: { valid_until: '2027-01-01T00:00:00Z' } });
+      if (u.includes('/transactions') && u.includes('transaction_status=PDNG'))
+        return pdngStatus !== 200 ? json(pdngStatus, { message: 'no admitido' }) : json(200, { transactions: [
+          { status: 'PDNG', transaction_date: '2026-11-09', transaction_amount: { amount: '3.00', currency: 'EUR' }, credit_debit_indicator: 'DBIT', remittance_information: ['Pendiente'] },
+          { status: 'PDNG', transaction_date: '2026-11-10', transaction_amount: { amount: '7.50', currency: 'EUR' }, credit_debit_indicator: 'DBIT', remittance_information: ['Retenida'] }] });
       if (u.includes('/transactions')) return json(200, { transactions: [
         { status: 'BOOK', entry_reference: 'r1', booking_date: '2026-11-08', transaction_amount: { amount: '10.00', currency: 'EUR' }, credit_debit_indicator: 'DBIT', remittance_information: ['Prueba'] },
         { status: 'PDNG', transaction_date: '2026-11-09', transaction_amount: { amount: '3.00', currency: 'EUR' }, credit_debit_indicator: 'DBIT', remittance_information: ['Pendiente'] }] });
@@ -30,7 +34,7 @@ async function run({ supa503 = 0 } = {}) {
   const url = `http://localhost:${srv.address().port}`;
   const code = await new Promise(res => spawn(process.execPath, ['scripts/bank-sync.mjs'], { env: { ...process.env,
     EB_API: url, EB_APP_ID: 'app', EB_PRIVATE_KEY: PEM, SUPABASE_URL: url, SUPABASE_SERVICE_KEY: 'clave-de-prueba',
-    LDB_USER_ID: '00000000-0000-0000-0000-000000000000', GITHUB_STEP_SUMMARY: '', SIN_CORREO: '1' } }).on('exit', res));
+    LDB_USER_ID: '00000000-0000-0000-0000-000000000000', GITHUB_STEP_SUMMARY: '', SIN_CORREO: '1', PROBAR_RETENCIONES: probar } }).on('exit', res));
   srv.close();
   return { code, calls };
 }
@@ -72,4 +76,27 @@ test('«Conectar banco» con un código ya usado explica que el banco ya está c
   srv.close();
   assert.equal(code, 0, 'no sale como error');
   assert.match(readFileSync(sum, 'utf8'), /ya se había usado/);
+});
+
+test('sin la prueba de retenciones no se hace la consulta extra', async () => {
+  const { calls } = await run();
+  assert.equal(calls.filter(c => c.u.includes('transaction_status=PDNG')).length, 0);
+});
+
+test('prueba de retenciones: una sola consulta, las nuevas se guardan y la repetida no se duplica', async () => {
+  const { code, calls } = await run({ probar: 'true' });
+  assert.equal(code, 0);
+  assert.equal(calls.filter(c => c.u.includes('transaction_status=PDNG')).length, 1);
+  const ins = calls.find(c => c.m === 'POST' && c.u.startsWith('/rest/v1/bank_pending'));
+  assert.deepEqual(ins.body.map(r => r.amount).sort(), ['-3.00', '-7.50']);
+  const lg = calls.filter(c => c.u.startsWith('/rest/v1/ops_log')).map(c => JSON.stringify(c.body)).join(' ');
+  assert.match(lg, /aceptó la consulta de retenciones: 2/);
+});
+
+test('prueba de retenciones: si el banco la rechaza, la sincronización normal sigue bien', async () => {
+  const { code, calls } = await run({ probar: 'true', pdngStatus: 400 });
+  assert.equal(code, 0);
+  assert.equal(calls.filter(c => c.u.includes('transaction_status=PDNG')).length, 1, 'sin reintentos');
+  assert.ok(calls.find(c => c.m === 'POST' && c.u.startsWith('/rest/v1/bank_tx')), 'los movimientos se guardan igual');
+  assert.deepEqual(calls.filter(c => c.u === '/rest/v1/rpc/ldb_job').map(c => c.body.p_event), ['start', 'ok']);
 });

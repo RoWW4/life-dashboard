@@ -18,6 +18,41 @@ if (!st || !st.session_id) { await job('bank-sync', 'ok'); summary('Banco aún n
 const diag = [];
 const accUrl = acc => `/accounts/${encodeURIComponent(acc)}`;
 
+/* Retención (PDNG) a bank_pending. La de la consulta de prueba no se repite si ya vino en la normal. */
+const pend = new Map(),
+  pendKeys = new Set();
+function addPend(acc, t, date, amount, desc, probe = false) {
+  const d = t.transaction_date || date, k = `${acc}|${d}|${amount}|${desc}|${t.entry_reference || t.transaction_id || ''}`;
+  if (probe && pendKeys.has(k)) return;
+  pendKeys.add(k);
+  const pid = 'p' + crypto.createHash('sha1').update(`${acc}|${d}|${amount}|${desc}|${pend.size}`).digest('hex').slice(0, 24);
+  pend.set(pid, { id: pid, user_id: uid(), conn: CONN, booking_date: d, amount: amount.toFixed(2), description: desc.slice(0, 300) });
+}
+/* Prueba a mano (Run workflow con «probar_retenciones»): pide al banco solo las retenciones de los últimos 10 días.
+   Una sola llamada, sin reintentos (el banco permite pocas consultas al día). Si las da, se guardan como pendientes.
+   En el resumen solo se escribe cuántas y de qué tipo, nunca importes ni conceptos (el resumen de GitHub es público). */
+const PROBAR = /^(1|true)$/.test(process.env.PROBAR_RETENCIONES || '');
+const prueba = [];
+async function probarRetenciones(acc) {
+  try {
+    const r = await eb(`${accUrl(acc)}/transactions?${new URLSearchParams({ date_from: day(10), transaction_status: 'PDNG' })}`, {}, 1);
+    const L = r.transactions || [], est = {};
+    L.forEach(t => (est[t.status || 'sin estado'] = (est[t.status || 'sin estado'] || 0) + 1));
+    prueba.push(`✅ El banco aceptó la consulta de retenciones: ${L.length} movimiento(s)${L.length ? ' · ' + Object.entries(est).map(([k, n]) => `${k}: ${n}`).join(', ') : ''}`);
+    for (const t of L) {
+      if (t.status && t.status !== 'PDNG') continue;
+      const raw = +(t.transaction_amount && t.transaction_amount.amount);
+      const date = t.booking_date || t.value_date || t.transaction_date;
+      if (!raw || !date) continue;
+      const amount = t.credit_debit_indicator ? Math.abs(raw) * (t.credit_debit_indicator === 'DBIT' ? -1 : 1) : raw;
+      const party = amount < 0 ? t.creditor && t.creditor.name : t.debtor && t.debtor.name;
+      addPend(acc, t, date, amount, [party, ...(t.remittance_information || [])].filter(Boolean).join(' · ').replace(/\s+/g, ' ').trim(), true);
+    }
+  } catch (e) {
+    prueba.push(`❌ El banco rechazó la consulta de retenciones: ${e.status ?? ''} ${(e.body || e.message).slice(0, 200)}`);
+  }
+}
+
 async function fetchTx(acc, params) {
   const out = [];
   let ck;
@@ -49,7 +84,7 @@ try {
   if (sess.status && sess.status !== 'AUTHORIZED') throw new Error(`El permiso del banco no está activo (estado ${sess.status}). Renuévalo con «Conectar banco».`);
   const accounts = (sess.accounts || st.accounts || []).map(x => (typeof x === 'string' ? x : x.uid)).filter(Boolean);
   const from = st.last_sync ? day(DAYS) : new Date().toISOString().slice(0, 8) + '01';
-  const rows = new Map(), pend = new Map();
+  const rows = new Map();
 
   for (const acc of accounts) {
     let list;
@@ -71,16 +106,14 @@ try {
       const desc = [party, ...(t.remittance_information || [])].filter(Boolean).join(' · ').replace(/\s+/g, ' ').trim();
       // Retenciones de tarjeta y bizums sin cerrar: van a bank_pending, que se rehace en cada sincronización.
       if (t.status && t.status !== 'BOOK') {
-        if (t.status !== 'PDNG') continue;
-        const pid = 'p' + crypto.createHash('sha1').update(`${acc}|${t.transaction_date || date}|${amount}|${desc}|${pend.size}`).digest('hex').slice(0, 24);
-        pend.set(pid, { id: pid, user_id: uid(), conn: CONN, booking_date: t.transaction_date || date, amount: amount.toFixed(2), description: desc.slice(0, 300) });
+        if (t.status === 'PDNG') addPend(acc, t, date, amount, desc);
         continue;
       }
       let ref = t.entry_reference || t.transaction_id;
       if (!ref) { const b = `${date}|${amount}|${desc}`; seen[b] = (seen[b] || 0) + 1; ref = b + '|' + seen[b]; }
       const id = 'a' + crypto.createHash('sha1').update(acc + '|' + ref).digest('hex').slice(0, 24);
       rows.set(id, { id, user_id: uid(), conn: CONN, account: acc.slice(-6), booking_date: date, amount: amount.toFixed(2), currency: (t.transaction_amount && t.transaction_amount.currency) || 'EUR', description: desc.slice(0, 300) });
-    }
+    }  if (PROBAR) await probarRetenciones(acc);
   }
 
   // Al renovar el permiso el banco da otro identificador a la cuenta y los ids cambian: los movimientos
@@ -106,11 +139,12 @@ try {
   if (pend.size) await sb('bank_pending?on_conflict=id', { method: 'POST', body: [...pend.values()], prefer: 'resolution=merge-duplicates,return=minimal' });
   await sb(`bank_pending?user_id=eq.${uid()}&conn=eq.${CONN}${pend.size ? `&id=not.in.(${[...pend.keys()].join(',')})` : ''}`, { method: 'DELETE', prefer: 'return=minimal' });
   await setStatus({ last_sync: new Date().toISOString(), last_error: null, fail_count: 0, valid_until: (sess.access && sess.access.valid_until) || st.valid_until, ...(bal || {}) }, CONN);
-  await log('INFO', 'bank-sync', 'Sincronización correcta', { func: 'main', detail: `${total} revisados, ${rows.size} nuevos, ${pend.size} pendientes${diag.length ? ', con consulta reducida' : ''}` });
+  await log('INFO', 'bank-sync', 'Sincronización correcta', { func: 'main', detail: `${total} revisados, ${rows.size} nuevos, ${pend.size} pendientes${diag.length ? ', con consulta reducida' : ''}${prueba.length ? ' | Prueba de retenciones: ' + prueba.join(' | ') : ''}` });
   await job('bank-sync', 'ok');
   summary(`## ✅ Sincronizado\n\n${total} movimientos revisados (${rows.size} nuevos) y ${pend.size} pendientes en ${accounts.length} cuenta(s). Los repetidos se ignoran.` +
     (bal ? `\n\nSaldo de la cuenta guardado (tipo ${bal.balance_type}).` : '\n\nEl banco no dio el saldo de la cuenta: se mantiene el último.') +
-    (diag.length ? `\n\n### ⚠️ La consulta normal falló y se usó una más corta\n${diag.map(d => '- ' + redact(d)).join('\n')}` : ''));
+    (diag.length ? `\n\n### ⚠️ La consulta normal falló y se usó una más corta\n${diag.map(d => '- ' + redact(d)).join('\n')}` : '') +
+    (prueba.length ? `\n\n### Prueba de retenciones\n${prueba.map(d => '- ' + redact(d)).join('\n')}` : ''));
 } catch (e) {
   // Fallo pasajero del banco: se apunta y la ejecución termina «bien» (sin correo) hasta que se repita FAILMAX veces.
   const soft = transient(e), fc = soft ? (st.fail_count || 0) + 1 : FAILMAX, quiet = soft && fc < FAILMAX;
