@@ -21,6 +21,23 @@ const fxEnd = (f, next) => {
   const n = next ? fxOcc(f, next, f.until).length : 0;
   return ` · Hasta ${MS[+f.until.slice(5, 7)]}${f.until.slice(0, 4) === TD().slice(0, 4) ? '' : ' ' + f.until.slice(0, 4)}${n ? ` · Quedan ${n} pago${n === 1 ? '' : 's'}` : ''}`;
 };
+/* Nota del pago bajo su nombre (sirve para distinguir dos pagos con el mismo nombre, p. ej. dos compras a plazos). */
+const fxNoteL = f => (fxNote(f) ? `<span class="mu fxnl">${I('file-text', 'sm')}<span>${esc(cap(fxNote(f)))}</span></span>` : '');
+/* Plazos de un pago con inicio y fin: en cuál vas (k de n) y la fecha del último. */
+const fxPz = f => {
+  if (!f.until || !f.from || f.once || f.var) return null;
+  const all = fxOcc(f, f.from + '-01', f.until);
+  return all.length > 1 ? { k: all.filter(d => d <= TD()).length, n: all.length, ult: all[all.length - 1] } : null;
+};
+/* Texto bajo el nombre, corto: a plazos, «Plazo 2 de 3» destacado y el próximo (o el último) cobro; si no, la frecuencia y el fin.
+   «Llegó del banco» no se dice (ya lo dice «Pagado»); solo se avisa si se marcó a mano y el banco aún no lo ha cobrado. */
+const fxSub = (f, s) => {
+  const pz = fxPz(f),
+    man = s.paid && !fromBank(s.paid) ? ' · Sin cargo del banco aún' : '';
+  if (pz)
+    return `<b class="fxpzb" style="--c:${col(f.cat)}">${pz.k ? `Plazo ${Math.min(pz.k, pz.n)} de ${pz.n}` : pz.n + ' plazos'}</b>${s.next ? (s.next === pz.ult ? ' · Último el ' : ' · Próximo ') + fdc(s.next) : ''}${man}`;
+  return `${fxFreq(f)}${fxEnd(f, s.next)}${man}${s.paid && s.next && Math.abs(dd(s.paid.date, s.next)) > 10 ? ' · Próximo ' + fdc(s.next) : ''}`;
+};
 const fxItem = f => {
   if (f.var) return fxVarItem(f);
   const s0 = fxState(f),
@@ -36,11 +53,11 @@ const fxItem = f => {
       : s.next
         ? `<span class="chip${f.t === 'g' && dayDiff(s.next) <= 7 ? ' wa' : ''}">Próximo ${fdc(s.next)}</span>`
         : '<span class="chip">Terminado</span>';
-  return `<div class="row brow">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><button class="link tt fxn" data-a="fxinf" data-i="${f.id}" title="Ver lo que cuesta al año">${esc(f.name)}</button><span class="mu">${fxFreq(f)}${fxEnd(f, s.next)}${s.paid ? (fromBank(s.paid) ? ' · Llegó del banco' : ' · Apuntado en el panel, aún sin cargo del banco') + (s.next && Math.abs(dd(s.paid.date, s.next)) > 10 ? ' · Próximo ' + fdc(s.next) : '') : ''}</span></span>${chip}<span class="amt ${f.t === 'i' ? 'ok' : ''}">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
+  return `<div class="row brow">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><button class="link tt fxn" data-a="fxinf" data-i="${f.id}" title="Ver lo que cuesta al año">${esc(f.name)}</button>${fxNoteL(f)}<span class="mu">${fxSub(f, s)}</span></span>${chip}<span class="amt ${f.t === 'i' ? 'ok' : ''}">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
 };
 /* Fila de un pago en pausa (p. ej. lo paga otra persona por ahora): no cuenta; botón para quitar la pausa. */
 const fxPauseItem = f =>
-  `<div class="row brow fxpz">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><button class="link tt fxn" data-a="fxinf" data-i="${f.id}" title="Ver lo que cuesta al año">${esc(f.name)}</button><span class="mu">${fxFreq(f)} · No cuenta mientras esté en pausa</span></span><button class="btn sm ghost" data-a="fxp" data-i="${f.id}" title="Empezar a contarlo en tus pagos">Reanudar</button><span class="amt">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
+  `<div class="row brow fxpz">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><button class="link tt fxn" data-a="fxinf" data-i="${f.id}" title="Ver lo que cuesta al año">${esc(f.name)}</button>${fxNoteL(f)}<span class="mu">${fxFreq(f)} · No cuenta mientras esté en pausa</span></span><button class="btn sm ghost" data-a="fxp" data-i="${f.id}" title="Empezar a contarlo en tus pagos">Reanudar</button><span class="amt">${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
 /* Ficha de un pago o ingreso (al tocar su nombre): cuánto supone al año y al mes, lo pagado este año y los últimos cargos. */
 /* Ficha de un pago o ingreso (al tocar su nombre), con el color de su categoría: cuánto supone al año y al mes,
    lo pagado este año (barra frente a lo previsto) y los últimos cargos. */
@@ -94,7 +111,7 @@ function fxInfo(f) {
 /* Fila de un pago variable: lo que lleva este mes frente a lo previsto. */
 const fxVarItem = f => {
   const v = fxVar(f, MN(new Date()));
-  return `<div class="row brow">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><button class="link tt fxn" data-a="fxinf" data-i="${f.id}" title="Ver lo que cuesta al año">${esc(f.name)}</button><span class="mu">${fxFreq(f)}${fxEnd(f)} · ${v.n} cargo${v.n === 1 ? '' : 's'} este mes</span></span><span class="chip ${v.s >= f.amt ? 'ok' : ''}">Llevas ${eur(v.s)}</span><span class="amt">≈ ${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
+  return `<div class="row brow">${tile(CI[f.cat] || 'receipt', col(f.cat))}<span class="g"><button class="link tt fxn" data-a="fxinf" data-i="${f.id}" title="Ver lo que cuesta al año">${esc(f.name)}</button>${fxNoteL(f)}<span class="mu">${fxFreq(f)}${fxEnd(f)} · ${v.n} cargo${v.n === 1 ? '' : 's'} este mes</span></span><span class="chip ${v.s >= f.amt ? 'ok' : ''}">Llevas ${eur(v.s)}</span><span class="amt">≈ ${eur(f.amt)}</span><button class="ib" data-a="ef" data-i="${f.id}" aria-label="Editar">${I('pencil')}</button></div>`;
 };
 /* Pagos de Facturas de este mes: total previsto (lo real si ya llegó), lo pagado y la lista (incluye lo atrasado del mes anterior). */
 function fxMonth() {
