@@ -2,7 +2,7 @@
 // Solo la conexión de gastos (openbank); la cuenta de ahorro la sincroniza savings-sync.mjs en sus propias tablas.
 // El panel los recoge al abrirse, los clasifica y evita duplicados con fijos y facturas.
 import crypto from 'node:crypto';
-import { eb, sb, uid, getStatus, setStatus, summary, transient, FAILMAX, pickBalance } from './eb.mjs';
+import { eb, sb, uid, getStatus, setStatus, summary, transient, FAILMAX, pickBalance, heldBalance } from './eb.mjs';
 import { log, job, guard, redact } from './log.mjs';
 
 guard('bank-sync');
@@ -16,6 +16,8 @@ const st = await getStatus(CONN).catch(async e => { await log('ERROR', 'bank-syn
 if (!st || !st.session_id) { await job('bank-sync', 'ok'); summary('Banco aún no conectado: ejecuta antes «Conectar banco».'); process.exit(0); }
 
 const diag = [];
+const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(new Date()); // AAAA-MM-DD en España
+let bookedToday = 0, held = null;
 const accUrl = acc => `/accounts/${encodeURIComponent(acc)}`;
 
 /* Retención (PDNG) a bank_pending. La de la consulta de prueba no se repite si ya vino en la normal. */
@@ -109,6 +111,7 @@ try {
         if (t.status === 'PDNG') addPend(acc, t, date, amount, desc);
         continue;
       }
+      if (acc === accounts[0] && date === today) bookedToday += amount;
       let ref = t.entry_reference || t.transaction_id;
       if (!ref) { const b = `${date}|${amount}|${desc}`; seen[b] = (seen[b] || 0) + 1; ref = b + '|' + seen[b]; }
       const id = 'a' + crypto.createHash('sha1').update(acc + '|' + ref).digest('hex').slice(0, 24);
@@ -133,17 +136,24 @@ try {
     const { balances = [] } = await eb(`${accUrl(accounts[0])}/balances`, {}, 1);
     const b = pickBalance(balances);
     if (b) bal = { balance: b.amount.toFixed(2), balance_type: b.type, balance_at: new Date().toISOString() };
+    // Retenciones sin detalle: si el banco no las manda como movimiento, se apunta una sola pendiente con el total.
+    held = heldBalance(balances, bookedToday);
+    if (held.held < 0 && !pend.size) {
+      const pid = 'p' + crypto.createHash('sha1').update(`${accounts[0]}|retenido`).digest('hex').slice(0, 24);
+      pend.set(pid, { id: pid, user_id: uid(), conn: CONN, booking_date: today, amount: held.held.toFixed(2), description: 'Retenido por el banco (sin detalle)' });
+    }
   } catch (e) { diag.push(`⚠️ Saldo (/balances): ${e.status ?? ''} ${(e.body || e.message).slice(0, 120)}`); }
   if (rows.size) await sb('bank_tx?on_conflict=id', { method: 'POST', body: [...rows.values()], prefer: 'resolution=ignore-duplicates,return=minimal' });
   // Pendientes: primero se guardan los nuevos y después se quitan los que ya no están (si algo falla, nunca queda la lista vacía).
   if (pend.size) await sb('bank_pending?on_conflict=id', { method: 'POST', body: [...pend.values()], prefer: 'resolution=merge-duplicates,return=minimal' });
   await sb(`bank_pending?user_id=eq.${uid()}&conn=eq.${CONN}${pend.size ? `&id=not.in.(${[...pend.keys()].join(',')})` : ''}`, { method: 'DELETE', prefer: 'return=minimal' });
   await setStatus({ last_sync: new Date().toISOString(), last_error: null, fail_count: 0, valid_until: (sess.access && sess.access.valid_until) || st.valid_until, ...(bal || {}) }, CONN);
-  await log('INFO', 'bank-sync', 'Sincronización correcta', { func: 'main', detail: `${total} revisados, ${rows.size} nuevos, ${pend.size} pendientes${diag.length ? ', con consulta reducida' : ''}${prueba.length ? ' | Prueba de retenciones: ' + prueba.join(' | ') : ''}` });
+  await log('INFO', 'bank-sync', 'Sincronización correcta', { func: 'main', detail: `${total} revisados, ${rows.size} nuevos, ${pend.size} pendientes${diag.length ? ', con consulta reducida' : ''}${prueba.length ? ' | Prueba de retenciones: ' + prueba.join(' | ') : ''}${held ? ` | Saldos del banco: ${held.types.join(', ') || 'ninguno'}${held.pair ? ` (${held.pair}): ${held.held < 0 ? 'hay dinero retenido' : 'sin retenciones'}` : ''}` : ''}` });
   await job('bank-sync', 'ok');
   summary(`## ✅ Sincronizado\n\n${total} movimientos revisados (${rows.size} nuevos) y ${pend.size} pendientes en ${accounts.length} cuenta(s). Los repetidos se ignoran.` +
     (bal ? `\n\nSaldo de la cuenta guardado (tipo ${bal.balance_type}).` : '\n\nEl banco no dio el saldo de la cuenta: se mantiene el último.') +
     (diag.length ? `\n\n### ⚠️ La consulta normal falló y se usó una más corta\n${diag.map(d => '- ' + redact(d)).join('\n')}` : '') +
+    (held ? `\n\nSaldos que da el banco: ${held.types.join(', ') || 'ninguno'}${held.pair ? ` · ${held.held < 0 ? 'hay dinero retenido (se apunta como pendiente)' : 'sin retenciones'}` : ''}.` : '') +
     (prueba.length ? `\n\n### Prueba de retenciones\n${prueba.map(d => '- ' + redact(d)).join('\n')}` : ''));
 } catch (e) {
   // Fallo pasajero del banco: se apunta y la ejecución termina «bien» (sin correo) hasta que se repita FAILMAX veces.

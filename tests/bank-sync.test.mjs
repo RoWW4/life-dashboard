@@ -5,11 +5,12 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
 import { generateKeyPairSync } from 'node:crypto';
+import { heldBalance } from '../scripts/eb.mjs';
 
 const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
 const PEM = privateKey.export({ type: 'pkcs8', format: 'pem' });
 
-async function run({ supa503 = 0, probar = '', pdngStatus = 200 } = {}) {
+async function run({ supa503 = 0, probar = '', pdngStatus = 200, balances = [], txs = null } = {}) {
   const calls = []; let fails = supa503;
   const srv = createServer((q, r) => {
     let b = ''; q.on('data', c => b += c); q.on('end', () => {
@@ -21,10 +22,11 @@ async function run({ supa503 = 0, probar = '', pdngStatus = 200 } = {}) {
         return pdngStatus !== 200 ? json(pdngStatus, { message: 'no admitido' }) : json(200, { transactions: [
           { status: 'PDNG', transaction_date: '2026-11-09', transaction_amount: { amount: '3.00', currency: 'EUR' }, credit_debit_indicator: 'DBIT', remittance_information: ['Pendiente'] },
           { status: 'PDNG', transaction_date: '2026-11-10', transaction_amount: { amount: '7.50', currency: 'EUR' }, credit_debit_indicator: 'DBIT', remittance_information: ['Retenida'] }] });
+      if (u.includes('/transactions') && txs) return json(200, { transactions: txs });
       if (u.includes('/transactions')) return json(200, { transactions: [
         { status: 'BOOK', entry_reference: 'r1', booking_date: '2026-11-08', transaction_amount: { amount: '10.00', currency: 'EUR' }, credit_debit_indicator: 'DBIT', remittance_information: ['Prueba'] },
         { status: 'PDNG', transaction_date: '2026-11-09', transaction_amount: { amount: '3.00', currency: 'EUR' }, credit_debit_indicator: 'DBIT', remittance_information: ['Pendiente'] }] });
-      if (u.includes('/balances')) return json(200, { balances: [] });
+      if (u.includes('/balances')) return json(200, { balances });
       if (q.method === 'GET' && u.startsWith('/rest/v1/bank_connections')) return json(200, [{ session_id: 'sesion', last_sync: '2026-11-01T00:00:00Z', fail_count: 0 }]);
       if (q.method === 'GET' && u.startsWith('/rest/v1/bank_tx')) { if (fails-- > 0) return json(503, { message: 'unavailable' }); return json(200, []); }
       json(q.method === 'POST' ? 201 : 204);
@@ -99,4 +101,33 @@ test('prueba de retenciones: si el banco la rechaza, la sincronización normal s
   assert.equal(calls.filter(c => c.u.includes('transaction_status=PDNG')).length, 1, 'sin reintentos');
   assert.ok(calls.find(c => c.m === 'POST' && c.u.startsWith('/rest/v1/bank_tx')), 'los movimientos se guardan igual');
   assert.deepEqual(calls.filter(c => c.u === '/rest/v1/rpc/ldb_job').map(c => c.body.p_event), ['start', 'ok']);
+});
+
+const bal = (type, amount) => ({ balance_type: type, balance_amount: { amount: String(Math.abs(amount)), currency: 'EUR' }, credit_debit_indicator: amount < 0 ? 'DBIT' : 'CRDT' });
+
+test('dinero retenido: diferencia entre el saldo disponible y el contable', () => {
+  assert.equal(heldBalance([bal('ITBD', 500), bal('ITAV', 470)]).held, -30);
+  assert.equal(heldBalance([bal('CLBD', 500), bal('CLAV', 488.5)]).held, -11.5);
+  // contable del cierre y disponible de ahora: lo cobrado hoy (−20) no es retención
+  assert.equal(heldBalance([bal('CLBD', 500), bal('ITAV', 450)], -20).held, -30);
+  assert.equal(heldBalance([bal('CLBD', 500), bal('ITAV', 480)], -20).held, 0, 'solo lo cobrado hoy: nada retenido');
+  assert.equal(heldBalance([bal('CLBD', 500), bal('ITAV', 600)]).held, 0, 'disponible mayor (p. ej. crédito): no se toma por retención');
+  assert.equal(heldBalance([bal('CLBD', 500)]).held, 0, 'con un solo saldo no se puede saber');
+});
+
+test('el dinero retenido se guarda como una pendiente si el banco no manda las retenciones', async () => {
+  const txs = [{ status: 'BOOK', entry_reference: 'r1', booking_date: '2026-11-08', transaction_amount: { amount: '10.00', currency: 'EUR' }, credit_debit_indicator: 'DBIT', remittance_information: ['Prueba'] }];
+  const { code, calls } = await run({ txs, balances: [bal('CLBD', 500), bal('CLAV', 475)] });
+  assert.equal(code, 0);
+  const ins = calls.find(c => c.m === 'POST' && c.u.startsWith('/rest/v1/bank_pending'));
+  assert.ok(ins, 'se guarda la pendiente');
+  assert.deepEqual(ins.body.map(r => [r.amount, r.description]), [['-25.00', 'Retenido por el banco (sin detalle)']]);
+  const st = calls.find(c => c.m === 'POST' && c.u.startsWith('/rest/v1/bank_connections') && c.body.balance);
+  assert.equal(st.body.balance_type, 'CLBD', 'el saldo que se enseña sigue siendo el contable');
+});
+
+test('si el banco sí manda las retenciones, no se añade la del total', async () => {
+  const { calls } = await run({ balances: [bal('CLBD', 500), bal('CLAV', 497)] });
+  const ins = calls.find(c => c.m === 'POST' && c.u.startsWith('/rest/v1/bank_pending'));
+  assert.ok(ins.body.every(r => r.description !== 'Retenido por el banco (sin detalle)'));
 });

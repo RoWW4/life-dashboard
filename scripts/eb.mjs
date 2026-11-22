@@ -106,6 +106,24 @@ export function pickBalance(balances = []) {
   return b && Number.isFinite(amt) ? { amount: amt, type: b.balance_type || '' } : null;
 }
 
+/* Dinero retenido que el banco no da como movimiento (Openbank no manda las retenciones): diferencia entre el saldo
+   disponible (ya les quita lo retenido) y el contable. Si el contable es el del cierre (CLBD) y el disponible es el de
+   ahora (ITAV/XPCD), lo cobrado hoy está en uno y no en el otro: se descuenta (bookedToday, con signo).
+   Devuelve { held (negativo = retenido; 0 si no hay o no se puede saber), types }. */
+export function heldBalance(balances = [], bookedToday = 0) {
+  const by = {};
+  for (const b of balances) {
+    const a = +(b.balance_amount && b.balance_amount.amount) * (b.credit_debit_indicator === 'DBIT' ? -1 : 1);
+    if (b.balance_type && Number.isFinite(a) && !(b.balance_type in by)) by[b.balance_type] = a;
+  }
+  const types = Object.keys(by);
+  const pairs = [['ITBD', 'ITAV', 0], ['ITBD', 'XPCD', 0], ['CLBD', 'CLAV', 0], ['CLBD', 'ITAV', 1], ['CLBD', 'XPCD', 1]];
+  const p = pairs.find(([k, a]) => k in by && a in by);
+  if (!p) return { held: 0, types };
+  const d = Math.round((by[p[1]] - by[p[0]] - (p[2] ? bookedToday : 0)) * 100) / 100;
+  return { held: d < 0 ? d : 0, types, pair: p[0] + '/' + p[1] };
+}
+
 /* Tipo de un movimiento de la cuenta de ahorro: los intereses (y la retención de impuestos sobre ellos) son «interes»;
    el resto, dinero que se mete («aporte») o se saca («retirada»).
    Si el banco no da ningún texto (Trade Republic solo da fecha e importe), se decide por fecha e importe: los intereses
