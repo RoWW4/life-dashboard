@@ -345,9 +345,22 @@ function txListHTML() {
     (rows.length ? txMore(rows) : empty('No hay movimientos con estos filtros.'))
   );
 }
-/* Pendientes del banco que no estén ya apuntados a mano o como fijo (mismo importe, ±4 días). */
+/* Pendientes del banco que no estén ya apuntados a mano o como fijo (mismo importe, ±4 días).
+   Al final, lo retenido por el banco sin detalle (HELD, ver heldUpd en nube.js). */
 const pendList = () =>
-  PEND.filter(
+  [
+    ...PEND,
+    ...(HELD < 0 && !PEND.length
+      ? [
+          {
+            id: 'held',
+            booking_date: (BANK.last_sync || '').slice(0, 10),
+            amount: HELD,
+            description: 'Retenido por el banco (sin detalle)'
+          }
+        ]
+      : [])
+  ].filter(
     p =>
       !S.tx.some(
         x =>

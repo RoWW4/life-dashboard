@@ -7,6 +7,7 @@ let sb = null,
   pushT = 0,
   BANK = null,
   PEND = [],
+  HELD = 0,
   syncTxt = '',
   cloudN = 0;
 /* Cuenta de ahorro sincronizada: conexión (bank_connections, purpose «ahorro»), saldos por día (savings_daily)
@@ -401,7 +402,8 @@ async function pullBank() {
     bc = be !== BANKERR;
   BANKERR = be;
   if (be) logErr('nube/banco', new Error(be));
-  if (!rows.length) return pc || bc || sc;
+  const hc = await heldUpd();
+  if (!rows.length) return pc || bc || sc || hc;
   const r = ingest(
     rows.map(d => ({ id: d.id, date: d.booking_date, amt: +d.amount, desc: d.description || '' })),
     'bank'
@@ -411,4 +413,33 @@ async function pullBank() {
   save();
   if (r.add || r.link) toast(`🏦 Banco: ${r.add} nuevos · ${r.link} enlazados con fijos o facturas`);
   return true;
+}
+/* Dinero retenido (HELD, negativo): Openbank no manda las retenciones como movimiento, pero el saldo que da ya las
+   descuenta. Se compara con un saldo de referencia S.held = {b, at}: el saldo de una sincronización (at = su last_sync)
+   más lo que ha llegado del banco después (bank_tx creados tras at). Lo que falta es lo retenido.
+   Si sobra (un ingreso que el banco ya suma al saldo pero aún no manda como movimiento), no se enseña nada.
+   Cuando cuadra justo, la referencia pasa al saldo de ahora (así la consulta se queda en lo último). */
+async function heldUpd() {
+  if (!BANK || BANK.balance == null || !BANK.last_sync) return false;
+  const bal = +BANK.balance,
+    at = BANK.last_sync,
+    h = S.held,
+    h0 = HELD;
+  if (!h || !h.at) {
+    S.held = { b: bal, at };
+    HELD = 0;
+    save();
+    return h0 !== 0;
+  }
+  const r = await sb.from('bank_tx').select('amount').eq('conn', 'openbank').gt('created_at', h.at);
+  if (r.error) return false;
+  const u = Math.round((bal - h.b - (r.data || []).reduce((a, x) => a + +x.amount, 0)) * 100) / 100;
+  HELD = u < -0.005 ? u : 0;
+  if (Math.abs(u) < 0.005) {
+    if (h.b !== bal || h.at !== at) {
+      S.held = { b: bal, at };
+      save();
+    }
+  }
+  return HELD !== h0;
 }
