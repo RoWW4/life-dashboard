@@ -10,6 +10,16 @@
    Si aún no tiene, vale la de cualquiera de sus cargos (notas puestas antes en un solo movimiento). */
 const fxNote = f =>
   !f ? '' : f.note || (S.tx.filter(x => x.fid === f.id && x.note).sort((a, b) => b.date.localeCompare(a.date))[0] || {}).note || '';
+/* Quitar un pago de la lista: sus cargos se conservan, sin enlace, y cada uno se queda con la nota del pago. */
+const fxDrop = f => {
+  const n = fxNote(f);
+  S.fixed = S.fixed.filter(y => y.id !== f.id);
+  S.tx.forEach(y => {
+    if (y.fid !== f.id) return;
+    delete y.fid;
+    if (n && !y.note) y.note = n;
+  });
+};
 /* Nota que se ve en un movimiento: la suya o, si es de un pago fijo, la del pago. */
 const txNote = x => x.note || (x.fid ? fxNote(S.fixed.find(f => f.id === x.fid)) : '');
 const mIdx = m => +m.slice(0, 4) * 12 + +m.slice(5, 7);
@@ -103,11 +113,31 @@ const fxHas = (f, c) =>
     return ws ? ws.every(t => c.includes(' ' + t + ' ')) : c.includes(' ' + w.trim() + ' ');
   });
 /* Un movimiento nuevo del banco: si es un pago de la lista, se enlaza con él (y aprende su concepto). */
+/* ¿Puede ser x un cargo de f? No, si cae fuera de sus fechas (antes de empezar o pasado el último plazo) o si f tiene fin
+   (a plazos: cuota fija) y no le toca un plazo cerca o el importe no se parece. Así dos compras a plazos con el mismo concepto del banco no se mezclan. */
+const fxFits = (f, x) =>
+  !(f.until && x.date > addD(f.until, 10)) &&
+  !(f.until && !f.var && !f.once && !fxOcc(f, addD(x.date, -10), addD(x.date, 10)).length) &&
+  !(f.from && x.date < addD(f.from.slice(0, 7) + '-01', -10)) &&
+  !(f.until && !f.var && Math.abs(f.amt - x.amt) > f.amt * 0.1);
+/* Pago de la lista al que corresponde x por su concepto: si hay varios, el que tiene un cobro previsto cerca y el importe más parecido. */
+const fxByKey = (x, c) => {
+  const near = f => (f.var || fxOcc(f, addD(x.date, -10), addD(x.date, 10)).length ? 0 : 1),
+    L = S.fixed.filter(
+      f =>
+        f.t === x.t &&
+        f.k &&
+        fxHas(f, c) &&
+        fxFits(f, x) &&
+        (f.var || !S.tx.some(y => y !== x && y.fid === f.id && Math.abs(dd(y.date, x.date)) <= 10))
+    );
+  return L.sort((a, b) => near(a) - near(b) || Math.abs(a.amt - x.amt) - Math.abs(b.amt - x.amt))[0];
+};
 function fxMatch(x) {
   if (x.fid || x.cat === NOCNT) return;
   const c = nt(concept(x));
   const f =
-    S.fixed.find(f => f.t === x.t && f.k && fxHas(f, c)) ||
+    fxByKey(x, c) ||
     S.fixed.find(
       f =>
         f.t === x.t &&

@@ -580,20 +580,14 @@ const A = {
       return makeFixed(x);
     }
     CF(`«${f.name}» está en Facturas. ¿Quitarlo de la lista? Los movimientos se conservan.`, () => {
-      S.fixed = S.fixed.filter(y => y.id !== f.id);
-      S.tx.forEach(y => {
-        if (y.fid === f.id) delete y.fid;
-      });
+      fxDrop(f);
       ch();
     });
   },
   df: i => {
     const f = S.fixed.find(x => x.id === i);
     CF(`¿Quitar «${f.name}» de Facturas? Los movimientos se conservan.`, () => {
-      S.fixed = S.fixed.filter(x => x.id !== i);
-      S.tx.forEach(x => {
-        if (x.fid === i) delete x.fid;
-      });
+      fxDrop(f);
       ch();
     });
   },

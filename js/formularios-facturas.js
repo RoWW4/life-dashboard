@@ -144,12 +144,18 @@ function fixedForm(f, isNew) {
 /* Lleva un movimiento a Facturas: los anteriores con el mismo concepto quedan enlazados y los siguientes
    del banco se enlazarán solos. */
 function makeFixed(x) {
-  // Pago a plazos («Paypal · Pago 3 plazos»): empieza en el cargo más antiguo con ese concepto y se propone como fin el mes del último plazo.
+  // Pago a plazos («Paypal · Pago 3 plazos»): empieza en el cargo más antiguo con ese concepto e importe parecido (otra compra a plazos tiene otra cuota) y se propone como fin el mes del último plazo.
   const pz = +((concept(x).match(/(\d+)\s*plazos/i) || [])[1] || 0),
     k0 = nt(concept(x)).trim(),
     m0 = !pz
       ? mon(x.date)
-      : S.tx.reduce((m, y) => (!y.fid && y.t === x.t && nt(concept(y)).trim() === k0 && mon(y.date) < m ? mon(y.date) : m), mon(x.date));
+      : S.tx.reduce(
+          (m, y) =>
+            !y.fid && y.t === x.t && nt(concept(y)).trim() === k0 && Math.abs(y.amt - x.amt) <= x.amt * 0.1 && mon(y.date) < m
+              ? mon(y.date)
+              : m,
+          mon(x.date)
+        );
   const o = modal(
     `<h3>Añadir a Facturas</h3><div class="fs"><label>Nombre<input id="mf1" value="${esc(concept(x))}"></label><div class="two"><label>Importe (€)<input id="mf2" inputmode="decimal" value="${x.amt}"></label><label>Día del mes<input id="mf3" type="number" min="1" max="31" value="${+x.date.slice(8)}"></label></div><label>Se repite<select id="mf4"><option value="m">Cada mes</option><option value="a">Cada año (en ${MS[+x.date.slice(5, 7)]})</option></select></label><label>Termina en (opcional)<input id="mf5" type="month" value="${pz ? mAdd(m0, pz - 1) : ''}"></label><div class="mu">Saldrá en Facturas. Cuando llegue el próximo cargo del banco se marcará como pagado solo. «Termina en» es el último mes que se paga; vacío = sin fin.${pz ? ` Rellenado con los ${pz} plazos del concepto, contando desde el primer cargo que hay en el panel.` : ''}</div></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`
   );
@@ -175,7 +181,7 @@ function makeFixed(x) {
         ...(un ? { until: un + '-' + p2(new Date(+un.slice(0, 4), +un.slice(5, 7), 0).getDate()) } : {})
       };
     S.tx.forEach(y => {
-      if (y === x || (!y.fid && y.t === x.t && nt(concept(y)).trim() === k)) y.fid = f.id;
+      if (y === x || (!y.fid && y.t === x.t && nt(concept(y)).trim() === k && fxFits(f, y))) y.fid = f.id;
     });
     S.fixed.push(f);
     o.remove();
