@@ -1,6 +1,14 @@
 'use strict';
 /* Botones (data-a) de Salud (vistas/salud.js). Se añaden a A, que está en acciones.js. */
 Object.assign(A, {
+  sls: i => {
+    salSec = i === 'salud' ? 'salud' : 'act';
+    try {
+      localStorage.setItem('ldb-salsec', salSec);
+    } catch (e) {}
+    render();
+    scrollTo(0, 0);
+  },
   alh: () => {
     const n = V('lh1'),
       d = V('lh2');

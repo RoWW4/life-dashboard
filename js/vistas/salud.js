@@ -467,6 +467,14 @@ function hlxHTML() {
     close
   );
 }
+/* Pestañas de Salud: «Actividad y sueño» o «Salud» (se recuerda en este dispositivo). */
+let salSec = (() => {
+  try {
+    return localStorage.getItem('ldb-salsec') === 'salud' ? 'salud' : 'act';
+  } catch (e) {
+    return 'act';
+  }
+})();
 function vSalud() {
   setTimeout(hlOpen);
   const st = salStats(),
@@ -501,7 +509,16 @@ function vSalud() {
       'wide'
     )
   };
-  VIS.salud = ord('salud', ['act', 'seg', 'conf']);
-  return `<div class="hdr"><div><h2>Salud</h2><div class="sub help">Privado: los datos solo se guardan en tu cuenta.</div></div></div>
+  VIS.salud = ord('salud', salSec === 'salud' ? ['seg', 'conf'] : ['act']);
+  const tabs = `<div class="seg dtabs" role="tablist" aria-label="Salud">${[
+    ['act', 'Actividad y sueño'],
+    ['salud', 'Salud']
+  ]
+    .map(
+      ([k, l]) =>
+        `<button role="tab" class="${salSec === k ? 'on' : ''}" aria-selected="${salSec === k}" data-a="sls" data-i="${k}">${l}</button>`
+    )
+    .join('')}</div>`;
+  return `<div class="hdr dinh"><div><h2>Salud</h2></div></div>${tabs}${salSec === 'salud' ? '<div class="sub shsub">Privado: los datos solo se guardan en tu cuenta.</div>' : ''}
   <div class="grid2">${VIS.salud.map(k => C[k]).join('')}</div>`;
 }
