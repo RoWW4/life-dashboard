@@ -650,6 +650,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
   .grid>*{grid-column:span 4}.grid2>*{grid-column:span 6}
   .grid>.card.wide,.grid2>.card.wide{grid-column:span 12}
   .dgrid>.dimp{grid-column:span 8}
+  .grid>.card.tlist{grid-column:span 8}
   .grid>.card.sz4,.grid2>.card.sz4{grid-column:span 4}
   .grid>.card.sz6,.grid2>.card.sz6{grid-column:span 6}
   .grid>.card.sz8,.grid2>.card.sz8{grid-column:span 8}
@@ -658,6 +659,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 @media(min-width:761px) and (max-width:1180px){
   .grid>*,.grid>.card.sz4,.grid2>.card.sz4{grid-column:span 6}
   .dgrid>.dimp,.grid>.card.sz8,.grid2>.card.sz8{grid-column:span 12}
+  .grid>.card.tlist:not([class*=" sz"]){grid-column:span 12}
 }
 @media(max-width:760px){.szb{display:none}}
 @media(hover:none){.card .hd{padding:8px;opacity:.7}.szb{opacity:.6}}
@@ -1160,7 +1162,7 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 .tfil{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}.tfil::-webkit-scrollbar{display:none}
 .tfil .chip{font-size:12.5px;padding:5px 10px;cursor:pointer;flex-shrink:0}.tfil .chip.on{background:var(--acs);color:var(--ac2);box-shadow:inset 0 0 0 1.5px var(--ac2)}.tfil .chip.tarea.on{color:var(--c);background:color-mix(in srgb,var(--c) 24%,transparent);box-shadow:inset 0 0 0 1.5px var(--c)}
 .tlist{grid-column:1/-1}
-.tsep{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);padding:16px 0 4px;border-bottom:1px solid var(--sep)}.tsep:first-child{padding-top:0}.tsep span{font-weight:500;opacity:.8}.tsep.er{color:var(--er)}
+.tsep{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);padding:16px 0 4px;border-bottom:1px solid var(--sep)}.tsep:first-child,h3+.tsep{padding-top:0}.tsep span{font-weight:500;opacity:.8}.tsep.er{color:var(--er)}
 .row.tstripe{border-left:3px solid var(--c);padding-left:10px;margin-left:-4px}
 .tstripe .link .meta{flex-basis:100%;margin-top:0}
 .tt .nw{white-space:nowrap}.tt .nw>*{margin-left:6px;vertical-align:middle}

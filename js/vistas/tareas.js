@@ -95,7 +95,14 @@ function vTareas() {
         : '';
     VIS.tareas = [];
     const cp = cum && !tfa ? cumplePanel('tareasf') : '';
-    if (lst || cp) body = fil + `<div class="grid">${lst ? `<div class="card tlist">${lst}</div>` : ''}${cp}</div>`;
+    // La lista también es un panel (sin asa: aquí no se mueven) para poder elegir su ancho en el ordenador.
+    const tl = lst
+      ? panel('tareasf', 'lista', `${I('list-checks')} Tareas <span class="cnt">· ${lf.length}</span>`, lst, 'tlist').replace(
+          /<span class="hd"[^>]*>.*?<\/span>/,
+          ''
+        )
+      : '';
+    if (lst || cp) body = fil + `<div class="grid">${tl}${cp}</div>`;
   }
   const segF = [
     ['pend', 'Pendientes'],
