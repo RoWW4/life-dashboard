@@ -15,7 +15,7 @@ function afterLoad() {
     const code = q.get('code');
     history.replaceState(null, '', location.pathname);
     const o = modal(
-      `<h3>🏦 Banco autorizado</h3><p>Copia este código y pégalo en GitHub al ejecutar «Conectar banco» por segunda vez. Caduca en unos minutos.</p><div class="code">${esc(code)}</div><div class="acts"><button class="btn" id="ok">${I('copy', 'sm')} Copiar código</button></div><div class="acts"><button class="btn ghost" data-close>Cerrar</button><a class="btn ghost" href="https://github.com/RoWW4/life-dashboard/actions/workflows/bank-link.yml" target="_blank" rel="noopener noreferrer">${I('external-link', 'sm')} Abrir en GitHub</a></div>`
+      `<h3>🏦 Banco autorizado</h3><p>Copia este código y pégalo en GitHub al ejecutar «Conectar banco» por segunda vez. Caduca en unos minutos.</p><div class="code">${esc(code)}</div><div class="acts"><a class="btn ghost" href="https://github.com/RoWW4/life-dashboard/actions/workflows/bank-link.yml" target="_blank" rel="noopener noreferrer">${I('external-link', 'sm')} Abrir en GitHub</a><span class="sp"></span><button class="btn ghost" data-close>Cerrar</button><button class="btn" id="ok">${I('copy', 'sm')} Copiar código</button></div>`
     );
     o.querySelector('#ok').onclick = () => {
       navigator.clipboard

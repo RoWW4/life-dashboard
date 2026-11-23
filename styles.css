@@ -450,6 +450,8 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .nc{display:inline-flex;align-items:center;gap:3px;font-size:12px}
 .fs .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.acts .sp{flex:1}.acts+.acts{margin-top:10px}.acts:empty{display:none}
+/* Fila de acciones secundarias (p. ej. Dividir · Es un ingreso · Añadir a Facturas): botones del mismo ancho también en el ordenador. */
+.dlg .acts.eq{align-items:stretch}.dlg .acts.eq>.btn{flex:1 1 0;min-width:0;white-space:normal;text-align:center;justify-content:center;padding-left:10px;padding-right:10px}
 /* Móvil: en las ventanas, los botones de cada fila se reparten el ancho a partes iguales (sin huecos ni botones
    descolgados) y el texto largo puede ir en dos líneas. */
 @media(max-width:760px){
