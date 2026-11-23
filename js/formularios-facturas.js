@@ -23,11 +23,13 @@ const ymOf = s => {
   }
   return mo >= 1 && mo <= 12 && y >= 2000 && y <= 2100 ? y + '-' + p2(mo) : null;
 };
-function fixedForm(f, isNew) {
+/* src: movimiento desde el que se lleva a Facturas (botón «Añadir a Facturas» de la ficha del movimiento): la misma ventana,
+   ya rellena; al guardar quedan enlazados ese movimiento y los anteriores con el mismo concepto. */
+function fixedForm(f, isNew, src) {
   const fq = fxFq(f),
     opt = (L, v) => L.map(([k, n]) => `<option value="${k}" ${String(k) === String(v) ? 'selected' : ''}>${n}</option>`).join('');
   const o =
-    modal(`<h3>${isNew ? 'Nueva factura o pago' : 'Editar'}</h3><div class="fs"><label>Nombre<input id="ff1" value="${esc(f.name)}" placeholder="Ej. Gimnasio, Seguro coche…"></label>
+    modal(`<h3>${src ? 'Añadir a Facturas' : isNew ? 'Nueva factura o pago' : 'Editar'}</h3><div class="fs"><label>Nombre<input id="ff1" value="${esc(f.name)}" placeholder="Ej. Gimnasio, Seguro coche…"></label>
     <div class="two"><label>Importe (€)<input id="ff2" inputmode="decimal" value="${f.amt || ''}"></label><label>Tipo<select id="ff0">${opt(
       [
         ['g', 'Gasto'],
@@ -38,7 +40,7 @@ function fixedForm(f, isNew) {
     <div class="two"><label>Se repite<select id="ff6">${opts(['Mensual', 'Trimestral', 'Semestral', 'Anual', 'Única', 'Variable'], fq)}</select></label><label>Categoría<select id="ff4">${opts(CATS, f.cat)}</select></label></div>
     <div class="two"><label class="r-d">Día del mes<input id="ff3" value="${f.days ? f.days.join(', ') : f.day || 1}"></label><label class="r-m">Mes<select id="ff7">${opt(
       MS.slice(1).map((n, i) => [i + 1, n]),
-      f.month || +TD().slice(5, 7)
+      f.month || +(src ? src.date : TD()).slice(5, 7)
     )}</select></label><label class="r-o">Fecha<input id="ff8" type="date" value="${f.once || ''}"></label></div>
     <div class="mu r-v">Variable: varios cargos al mes sin día fijo (p. ej. gasolina). Pon en Importe lo que sueles gastar al mes; se juntan todos los cargos del banco con este nombre.</div>
     <label class="r-v">También reconoce (palabras separadas por comas)<input id="ff9" value="${esc((f.kx || []).join(', '))}" placeholder="Ej. gasolina, repsol"></label>
@@ -128,9 +130,16 @@ function fixedForm(f, isNew) {
         const ids = new Set(old.map(x => x.id));
         S.tx = S.tx.filter(x => !ids.has(x.id));
       }
+      if (src) {
+        // Enlaza este movimiento y los anteriores con el mismo concepto que encajan (los variables ya se enlazaron arriba).
+        S.tx.forEach(y => {
+          if (y === src || (!f.var && !y.fid && !y.billId && y.t === f.t && nt(concept(y)).trim() === f.k && fxFits(f, y))) y.fid = f.id;
+        });
+      }
       if (isNew) S.fixed.push(f);
       o.remove();
       ch();
+      if (src) toast('🔁 Añadido a Facturas');
     };
     if (old.length)
       CF(
@@ -156,37 +165,20 @@ function makeFixed(x) {
               : m,
           mon(x.date)
         );
-  const o = modal(
-    `<h3>Añadir a Facturas</h3><div class="fs"><label>Nombre<input id="mf1" value="${esc(concept(x))}"></label><div class="two"><label>Importe (€)<input id="mf2" inputmode="decimal" value="${x.amt}"></label><label>Día del mes<input id="mf3" type="number" min="1" max="31" value="${+x.date.slice(8)}"></label></div><label>Se repite<select id="mf4"><option value="m">Cada mes</option><option value="a">Cada año (en ${MS[+x.date.slice(5, 7)]})</option></select></label><label>Termina en (opcional)<input id="mf5" type="month" value="${pz ? mAdd(m0, pz - 1) : ''}"></label><div class="mu">Saldrá en Facturas. Cuando llegue el próximo cargo del banco se marcará como pagado solo. «Termina en» es el último mes que se paga; vacío = sin fin.${pz ? ` Rellenado con los ${pz} plazos del concepto, contando desde el primer cargo que hay en el panel.` : ''}</div></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">Guardar</button></div>`
+  const un = pz ? mAdd(m0, pz - 1) : '';
+  fixedForm(
+    {
+      id: 'fx-' + id(),
+      name: concept(x),
+      t: x.t,
+      amt: x.amt,
+      cat: x.cat,
+      day: +x.date.slice(8),
+      from: m0,
+      k: k0,
+      ...(un ? { until: un + '-01' } : {})
+    },
+    true,
+    x
   );
-  o.querySelector('#ok').onclick = () => {
-    const n = o.querySelector('#mf1').value.trim(),
-      a = pnum(o.querySelector('#mf2').value),
-      d = Math.min(31, Math.max(1, +o.querySelector('#mf3').value || 1)),
-      an = o.querySelector('#mf4').value === 'a',
-      un = o.querySelector('#mf5').value;
-    if (!n || !(a > 0)) return toast('Indica nombre e importe');
-    if (un && un < m0) return toast('«Termina en» no puede ser antes del primer cargo');
-    const k = nt(concept(x)).trim(),
-      f = {
-        id: 'fx-' + id(),
-        name: n,
-        t: x.t,
-        amt: a,
-        cat: x.cat,
-        day: d,
-        from: m0,
-        k,
-        ...(an ? { month: +x.date.slice(5, 7) } : {}),
-        ...(un ? { until: un + '-' + p2(new Date(+un.slice(0, 4), +un.slice(5, 7), 0).getDate()) } : {})
-      };
-    S.tx.forEach(y => {
-      if (y === x || (!y.fid && y.t === x.t && nt(concept(y)).trim() === k && fxFits(f, y))) y.fid = f.id;
-    });
-    S.fixed.push(f);
-    o.remove();
-    ch();
-    toast('🔁 Añadido a Facturas');
-  };
-  o.querySelector('#mf1').focus();
 }
