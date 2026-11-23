@@ -8,7 +8,6 @@ Solo lo importante que queda por decidir o hacer. **No hacerlo hasta que la due�
 - Wallet no traía movimientos nuevos desde el 29/10/2026; el 31/10 se escribió a su soporte (sin respuesta).
 - 08/11/2026: correos de fallo de la sincronización del banco en pausa (`SIN_CORREO` en `bank-sync.yml`). Reactivarlos cuando el banco vuelva a funcionar.
 - Cuando se resuelva el fallo de sincronización con el banco: revisar si de verdad hay un límite de 4 consultas al día (PSD2, sin la usuaria delante) con este banco y esta conexión, o si se dio por hecho a raíz de los fallos de sincronización de antes. Si no lo hay, se podría sincronizar más a menudo.
-- La próxima vez que se reconecte el banco («Conectar banco» a mano): revisar que el saldo cuadra con los movimientos y que el aviso «Retenido por el banco (sin detalle)» sale bien (`heldUpd` en `js/nube.js`, referencia en `S.held`). Si una reconexión cambia los ids o repite movimientos, la referencia puede descuadrarse.
 - Plan B si el banco falla: importar el `.xls` o el PDF desde Ajustes → Banco.
 - Si vuelve a funcionar: sacar de `wallet_log` (`kind='rec'`) a qué horas trae Wallet los movimientos y ajustar las horas de la tarea `sync-wallet` de pg_cron para ir justo detrás.
 
