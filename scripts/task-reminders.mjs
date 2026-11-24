@@ -2,7 +2,7 @@
 //  · aviso a la fecha y hora elegidas en la tarea (t.rem) o, si no tiene, 1 día antes (24 h antes de la hora de la tarea,
 //    no se repite al aplazarla a menos de 24 h;
 //    si no tiene hora, como si fuera a las 9:00);
-//  · cumpleaños: además, una semana antes con las ideas de regalo (y los años que cumple, si se sabe el año de nacimiento);
+//  · cumpleaños: además, dos semanas antes con las ideas de regalo (y los años que cumple, si se sabe el año de nacimiento);
 //  · resumen a las 7:00 con las tareas de hoy, las atrasadas y los cumpleaños (si no hay nada, no se manda);
 //  · Salud (3 días antes), documentos que caducan, fechas del coche y batería del reloj (ver apartados 3 a 6).
 // La lanza Supabase cada 15 minutos (pg_cron, tarea «task-reminders»). Lo ya avisado se apunta en la tabla
@@ -90,12 +90,14 @@ for (const t of tasks.filter(t => /^\d{4}-\d{2}-\d{2}$/.test(t.due) && !REM.test
   await send(key, `${t.area === 'Cumpleaños' ? '🎂' : '⏰'} ${cuando}${hm ? ' a las ' + hm : ''}: ${bdTxt(t)}`, 'Aviso de tarea');
 }
 
-// 1b) Cumpleaños: también una semana antes (desde las 9:00 hasta el aviso del día anterior), con las ideas de regalo apuntadas.
+// 1b) Cumpleaños: también dos semanas antes (desde las 9:00 hasta el aviso del día anterior), con las ideas de regalo apuntadas.
+//     La clave sigue siendo «bd7» (antes avisaba una semana antes) para no repetir los avisos ya mandados.
 for (const t of tasks.filter(t => t.area === 'Cumpleaños' && /^\d{4}-\d{2}-\d{2}$/.test(t.due))) {
-  const w = at(t.due, DEF_TM) - 7 * DAY, key = `bd7:${t.id}:${t.due}`;
-  if (nowL < w || nowL >= w + 6 * DAY || sent.has(key)) continue;
+  const w = at(t.due, DEF_TM) - 14 * DAY, key = `bd7:${t.id}:${t.due}`;
+  if (nowL < w || nowL >= w + 13 * DAY || sent.has(key)) continue;
   const ideas = (t.notes || []).filter(n => n && !n.gy && n.tx).map(n => '• ' + n.tx);
-  await send(key, `🎁 Dentro de una semana, el ${DOW[new Date(at(t.due, '12:00')).getUTCDay()]} ${fd(t.due)}: ${bdTxt(t)}${ideas.length ? '\nIdeas de regalo:\n' + ideas.join('\n') : ''}`, 'Cumpleaños');
+  const n = Math.round((at(t.due, '12:00') - at(today, '12:00')) / DAY);
+  await send(key, `🎁 ${n === 14 ? 'Dentro de dos semanas' : n === 7 ? 'Dentro de una semana' : `Dentro de ${n} días`}, el ${DOW[new Date(at(t.due, '12:00')).getUTCDay()]} ${fd(t.due)}: ${bdTxt(t)}${ideas.length ? '\nIdeas de regalo:\n' + ideas.join('\n') : ''}`, 'Cumpleaños');
 }
 
 // 2) Resumen de la mañana (desde las 7:00 hasta mediodía, una vez al día).

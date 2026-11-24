@@ -114,7 +114,7 @@ function vDia() {
     g = h < 6 ? 'Buenas noches' : h < 13 ? 'Buenos días' : h < 21 ? 'Buenas tardes' : 'Buenas noches',
     td = TD(),
     open = S.tasks.filter(t => !t.done);
-  // Calendario: los próximos 7 días agrupados por día. Las tareas de mañana (y los cumpleaños de la semana) ya salen en «Lo más importante», así que aquí empiezan pasado mañana.
+  // Calendario: los próximos 7 días agrupados por día. Las tareas de mañana (y los cumpleaños de las dos próximas semanas) ya salen en «Lo más importante», así que aquí empiezan pasado mañana.
   const up = [
     ...open
       .filter(t => t.due && t.area !== 'Cumpleaños' && dayDiff(t.due) >= 2 && dayDiff(t.due) <= 7)
@@ -134,8 +134,8 @@ function vDia() {
     return hd + r;
   });
   const imp = [
-    // Los cumpleaños, con una semana de antelación (para el regalo); los años que cumple van en su icono.
-    ...open.filter(t => t.due && dayDiff(t.due) <= (t.area === 'Cumpleaños' ? 7 : 1)).map(t => [t.due, ico(t), t.title, AC[t.area], t.id]),
+    // Los cumpleaños, con dos semanas de antelación (para el regalo); los años que cumple van en su icono.
+    ...open.filter(t => t.due && dayDiff(t.due) <= (t.area === 'Cumpleaños' ? 14 : 1)).map(t => [t.due, ico(t), t.title, AC[t.area], t.id]),
     // Lo que no es una tarea lleva a su sección al tocarlo (6.º dato).
     ...fxDue(7).map(o => [o.d, 'receipt', o.f.name + ' · ' + eur(o.f.amt), col(o.f.cat), '', 'fact']),
     ...fxPausedHit().map(o => [

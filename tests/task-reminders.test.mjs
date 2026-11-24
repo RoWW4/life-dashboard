@@ -110,8 +110,8 @@ test('batería del reloj: avisa una vez al bajar del 25 % y vuelve a avisar tras
   assert.ok(!calls.some(c => (c.m === 'DELETE' && c.u.includes('bat')) || (c.u.startsWith('/botTEST/') && /Batería/.test(c.body.text))));
 });
 
-test('cumpleaños: avisa una semana antes con los años que cumple y las ideas sin regalar, y no si falta más', async () => {
-  const d6 = madrid(6 * 1440).slice(0, 10), d20 = madrid(20 * 1440).slice(0, 10), sent = [];
+test('cumpleaños: avisa dos semanas antes con los años que cumple y las ideas sin regalar, y no si falta más', async () => {
+  const d6 = madrid(13 * 1440).slice(0, 10), d20 = madrid(20 * 1440).slice(0, 10), sent = [];
   const notes = [{ id: 'n1', tx: 'Idea uno' }, { id: 'n2', tx: 'Idea vieja', gy: 2020 }];
   const { calls } = await run([
     { id: 'b1', title: 'Cumpleaños de Prueba', area: 'Cumpleaños', due: d6, by: +d6.slice(0, 4) - 30, notes },
@@ -119,7 +119,7 @@ test('cumpleaños: avisa una semana antes con los años que cumple y las ideas s
   ], text => (sent.push(text), [200, { ok: true, result: { message_id: 3 } }]));
   assert.deepEqual(marks(calls), [`bd7:b1:${d6}`]);
   assert.equal(sent.length, 1);
-  assert.match(sent[0], /Dentro de una semana.*Cumpleaños de Prueba \(cumple 30\)/);
+  assert.match(sent[0], /Dentro de 13 días.*Cumpleaños de Prueba \(cumple 30\)/);
   assert.match(sent[0], /Idea uno/);
   assert.ok(!sent[0].includes('Idea vieja'), 'lo ya regalado no sale como idea');
 });

@@ -7,11 +7,11 @@ function cumplePanel(v) {
   return cumplePanel0(v).replace(v === 'tareasf' ? /<span class="hd"[^>]*>.*?<\/span>/ : /^$/, '');
 }
 /* Panel de cumpleaños: el próximo, destacado arriba (con sus ideas de regalo; los años que cumple van en el icono) y el resto por meses,
-   con cuántos días faltan (naranja la última semana, color de hoy si es hoy). */
+   con cuántos días faltan (naranja las dos últimas semanas, color de hoy si es hoy). */
 function bdChip(t) {
   const n = t.due ? dayDiff(t.due) : null;
   if (n === null) return '';
-  return `<span class="chip ${n < 0 ? 'er' : n === 0 ? 'ac' : n <= 7 ? 'wa' : ''}">${n <= 1 ? cap(rel(t.due)) : 'Faltan ' + n + ' días'}</span>`;
+  return `<span class="chip ${n < 0 ? 'er' : n === 0 ? 'ac' : n <= 14 ? 'wa' : ''}">${n <= 1 ? cap(rel(t.due)) : 'Faltan ' + n + ' días'}</span>`;
 }
 function bdMeta(t) {
   const k = bdIdeas(t).length;
@@ -44,7 +44,7 @@ function cumplePanel0(v) {
           ? `<div class="dh">${m ? cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date(m + '-15T12:00'))) + (m.slice(0, 4) !== yr ? ' ' + m.slice(0, 4) : '') : 'Sin fecha'}</div>`
           : '';
     lastM = m;
-    return `${hd}<div class="row bdrow${t.due && dayDiff(t.due) <= 7 ? ' soon' : ''}">${ck(t)}${bdTile(t)}<button class="link g" data-a="et" data-i="${t.id}"><span class="tt">${esc(bdName(t))}</span><span class="meta mu">${bdMeta(t)}</span></button>${bdChip(t)}</div>`;
+    return `${hd}<div class="row bdrow${t.due && dayDiff(t.due) <= 14 ? ' soon' : ''}">${ck(t)}${bdTile(t)}<button class="link g" data-a="et" data-i="${t.id}"><span class="tt">${esc(bdName(t))}</span><span class="meta mu">${bdMeta(t)}</span></button>${bdChip(t)}</div>`;
   });
   return panel(
     v,
