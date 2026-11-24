@@ -483,6 +483,12 @@ const id = () => Date.now().toString(36).slice(-4) + Math.random().toString(36).
 const p2 = n => String(n).padStart(2, '0');
 const iso = d => d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
 const TD = () => iso(new Date());
+/* Próximo cumpleaños (hoy o más adelante) de un día y mes; el 29 de febrero, el 28 los años que no son bisiestos. */
+const bdNext = (m, d) => {
+  const td = TD(),
+    f = y => y + '-' + p2(m) + '-' + p2(Math.min(d, new Date(y, m, 0).getDate()));
+  return f(+td.slice(0, 4)) >= td ? f(+td.slice(0, 4)) : f(+td.slice(0, 4) + 1);
+};
 const MN = d => iso(d).slice(0, 7),
   mon = s => s.slice(0, 7);
 const fd = s => (s ? s.split('-').reverse().join('/') : '');

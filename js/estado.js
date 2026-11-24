@@ -165,6 +165,12 @@ function seed() {
       c++;
     }
     if (t.tm === undefined) t.tm = '';
+    // Cumpleaños con la fecha de nacimiento como fecha: pasa al próximo cumpleaños y ese año, a «Año de nacimiento».
+    if (t.area === 'Cumpleaños' && !t.done && /^\d{4}-\d{2}-\d{2}$/.test(t.due || '') && +t.due.slice(0, 4) < new Date().getFullYear() - 1) {
+      if (!t.by) t.by = +t.due.slice(0, 4);
+      t.due = bdNext(+t.due.slice(5, 7), +t.due.slice(8));
+      c++;
+    }
   });
   // Fijos y facturas pasan a ser una sola lista (S.fixed, sección Facturas). La app deja de apuntar gastos sola:
   // cada pago se da por hecho cuando llega su movimiento del banco (o se marca a mano).

@@ -7,15 +7,20 @@ function taskForm(t, pre) {
   const B = t.area === 'Cumpleaños',
     yr = new Date().getFullYear(); // en un cumpleaños, las notas son ideas de regalo
   const o = modal(
-    `<h3>${n ? (B ? 'Nuevo cumpleaños' : 'Nueva tarea') : B ? 'Editar cumpleaños' : 'Editar tarea'}</h3><div class="fs"><label>Título<input id="ft1" value="${esc(t.title)}" placeholder="${t.area === 'Cumpleaños' ? 'Ej. Cumpleaños de …' : '¿Qué hay que hacer?'}"></label><div class="two"><label>Fecha<input id="ft2" type="date" value="${t.due || ''}"><span class="qd">${[
-      [0, 'Hoy'],
-      [1, 'Mañana'],
-      [7, '+1 semana']
-    ]
-      .map(([k, l]) => `<button type="button" class="chip" data-d="${k}">${l}</button>`)
-      .join(
-        ''
-      )}</span></label><label>Hora<input id="ft3" type="time" value="${t.tm || ''}"></label></div><div class="two"><label id="ft4l"${B ? ' hidden' : ''}>Prioridad<select id="ft4">${opts(PR, t.pr)}</select></label><label id="ftbl"${B ? '' : ' hidden'} title="Para saber cuántos cumple">Año de nacimiento<input id="ftb" type="number" inputmode="numeric" min="1900" max="${yr}" placeholder="Opcional" value="${t.by || ''}"></label><label>Área<select id="ft5">${opts(AREAS, t.area)}</select></label></div><div class="two"><label>Repetir<select id="ft6"><option value="">No se repite</option>${opts(REP, t.rep)}</select></label><label>Aviso por Telegram<input id="ft7" type="datetime-local" value="${t.rem || ''}"></label></div><div class="mu" style="margin-top:-4px">${B ? 'Vacío: te avisa dos semanas antes (con tus ideas de regalo) y el día antes, a las 9:00.' : 'Vacío: te avisa 1 día antes (a las 9:00 si la tarea no tiene hora). Puede llegar hasta unos 15 min tarde.'}</div><div class="notes"><h4>${B ? I('gift', 'sm') + ' Ideas de regalo' : I('message-square', 'sm') + ' Notas y enlaces'}</h4><div id="fnl"></div><div class="nadd"><input id="fn1" class="in" placeholder="${B ? 'Apunta una idea de regalo (o pega un enlace)' : 'Escribe una nota o pega un enlace'}"><button class="btn sm" id="fn2" aria-label="Añadir nota">${I('plus', 'sm')}</button></div></div></div><div class="acts">${n ? '' : '<button class="btn ghost danger" id="fdel">Eliminar</button>'}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">${n ? 'Añadir' : 'Guardar'}</button></div>`
+    `<h3>${n ? (B ? 'Nuevo cumpleaños' : 'Nueva tarea') : B ? 'Editar cumpleaños' : 'Editar tarea'}</h3><div class="fs"><label>Título<input id="ft1" value="${esc(t.title)}" placeholder="${t.area === 'Cumpleaños' ? 'Ej. Cumpleaños de …' : '¿Qué hay que hacer?'}"></label>${
+      B
+        ? // Cumpleaños: solo día y mes (el año va en «Año de nacimiento»); sin hora, prioridad ni repetir (siempre cada año).
+          `<div class="two"><label>Día<select id="ftd"><option value="">—</option>${Array.from({ length: 31 }, (_, k) => `<option${t.due && +t.due.slice(8) === k + 1 ? ' selected' : ''}>${k + 1}</option>`).join('')}</select></label><label>Mes<select id="ftm"><option value="">—</option>${MESES.map((x, k) => `<option value="${k + 1}"${t.due && +t.due.slice(5, 7) === k + 1 ? ' selected' : ''}>${cap(x)}</option>`).join('')}</select></label></div><div class="two"><label title="Para saber cuántos cumple">Año de nacimiento<input id="ftb" type="number" inputmode="numeric" min="1900" max="${yr}" placeholder="Opcional" value="${t.by || ''}"></label><label>Área<select id="ft5">${opts(AREAS, t.area)}</select></label></div><input id="ft2" type="hidden" value="${t.due || ''}"><input id="ft3" type="hidden" value=""><input id="ft4" type="hidden" value="${esc(t.pr || 'Normal')}"><input id="ft6" type="hidden" value="Anual"><label>Aviso por Telegram<input id="ft7" type="datetime-local" value="${t.rem || ''}"></label>`
+        : `<div class="two"><label>Fecha<input id="ft2" type="date" value="${t.due || ''}"><span class="qd">${[
+            [0, 'Hoy'],
+            [1, 'Mañana'],
+            [7, '+1 semana']
+          ]
+            .map(([k, l]) => `<button type="button" class="chip" data-d="${k}">${l}</button>`)
+            .join(
+              ''
+            )}</span></label><label>Hora<input id="ft3" type="time" value="${t.tm || ''}"></label></div><div class="two"><label>Prioridad<select id="ft4">${opts(PR, t.pr)}</select></label><label>Área<select id="ft5">${opts(AREAS, t.area)}</select></label></div><div class="two"><label>Repetir<select id="ft6"><option value="">No se repite</option>${opts(REP, t.rep)}</select></label><label>Aviso por Telegram<input id="ft7" type="datetime-local" value="${t.rem || ''}"></label></div>`
+    }<div class="mu" style="margin-top:-4px">${B ? 'Vacío: te avisa dos semanas antes (con tus ideas de regalo) y el día antes, a las 9:00.' : 'Vacío: te avisa 1 día antes (a las 9:00 si la tarea no tiene hora). Puede llegar hasta unos 15 min tarde.'}</div><div class="notes"><h4>${B ? I('gift', 'sm') + ' Ideas de regalo' : I('message-square', 'sm') + ' Notas y enlaces'}</h4><div id="fnl"></div><div class="nadd"><input id="fn1" class="in" placeholder="${B ? 'Apunta una idea de regalo (o pega un enlace)' : 'Escribe una nota o pega un enlace'}"><button class="btn sm" id="fn2" aria-label="Añadir nota">${I('plus', 'sm')}</button></div></div></div><div class="acts">${n ? '' : '<button class="btn ghost danger" id="fdel">Eliminar</button>'}<span class="sp"></span><button class="btn ghost" data-close>Cancelar</button><button class="btn" id="ok">${n ? 'Añadir' : 'Guardar'}</button></div>`
   );
   const v = i => o.querySelector(i).value.trim();
   // Atajos de fecha: Hoy y Mañana desde hoy; «+1 semana», desde la fecha puesta (o desde hoy si no hay).
@@ -117,10 +122,21 @@ function taskForm(t, pre) {
   });
   drawN();
   o.querySelector('#ok').onclick = () => {
+    if (B) {
+      const dm = +v('#ftd'),
+        mm = +v('#ftm');
+      if (!dm || !mm) return toast('Elige el día y el mes');
+      o.querySelector('#ft2').value = bdNext(mm, dm);
+    }
     const d = { title: v('#ft1'), due: v('#ft2'), tm: v('#ft3'), pr: v('#ft4'), area: v('#ft5'), rep: v('#ft6') };
     if (!d.title) return toast('Escribe un título');
     if (d.area === 'Cumpleaños' && !d.rep) d.rep = 'Anual'; // los cumpleaños se repiten cada año
-    const by = +v('#ftb');
+    // Cumpleaños con la fecha de nacimiento puesta como fecha (año pasado): va al próximo cumpleaños y el año, a «Año de nacimiento».
+    if (d.area === 'Cumpleaños' && /^\d{4}-/.test(d.due) && +d.due.slice(0, 4) < yr) {
+      if (!B || !v('#ftb')) d.by = +d.due.slice(0, 4);
+      d.due = bdNext(+d.due.slice(5, 7), +d.due.slice(8));
+    }
+    const by = B ? +v('#ftb') : d.by || 0;
     if (d.area === 'Cumpleaños' && by) {
       if (by < 1900 || by > yr) return toast('Revisa el año de nacimiento');
       d.by = by;
@@ -157,11 +173,6 @@ function taskForm(t, pre) {
       o.remove();
       A.dt(t.id);
     };
-  // En los cumpleaños, año de nacimiento en vez de prioridad.
-  o.querySelector('#ft5').onchange = e => {
-    o.querySelector('#ftbl').hidden = e.target.value !== 'Cumpleaños';
-    o.querySelector('#ft4l').hidden = e.target.value === 'Cumpleaños';
-  };
   o.querySelector('#ft1').focus();
 }
 function txForm() {
