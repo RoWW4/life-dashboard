@@ -759,13 +759,13 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .hwc{position:relative;display:grid;grid-template-columns:repeat(4,38px);padding-left:22px;border-left:1px solid var(--hero-bd)}
 .hwc>svg{position:absolute;left:22px;right:0;top:24px;height:22px;width:calc(100% - 22px);overflow:visible}
 .hwc polyline{fill:none;stroke:var(--hero-mu);stroke-width:1.2;stroke-linejoin:round;stroke-linecap:round;opacity:.7}
-.hwc>span{position:relative;height:84px;text-align:center}
+.hwc>span{position:relative;height:92px;text-align:center}
 .hwc>span b{position:absolute;left:0;right:0;top:calc(var(--y)*22px);font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
 .hwc>span i{position:absolute;left:50%;top:calc(24px + var(--y)*22px);width:20px;height:20px;margin:-10px 0 0 -10px;display:grid;place-items:center;border-radius:50%;background:var(--hero);color:var(--hero-tx)}
 .hwc>span i{cursor:pointer}.hwc>span i .i{width:15px;height:15px}
 .hwc>span:first-child i{color:var(--ac);filter:drop-shadow(0 0 6px var(--ac))}
 .bg-on .hwc>span i,.bg-all .hwc>span i{background:rgba(5,10,24,.55)}
-.hwc>span em{position:absolute;left:0;right:0;bottom:0;font-style:normal;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--hero-mu)}
+.hwc>span em{position:absolute;left:0;right:0;bottom:0;font-style:normal;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;line-height:1;color:var(--hero-mu)}
 .hwc>span small{position:absolute;left:0;right:0;top:calc(38px + var(--y)*22px);font-size:11px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1;color:var(--hero-mu)}
 .hwc>span:first-child em{color:var(--hero-tx)}
 .hwxadd{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin:12px 0 4px;font-size:13px;color:var(--hero-mu);border-bottom:1px dashed currentColor}
