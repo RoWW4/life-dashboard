@@ -41,7 +41,7 @@ const fxSub = (f, s) => {
 /* Fila de Facturas con la misma forma que un movimiento: a la izquierda nombre, nota y detalle (toca para ver la ficha,
    que tiene «Editar»); a la derecha la etiqueta arriba, alineada con el nombre, y el importe debajo. */
 const fxRow = (f, sub, chip, amt, cls = '') =>
-  `<div class="row txrow fxrow${cls}">${tile(CI[f.cat] || 'receipt', col(f.cat))}<button class="g link txg" data-a="fxinf" data-i="${f.id}" title="Ver la ficha: lo que cuesta, cargos y editar"><span class="tt">${esc(f.name)}</span>${fxNoteL(f)}<span class="meta mu">${sub}</span></button><span class="txr"><span class="txc">${chip}</span><span class="txb"><span class="amt${f.t === 'i' ? ' ok' : ''}">${amt}</span></span></span></div>`;
+  `<div class="row txrow fxrow${cls}">${tile(CI[f.cat] || 'receipt', col(f.cat))}<button class="g link txg" data-a="fxinf" data-i="${f.id}" title="Ver la ficha: lo que cuesta, cargos y editar"><span class="tt">${esc(f.name)}</span>${fxNoteL(f)}<span class="meta mu">${sub}</span></button><span class="txr"><span class="txc">${chip}</span><span class="txb"><span class="amt">${amt}</span></span></span></div>`;
 const fxItem = f => {
   if (f.var) return fxVarItem(f);
   const s0 = fxState(f),
