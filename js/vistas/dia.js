@@ -151,10 +151,10 @@ function vDia() {
     ...bankAlerts().map(a => [...a, '', 'ajus'])
   ].sort((a, b) => a[0].localeCompare(b[0]));
   const P = S.shop.filter(s => !s.done);
-  // Etiqueta de cuándo: rojo si está atrasado, acento si es hoy y gris si es más adelante.
+  // Etiqueta de cuándo: rojo si está atrasado, acento si es hoy y naranja si es más adelante.
   const when = d => {
     const n = dayDiff(d);
-    return `<span class="chip ${n < 0 ? 'er' : n === 0 ? 'ac' : ''}">${cap(rel(d))}</span>`;
+    return `<span class="chip ${n < 0 ? 'er' : n === 0 ? 'ac' : 'wa'}">${cap(rel(d))}</span>`;
   };
   const C = {
     imp: panel(
