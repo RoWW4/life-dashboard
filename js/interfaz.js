@@ -506,6 +506,16 @@ const glue = (tt, ex) => {
   const i = tt.trimEnd().lastIndexOf(' ');
   return `${esc(tt.slice(0, i + 1))}<span class="nw">${esc(tt.slice(i + 1).trimEnd())}${ex}</span>`;
 };
+/* Cumpleaños: nombre sin «Cumpleaños de», años que cumple (si se sabe el año de nacimiento) e ideas de regalo sin regalar
+   (las notas de un cumpleaños son sus ideas de regalo; gy = año en que se regaló). */
+const bdName = t => cap(t.title.replace(/^cumplea(ñ|n)os\s+(de\s+)?/i, '').trim()) || t.title;
+const bdAge = t => (t.by && t.due ? +t.due.slice(0, 4) - t.by : 0);
+const bdIdeas = t => (t.notes || []).filter(x => !x.gy);
+/* Icono de tarta con los años que cumple en una esquina (si se sabe el año de nacimiento). */
+const bdTile = t => {
+  const a = bdAge(t);
+  return `<span class="ic bdt" style="--c:${AC['Cumpleaños']}"${a ? ` title="Cumple ${a}"` : ''}>${I('cake')}${a ? `<b aria-label="Cumple ${a}">${a}</b>` : ''}</span>`;
+};
 /* sa: con franja y etiqueta del área (lista «Por fecha» de Tareas). */
 const taskRow = (t, sa) => {
   const n = t.due ? dayDiff(t.due) : null,

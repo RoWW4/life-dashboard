@@ -2,6 +2,7 @@
 //  · aviso a la fecha y hora elegidas en la tarea (t.rem) o, si no tiene, 1 día antes (24 h antes de la hora de la tarea,
 //    no se repite al aplazarla a menos de 24 h;
 //    si no tiene hora, como si fuera a las 9:00);
+//  · cumpleaños: además, una semana antes con las ideas de regalo (y los años que cumple, si se sabe el año de nacimiento);
 //  · resumen a las 7:00 con las tareas de hoy, las atrasadas y los cumpleaños (si no hay nada, no se manda);
 //  · Salud (3 días antes), documentos que caducan, fechas del coche y batería del reloj (ver apartados 3 a 6).
 // La lanza Supabase cada 15 minutos (pg_cron, tarea «task-reminders»). Lo ya avisado se apunta en la tabla
@@ -34,6 +35,8 @@ const iso = t => new Date(t).toISOString().slice(0, 10);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const row = (await sb(`ldb_state?user_id=eq.${uid()}&select=data`))[0];
 const tasks = ((row && row.data && row.data.tasks) || []).filter(t => !t.done && t.due && t.title);
+// Título de la tarea; en un cumpleaños con año de nacimiento, también los años que cumple.
+const bdTxt = t => t.title + (t.area === 'Cumpleaños' && t.by > 1900 && /^\d{4}/.test(t.due || '') ? ` (cumple ${+t.due.slice(0, 4) - t.by})` : '');
 const sent = new Set((await sb(`task_reminders?user_id=eq.${uid()}&select=key`)).map(r => r.key));
 const out = [];
 const mark = key => sb('task_reminders', { method: 'POST', body: { user_id: uid(), key }, prefer: 'resolution=ignore-duplicates,return=minimal' });
@@ -84,7 +87,15 @@ for (const t of tasks.filter(t => /^\d{4}-\d{2}-\d{2}$/.test(t.due) && !REM.test
   // al momento de aplazarla; el resumen de las 7:00 ya la recuerda.
   if (DAY - (w - nowL) > 36e5 && [...sent].some(k => k.startsWith(`tk:${t.id}:`))) continue;
   const cuando = t.due === today ? 'Hoy' : t.due === iso(nowL + DAY) ? 'Mañana' : `El ${DOW[new Date(w).getUTCDay()]} ${fd(t.due)}`;
-  await send(key, `${t.area === 'Cumpleaños' ? '🎂' : '⏰'} ${cuando}${hm ? ' a las ' + hm : ''}: ${t.title}`, 'Aviso de tarea');
+  await send(key, `${t.area === 'Cumpleaños' ? '🎂' : '⏰'} ${cuando}${hm ? ' a las ' + hm : ''}: ${bdTxt(t)}`, 'Aviso de tarea');
+}
+
+// 1b) Cumpleaños: también una semana antes (desde las 9:00 hasta el aviso del día anterior), con las ideas de regalo apuntadas.
+for (const t of tasks.filter(t => t.area === 'Cumpleaños' && /^\d{4}-\d{2}-\d{2}$/.test(t.due))) {
+  const w = at(t.due, DEF_TM) - 7 * DAY, key = `bd7:${t.id}:${t.due}`;
+  if (nowL < w || nowL >= w + 6 * DAY || sent.has(key)) continue;
+  const ideas = (t.notes || []).filter(n => n && !n.gy && n.tx).map(n => '• ' + n.tx);
+  await send(key, `🎁 Dentro de una semana, el ${DOW[new Date(at(t.due, '12:00')).getUTCDay()]} ${fd(t.due)}: ${bdTxt(t)}${ideas.length ? '\nIdeas de regalo:\n' + ideas.join('\n') : ''}`, 'Cumpleaños');
 }
 
 // 2) Resumen de la mañana (desde las 7:00 hasta mediodía, una vez al día).
@@ -92,7 +103,7 @@ const sk = 'sum:' + today;
 if (+P.hour >= HOUR && +P.hour < 12 && !sent.has(sk)) {
   const byTm = (a, b) => (a.tm || '').localeCompare(b.tm || '');
   const hoy = tasks.filter(t => t.due === today).sort(byTm), atr = tasks.filter(t => t.due < today).sort((a, b) => a.due.localeCompare(b.due));
-  const li = t => `• ${t.area === 'Cumpleaños' ? '🎂 ' : ''}${t.tm ? t.tm + ' ' : ''}${t.title}`;
+  const li = t => `• ${t.area === 'Cumpleaños' ? '🎂 ' : ''}${t.tm ? t.tm + ' ' : ''}${bdTxt(t)}`;
   const L = [];
   if (hoy.length) L.push(`☀️ Hoy, ${DOW[new Date(nowL).getUTCDay()]} ${fd(today)}:`, ...hoy.map(li));
   if (atr.length) L.push(...(L.length ? [''] : []), '⚠️ Atrasadas:', ...atr.map(t => `${li(t)} (desde ${fd(t.due)})`));

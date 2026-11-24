@@ -183,7 +183,9 @@ const A = {
     else delete t.doneAt;
     // Desmarcada por error: se quita la siguiente que se creó al marcarla (si sigue pendiente).
     if (!t.done && t.nx) {
-      S.tasks = S.tasks.filter(x => !(x.id === t.nx && !x.done && !x.notes));
+      S.tasks = S.tasks.filter(
+        x => !(x.id === t.nx && !x.done && (!x.notes || (t.area === 'Cumpleaños' && JSON.stringify(x.notes) === JSON.stringify(t.notes))))
+      );
       delete t.nx;
     }
     let msg = t.done ? 'Completada' : '';
@@ -206,7 +208,10 @@ const A = {
           tm: t.tm || '',
           done: false,
           ...(t.rep === 'Mensual' || t.rep === 'Anual' ? { rd: day } : {}),
-          ...(t.rem && t.due ? { rem: addD(nd, dd(t.rem.slice(0, 10), t.due)) + t.rem.slice(10) } : {})
+          ...(t.rem && t.due ? { rem: addD(nd, dd(t.rem.slice(0, 10), t.due)) + t.rem.slice(10) } : {}),
+          // Un cumpleaños se lleva al año siguiente su año de nacimiento y sus ideas de regalo (y lo ya regalado).
+          ...(t.area === 'Cumpleaños' && t.by ? { by: t.by } : {}),
+          ...(t.area === 'Cumpleaños' && t.notes && t.notes.length ? { notes: t.notes.map(x => ({ ...x })) } : {})
         });
         t.nx = nid;
         msg = '🔁 Próxima: ' + fd(nd);

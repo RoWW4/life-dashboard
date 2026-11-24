@@ -114,9 +114,11 @@ function vDia() {
     g = h < 6 ? 'Buenas noches' : h < 13 ? 'Buenos días' : h < 21 ? 'Buenas tardes' : 'Buenas noches',
     td = TD(),
     open = S.tasks.filter(t => !t.done);
-  // Calendario: los próximos 7 días agrupados por día. Las tareas de mañana ya salen en «Lo más importante», así que aquí empiezan pasado mañana.
+  // Calendario: los próximos 7 días agrupados por día. Las tareas de mañana (y los cumpleaños de la semana) ya salen en «Lo más importante», así que aquí empiezan pasado mañana.
   const up = [
-    ...open.filter(t => t.due && dayDiff(t.due) >= 2 && dayDiff(t.due) <= 7).map(t => [t.due, t.tm || '', taskRow(t)]),
+    ...open
+      .filter(t => t.due && t.area !== 'Cumpleaños' && dayDiff(t.due) >= 2 && dayDiff(t.due) <= 7)
+      .map(t => [t.due, t.tm || '', taskRow(t)]),
     ...[...new Set([td.slice(0, 4), addD(td, 7).slice(0, 4)])]
       .flatMap(y => holidays(+y))
       .filter(h => dayDiff(h.d) >= 1 && dayDiff(h.d) <= 7)
@@ -132,7 +134,8 @@ function vDia() {
     return hd + r;
   });
   const imp = [
-    ...open.filter(t => t.due && dayDiff(t.due) <= 1).map(t => [t.due, ico(t), t.title, AC[t.area], t.id]),
+    // Los cumpleaños, con una semana de antelación (para el regalo); los años que cumple van en su icono.
+    ...open.filter(t => t.due && dayDiff(t.due) <= (t.area === 'Cumpleaños' ? 7 : 1)).map(t => [t.due, ico(t), t.title, AC[t.area], t.id]),
     // Lo que no es una tarea lleva a su sección al tocarlo (6.º dato).
     ...fxDue(7).map(o => [o.d, 'receipt', o.f.name + ' · ' + eur(o.f.amt), col(o.f.cat), '', 'fact']),
     ...fxPausedHit().map(o => [
@@ -165,7 +168,7 @@ function vDia() {
         ? imp
             .map(
               ([d, n, t, c, ti, go]) =>
-                `<div class="row"${ti && NATIVE_DRAG ? ` draggable="true" data-tid="${ti}"` : ''}>${ti ? `<input type="checkbox" class="ck" data-a="tt" data-i="${ti}" aria-label="Completar «${esc(t)}»">` : ''}${tile(n, c)}${ti ? `<button class="link" data-a="et" data-i="${ti}"><span class="tt">${esc(t)}</span></button>` : go ? `<button class="link" data-a="go" data-i="${go}" title="Abrir su sección"><span class="tt">${esc(t)}</span></button>` : `<span class="g">${esc(t)}</span>`}${when(d)}${ti ? tppBtn(S.tasks.find(x => x.id === ti)) : ''}</div>`
+                `<div class="row"${ti && NATIVE_DRAG ? ` draggable="true" data-tid="${ti}"` : ''}>${ti ? `<input type="checkbox" class="ck" data-a="tt" data-i="${ti}" aria-label="Completar «${esc(t)}»">` : ''}${(tk => (tk && tk.area === 'Cumpleaños' ? bdTile(tk) : tile(n, c)))(ti && S.tasks.find(x => x.id === ti))}${ti ? `<button class="link" data-a="et" data-i="${ti}"><span class="tt">${esc(t)}</span></button>` : go ? `<button class="link" data-a="go" data-i="${go}" title="Abrir su sección"><span class="tt">${esc(t)}</span></button>` : `<span class="g">${esc(t)}</span>`}${when(d)}${ti ? tppBtn(S.tasks.find(x => x.id === ti)) : ''}</div>`
             )
             .join('')
         : empty('Nada urgente para hoy ni mañana.'),

@@ -6,19 +6,51 @@ const CUMPLE = 'Cumpleaños';
 function cumplePanel(v) {
   return cumplePanel0(v).replace(v === 'tareasf' ? /<span class="hd"[^>]*>.*?<\/span>/ : /^$/, '');
 }
+/* Panel de cumpleaños: el próximo, destacado arriba (con sus ideas de regalo; los años que cumple van en el icono) y el resto por meses,
+   con cuántos días faltan (naranja la última semana, color de hoy si es hoy). */
+function bdChip(t) {
+  const n = t.due ? dayDiff(t.due) : null;
+  if (n === null) return '';
+  return `<span class="chip ${n < 0 ? 'er' : n === 0 ? 'ac' : n <= 7 ? 'wa' : ''}">${n <= 1 ? cap(rel(t.due)) : 'Faltan ' + n + ' días'}</span>`;
+}
+function bdMeta(t) {
+  const k = bdIdeas(t).length;
+  return [t.due ? fdc(t.due) : 'Sin fecha', k ? `<span class="bdnx">${I('gift', 'sm')} ${k} idea${k > 1 ? 's' : ''}</span>` : '']
+    .filter(Boolean)
+    .join(' · ');
+}
 function cumplePanel0(v) {
   const c = S.tasks.filter(t => t.area === CUMPLE && !t.done).sort((a, b) => (a.due || '9').localeCompare(b.due || '9'));
+  const ck = t =>
+    `<input type="checkbox" class="ck" data-a="tt" data-i="${t.id}" aria-label="Ya ha pasado: llevar «${esc(t.title)}» al año que viene">`;
+  const [p, ...r] = c;
+  const yr = TD().slice(0, 4);
+  // El próximo: tarjeta destacada con sus dos primeras ideas de regalo.
+  const top = p
+    ? `<div class="bdnext">${ck(p)}${bdTile(p)}<button class="link g" data-a="et" data-i="${p.id}"><small>Próximo cumpleaños</small><b>${esc(bdName(p))}</b><span class="mu">${bdMeta(p)}</span>${
+        bdIdeas(p).length
+          ? `<span class="bdids">${bdIdeas(p)
+              .slice(0, 2)
+              .map(x => `<span>${I('gift', 'sm')} ${esc(x.tx.replace(/https?:\/\/\S+/g, '').trim() || 'Enlace')}</span>`)
+              .join('')}</span>`
+          : ''
+      }</button>${bdChip(p)}</div>`
+    : '';
+  let lastM = '';
+  const rows = r.map(t => {
+    const m = (t.due || '').slice(0, 7),
+      hd =
+        m !== lastM
+          ? `<div class="dh">${m ? cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date(m + '-15T12:00'))) + (m.slice(0, 4) !== yr ? ' ' + m.slice(0, 4) : '') : 'Sin fecha'}</div>`
+          : '';
+    lastM = m;
+    return `${hd}<div class="row bdrow${t.due && dayDiff(t.due) <= 7 ? ' soon' : ''}">${ck(t)}${bdTile(t)}<button class="link g" data-a="et" data-i="${t.id}"><span class="tt">${esc(bdName(t))}</span><span class="meta mu">${bdMeta(t)}</span></button>${bdChip(t)}</div>`;
+  });
   return panel(
     v,
     CUMPLE,
     `<span style="color:${AC[CUMPLE]}">${I(AI[CUMPLE])}</span> Cumpleaños <span class="cnt">· ${c.length}</span>`,
-    (c.length
-      ? fold(
-          'a-' + CUMPLE,
-          c.map(t => taskRow(t)),
-          3
-        )
-      : empty('No hay cumpleaños apuntados.')) +
+    (c.length ? top + fold('a-' + CUMPLE, rows, 4) : empty('No hay cumpleaños apuntados.')) +
       `<div class="more"><button class="btn sm ghost" data-a="nc">${I('plus', 'sm')} Añadir cumpleaños</button></div>`
   );
 }
