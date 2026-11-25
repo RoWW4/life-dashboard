@@ -143,7 +143,7 @@ function vTareas() {
   }
   const segF = [
     ['pend', 'Pendientes'],
-    ['hecha', 'Hechas'],
+    ['hecha', 'Completadas'],
     ['todas', 'Todas'],
     ['Alta', 'Alta']
   ];
