@@ -547,10 +547,10 @@ function ruleForm(i) {
 }
 function addPicker() {
   const o = modal(
-    `<h3>¿Qué quieres añadir?</h3><div class="pick"><button data-k="t">${tile('list-checks', '#0099ff')}Tarea</button><button data-k="x">${tile('wallet', '#2fcf7a')}Movimiento</button><button data-k="s">${tile('shopping-cart', '#f5a524')}Compra</button><button data-k="d">${tile('file-text', '#a78bfa')}Documento</button><button data-k="v">${tile('sun', '#2fcf7a')}Vacaciones</button></div>`
+    `<h3>¿Qué quieres añadir?</h3><div class="pick"><button data-k="t">${tile('list-checks', '#0099ff')}Tarea</button><button data-k="c">${tile('cake', 'var(--bday)')}Cumpleaños</button><button data-k="x">${tile('wallet', '#2fcf7a')}Movimiento</button><button data-k="s">${tile('shopping-cart', '#f5a524')}Compra</button><button data-k="d">${tile('file-text', '#a78bfa')}Documento</button><button data-k="v">${tile('sun', '#2fcf7a')}Vacaciones</button></div>`
   );
   o.querySelectorAll('.pick button').forEach(
-    b => (b.onclick = () => ({ t: () => taskForm(), x: txForm, s: shopForm, d: () => docForm(), v: vacForm })[b.dataset.k]())
+    b => (b.onclick = () => ({ t: () => taskForm(), c: A.nc, x: txForm, s: shopForm, d: () => docForm(), v: vacForm })[b.dataset.k]())
   );
 }
 /* Vacaciones o días libres: se ven con fondo verde en el calendario (S.periods). */
