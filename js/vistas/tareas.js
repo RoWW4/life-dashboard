@@ -51,7 +51,7 @@ function cumplePanel0(v) {
     CUMPLE,
     `<span style="color:${AC[CUMPLE]}">${I(AI[CUMPLE])}</span> Cumpleaños <span class="cnt">· ${c.length}</span>`,
     (c.length ? top + fold('a-' + CUMPLE, rows, 4) : empty('No hay cumpleaños apuntados.')) +
-      `<div class="more"><button class="btn sm ghost" data-a="nc">${I('plus', 'sm')} Añadir cumpleaños</button></div>`
+      `<div class="more"><button class="btn sm" data-a="nc">${I('plus', 'sm')} Añadir cumpleaños</button></div>`
   );
 }
 /* Pestañas «Tareas | Cumpleaños»: los cumpleaños van en la suya para no mezclarse con las tareas (se abre en Tareas). */
