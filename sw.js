@@ -1,9 +1,53 @@
-// Service worker: permite abrir el panel sin conexión (red primero, caché si falla).
-const C = 'ldb-shell-v249';
-const SHELL = ['./', 'index.html', 'styles.css', 'icons.js', 'config.js', 'js/base.js', 'js/estado.js', 'js/facturas-calculo.js', 'js/salud-calculo.js', 'js/nube.js', 'js/banco.js', 'js/interfaz.js', 'js/vistas/dia.js', 'js/vistas/tareas.js', 'js/vistas/compra.js', 'js/vistas/finanzas.js', 'js/vistas/inversiones.js', 'js/vistas/facturas.js', 'js/vistas/salud.js', 'js/vistas/coche.js', 'js/vistas/mascotas.js', 'js/vistas/ajustes.js', 'js/render.js', 'js/formularios.js', 'js/formularios-facturas.js', 'js/formularios-coche.js', 'js/formularios-mascotas.js', 'js/voz.js', 'js/acciones.js', 'js/acciones-coche.js', 'js/acciones-mascotas.js', 'js/acciones-salud.js', 'js/eventos.js', 'js/arranque.js', 'img/fondo-planeta.jpg', 'manifest.webmanifest', 'icons/icon-192.png'];
+// Service worker: abre el panel rápido y también sin conexión.
+// - Archivos con versión (?v=N), librerías y fuentes: de la copia guardada al momento (no cambian; cada versión nueva
+//   lleva otro ?v= y se descarga aparte).
+// - La página: red primero (para coger siempre la versión nueva) y copia guardada si la red no contesta en 4 s.
+// - El resto de archivos propios (config, imágenes, manifiesto): copia guardada al momento y se actualiza por detrás.
+const C = 'ldb-shell-v250';
+const SHELL = [
+  './',
+  'index.html',
+  'styles.css',
+  'icons.js',
+  'config.js',
+  'js/base.js',
+  'js/estado.js',
+  'js/facturas-calculo.js',
+  'js/salud-calculo.js',
+  'js/nube.js',
+  'js/banco.js',
+  'js/interfaz.js',
+  'js/vistas/dia.js',
+  'js/vistas/tareas.js',
+  'js/vistas/compra.js',
+  'js/vistas/finanzas.js',
+  'js/vistas/inversiones.js',
+  'js/vistas/facturas.js',
+  'js/vistas/salud.js',
+  'js/vistas/coche.js',
+  'js/vistas/mascotas.js',
+  'js/vistas/ajustes.js',
+  'js/render.js',
+  'js/formularios.js',
+  'js/formularios-facturas.js',
+  'js/formularios-coche.js',
+  'js/formularios-mascotas.js',
+  'js/voz.js',
+  'js/acciones.js',
+  'js/acciones-coche.js',
+  'js/acciones-mascotas.js',
+  'js/acciones-salud.js',
+  'js/eventos.js',
+  'js/arranque.js',
+  'img/fondo-planeta.jpg',
+  'manifest.webmanifest',
+  'icons/icon-192.png'
+];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(C).then(c => c.addAll(SHELL)));
+  // Se guardan con el mismo ?v= con el que los pide index.html, para que la primera recarga ya los encuentre.
+  const v = C.match(/\d+$/)[0];
+  e.waitUntil(caches.open(C).then(c => c.addAll(SHELL.map(f => (/\.(js|css)$/.test(f) && f !== 'config.js' ? f + '?v=' + v : f)))));
   self.skipWaiting();
 });
 
@@ -29,11 +73,27 @@ self.addEventListener('fetch', e => {
   const u = new URL(e.request.url);
   // Solo cacheamos la propia app y librerías/fuentes; nunca las llamadas a Supabase.
   if (u.origin !== location.origin && !/jsdelivr|fonts\.(googleapis|gstatic)/.test(u.hostname)) return;
-  // La página (navegación) se pide sin la copia guardada del navegador: GitHub Pages deja guardarla hasta 10 minutos
-  // y el móvil seguía abriendo la versión anterior después de publicar. Con «no-cache» pregunta siempre si hay una nueva.
-  const req = e.request.mode === 'navigate' ? fetch(e.request.url, { cache: 'no-cache', credentials: 'same-origin' }) : fetch(e.request);
-  const red = req.then(r => { const cp = r.clone(); caches.open(C).then(c => c.put(e.request, cp)); return r; });
-  // Si la red no contesta en 4 s (mala cobertura), se usa la copia guardada; si no hay copia, se sigue esperando a la red.
+  const guarda = r => {
+    if (r.ok || r.type === 'opaque') {
+      const cp = r.clone();
+      caches.open(C).then(c => c.put(e.request, cp));
+    }
+    return r;
+  };
+  if (e.request.mode !== 'navigate') {
+    const fijo = u.searchParams.has('v') || u.origin !== location.origin;
+    return e.respondWith(
+      caches.match(e.request).then(c => {
+        if (c && fijo) return c;
+        const red = fetch(e.request).then(guarda);
+        if (c) return (red.catch(() => {}), c); // se usa la copia y se actualiza por detrás para la próxima vez
+        return red.catch(() => caches.match(e.request, { ignoreSearch: true }));
+      })
+    );
+  }
+  // La página se pide sin la copia del navegador (GitHub Pages deja guardarla 10 minutos y el móvil abría la versión
+  // anterior tras publicar). Si la red no contesta en 4 s (mala cobertura), se usa la copia guardada.
+  const red = fetch(e.request.url, { cache: 'no-cache', credentials: 'same-origin' }).then(guarda);
   const lenta = new Promise(ok => setTimeout(ok, 4000)).then(() => caches.match(e.request, { ignoreSearch: true })).then(c => c || red);
   e.respondWith(Promise.race([red, lenta]).catch(() => caches.match(e.request, { ignoreSearch: true })));
 });
