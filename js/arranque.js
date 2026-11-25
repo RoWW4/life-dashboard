@@ -6,6 +6,8 @@ function afterLoad() {
   const changed = seed();
   if (changed) save();
   render();
+  // Una vez, unos segundos después de abrir (con la nube ya al día): fotos de mascotas antiguas, más ligeras.
+  setTimeout(petPhotoShrink, 5000);
   // Vuelta desde el banco (Enable Banking redirige aquí con ?code=…)
   const q = new URLSearchParams(location.search);
   if (q.get('compartir')) {

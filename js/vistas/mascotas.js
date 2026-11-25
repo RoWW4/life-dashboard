@@ -349,16 +349,49 @@ function petPhoto(f, cb) {
     o.addEventListener('keydown', e => e.key === 'Escape' && (e.stopPropagation(), close()));
     o.querySelector('[data-ok]').onclick = () => {
       const s = base * z,
-        n = Math.min(360, Math.round(V / s)) || 360,
+        n = Math.min(FOTO_PX, Math.round(V / s)) || FOTO_PX,
         c = document.createElement('canvas');
       c.width = c.height = Math.max(n, 160);
       c.getContext('2d').drawImage(im, -x / s, -y / s, V / s, V / s, 0, 0, c.width, c.height);
       close();
-      cb(c.toDataURL('image/jpeg', 0.82));
+      cb(c.toDataURL('image/jpeg', FOTO_Q));
     };
     o.querySelector('[data-ok]').focus();
   };
   im.src = u;
+}
+/* Fotos de mascotas: como mucho 256 px (en pantalla miden 112 px) para que los datos del panel pesen poco.
+   petPhotoShrink() reduce una vez, al abrir, las fotos guardadas antes con más tamaño (antes eran de 360 px). */
+const FOTO_PX = 256,
+  FOTO_Q = 0.72;
+function petPhotoShrink() {
+  const ps = petsR().filter(p => typeof p.photo === 'string' && p.photo.startsWith('data:image/'));
+  let cambia = false,
+    quedan = ps.length;
+  if (!quedan) return;
+  const fin = () => {
+    if (--quedan) return;
+    if (cambia) ch();
+  };
+  ps.forEach(p => {
+    const im = new Image(),
+      src = p.photo;
+    im.onload = () => {
+      if (im.naturalWidth > FOTO_PX && p.photo === src) {
+        const c = document.createElement('canvas');
+        c.width = c.height = FOTO_PX;
+        c.getContext('2d').drawImage(im, 0, 0, FOTO_PX, FOTO_PX);
+        const nueva = c.toDataURL('image/jpeg', FOTO_Q);
+        if (nueva.length < src.length) {
+          p.photo = nueva;
+          cambia = true;
+        }
+      }
+      fin();
+    };
+    im.onerror = fin;
+    im.src = src;
+  });
 }
 function petPhotoSet(pid, f) {
   petPhoto(f, src => {
