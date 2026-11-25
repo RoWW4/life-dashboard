@@ -57,8 +57,9 @@ async function carSync(manual) {
     else {
       const desde = new Date(data.at).getTime() - 2000;
       msg = 'Kia Connect no ha respondido aún; prueba en un rato';
-      for (let i = 0; i < 24; i++) {
-        await new Promise(r => setTimeout(r, i < 3 ? 15000 : 8000));
+      for (let i = 0; i < 60; i++) {
+        // Mira cada 3 s (el robot suele tardar unos 20-30 s): antes miraba cada 15 s y se perdía hasta 15 s de espera.
+        await new Promise(r => setTimeout(r, 3000));
         const { data: j } = await sb.from('job_health').select('last_ok,last_error,last_error_at').eq('job', 'kia-km').maybeSingle();
         if (j && j.last_ok && new Date(j.last_ok) >= desde) {
           msg = 'Coche al día';
