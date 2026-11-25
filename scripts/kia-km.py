@@ -49,7 +49,8 @@ def job(event, error=None):
 DIAG_FIELDS = [
     "fuel_level", "fuel_level_is_low", "fuel_driving_range", "total_driving_range", "engine_type",
     "oil_level_warning_is_on", "brake_fluid_warning_is_on", "washer_fluid_warning_is_on", "smart_key_battery_warning_is_on",
-    "tire_pressure_all_warning_is_on", "tire_pressure_front_left_warning_is_on", "battery_auxiliary_fail_warning_is_on",
+    "tire_pressure_all_warning_is_on", "tire_pressure_front_left_warning_is_on", "tire_pressure_front_right_warning_is_on",
+    "tire_pressure_rear_left_warning_is_on", "tire_pressure_rear_right_warning_is_on", "battery_auxiliary_fail_warning_is_on",
     "car_battery_percentage", "dtc_count", "lamp_status", "headlamp_status",
     "is_locked", "front_left_door_is_open", "front_left_window_is_open", "trunk_is_open", "hood_is_open", "sunroof_is_open",
     "location_latitude", "location_last_set_time", "last_updated_at",
@@ -93,6 +94,11 @@ WARN = {
 }
 
 
+def tire_one(v):
+    """Aviso de presión en una sola rueda: el coche lo manda por rueda, aparte del de «todas»."""
+    return any(g(v, f"tire_pressure_{p}_warning_is_on") for p in ("front_left", "front_right", "rear_left", "rear_right"))
+
+
 def g(v, f):
     try:
         return getattr(v, f)
@@ -125,7 +131,7 @@ def live(v):
         "fuel": num(g(v, "fuel_level")),
         "low": bool(g(v, "fuel_level_is_low")),
         "range": num(g(v, "total_driving_range") or g(v, "fuel_driving_range")),
-        "warn": [k for k, f in WARN.items() if g(v, f)],
+        "warn": [k for k, f in WARN.items() if g(v, f) or (k == "tire" and tire_one(v))],
         "open": opn,
         "sync": dt.datetime.now(dt.UTC).isoformat(),
     }
