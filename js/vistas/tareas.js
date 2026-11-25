@@ -1,6 +1,6 @@
 'use strict';
 /* Sección «Tareas». */
-/* Los cumpleaños van aparte, en su propio panel (los próximos primero), para que no llenen las listas de tareas.
+/* Los cumpleaños van aparte, en su pestaña (los próximos primero), para que no llenen las listas de tareas.
    Se añaden con «Añadir cumpleaños» (o como una tarea con el área Cumpleaños) y se repiten cada año solos. */
 const CUMPLE = 'Cumpleaños';
 function cumplePanel(v) {
@@ -54,8 +54,23 @@ function cumplePanel0(v) {
       `<div class="more"><button class="btn sm ghost" data-a="nc">${I('plus', 'sm')} Añadir cumpleaños</button></div>`
   );
 }
+/* Pestañas «Tareas | Cumpleaños»: los cumpleaños van en la suya para no mezclarse con las tareas (se abre en Tareas). */
+let tTab = 'tar';
 function vTareas() {
-  const cum = flt === 'pend' || flt === 'todas';
+  const nC = S.tasks.filter(t => t.area === CUMPLE && !t.done).length,
+    nT = S.tasks.filter(t => t.area !== CUMPLE && !t.done).length;
+  const tabs = `<div class="seg ctabs" role="tablist" aria-label="Tareas o cumpleaños">${[
+    ['tar', I('list-checks', 'sm') + ' Tareas', nT],
+    ['cum', I(AI[CUMPLE], 'sm') + ' Cumpleaños', nC]
+  ]
+    .map(
+      ([k, l, n]) =>
+        `<button role="tab" aria-selected="${tTab === k}" class="${tTab === k ? 'on' : ''}" data-a="ttab" data-i="${k}">${l} <span class="cnt">· ${n}</span></button>`
+    )
+    .join('')}</div>`;
+  if (tTab === 'cum')
+    return `<div class="hdr"><div><h2>Tareas</h2><div class="sub help">Toca un cumpleaños para editarlo o apuntar ideas de regalo · Marca el cuadrado cuando haya pasado</div></div></div>
+  ${tabs}<div class="grid">${cumplePanel('tareasf')}</div>`;
   const l = S.tasks.filter(
     t =>
       t.area !== CUMPLE &&
@@ -66,43 +81,38 @@ function vTareas() {
   if (grp === 'area') {
     const g = {};
     l.forEach(t => (g[t.area] = g[t.area] || []).push(t));
-    // Áreas ordenadas por su tarea más próxima (las que no tienen fecha, al final; Cumpleaños, el último).
-    if (cum) g[CUMPLE] = [];
+    // Áreas ordenadas por su tarea más próxima (las que no tienen fecha, al final).
     const near = a => {
       const d = g[a]
         .filter(t => !t.done && t.due)
         .map(t => t.due)
         .sort()[0];
-      return a === CUMPLE ? 'z2' : d || 'z1';
+      return d || 'z1';
     };
     // Si se han movido a mano, manda ese orden (S.order.tareas); las áreas nuevas entran en su sitio según la tarea más próxima.
     const keys = (VIS.tareas = ord(
       'tareas',
       Object.keys(g).sort((a, b) => near(a).localeCompare(near(b)) || AREAS.indexOf(a) - AREAS.indexOf(b))
     ));
-    // Cada panel enseña sus 5 tareas más próximas (Cumpleaños, los 3 siguientes) y se despliega con «Ver más».
+    // Cada panel enseña sus 5 tareas más próximas y se despliega con «Ver más».
     body = `<div class="grid">${keys
       .map(a =>
-        a === CUMPLE
-          ? cumplePanel('tareas')
-          : panel(
-              'tareas',
-              a,
-              `<span style="color:${AC[a] || 'inherit'}">${I(AI[a] || 'pin')}</span> ${esc(a)} <span class="cnt">· ${g[a].length}</span>`,
-              fold(
-                'a-' + a,
-                so(g[a]).map(t => taskRow(t)),
-                5
-              )
-            )
+        panel(
+          'tareas',
+          a,
+          `<span style="color:${AC[a] || 'inherit'}">${I(AI[a] || 'pin')}</span> ${esc(a)} <span class="cnt">· ${g[a].length}</span>`,
+          fold(
+            'a-' + a,
+            so(g[a]).map(t => taskRow(t)),
+            5
+          )
+        )
       )
       .join('')}</div>`;
   } else {
     // Por fecha (la vista de inicio): una sola lista, de lo más cercano a lo más lejano, con separadores por tramos.
-    // Cada tarea lleva una franja y una etiqueta con el color de su área; arriba se puede filtrar por área (tfa).
-    const ar = [...new Set(l.map(t => t.area))].sort((x, y) => AREAS.indexOf(x) - AREAS.indexOf(y));
-    if (tfa && !ar.includes(tfa)) tfa = '';
-    const lf = tfa ? l.filter(t => t.area === tfa) : l;
+    // Cada tarea lleva una franja y una etiqueta con el color de su área (para verlas por área, el botón de la fila de filtros).
+    const lf = l;
     const dd = t => dayDiff(t.due);
     // Las completadas con fecha pasada no son atrasadas: van en su propio tramo.
     const B = [
@@ -121,12 +131,7 @@ function vTareas() {
         ? `<div class="tsep${n === 'Atrasadas' ? ' er' : ''}">${n} <span>· ${x.length}</span></div>` + x.map(t => taskRow(t, 1)).join('')
         : '';
     }).join('');
-    const fil =
-      ar.length > 1
-        ? `<div class="tfil" role="group" aria-label="Filtrar por área"><button class="chip${tfa ? '' : ' on'}" data-a="tfa" data-i="">Todas</button>${ar.map(x => `<button class="chip tarea${tfa === x ? ' on' : ''}" style="--c:${AC[x] || 'var(--mu)'}" data-a="tfa" data-i="${esc(x)}">${I(AI[x] || 'pin', 'sm')} ${esc(x)}</button>`).join('')}</div>`
-        : '';
     VIS.tareas = [];
-    const cp = cum && !tfa ? cumplePanel('tareasf') : '';
     // La lista también es un panel (sin asa: aquí no se mueven) para poder elegir su ancho en el ordenador.
     const tl = lst
       ? panel('tareasf', 'lista', `${I('list-checks')} Tareas <span class="cnt">· ${lf.length}</span>`, lst, 'tlist').replace(
@@ -134,22 +139,20 @@ function vTareas() {
           ''
         )
       : '';
-    if (lst || cp) body = fil + `<div class="grid">${tl}${cp}</div>`;
+    if (lst) body = `<div class="grid">${tl}</div>`;
   }
   const segF = [
     ['pend', 'Pendientes'],
-    ['hecha', 'Completadas'],
+    ['hecha', 'Hechas'],
     ['todas', 'Todas'],
     ['Alta', 'Alta']
   ];
+  // Una sola fila: el filtro y, al final, un botón que cambia entre lista por fecha y paneles por área.
+  const gpB =
+    grp === 'area'
+      ? `<button class="ib on" data-a="gp" data-i="fecha" aria-label="Ver por fecha" title="Ahora: por área. Toca para ver por fecha">${I('tags')}</button>`
+      : `<button class="ib" data-a="gp" data-i="area" aria-label="Ver por área" title="Ahora: por fecha. Toca para ver por área">${I('tags')}</button>`;
   return `<div class="hdr"><div><h2>Tareas</h2><div class="sub help">Marca el cuadrado para completar · Toca el título para editar · Las repetitivas generan la siguiente</div></div><button class="btn" data-a="nt">${I('plus')} Nueva tarea</button></div>
-  <div class="toolbar one"><div class="seg">${[
-    ['fecha', 'Por fecha'],
-    ['area', 'Por área']
-  ]
-    .map(([k, n]) => `<button class="${grp === k ? 'on' : ''}" data-a="gp" data-i="${k}">${n}</button>`)
-    .join(
-      ''
-    )}</div><div class="seg">${segF.map(([k, n]) => `<button class="${flt === k ? 'on' : ''}" data-a="fl" data-i="${k}">${n}</button>`).join('')}</div></div>
+  ${tabs}<div class="toolbar one ttb"><div class="seg">${segF.map(([k, n]) => `<button class="${flt === k ? 'on' : ''}" data-a="fl" data-i="${k}">${n}</button>`).join('')}</div>${gpB}</div>
   ${body || `<div class="card">${empty('No hay tareas aquí.')}</div>`}`;
 }

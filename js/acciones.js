@@ -95,6 +95,11 @@ const A = {
     S.order[v] = keys;
     ch();
   },
+  ttab: i => {
+    tTab = i;
+    render();
+    window.scrollTo(0, 0);
+  },
   gp: i => {
     grp = i;
     render();
