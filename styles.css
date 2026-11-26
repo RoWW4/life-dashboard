@@ -913,7 +913,7 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
   .f #s2{min-width:0;flex:0 0 76px}.f #s3{flex:1 1 0}
 }
 /* Movimientos en el móvil: categoría y periodo en dos columnas */
-@media(max-width:760px){.txf select{flex:1 1 calc(50% - 4px);min-width:0}}
+@media(max-width:760px){.txf select{flex:1 1 calc(50% - 4px);min-width:0}.txf .txs2{display:flex;flex:1 1 100%}.txf .txs2 button{flex:1;justify-content:center;text-align:center}}
 /* Inversiones: las cifras con las mismas esquinas que el resto; el saldo como la tarjeta de Finanzas */
 .savk>div{border-radius:18px;padding:14px 16px}
 .savk>div.bal{border-radius:22px;padding:16px 18px}
