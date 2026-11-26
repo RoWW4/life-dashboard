@@ -1,7 +1,7 @@
 name: Sincronizar banco
 
-# La lanza Supabase 4 veces al día (pg_cron, tarea «bank-sync»: 43 5,10,14,19 * * * UTC ≈ 06:43, 11:43, 15:43 y
-# 20:43 en invierno; en verano, una hora más) llamando a la API de GitHub, como los avisos. Antes usaba el «schedule»
+# La lanza Supabase 4 veces al día (pg_cron, tarea «bank-sync»: 0 6,12,17,21 * * * UTC ≈ 07:00, 13:00, 18:00 y
+# 22:00 en invierno; en verano, una hora más) llamando a la API de GitHub, como los avisos. Antes usaba el «schedule»
 # de GitHub, que se retrasaba de 1 a 4 horas (10/11/2026). 4 al día es el máximo que permite PSD2 sin que estés delante.
 # Pausarla: select cron.alter_job((select jobid from cron.job where jobname = 'bank-sync'), active := false);
 # También se puede lanzar a mano (Run workflow).

@@ -11,7 +11,7 @@ function bankCard(v) {
   else {
     const vu = BANK.valid_until ? BANK.valid_until.slice(0, 10) : '',
       n = vu ? dayDiff(vu) : 999;
-    st = `<div class="row"><span class="g">Última sincronización</span><span class="mu">${ago(BANK.last_sync)}</span></div><div class="row"><span class="g">Permiso del banco</span><span class="chip ${n < 0 ? 'er' : n <= 14 ? 'wa' : 'ok'}">${vu ? (n < 0 ? 'Caducado' : 'Hasta ' + fd(vu)) : '—'}</span></div>${BANK.last_error ? errFold('La última sincronización dio error', BANK.last_error) : ''}<div class="mu" style="margin-top:6px">El panel recoge los movimientos directamente del banco 4 veces al día (hacia las 6:43, 11:43, 15:43 y 20:43) y la app los muestra al abrirla. Para recogerlos en este momento: «Sincronizar ahora en GitHub» → <i>Run workflow</i>.</div>`;
+    st = `<div class="row"><span class="g">Última sincronización</span><span class="mu">${ago(BANK.last_sync)}</span></div><div class="row"><span class="g">Permiso del banco</span><span class="chip ${n < 0 ? 'er' : n <= 14 ? 'wa' : 'ok'}">${vu ? (n < 0 ? 'Caducado' : 'Hasta ' + fd(vu)) : '—'}</span></div>${BANK.last_error ? errFold('La última sincronización dio error', BANK.last_error) : ''}<div class="mu" style="margin-top:6px">El panel recoge los movimientos directamente del banco 4 veces al día (hacia las 7:00, 13:00, 18:00 y 22:00) y la app los muestra al abrirla. Para recogerlos en este momento: «Sincronizar ahora en GitHub» → <i>Run workflow</i>.</div>`;
   }
   if (user && BANKERR)
     st =

@@ -19,9 +19,9 @@ select cron.schedule('task-reminders', '7,22,37,52 * * * *', $$
   where exists (select 1 from vault.decrypted_secrets where name = 'github_dispatch_token');
 $$);
 
--- Banco (Enable Banking): lanza «Sincronizar banco» 4 veces al día (≈ 06:43, 11:43, 15:43 y 20:43 en invierno).
+-- Banco (Enable Banking): lanza «Sincronizar banco» 4 veces al día (≈ 07:00, 13:00, 18:00 y 22:00 en invierno; horas cambiadas el 26/11/2026).
 -- Desde el 10/11/2026; antes lo lanzaba el «schedule» de GitHub, que se retrasaba horas.
-select cron.schedule('bank-sync', '43 5,10,14,19 * * *', $$
+select cron.schedule('bank-sync', '0 6,12,17,21 * * *', $$
   select net.http_post(
     url := 'https://api.github.com/repos/RoWW4/life-dashboard/actions/workflows/bank-sync.yml/dispatches',
     body := '{"ref":"main"}'::jsonb,

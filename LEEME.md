@@ -40,7 +40,7 @@ Cómo se trabaja con Claude en este proyecto (historial, pendientes, cuándo se 
 - **Programador (pg_cron):** tareas que llaman a la API de GitHub para lanzar los workflows, con un token de GitHub guardado en Vault (`github_dispatch_token`, uno solo para todos los robots; no tiene fecha de caducidad, comprobado el 21/11/2026). Si GitHub lo rechazara, el vigilante avisa («¿token de GitHub caducado?»): se crea uno nuevo en GitHub (Settings → Developer settings → Personal access tokens, solo este repositorio, permiso Actions: lectura y escritura) y se cambia en Supabase → Project Settings → Vault con el mismo nombre. Se crearon a mano en Supabase (no están en `schema.sql`):
   - `sync-wallet`: `17 5,9,13,17,21 * * *` (UTC), unas 06:17, 10:17, 14:17, 18:17 y 22:17 en invierno. **Desactivada desde el 04/11/2026.** Para volver a activarla: `select cron.alter_job(1, active := true);`.
   - `task-reminders`: `7,22,37,52 * * * *`.
-  - `bank-sync`: `43 5,10,14,19 * * *` (UTC), desde el 10/11/2026.
+  - `bank-sync`: `0 6,12,17,21 * * *` (UTC), unas 07:00, 13:00, 18:00 y 22:00 en invierno (horas desde el 26/11/2026).
   - `savings-sync`: `13 6 * * *` (UTC), unas 07:13 en invierno.
   - `vigilante`: `41 * * * *` (ver «Vigilancia y registro de errores»).
 
