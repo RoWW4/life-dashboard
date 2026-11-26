@@ -912,8 +912,8 @@ body.bg-all.bg-stars::before{background-image:var(--stars);background-size:var(-
   /* Compra: la cantidad estrecha y el precio con el resto, para que se lea entero */
   .f #s2{min-width:0;flex:0 0 76px}.f #s3{flex:1 1 0}
 }
-/* Movimientos en el móvil: cada desplegable en su línea para que se lea entero */
-@media(max-width:760px){.txf select{flex-basis:100%}}
+/* Movimientos en el móvil: categoría y periodo en dos columnas */
+@media(max-width:760px){.txf select{flex:1 1 calc(50% - 4px);min-width:0}}
 /* Inversiones: las cifras con las mismas esquinas que el resto; el saldo como la tarjeta de Finanzas */
 .savk>div{border-radius:18px;padding:14px 16px}
 .savk>div.bal{border-radius:22px;padding:16px 18px}

@@ -58,6 +58,13 @@ const finMonth = () => {
   return MN(new Date(n.getFullYear(), n.getMonth() + finOff, 1));
 };
 const mAdd = (m, n) => MN(new Date(+m.slice(0, 4), +m.slice(5, 7) - 1 + n, 1));
+// En el filtro de Movimientos, corto para que quepa en media pantalla del móvil: «Noviembre» (este año) o «Dic. 2025».
+const mCorto = m =>
+  m.slice(0, 4) === String(new Date().getFullYear())
+    ? cap(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date(m + '-01T00:00')))
+    : cap(new Intl.DateTimeFormat('es-ES', { month: 'short' }).format(new Date(m + '-01T00:00'))).replace(/\.?$/, '.') +
+      ' ' +
+      m.slice(0, 4);
 const mLabel = m => cap(new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(new Date(m + '-01T00:00')));
 /* Concepto sin lo de detrás de « · » (referencias, concepto del Bizum…), salvo un pago a plazos («Paypal · Pago 3 plazos»):
    así no se mezcla con las demás compras de esa tienda ni en Facturas ni en los resúmenes. */
@@ -750,12 +757,12 @@ function vFin() {
         'mov',
         `${I('list-checks')} Movimientos <button class="btn sm movadd" data-a="nx" aria-label="Añadir movimiento" title="Añadir movimiento">${I('plus', 'sm')} Añadir</button>${txSeg('txs1')}`,
         `<span id="txcard"></span>
-    <div class="txf"><input id="txq" class="in" type="search" placeholder="Buscar concepto, nota o importe…" value="${esc(txf.q)}" aria-label="Buscar en movimientos"><select class="in" data-a="txfc" aria-label="Categoría"><option value="">Todas las categorías</option>${CATS.map(c => `<option ${txf.cat === c ? 'selected' : ''}>${c}</option>`).join('')}</select><select class="in" data-a="txfp" aria-label="Periodo">${(() => {
+    <div class="txf"><input id="txq" class="in" type="search" placeholder="Buscar concepto, nota o importe…" value="${esc(txf.q)}" aria-label="Buscar en movimientos"><select class="in" data-a="txfc" aria-label="Categoría"><option value="">Categorías</option>${CATS.map(c => `<option ${txf.cat === c ? 'selected' : ''}>${c}</option>`).join('')}</select><select class="in" data-a="txfp" aria-label="Periodo">${(() => {
       const ms = [...new Set([...Array(3)].map((_, j) => MN(new Date(now.getFullYear(), now.getMonth() - j, 1))).concat(m))]
         .sort()
         .reverse();
       return (
-        ms.map(x => `<option value="m:${x}" ${txf.per === 'mes' && x === m ? 'selected' : ''}>${mLabel(x)}</option>`).join('') +
+        ms.map(x => `<option value="m:${x}" ${txf.per === 'mes' && x === m ? 'selected' : ''}>${mCorto(x)}</option>`).join('') +
         [
           ['3m', 'Último trimestre'],
           ['anio', 'Año ' + m.slice(0, 4)],
