@@ -156,9 +156,9 @@ const HLF = [
   ['deep_min', 'Profundo', '#4f46e5']
 ];
 /* Tarjeta de un dato: icono de color, valor grande y, si hay objetivo, barra de progreso. */
-function hlKpi(c, ic, k, v, sub, pct) {
+function hlKpi(c, ic, k, v, sub, pct, m) {
   return (
-    `<div class="hlk" style="--c:${c}"><div class="hlkt"><span class="hico">${I(ic)}</span><span class="k">${k}</span></div><b>${v}</b>` +
+    `<div class="hlk${m ? ' hlkx' : ''}" style="--c:${c}"${m ? ` data-a="hlxo" data-i="${m}" role="button" tabindex="0" aria-label="${k}: ver el histórico"` : ''}><div class="hlkt"><span class="hico">${I(ic)}</span><span class="k">${k}</span>${m ? `<span class="hlkg">${I('chevron-right', 'sm')}</span>` : ''}</div><b>${v}</b>` +
     (pct != null
       ? `<div class="hlp" role="progressbar" aria-valuenow="${Math.round(pct)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.min(100, Math.max(2, pct)).toFixed(0)}%"></i></div>`
       : '') +
@@ -248,10 +248,10 @@ function hlHTML() {
   const st = HLS ? (hlSync.on ? 'Sincronizando…' : 'Actualizado ' + ago(HLS.last_sync)) : 'Aún no se ha sincronizado nunca';
   return (
     (HL.length
-      ? `<div class="hlg">${hlKpi(HLC.pasos, 'footprints', 'Pasos', hlN(hoy.steps), `<button class="hlmb" data-a="hlm" data-i="pasos" title="Cambiar el objetivo de pasos">${hoy.steps != null ? Math.round((hoy.steps / HL_PASOS) * 100) + ' % de ' : 'Objetivo '}${hlN(HL_PASOS)} ${I('pencil', 'sm')}</button>`, hoy.steps != null ? (hoy.steps / HL_PASOS) * 100 : null)}` +
-        `${hlKpi(HLC.kcal, 'flame', 'Calorías', `${hlN(hoy.kcal)}<small>kcal</small>`, 'Quemadas hoy')}` +
-        `${hlKpi(HLC.sueno, 'moon', 'Sueño', hlD(sl), `<button class="hlmb" data-a="hlm" data-i="sueno" title="Cambiar el objetivo de sueño">${sleepDay === td ? 'Anoche' : 'Noche anterior'} · Meta ${hlHm(HL_SUENO)} ${I('pencil', 'sm')}</button>`, sl != null ? (sl / HL_SUENO) * 100 : null)}` +
-        `${hlKpi(HLC.pulso, 'heart-pulse', 'Pulso', rhrRow ? `${rhrRow.rhr}<small>ppm</small>` : '—', 'En reposo' + (rhrRow && rhrRow.day !== td ? ' · ' + fd(rhrRow.day) : ''))}</div>
+      ? `<div class="hlg">${hlKpi(HLC.pasos, 'footprints', 'Pasos', hlN(hoy.steps), `<button class="hlmb" data-a="hlm" data-i="pasos" title="Cambiar el objetivo de pasos">${hoy.steps != null ? Math.round((hoy.steps / HL_PASOS) * 100) + ' % de ' : 'Objetivo '}${hlN(HL_PASOS)} ${I('pencil', 'sm')}</button>`, hoy.steps != null ? (hoy.steps / HL_PASOS) * 100 : null, 'steps')}` +
+        `${hlKpi(HLC.kcal, 'flame', 'Calorías', `${hlN(hoy.kcal)}<small>kcal</small>`, 'Quemadas hoy', null, 'kcal')}` +
+        `${hlKpi(HLC.sueno, 'moon', 'Sueño', hlD(sl), `<button class="hlmb" data-a="hlm" data-i="sueno" title="Cambiar el objetivo de sueño">${sleepDay === td ? 'Anoche' : 'Noche anterior'} · Meta ${hlHm(HL_SUENO)} ${I('pencil', 'sm')}</button>`, sl != null ? (sl / HL_SUENO) * 100 : null, 'sleep_min')}` +
+        `${hlKpi(HLC.pulso, 'heart-pulse', 'Pulso', rhrRow ? `${rhrRow.rhr}<small>ppm</small>` : '—', 'En reposo' + (rhrRow && rhrRow.day !== td ? ' · ' + fd(rhrRow.day) : ''), null, 'rhr')}</div>
     ${hlNoche(by[sleepDay])}
     <div class="hlw"><div class="hlwh"><b>Últimos 7 días</b><button class="btn ghost sm hlxb" data-a="hlx">${I('calendar-days', 'sm')} Histórico</button><span><i style="--c:${HLC.pasos}"></i>Pasos</span><span><i style="--c:${HLC.sueno}"></i>Sueño</span><button class="hlmb hlmeta" data-a="hlm" data-i="pasos" title="Cambiar el objetivo de pasos"><i></i>Objetivo ${hlN(HL_PASOS)}</button></div>
     <div class="hlbars${sel ? ' picked' : ''}" role="group" aria-label="Pasos y horas de sueño de los últimos 7 días" style="--g:${((HL_PASOS / mx) * 100).toFixed(1)}%">${bars}<span class="hlgoal" aria-hidden="true"></span></div>${info}</div>${fitHTML()}`
@@ -409,6 +409,20 @@ async function hlxOpen() {
     if (e) e.innerHTML = hlxHTML();
   }
 }
+/* Burbuja sobre la barra tocada: el dato y el día (o el mes); con objetivo, si se cumplió. Pegada al borde en los extremos. */
+function hlxBur(B, j, h, m, meta) {
+  const b = j != null ? B[j] : null;
+  if (!b) return '';
+  const c = ((j + 0.5) / B.length) * 100,
+    pos =
+      c < 18
+        ? `left:${(j / B.length) * 100}%`
+        : c > 82
+          ? `right:${((B.length - j - 1) / B.length) * 100}%`
+          : `left:${c.toFixed(2)}%;transform:translateX(-50%)`,
+    ok = meta && b.v != null && m !== 'rhr' ? (b.v >= meta ? ' <span class="ok">✓</span>' : '') : '';
+  return `<span class="hlxb" style="${pos}"><b>${b.v == null ? 'Sin datos' : hlxF(m, b.v)}${ok}</b><small>${b.s || b.t}</small></span>`;
+}
 function hlxHTML() {
   const { m, d } = hlx,
     [nom, ic, c] = HLX_M[m],
@@ -424,6 +438,7 @@ function hlxHTML() {
       m,
       Object.entries(HLX_M).map(([k, [n]]) => [k, n])
     )}${seg('hlxd', d, [
+      [7, '7 días'],
       [30, '30 días'],
       [90, '3 meses'],
       [365, '1 año']
@@ -446,9 +461,13 @@ function hlxHTML() {
       return {
         v: by[k],
         t: cap(new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(dt)),
-        l: (d === 30 ? i % 6 === 0 || i === d - 1 : dt.getDate() === 1)
-          ? dt.getDate() + ' ' + new Intl.DateTimeFormat('es-ES', { month: 'short' }).format(dt).replace('.', '')
-          : ''
+        s: new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).format(dt).replace(/\./g, ''),
+        l:
+          d === 7
+            ? new Intl.DateTimeFormat('es-ES', { weekday: 'short' }).format(dt).replace('.', '') + ' ' + dt.getDate()
+            : (d === 30 ? i % 6 === 0 || i === d - 1 : dt.getDate() === 1)
+              ? dt.getDate() + ' ' + new Intl.DateTimeFormat('es-ES', { month: 'short' }).format(dt).replace('.', '')
+              : ''
       };
     });
   } else {
@@ -465,6 +484,7 @@ function hlxHTML() {
       return {
         v: a ? a.reduce((s, v) => s + v, 0) / a.length : null,
         t: mLabel(k) + ' · Media diaria',
+        s: mLabel(k) + ' · media',
         l: new Intl.DateTimeFormat('es-ES', { month: 'short' }).format(new Date(k + '-15T12:00')).replace('.', '')
       };
     });
@@ -476,22 +496,9 @@ function hlxHTML() {
   const tile = (k, v, sub) => `<div class="hlxk"><span>${k}</span><b>${v}</b>${sub ? `<small>${sub}</small>` : ''}</div>`;
   return (
     head +
-    `<div class="hlxs" style="--c:${c}">${tile(d > 90 ? 'Media diaria' : 'Media', hlxF(m, avg), R.length + (R.length === 1 ? ' día con datos' : ' días con datos'))}${tile(m === 'rhr' ? 'Más bajo' : 'Mejor día', hlxF(m, best[m]), fd(best.day))}${meta ? tile('Objetivo cumplido', ok + ' de ' + R.length, Math.round((ok / R.length) * 100) + ' % de los días') : tile(m === 'kcal' ? 'Total' : 'Más alto', m === 'kcal' ? hlN(vals.reduce((a, v) => a + v, 0)) + ' kcal' : hlxF(m, Math.max(...vals)), '')}</div>
-    ${(() => {
-      const b = hlx.s != null ? B[hlx.s] : null;
-      if (!b) return `<div class="hlxi mu">${I('info', 'sm')} Toca una barra para ver su dato</div>`;
-      const v = b.v,
-        okm =
-          meta && v != null
-            ? m === 'rhr'
-              ? ''
-              : v >= meta
-                ? `<span class="chip ok">Objetivo cumplido</span>`
-                : `<span class="chip">Faltaron ${hlxF(m, meta - v)}</span>`
-            : '';
-      return `<div class="hlxi"><b>${v == null ? 'Sin datos' : hlxF(m, v)}</b><span>${b.t}</span>${okm}</div>`;
-    })()}
-    <div class="hlxc${d > 90 ? ' yr' : d > 30 ? ' dense' : ''}${hlx.s != null ? ' picked' : ''}" style="--c:${c}${meta ? ';--g:' + h(meta).toFixed(1) + '%' : ''}" role="group" aria-label="${nom}: ${d === 365 ? 'media de cada mes del último año' : 'cada día de los últimos ' + d + ' días'}">${B.map((b, j) => `<div class="${hlx.s === j ? 'on' : ''}" data-a="hlxs" data-i="${j}" title="${b.t}: ${hlxF(m, b.v)}" role="button" tabindex="0" aria-label="${b.t}: ${hlxF(m, b.v)}"><div class="tr"><i style="height:${h(b.v).toFixed(1)}%"></i></div><em>${b.l}</em></div>`).join('')}${meta ? '<span class="hlgoal" aria-hidden="true"></span>' : ''}</div>` +
+    `<div class="hlxs${meta || m === 'rhr' ? '' : ' dos'}" style="--c:${c}">${tile(d > 90 ? 'Media diaria' : 'Media', hlxF(m, avg), R.length + (R.length === 1 ? ' día con datos' : ' días con datos'))}${tile(m === 'rhr' ? 'Más bajo' : 'Mejor día', hlxF(m, best[m]), fd(best.day))}${meta ? tile('Objetivo cumplido', ok + ' de ' + R.length, Math.round((ok / R.length) * 100) + ' % de los días') : m === 'rhr' ? tile('Más alto', hlxF(m, Math.max(...vals)), '') : ''}</div>
+    <div class="hlxi mu">${I('info', 'sm')} Toca una barra para ver su dato${meta ? '' : ' · línea: media'}</div>
+    <div class="hlxc${d > 90 ? ' yr' : d > 30 ? ' dense' : ''}${hlx.s != null ? ' picked' : ''}" style="--c:${c};--g:${h(meta || avg).toFixed(1)}%" role="group" aria-label="${nom}: ${d === 365 ? 'media de cada mes del último año' : 'cada día de los últimos ' + d + ' días'}">${B.map((b, j) => `<div class="${hlx.s === j ? 'on' : ''}" data-a="hlxs" data-i="${j}" title="${b.t}: ${hlxF(m, b.v)}" role="button" tabindex="0" aria-label="${b.t}: ${hlxF(m, b.v)}"><div class="tr"><i style="height:${h(b.v).toFixed(1)}%"></i></div><em>${b.l}</em></div>`).join('')}<span class="hlgoal${meta ? '' : ' hlavg'}" aria-hidden="true"></span>${hlxBur(B, hlx.s, h, m, meta)}</div>` +
     (meta ? `<div class="mu hlxl"><i></i>Objetivo: ${hlxF(m, meta)}</div>` : '') +
     close
   );

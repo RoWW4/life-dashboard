@@ -103,6 +103,12 @@ Object.assign(A, {
     const e = document.getElementById('hlbox');
     if (e) e.innerHTML = hlHTML();
   },
+  // Tocar una tarjeta (pasos, calorías, sueño, pulso): abre el histórico de ese dato.
+  hlxo: k => {
+    hlx.m = k;
+    hlx.s = null;
+    hlxOpen();
+  },
   hlxm: k => {
     hlx.m = k;
     hlx.s = null;

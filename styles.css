@@ -250,6 +250,8 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 /* Salud · actividad (Google Health): 4 tarjetas con icono de color (--c) y progreso, la última noche por fases
    y los últimos 7 días (barras de pasos con la línea del objetivo y horas de sueño debajo) */
 .hlg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.hlkx{cursor:pointer;-webkit-tap-highlight-color:transparent}.hlkx:active{transform:scale(.985)}.hlkx:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.hlkg{margin-left:auto;color:var(--mu);display:flex}
 .hlk{position:relative;display:flex;flex-direction:column;gap:6px;min-width:0;padding:12px 14px;border-radius:14px;overflow:hidden;
   background:linear-gradient(160deg,color-mix(in srgb,var(--c) 13%,transparent),transparent 70%);border:1px solid color-mix(in srgb,var(--c) 22%,var(--bd))}
 .hlkt{display:flex;align-items:center;gap:8px}.hlkt .k{font-size:13px;color:var(--mu);font-weight:500}
@@ -301,9 +303,12 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 /* Ventana de histórico */
 .hlxh{display:flex;align-items:center;gap:10px}.dlg .hlxh h3{margin:0;line-height:1.2}.hlxh .hico{width:30px;height:30px}
 .hlxt{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
-.hlxs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.hlxs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.hlxs.dos{grid-template-columns:repeat(2,minmax(0,1fr))}
 .hlxk{display:flex;flex-direction:column;gap:2px;min-width:0;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--c) 10%,transparent);border:1px solid color-mix(in srgb,var(--c) 20%,var(--bd))}
 .hlxk span{font-size:12px;color:var(--mu)}.hlxk b{font-size:18px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hlxk small{font-size:11px;color:var(--mu)}
+.hlxc.picked{padding-top:54px;--tt:54px}
+.hlxb{position:absolute;top:0;z-index:3;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 10px;border-radius:10px;background:var(--el);border:1px solid color-mix(in srgb,var(--c) 55%,transparent);box-shadow:var(--sh2);white-space:nowrap;pointer-events:none;animation:pop .15s ease;font-variant-numeric:tabular-nums}
+.hlxb b{font-size:14px}.hlxb small{font-size:12px;color:var(--mu)}.hlxb .ok{color:#34d399}
 .hlxc{position:relative;display:flex;gap:2px;align-items:flex-end;margin-top:10px}
 .hlxc>div{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px}
 .hlxc .tr{position:relative;height:140px;width:100%;display:flex;align-items:flex-end;padding:0}
@@ -317,10 +322,11 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .hlxc em{font-style:normal;font-size:10.5px;color:var(--mu);height:13px;white-space:nowrap}.hlxc.yr em{text-transform:capitalize}
 .hlbars{--th:96px;--tt:19px}.hlxc{--th:140px;--tt:0px}
 /* Línea del objetivo: una sola, sobre la zona de las barras (--tt: dónde empieza, --th: su alto; --g: altura del objetivo) */
+.hlavg::after{border-top-color:color-mix(in srgb,var(--tx) 45%,transparent)!important}
 .hlgoal{position:absolute;left:0;right:0;top:var(--tt);height:var(--th);pointer-events:none}
 .hlgoal::after{content:'';position:absolute;left:0;right:0;bottom:var(--g);height:0;border-top:1.5px dashed color-mix(in srgb,#fbbf24 75%,transparent)}
 .hlxl{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12px}.hlxl i{width:14px;border-top:1.5px dashed #fbbf24}
-@media (max-width:420px){.hlxs{grid-template-columns:repeat(2,minmax(0,1fr))}.hlxs .hlxk:last-child{grid-column:1/-1}.hlxc .tr{height:110px}.hlxc{--th:110px}}
+@media (max-width:420px){.hlxs{grid-template-columns:repeat(2,minmax(0,1fr))}.hlxs:not(.dos) .hlxk:last-child{grid-column:1/-1}.hlxc .tr{height:110px}.hlxc{--th:110px}}
 @media (max-width:760px){.hlg{grid-template-columns:repeat(2,minmax(0,1fr))}.hlleg{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:420px){.hlk b{font-size:23px}.hlz{padding:1px 4px;font-size:10.5px;white-space:nowrap}.hlwh b{flex:1 0 auto}.hlwh .hlxb{margin-left:0}.hlwh span,.hlwh .hlmeta{order:2}.hlwh::after{content:'';flex-basis:100%;order:1}.hlbars{gap:3px}}
 @media (max-width:760px){.hlg{grid-template-columns:repeat(2,minmax(0,1fr))}}
