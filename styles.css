@@ -695,6 +695,10 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .card[data-k=hecho]{--mod:var(--mu)}
 /* «Lo más importante»: tarjeta principal, título más grande */
 .dimp h3{font-size:17px}
+/* «Lo más importante»: título en negrita y debajo el detalle en gris (importe, tipo…) */
+.dimp .row .link,.dimp .row>.g{flex-direction:column;align-items:flex-start;gap:1px;flex-wrap:nowrap}
+.dimp .row .tt{font-weight:600}
+.dimp .dsub{font-size:12.5px;color:var(--mu);font-variant-numeric:tabular-nums}
 .card.hl{border-color:color-mix(in srgb,var(--ac) 30%,var(--bd))}
 /* Documentos a mano en Mi día: pastillas más altas, con el icono arriba */
 /* Lista de la compra en Mi día: filas más compactas */

@@ -133,25 +133,31 @@ function vDia() {
     lastU = d;
     return hd + r;
   });
+  // Cada aviso: [fecha, icono, título, color, id de tarea, sección, detalle]. El título va en negrita y el detalle (importe, tipo…) debajo, en gris.
+  const cut = (x, sep) => {
+    const i = x.indexOf(sep);
+    return i < 0 ? [x, ''] : [x.slice(0, i), x.slice(i + sep.length)];
+  };
   const imp = [
     // Los cumpleaños, con dos semanas de antelación (para el regalo); los años que cumple van en su icono.
-    ...open.filter(t => t.due && dayDiff(t.due) <= (t.area === 'Cumpleaños' ? 14 : 1)).map(t => [t.due, ico(t), t.title, AC[t.area], t.id]),
+    ...open.filter(t => t.due && dayDiff(t.due) <= (t.area === 'Cumpleaños' ? 14 : 1)).map(t => [t.due, ico(t), t.title, AC[t.area], t.id, '', [t.tm, t.area].filter(Boolean).join(' · ')]),
     // Lo que no es una tarea lleva a su sección al tocarlo (6.º dato).
-    ...fxDue(7).map(o => [o.d, 'receipt', fxPzName(o.f, o.d) + ' · ' + eur(o.f.amt), col(o.f.cat), '', 'fact']),
+    ...fxDue(7).map(o => [o.d, 'receipt', fxPzName(o.f, o.d), col(o.f.cat), '', 'fact', eur(o.f.amt) + (o.f.t === 'i' ? ' · Cobro' : ' · Factura')]),
     ...fxPausedHit().map(o => [
       o.x.date,
       'receipt',
-      `${o.f.name} está en pausa, pero el banco lo cobró el ${fdc(o.x.date)} (${eur(o.x.amt)})`,
+      o.f.name,
       '#f2b13d',
       '',
-      'fact'
+      'fact',
+      `En pausa, pero el banco lo cobró el ${fdc(o.x.date)} · ${eur(o.x.amt)}`
     ]),
     ...S.docs
       .filter(d => d.exp && dayDiff(d.exp) <= 30)
-      .map(d => [d.exp, DI[d.cat] || 'file-text', 'Vence: ' + d.name, DCOL[d.cat], '', 'docs']),
-    ...carWarn().map(o => [o.d, 'car', o.n + (/km/.test(o.pill) ? ' · ' + o.pill : ''), CARC, '', 'coche']),
-    ...petWarn().map(o => [o.d, o.ic, o.t, PETC, '', 'mascotas']),
-    ...bankAlerts().map(a => [...a, '', 'ajus'])
+      .map(d => [d.exp, DI[d.cat] || 'file-text', d.name, DCOL[d.cat], '', 'docs', 'Caduca · Documentos']),
+    ...carWarn().map(o => [o.d, 'car', o.n, CARC, '', 'coche', (/km/.test(o.pill) ? o.pill + ' · ' : '') + 'Coche']),
+    ...petWarn().map(o => (([a, b]) => [o.d, o.ic, a, PETC, '', 'mascotas', (b ? b + ' · ' : '') + 'Mascotas'])(cut(o.t, ' · '))),
+    ...bankAlerts().map(([d, n, t, c]) => (([a, b]) => [d, n, a, c, '', 'ajus', cap(b)])(t.includes(': ') ? cut(t, ': ') : cut(t, ' · ')))
   ].sort((a, b) => a[0].localeCompare(b[0]));
   const P = S.shop.filter(s => !s.done);
   // Etiqueta de cuándo: rojo si está atrasado, acento si es hoy y naranja si es más adelante.
@@ -167,8 +173,8 @@ function vDia() {
       imp.length
         ? imp
             .map(
-              ([d, n, t, c, ti, go]) =>
-                `<div class="row"${ti && NATIVE_DRAG ? ` draggable="true" data-tid="${ti}"` : ''}>${ti ? `<input type="checkbox" class="ck" data-a="tt" data-i="${ti}" aria-label="Completar «${esc(t)}»">` : ''}${(tk => (tk && tk.area === 'Cumpleaños' ? bdTile(tk) : tile(n, c)))(ti && S.tasks.find(x => x.id === ti))}${ti ? `<button class="link" data-a="et" data-i="${ti}"><span class="tt">${esc(t)}</span></button>` : go ? `<button class="link" data-a="go" data-i="${go}" title="Abrir su sección"><span class="tt">${esc(t)}</span></button>` : `<span class="g">${esc(t)}</span>`}${when(d)}${ti ? tppBtn(S.tasks.find(x => x.id === ti)) : ''}</div>`
+              ([d, n, t, c, ti, go, sb], _, __, dt = `<span class="tt">${esc(t)}</span>${sb ? `<span class="dsub">${esc(sb)}</span>` : ''}`) =>
+                `<div class="row"${ti && NATIVE_DRAG ? ` draggable="true" data-tid="${ti}"` : ''}>${ti ? `<input type="checkbox" class="ck" data-a="tt" data-i="${ti}" aria-label="Completar «${esc(t)}»">` : ''}${(tk => (tk && tk.area === 'Cumpleaños' ? bdTile(tk) : tile(n, c)))(ti && S.tasks.find(x => x.id === ti))}${ti ? `<button class="link" data-a="et" data-i="${ti}">${dt}</button>` : go ? `<button class="link" data-a="go" data-i="${go}" title="Abrir su sección">${dt}</button>` : `<span class="g">${dt}</span>`}${when(d)}${ti ? tppBtn(S.tasks.find(x => x.id === ti)) : ''}</div>`
             )
             .join('')
         : empty('Nada urgente para hoy ni mañana.'),
