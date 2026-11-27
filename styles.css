@@ -121,13 +121,14 @@ h2{margin:0;font-size:26px;font-weight:650;letter-spacing:-.025em;line-height:1.
 @media(max-width:760px){.toolbar.one .seg button{padding:5px 7px;font-size:12.5px}}
 .ttb{flex-wrap:nowrap;justify-content:space-between}.ttb .ib{border:1px solid var(--bd);padding:8px}.ttb .ib.on{background:var(--acs);color:var(--ac2);border-color:transparent}
 /* Título de tarjeta: texto normal (no mayúsculas), semibold y en color de texto; el icono y el contador, en gris */
+/* El icono de 30 px de la cabecera se centra con la altura de las mayúsculas del título (.36em sobre la línea base), no con la de las minúsculas. */
 .card h3{margin:0 0 12px;font-size:15px;font-weight:600;color:var(--tx);display:flex;align-items:center;gap:7px;letter-spacing:-.01em;line-height:1.35}
 .card h3 .t{flex:1;min-width:0;display:block;line-height:1.4}
 .card h3 .t>.i,.card h3 .t>span:first-child>.i{margin-right:6px}
 .card h3 .i{width:16px;height:16px;vertical-align:-.17em;color:var(--mu)}
 /* Icono del título en un cuadradito con el color de su módulo (--mod); en áreas y carpetas, el color propio de cada una */
 .card{--mod:var(--ac)}
-.card h3 .t>.i:first-child,.card h3 .t>span[style]:first-child>.i{width:30px;height:30px;padding:7px;border-radius:10px;box-sizing:border-box;vertical-align:middle;margin-right:8px!important;background:color-mix(in srgb,currentColor 15%,transparent)}
+.card h3 .t>.i:first-child,.card h3 .t>span[style]:first-child>.i{width:30px;height:30px;padding:7px;border-radius:10px;box-sizing:border-box;vertical-align:calc(.36em - 15px);margin-right:8px!important;background:color-mix(in srgb,currentColor 15%,transparent)}
 .card h3 .t>.i:first-child{color:var(--mod)}
 .card h3 .t>span[style]:first-child>.i{color:inherit}
 .card h3 .cnt{white-space:nowrap;color:var(--mu);font-weight:500;font-variant-numeric:tabular-nums}
