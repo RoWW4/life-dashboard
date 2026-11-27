@@ -70,7 +70,7 @@ async function hlLoad() {
   const [a, b, c] = await Promise.all([
     sb
       .from('health_daily')
-      .select('day,steps,kcal,sleep_min,rhr,awake_min,light_min,deep_min,rem_min,bed_at,wake_at')
+      .select('day,steps,kcal,sleep_min,rhr,awake_min,light_min,deep_min,rem_min,bed_at,wake_at,stages')
       .gte('day', addD(TD(), -13))
       .order('day'),
     sb.from('health_status').select('last_sync,last_error,sync_url').eq('user_id', user.id).maybeSingle(),
@@ -166,7 +166,34 @@ function hlKpi(c, ic, k, v, sub, pct) {
     `</div>`
   );
 }
-/* Última noche: hora de dormirse → despertar, barra con el reparto de fases y una ficha por fase. */
+/* Línea de tiempo de la noche (como en Google Health): una fila por fase con sus tramos colocados a su hora, y abajo
+   la hora de inicio, la de en medio y la de fin. r.stages = {s: inicio, f: [[minuto desde el inicio, minutos, a|r|l|d]]}. */
+const HLL = { a: 0, r: 1, l: 2, d: 3 }; // letra de la fase → posición en HLF
+let hlTr = null; // tramo tocado en la línea de tiempo (minuto de inicio): debajo se ve su hora exacta
+function hlLinea(st) {
+  const f = st && Array.isArray(st.f) ? st.f.filter(x => Array.isArray(x) && HLL[x[2]] != null) : [];
+  if (!f.length || !st.s) return '';
+  const t0 = new Date(st.s).getTime(),
+    tot = Math.max(...f.map(([o, d]) => o + d)),
+    pc = m => ((m / tot) * 100).toFixed(2) + '%',
+    hm = m => hlHM(t0 + m * 60000),
+    // Burbuja sobre el tramo tocado con su hora exacta (pegada al borde si el tramo está en un extremo).
+    burbuja = (o, d, n) => {
+      const c = ((o + d / 2) / tot) * 100,
+        pos = c < 22 ? `left:${pc(o)}` : c > 78 ? `right:${pc(tot - o - d)}` : `left:${c.toFixed(2)}%;transform:translateX(-50%)`;
+      return `<span class="hllb" style="${pos}"><b>${n}</b> ${hm(o)} – ${hm(o + d)} <small>· ${d < 60 ? d + ' min' : hlH(d)}</small></span>`;
+    };
+  return (
+    `<div class="hlln" role="img" aria-label="Fases de la noche según la hora">` +
+    HLF.map(([, n, c], i) => {
+      const T = f.filter(x => HLL[x[2]] === i),
+        sel = T.find(([o]) => o === hlTr);
+      return `<div class="hllr" style="--c:${c}"><span>${n}</span><div>${T.map(([o, d]) => `<i class="${hlTr === o ? 'on' : ''}" style="left:${pc(o)};width:${pc(d)}" data-a="hlt" data-i="${o}" role="button" tabindex="0" aria-label="${n}: de ${hm(o)} a ${hm(o + d)}"></i>`).join('')}${sel ? burbuja(sel[0], sel[1], n) : ''}</div></div>`;
+    }).join('') +
+    `<div class="hllx"><span></span><div><small>${hm(0)}</small><small>${hm(tot / 2)}</small><small>${hm(tot)}</small></div></div></div>`
+  );
+}
+/* Última noche: hora de dormirse → despertar, línea de tiempo de las fases (o, si no la hay, barra con el reparto) y una ficha por fase. */
 function hlNoche(r) {
   if (!r) return '';
   const F = HLF.filter(([k]) => r[k] != null),
@@ -179,7 +206,9 @@ function hlNoche(r) {
   return (
     `<div class="hln" style="--c:${HLC.sueno}"><div class="hlnh"><span class="hico">${I('bed')}</span><b>Última noche</b>${hrs}</div>` +
     (tot
-      ? `<div class="hlst" role="img" aria-label="Fases del sueño">${F.map(([k, n, c]) => (r[k] ? `<i style="flex:${r[k]};--c:${c}" title="${n}: ${hlH(r[k])}"></i>` : '')).join('')}</div>
+      ? (hlLinea(r.stages) ||
+          `<div class="hlst" role="img" aria-label="Fases del sueño">${F.map(([k, n, c]) => (r[k] ? `<i style="flex:${r[k]};--c:${c}" title="${n}: ${hlH(r[k])}"></i>` : '')).join('')}</div>`) +
+        `
       <div class="hlleg">${F.map(([k, n, c]) => `<div style="--c:${c};--w:${Math.round((r[k] / tot) * 100)}%" title="${Math.round((r[k] / tot) * 100)} % de la noche"><span><i></i>${n}</span><b>${hlD(r[k])}</b><small>${Math.round((r[k] / tot) * 100)} %</small></div>`).join('')}</div>`
       : '') +
     `</div>`

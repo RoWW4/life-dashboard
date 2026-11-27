@@ -113,8 +113,31 @@ function lista(tipo, filtro) {
    (despierta, ligero, profundo, REM) y hora de dormirte y de despertar. Si hay varias sesiones, se suman las fases
    y se toma la primera hora de inicio y la última de fin. */
 const FASES = { AWAKE: 'awake_min', LIGHT: 'light_min', DEEP: 'deep_min', REM: 'rem_min' };
+/* Línea de tiempo de una sesión (para el gráfico de «Última noche»): {s: inicio, f: [[minuto desde el inicio, minutos, fase]]},
+   fase a (despierta), r (REM), l (ligero) o d (profundo). Admite las dos formas en que Google puede dar cada tramo. */
+const LETRA = { AWAKE: 'a', WAKE: 'a', REM: 'r', LIGHT: 'l', DEEP: 'd' };
+function tramos(s) {
+  const ini = (s.interval || {}).startTime, L = s.stages || s.sleepStages || (s.levels && s.levels.data) || [];
+  if (!ini || !Array.isArray(L)) return null;
+  const t0 = new Date(ini).getTime(), f = [];
+  L.forEach(x => {
+    const iv = x.interval || x, a = iv.startTime || x.dateTime, b = iv.endTime;
+    const k = LETRA[String(x.type || x.stage || x.level || '').toUpperCase().replace(/^SLEEP_STAGE_TYPE_|^STAGE_/, '')];
+    if (!a || !k) return;
+    const off = Math.round((new Date(a).getTime() - t0) / 60000);
+    const dur = b ? Math.round((new Date(b).getTime() - new Date(a).getTime()) / 60000) : x.seconds != null ? Math.round(Number(x.seconds) / 60) : 0;
+    if (dur > 0 && off >= 0) f.push([off, dur, k]);
+  });
+  return f.length ? { s: ini, f: f.sort((x, y) => x[0] - y[0]) } : null;
+}
+/** Ejecutar a mano si la línea de tiempo del sueño no sale: enseña en el registro la última sesión de sueño tal como la manda Google. */
+function verSueno() {
+  const hoy = dia(new Date()), L = lista('sleep', 'sleep.interval.civil_end_time >= "' + sumar(hoy, -3) + 'T00:00:00"');
+  console.log(L.length ? JSON.stringify(L[L.length - 1], null, 1).slice(0, 6000) : 'No hay sueño en los últimos 3 días.');
+  if (L.length) console.log('Línea de tiempo: ' + JSON.stringify(tramos(L[L.length - 1].sleep || {})).slice(0, 500));
+}
 function sueno(desde, hasta) {
-  const out = { sleep_min: {}, awake_min: {}, light_min: {}, deep_min: {}, rem_min: {}, bed_at: {}, wake_at: {} };
+  const out = { sleep_min: {}, awake_min: {}, light_min: {}, deep_min: {}, rem_min: {}, bed_at: {}, wake_at: {}, stages: {} }, larga = {};
   lista('sleep', 'sleep.interval.civil_end_time >= "' + desde + 'T00:00:00" AND sleep.interval.civil_end_time < "' + hasta + 'T00:00:00"').forEach(p => {
     const s = p.sleep || {}, iv = s.interval || {}, fin = iv.endTime, sm = s.summary || {};
     if (!fin || sm.minutesAsleep == null || (s.metadata && s.metadata.nap)) return;
@@ -123,6 +146,8 @@ function sueno(desde, hasta) {
     (sm.stagesSummary || []).forEach(f => { const c = FASES[String(f.type || '').toUpperCase()]; if (c && f.minutes != null) suma(c, f.minutes); });
     if (iv.startTime && (!out.bed_at[d] || iv.startTime < out.bed_at[d])) out.bed_at[d] = iv.startTime;
     if (!out.wake_at[d] || fin > out.wake_at[d]) out.wake_at[d] = fin;
+    // Línea de tiempo: la de la sesión más larga del día (la noche).
+    if (!larga[d] || sm.minutesAsleep > larga[d]) { const t = tramos(s); if (t) { out.stages[d] = t; larga[d] = sm.minutesAsleep; } }
   });
   return out;
 }

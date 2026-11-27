@@ -195,6 +195,8 @@ alter table public.health_status enable row level security;
 drop policy if exists "health_status propio" on public.health_status;
 create policy "health_status propio" on public.health_status
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+-- Línea de tiempo de la noche (27/11/2026): {s: inicio, f: [[minuto desde el inicio, minutos, fase a|r|l|d], …]}.
+alter table public.health_daily add column if not exists stages jsonb;
 alter table public.health_daily add column if not exists awake_min int, add column if not exists light_min int, add column if not exists deep_min int, add column if not exists rem_min int, add column if not exists bed_at timestamptz, add column if not exists wake_at timestamptz;
 -- Batería del reloj (18/11/2026): la escribe el mismo script; el robot de avisos manda un Telegram al bajar del 25 %.
 alter table public.health_status add column if not exists battery_level int, add column if not exists battery_status text, add column if not exists battery_at timestamptz;

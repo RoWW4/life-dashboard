@@ -93,6 +93,11 @@ Object.assign(A, {
     const e = document.getElementById('fitm');
     if (e) e.innerHTML = fitMHTML();
   },
+  hlt: k => {
+    hlTr = hlTr === +k ? null : +k;
+    const e = document.getElementById('hlbox');
+    if (e) e.innerHTML = hlHTML();
+  },
   hlb: k => {
     hlSel = hlSel === k ? null : k;
     const e = document.getElementById('hlbox');
