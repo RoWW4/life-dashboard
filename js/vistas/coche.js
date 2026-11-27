@@ -18,15 +18,11 @@ const carR = () => {
   const c = S.car && typeof S.car === 'object' ? S.car : {};
   return { info: c.info || {}, km: c.km || [], mt: Array.isArray(c.mt) ? c.mt : CAR_MT0, vis: c.vis || [] };
 };
-/* Lo que manda el coche por Kia Connect (robot kia-km, cada 3 h de 7 a 22 h y con «Actualizar»): S.car.live = estado (at: hora del dato, fuel %, low,
-   range km, warn: avisos, locked, open: lo que está abierto, loc: {lat, lon}) y S.car.trips = {days: {fecha: {km, min}},
+/* Lo que manda el coche por Kia Connect (robot kia-km, cada 3 h de 7 a 22 h y con «Actualizar»): S.car.live = estado (at: hora del dato, fuel %,
+   range km, locked, open: lo que está abierto, loc: {lat, lon}) y S.car.trips = {days: {fecha: {km, min}},
    months: {AAAA-MM: {km, min, spd}}}. Lo escribe la base de datos (ldb_car_live); la app solo lo lee. */
-const CAR_AV = {
-  oil: 'Nivel de aceite',
-  brake: 'Líquido de frenos',
-  key: 'Pila de la llave',
-  tire: 'Presión de las ruedas'
-};
+/* Sin avisos de aceite, frenos, ruedas ni pila de la llave: este coche no los manda a Kia Connect (llegan siempre apagados)
+   y la llave no es inteligente. El depósito bajo se mira con el % calculado (carLow). */
 /* % del depósito. Este coche no lo manda (Kia Connect da 0 aunque haya autonomía): con 0 % y autonomía de más de 30 km se toma como «sin dato»
    y se calcula con la autonomía: litros que quedan = km × consumo medio / 100, sobre la capacidad del depósito (ficha técnica del modelo). */
 const CAR_TANK = 45, // litros
@@ -35,6 +31,8 @@ const carFuelReal = lv => (!hasN(lv.fuel) || (+lv.fuel === 0 && hasN(lv.range) &
 const carFuel = lv => carFuelReal(lv) ?? (hasN(lv.range) ? Math.min(100, ((+lv.range * CAR_L100) / 100 / CAR_TANK) * 100) : null);
 /* Color de la barra: verde por encima de la mitad, naranja hasta 1/4 y rojo en 1/4 o menos. */
 const carFuelLvl = p => (p > 50 ? 'ok' : p > 25 ? 'wa' : 'er');
+/* Depósito bajo: 1/4 o menos (el mismo rojo de la barra). */
+const carLow = lv => carFuel(lv) != null && carFuel(lv) <= 25;
 const CAR_AB = { doors: 'puertas', windows: 'ventanillas', trunk: 'maletero', hood: 'capó' };
 const carLive = () => (S.car && S.car.live && typeof S.car.live === 'object' ? S.car.live : null);
 /* «Actualizar»: pide a Supabase que lance el robot del coche (ldb_car_refresh, como mucho cada 5 min) y espera
@@ -200,10 +198,7 @@ function carNext(c = carR(), K = carKm(c)) {
   const lv = carLive(),
     kia = lv
       ? [
-          ...(lv.warn || [])
-            .filter(w => CAR_AV[w])
-            .map(w => ({ k: 'kia', n: CAR_AV[w], d: TD(), lvl: 'er', pill: 'Aviso', sub: 'Aviso del coche (Kia Connect)' })),
-          ...(lv.low
+          ...(carLow(lv)
             ? [
                 {
                   k: 'kia',
@@ -211,7 +206,7 @@ function carNext(c = carR(), K = carKm(c)) {
                   d: TD(),
                   lvl: 'er',
                   pill: hasN(lv.range) ? kmf(lv.range) + ' km' : 'Repostar',
-                  sub: 'Quedan ' + (carFuel(lv) != null ? Math.round(carFuel(lv)) + ' %' : 'pocos litros')
+                  sub: 'Quedan ' + (carFuelReal(lv) == null ? '≈ ' : '') + Math.round(carFuel(lv)) + ' %'
                 }
               ]
             : [])
@@ -253,7 +248,7 @@ function carNext(c = carR(), K = carKm(c)) {
   ];
   return L.sort((a, b) => LV[a.lvl] - LV[b.lvl] || a.d.localeCompare(b.d));
 }
-/* Avisos para Mi día: los mantenimientos en rojo y los avisos del coche (Kia; en la sección van en «Estado», no en Lo próximo). */
+/* Avisos para Mi día: los mantenimientos en rojo y el depósito bajo. */
 const carWarn = () => (S.car ? carNext().filter(o => (o.k === 'mt' || o.k === 'kia') && o.lvl === 'er') : []);
 /* Gastos: los movimientos con categoría Coche (también las partes de un gasto dividido; las devoluciones restan). */
 const carTx = () => TXP().filter(x => x.cat === 'Coche' && gAmt(x));
@@ -372,16 +367,12 @@ function carMapMount() {
         el.innerHTML = `<div class="cmload">No se pudo cargar el mapa. <a href="https://www.google.com/maps/search/?api=1&query=${car.join(',')}" target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a></div>`;
     });
 }
-/* Tarjeta «Estado»: avisos, si está cerrado y dónde está aparcado. */
+/* Tarjeta «Estado»: si está cerrado y dónde está aparcado. */
 function carEstado(lv) {
-  const W = (lv.warn || []).filter(w => CAR_AV[w]),
-    O = (lv.open || []).filter(x => CAR_AB[x]),
+  const O = (lv.open || []).filter(x => CAR_AB[x]),
     row = (ic, co, t, s, extra = '') =>
       `<div class="row">${tile(ic, co)}<span class="g"><span class="tt">${t}</span>${s ? `<br><span class="mu">${s}</span>` : ''}</span>${extra}</div>`;
   return (
-    (W.length
-      ? W.map(w => row('triangle-alert', 'var(--er)', esc(CAR_AV[w]), 'Aviso del coche', carPill('er', 'Revisar'))).join('')
-      : row('circle-check', 'var(--ok)', 'Sin avisos', 'Aceite, frenos, ruedas y pila de la llave')) +
     (lv.locked === undefined && !O.length
       ? ''
       : O.length
@@ -588,7 +579,7 @@ function vCoche() {
       K.cur !== null
         ? `<b>${kmf(K.cur)} <small>km</small></b><span class="carhs">${K.src === 'kia' ? 'De Kia Connect' : 'Apuntado'} ${rel(K.d)}</span>${
             lv && carFuel(lv) != null
-              ? `<span class="carfu ${lv.low ? 'er' : carFuelLvl(carFuel(lv))}" title="${carFuelReal(lv) == null ? `Calculado con la autonomía: depósito de ${CAR_TANK} l y consumo medio de ${String(CAR_L100).replace('.', ',')} l/100 km` : 'Dato del coche'}"><span class="carfb"><i style="width:${Math.max(3, carFuel(lv)).toFixed(0)}%"></i></span>${I('fuel', 'sm')} ${carFuelReal(lv) == null ? '≈ ' : ''}${Math.round(carFuel(lv))} %${hasN(lv.range) ? `<span class="carfa"><span class="carfr">${kmf(lv.range)} km</span> de autonomía</span>` : ''}</span>`
+              ? `<span class="carfu ${carFuelLvl(carFuel(lv))}" title="${carFuelReal(lv) == null ? `Calculado con la autonomía: depósito de ${CAR_TANK} l y consumo medio de ${String(CAR_L100).replace('.', ',')} l/100 km` : 'Dato del coche'}"><span class="carfb"><i style="width:${Math.max(3, carFuel(lv)).toFixed(0)}%"></i></span>${I('fuel', 'sm')} ${carFuelReal(lv) == null ? '≈ ' : ''}${Math.round(carFuel(lv))} %${hasN(lv.range) ? `<span class="carfa"><span class="carfr">${kmf(lv.range)} km</span> de autonomía</span>` : ''}</span>`
               : ''
           }`
         : `<b class="carh0">Sin apuntar</b><span class="carhs">Toca las flechas para leer los km del coche.</span>`

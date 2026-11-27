@@ -3,7 +3,7 @@
 Entra en Kia Connect con la cuenta de la dueña del panel (secretos KIA_USER y KIA_PASSWORD; KIA_PIN si la cuenta lo
 pide) y lee el último estado guardado por Kia (no despierta el coche):
 - km: se pasan a ldb_car_km(), que solo los apunta si han subido;
-- estado (combustible, autonomía, avisos, cerrado, ubicación) y viajes (km y minutos por día y por mes): ldb_car_live().
+- estado (combustible, autonomía, cerrado, ubicación) y viajes (km y minutos por día y por mes): ldb_car_live().
 El repositorio es público: en la consola no se escribe ningún valor ni dato del coche o de la cuenta.
 Con KIA_BACKFILL=1 trae también los días de este mes y el anterior y los últimos 6 meses (para rellenar al empezar).
 """
@@ -111,19 +111,6 @@ def diag(vm):
     print("estadísticas diarias:", "sí" if getattr(v, "daily_stats", None) else "no")
 
 
-WARN = {
-    "oil": "oil_level_warning_is_on",
-    "brake": "brake_fluid_warning_is_on",
-    "key": "smart_key_battery_warning_is_on",
-    "tire": "tire_pressure_all_warning_is_on",
-}
-
-
-def tire_one(v):
-    """Aviso de presión en una sola rueda: el coche lo manda por rueda, aparte del de «todas»."""
-    return any(g(v, f"tire_pressure_{p}_warning_is_on") for p in ("front_left", "front_right", "rear_left", "rear_right"))
-
-
 def g(v, f):
     try:
         return getattr(v, f)
@@ -139,7 +126,9 @@ def num(x):
 
 
 def live(v):
-    """Lo último que mandó el coche, en el formato de S.car.live (ver js/vistas/coche.js)."""
+    """Lo último que mandó el coche, en el formato de S.car.live (ver js/vistas/coche.js).
+    Sin avisos (aceite, frenos, ruedas, pila de la llave) ni «depósito bajo»: este coche no los manda (llegan siempre apagados);
+    el depósito bajo lo calcula la app con la autonomía."""
     at = g(v, "last_updated_at")
     opn = []
     if any(g(v, f"{p}_door_is_open") for p in ("front_left", "front_right", "back_left", "back_right")):
@@ -154,9 +143,7 @@ def live(v):
     o = {
         "at": at.isoformat() if isinstance(at, dt.datetime) else dt.datetime.now(dt.UTC).isoformat(),
         "fuel": num(g(v, "fuel_level")),
-        "low": bool(g(v, "fuel_level_is_low")),
         "range": num(g(v, "total_driving_range") or g(v, "fuel_driving_range")),
-        "warn": [k for k, f in WARN.items() if g(v, f) or (k == "tire" and tire_one(v))],
         "open": opn,
         "sync": dt.datetime.now(dt.UTC).isoformat(),
     }
