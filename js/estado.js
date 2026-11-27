@@ -166,7 +166,12 @@ function seed() {
     }
     if (t.tm === undefined) t.tm = '';
     // Cumpleaños con la fecha de nacimiento como fecha: pasa al próximo cumpleaños y ese año, a «Año de nacimiento».
-    if (t.area === 'Cumpleaños' && !t.done && /^\d{4}-\d{2}-\d{2}$/.test(t.due || '') && +t.due.slice(0, 4) < new Date().getFullYear() - 1) {
+    if (
+      t.area === 'Cumpleaños' &&
+      !t.done &&
+      /^\d{4}-\d{2}-\d{2}$/.test(t.due || '') &&
+      +t.due.slice(0, 4) < new Date().getFullYear() - 1
+    ) {
       if (!t.by) t.by = +t.due.slice(0, 4);
       t.due = bdNext(+t.due.slice(5, 7), +t.due.slice(8));
       c++;
@@ -206,6 +211,8 @@ function seed() {
     });
     S.tx.filter(x => fromBank(x) && x.date >= addD(TD(), -90)).forEach(fxMatch);
   });
+  // Cargos del banco cuya palabra clave venía detrás de « · » y no se enlazaron con su pago de Facturas.
+  once('fx-desc-v1', () => S.tx.filter(x => fromBank(x) && !x.fid && x.date >= addD(TD(), -60)).forEach(fxMatch));
   // «events» (agenda antigua) y «bills» (facturas antiguas) ya pasaron a Tareas y Facturas: se quitan de los datos.
   for (const k of ['events', 'bills'])
     if (k in S) {

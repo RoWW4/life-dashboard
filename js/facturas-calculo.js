@@ -135,9 +135,24 @@ const fxByKey = (x, c) => {
 };
 function fxMatch(x) {
   if (x.fid || x.cat === NOCNT) return;
-  const c = nt(concept(x));
+  const c = nt(concept(x)),
+    cd = nt(x.desc);
   const f =
     fxByKey(x, c) ||
+    // La palabra clave puede venir detrás de « · » (p. ej. «Tienda · Servicio»), que concept() quita: se busca en el
+    // concepto entero, pero solo si el importe se parece y le toca un cobro cerca (para no enlazar compras sueltas).
+    (cd !== c
+      ? S.fixed.find(
+          f =>
+            f.t === x.t &&
+            f.k &&
+            !f.var &&
+            fxHas(f, cd) &&
+            fxFits(f, x) &&
+            Math.abs(f.amt - x.amt) <= f.amt * 0.1 &&
+            fxOcc(f, addD(x.date, -6), addD(x.date, 6)).length
+        )
+      : null) ||
     S.fixed.find(
       f =>
         f.t === x.t &&
