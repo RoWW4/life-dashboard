@@ -1,8 +1,8 @@
 name: Coche (Kia Connect)
 
 # Lee en Kia Connect el último estado guardado del coche (sin despertarlo): km, combustible, avisos, cierre,
-# ubicación y viajes, y los guarda en la sección Coche del panel. La lanza Supabase cada 3 h (pg_cron, tarea
-# «kia-km»: 0 6-21/3 * * * UTC ≈ 07:00, 10:00, 13:00, 16:00, 19:00 y 22:00 en invierno; en verano, una hora más) llamando a la API de GitHub, como
+# ubicación y viajes, y los guarda en la sección Coche del panel. La lanza Supabase cada hora (pg_cron, tarea
+# «kia-km»: 0 6-21 * * * UTC ≈ de 07:00 a 22:00 en invierno; en verano, una hora más) llamando a la API de GitHub, como
 # el banco, porque el «schedule» de GitHub se retrasaba. También con «Actualizar» en Coche (ldb_car_refresh) y a mano (Run workflow).
 # Secretos: KIA_USER y KIA_PASSWORD (cuenta de Kia Connect), KIA_PIN si la cuenta lo pide, y los de Supabase.
 on:

@@ -18,7 +18,7 @@ const carR = () => {
   const c = S.car && typeof S.car === 'object' ? S.car : {};
   return { info: c.info || {}, km: c.km || [], mt: Array.isArray(c.mt) ? c.mt : CAR_MT0, vis: c.vis || [] };
 };
-/* Lo que manda el coche por Kia Connect (robot kia-km, cada 3 h de 7 a 22 h y con «Actualizar»): S.car.live = estado (at: hora del dato, fuel %,
+/* Lo que manda el coche por Kia Connect (robot kia-km, cada hora de 7 a 22 h y con «Actualizar»): S.car.live = estado (at: hora del dato, fuel %,
    range km, locked, open: lo que está abierto, loc: {lat, lon}) y S.car.trips = {days: {fecha: {km, min}},
    months: {AAAA-MM: {km, min, spd}}}. Lo escribe la base de datos (ldb_car_live); la app solo lo lee. */
 /* Sin avisos de aceite, frenos, ruedas ni pila de la llave: este coche no los manda a Kia Connect (llegan siempre apagados)
@@ -390,9 +390,7 @@ function carEstado(lv) {
         ) + (exp.carmap ? carMap(+lv.loc.lat, +lv.loc.lon) : '')
       : '') +
     `<div class="mu carup"><span>${
-      carSync.on
-        ? 'Actualizando…'
-        : `Datos del coche ${ago(lv.at)}${carJob() && carJob().last_ok ? ` · comprobado ${ago(carJob().last_ok)}` : ''}`
+      `Datos del coche ${ago(lv.at)}${carSync.on ? ' · actualizando…' : carJob() && carJob().last_ok ? ` · comprobado ${ago(carJob().last_ok)}` : ''}`
     }</span></div>`
   );
 }
@@ -583,7 +581,7 @@ function vCoche() {
               : ''
           }`
         : `<b class="carh0">Sin apuntar</b><span class="carhs">Toca las flechas para leer los km del coche.</span>`
-    }</div><button class="carhb${carSync.on ? ' gira' : ''}" data-a="carup" aria-label="Actualizar los datos del coche" title="${carSync.on ? 'Actualizando… (tarda un minuto)' : 'Actualizar los datos del coche'}" ${carSync.on ? 'disabled' : ''}>${I('refresh-cw')}</button></section>`;
+    }</div><button class="carhb${carSync.on ? ' gira' : ''}" data-a="carup" aria-label="Actualizar los datos del coche" title="${carSync.on ? 'Actualizando… (unos 15 s; puedes seguir usando el panel)' : 'Actualizar los datos del coche'}" ${carSync.on ? 'disabled' : ''}>${I('refresh-cw')}</button></section>`;
     C = {
       prox: panel(
         'coche',

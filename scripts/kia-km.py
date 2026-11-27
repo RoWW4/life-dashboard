@@ -1,4 +1,4 @@
-"""Coche desde Kia Connect (lo lanza .github/workflows/kia-km.yml cada 3 horas, de 7 a 23 h).
+"""Coche desde Kia Connect (lo lanza .github/workflows/kia-km.yml cada hora, de 7 a 22 h).
 
 Entra en Kia Connect con la cuenta de la dueña del panel (secretos KIA_USER y KIA_PASSWORD; KIA_PIN si la cuenta lo
 pide) y lee el último estado guardado por Kia (no despierta el coche):
