@@ -30,9 +30,17 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Solo el robot: el resto del repositorio no hace falta y así arranca antes.
+          sparse-checkout: |
+            scripts/kia-km.py
+            .github/workflows/kia-km.yml
+          sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v6
         with:
           python-version: '3.13'
+          cache: pip
+          cache-dependency-path: .github/workflows/kia-km.yml
       - name: Instalar
         run: pip install --quiet hyundai_kia_connect_api==5.3.1
       - name: Leer km
