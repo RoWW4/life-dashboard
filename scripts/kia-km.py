@@ -59,7 +59,7 @@ DIAG_FIELDS = [
 
 
 def diag(vm):
-    """Prueba: qué datos manda este coche. Solo escribe nombres y si vienen o no, nunca valores (el registro es público)."""
+    """Prueba: qué datos manda este coche. Solo nombres y si vienen o no, y los avisos (0/1); nunca otros valores (el registro es público)."""
 
     v = next(iter(vm.vehicles.values()))
     for f in DIAG_FIELDS:
@@ -68,6 +68,31 @@ def diag(vm):
         except Exception:
             val = None
         print(f"{f}: {'sí' if val is not None else 'no'}")
+    # Avisos tal como llegan del coche (sin pasar por la librería, que da «apagado» también cuando el coche no manda
+    # el dato). Solo rutas de avisos y su valor 0/1: no hay nada personal.
+    print("-- avisos en bruto (ruta: valor; «falta» = el coche no lo manda) --")
+    raw = getattr(v, "data", None) or {}
+
+    def walk(d, p=""):
+        if isinstance(d, dict):
+            for k, x in d.items():
+                yield from walk(x, f"{p}.{k}" if p else k)
+        else:
+            yield p, d
+
+    pal = ("warning", "low", "lamp", "fail", "status", "malfunction", "service", "check")
+    for ruta, x in walk(raw):
+        if any(w in ruta.lower() for w in pal) and (isinstance(x, bool) or (isinstance(x, int) and 0 <= x <= 9)):
+            print(f"{ruta}: {int(x)}")
+    for ruta in (
+        "Chassis.Axle.Tire.PressureLow", "Chassis.Axle.Row1.Left.Tire.PressureLow", "Electronics.FOB.LowBattery",
+        "Body.Windshield.Front.WasherFluid.LevelLow", "Chassis.Brake.Fluid.Warning",
+        "Drivetrain.InternalCombustionEngine.OilLevelWarning", "Electronics.Battery.Level",
+    ):
+        x = raw
+        for k in ruta.split("."):
+            x = x.get(k) if isinstance(x, dict) else None
+        print(f"{ruta}: {'falta' if x is None else 'viene'}")
     vid = next(iter(vm.vehicles))
     hoy = dt.date.today()
     for nombre, fn in (
