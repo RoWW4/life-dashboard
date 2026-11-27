@@ -204,7 +204,7 @@ function hlNoche(r) {
       : '';
   if (!tot && !hrs) return '';
   return (
-    `<div class="hln" style="--c:${HLC.sueno}"><div class="hlnh"><span class="hico">${I('bed')}</span><b>Última noche</b>${r.sleep_min != null ? `<span class="hlnt">${hlH(r.sleep_min)} min</span>` : ''}${hrs}</div>` +
+    `<div class="hln" style="--c:${HLC.sueno}"><div class="hlnh"><span class="hico">${I('bed')}</span><b>Última noche</b>${hrs}</div>` +
     (tot
       ? (hlLinea(r.stages) ||
           `<div class="hlst" role="img" aria-label="Fases del sueño">${F.map(([k, n, c]) => (r[k] ? `<i style="flex:${r[k]};--c:${c}" title="${n}: ${hlH(r[k])}"></i>` : '')).join('')}</div>`) +
