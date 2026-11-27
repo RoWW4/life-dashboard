@@ -5,7 +5,7 @@ pide) y lee el último estado guardado por Kia (no despierta el coche):
 - km: se pasan a ldb_car_km(), que solo los apunta si han subido;
 - estado (combustible, autonomía, cerrado, ubicación) y viajes (km y minutos por día y por mes): ldb_car_live().
 El repositorio es público: en la consola no se escribe ningún valor ni dato del coche o de la cuenta.
-Con KIA_BACKFILL=1 trae también los días de este mes y el anterior y los últimos 6 meses (para rellenar al empezar).
+Con KIA_BACKFILL=1 trae también los últimos 6 meses y sus días (para rellenar el historial).
 """
 import datetime as dt
 import json
@@ -162,14 +162,14 @@ def trip(t):
 
 
 def trips(vm, vid, backfill):
-    """Km, minutos, velocidad media y máxima y número de viajes de cada día (hoy, ayer y, al rellenar, los dos últimos meses) y resumen de cada mes."""
+    """Km, minutos, velocidad media y máxima y número de viajes de cada día (hoy, ayer y, al rellenar, los de todos los meses que tenga Kia) y resumen de cada mes."""
     v = vm.get_vehicle(vid)
     hoy = dt.datetime.now(ZoneInfo("Europe/Madrid")).date()
     meses = [hoy.replace(day=1)]
     for _ in range(6 if backfill else (1 if hoy.day <= 3 else 0)):
         meses.append((meses[-1] - dt.timedelta(days=1)).replace(day=1))
     days, months, quiero = {}, {}, {hoy, hoy - dt.timedelta(days=1)}
-    for i, m in enumerate(meses):
+    for m in meses:
         try:
             vm.update_month_trip_info(vid, m.strftime("%Y%m"))
         except Exception as e:
@@ -187,7 +187,7 @@ def trips(vm, vid, backfill):
                 f = dt.date(int(s[:4]), int(s[4:6]), int(s[6:8])) if len(s) == 8 else m.replace(day=int(s))
             except ValueError:
                 continue
-            if backfill and i <= 1:
+            if backfill:
                 quiero.add(f)
     for f in sorted(quiero):
         try:
