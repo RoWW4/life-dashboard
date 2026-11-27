@@ -534,8 +534,23 @@ const expChip = d =>
   d.exp
     ? `<span class="chip ${dayDiff(d.exp) < 0 ? 'er' : dayDiff(d.exp) <= 30 ? 'wa' : ''}">${dayDiff(d.exp) < 0 ? 'Caducó' : 'Vence'} ${fdc(d.exp)}</span>`
     : '';
-const docRow = d =>
-  `<div class="row">${tile(DI[d.cat] || 'file-text', DCOL[d.cat])}<span class="g">${d.url ? `<a class="dl" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">${esc(d.name)}${I('external-link', 'sm')}</a>` : `<span>${esc(d.name)}</span> <button class="btn sm ghost" data-a="ed" data-i="${d.id}">${I('link', 'sm')} Añadir enlace</button>`}${d.notes || d.exp ? `<span class="meta">${expChip(d)}${d.exp && dayDiff(d.exp) <= 30 ? `<button class="chip" data-a="dren" data-i="${d.id}" title="Ya lo has renovado: pon la nueva fecha">${I('calendar-check', 'sm')} Renovado</button>` : ''}${d.notes ? `<span class="mu">${esc(cap(d.notes))}</span>` : ''}</span>` : ''}</span><button class="ib" data-a="ed" data-i="${d.id}" aria-label="Editar">${I('pencil')}</button><button class="ib" data-a="dd" data-i="${d.id}" aria-label="Quitar">${I('x')}</button></div>`;
+/* Fila de Documentos: el nombre (abre el archivo) y debajo la fecha de vencimiento y la nota. Sin icono (ya está en la cabecera de la carpeta).
+   La fecha solo va como etiqueta de color si vence en 30 días o menos (o ya caducó); si falta más, en gris. Editar, Renovado y Quitar, en el menú «⋯». */
+const docRow = d => {
+  const n = d.exp ? dayDiff(d.exp) : null,
+    soon = n !== null && n <= 30,
+    sub = [d.exp && !soon ? 'Vence ' + fdc(d.exp) : '', d.notes ? cap(d.notes) : ''].filter(Boolean).join(' · ');
+  return `<div class="row docr"><span class="g">${d.url ? `<a class="dl" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">${esc(d.name)}${I('external-link', 'sm')}</a>` : `<span class="dl">${esc(d.name)}</span> <button class="btn sm ghost" data-a="ed" data-i="${d.id}">${I('link', 'sm')} Añadir enlace</button>`}${sub ? `<span class="dsub">${esc(sub)}</span>` : ''}</span>${soon ? expChip(d) : ''}<button class="ib" data-a="dmn" data-i="${d.id}" aria-label="Más opciones de «${esc(d.name)}»" title="Editar, renovar o quitar">${I('ellipsis')}</button></div>`;
+};
+/* Menú «⋯» de un documento. */
+function docMenu(i) {
+  const d = S.docs.find(x => x.id === i);
+  if (!d) return;
+  const o = modal(
+    `<h3>${esc(d.name)}</h3><div class="dmn"><button class="btn ghost" data-x="ed">${I('pencil', 'sm')} Editar</button>${d.exp ? `<button class="btn ghost" data-x="dren">${I('calendar-check', 'sm')} Renovado: poner la nueva fecha</button>` : ''}<button class="btn ghost danger" data-x="dd">${I('trash-2', 'sm')} Quitar de la lista</button></div><div class="acts"><span class="sp"></span><button class="btn ghost" data-close>Cancelar</button></div>`
+  );
+  o.querySelectorAll('[data-x]').forEach(b => (b.onclick = () => (o.remove(), A[b.dataset.x](i))));
+}
 function donut(cats, budget, sp, rem) {
   const R = 54,
     C = 2 * Math.PI * R,

@@ -639,6 +639,7 @@ const A = {
         ch();
       });
     }),
+  dmn: i => docMenu(i),
   dren: i => {
     const d = S.docs.find(x => x.id === i);
     if (d) docRenew(d);

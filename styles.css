@@ -1093,6 +1093,13 @@ body.bg-all.bg-gen::before{background:var(--hbg)}
 @media(min-width:761px){.hmoon,.hbg-cielo .hmoon,.hbg-luna .hmoon{left:auto;right:3%;top:10px;transform:none;width:62px;height:62px}.sol,.sky-dia .sol,.sky-tarde .sol{left:auto;right:4%;top:16px}.sky-amanecer .sol,.sky-atardecer .sol{top:auto;bottom:34%;right:42%}}
 /* Documentos: cada panel con el color de su categoría (borde y brillo suave). */
 .card.dcat{--mod:var(--c)}
+/* Documentos: cabecera de carpeta más grande, número en etiqueta del color de la carpeta y filas sin icono */
+.card.dcat h3{font-size:18px;font-weight:700}
+.card.dcat h3 .dcn{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;margin-left:6px;box-sizing:border-box;border-radius:6px;font-size:12.5px;font-weight:600;vertical-align:.12em;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c)}
+.docr .g{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;flex:1}
+.docr .dl{font-size:15px;font-weight:500;display:inline}.docr .dl .i{margin-left:6px;vertical-align:-.15em}
+.docr .dsub{font-size:12.5px;color:var(--mu)}
+.dmn{display:flex;flex-direction:column;gap:6px;margin:4px 0 8px}.dmn .btn{justify-content:flex-start}
 
 /* ---------- Coche (js/vistas/coche.js) ---------- */
 :is(.nv,.msecs button)[data-i=coche]{--c:#f5a524}.card[data-v=coche]{--mod:#f5a524}

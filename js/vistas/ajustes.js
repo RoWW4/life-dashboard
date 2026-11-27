@@ -17,7 +17,7 @@ function docsHTML() {
       panel(
         'docs',
         c,
-        `<span style="color:${DCOL[c]}">${I(DI[c])}</span> ${c} <span class="cnt">· ${g[c].length}</span>`,
+        `<span style="color:${DCOL[c]}">${I(DI[c])}</span> ${c} <span class="cnt dcn"><span hidden>· </span>${g[c].length}</span>`,
         so(g[c]).map(docRow).join(''),
         'hl dcat',
         '--c:' + DCOL[c]
