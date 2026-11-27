@@ -707,9 +707,6 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .imk:hover .imq{border-color:var(--ok)}
 .imk:active{transform:scale(.92)}
 .dimp .row .tt{font-size:15px;line-height:1.3}
-/* Prueba de fuente (solo Mi día, Movimientos y Facturas): más cálida y con pesos más suaves que Inter */
-#m:is([data-view=dia],[data-view=fin],[data-view=fact]){font-family:"Figtree",Inter,system-ui,sans-serif;font-feature-settings:normal}
-#m:is([data-view=dia],[data-view=fin],[data-view=fact]) :is(.tt,.card h3,.amt){font-weight:500}
 .card.hl{border-color:color-mix(in srgb,var(--ac) 30%,var(--bd))}
 /* Documentos a mano en Mi día: pastillas más altas, con el icono arriba */
 /* Lista de la compra en Mi día: filas más compactas */
