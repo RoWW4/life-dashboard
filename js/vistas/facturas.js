@@ -2,7 +2,7 @@
 /* Sección «Facturas»: pagos e ingresos que se repiten. */
 /* Una fila de Facturas: estado del último cobro y acciones. Etiquetas: pagado/cobrado (verde) · próximo (aún no toca; naranja si es un pago de esta semana) ·
    pendiente (pasó la fecha hace ≤5 días: el banco suele tardar) · vencido (más de 5 días) · terminado (ya no hay más cobros). */
-/* Pago con fecha de fin. Con mes de inicio: en qué plazo vas y cuándo es el último («Plazo 2 de 3 · último el 28 nov»).
+/* Pago con fecha de fin. Con mes de inicio: en qué plazo vas y cuándo es el último («Pago 2 de 3 · último el 28 nov»).
    Sin mes de inicio: hasta qué mes y cuántos cobros quedan desde el próximo. */
 const fxEnd = (f, next) => {
   if (!f.until) return '';
@@ -13,9 +13,9 @@ const fxEnd = (f, next) => {
       ult = all[n - 1];
     if (n > 1)
       return k >= n
-        ? ` · Último plazo (${n} de ${n}) · ${fdc(ult)}`
+        ? ` · Último pago (${n} de ${n}) · ${fdc(ult)}`
         : k
-          ? ` · Plazo ${k} de ${n} · último el ${fdc(ult)}`
+          ? ` · Pago ${k} de ${n} · último el ${fdc(ult)}`
           : ` · ${n} plazos · el primero el ${fdc(all[0])}`;
   }
   const n = next ? fxOcc(f, next, f.until).length : 0;
@@ -29,13 +29,13 @@ const fxPz = f => {
   const all = fxOcc(f, f.from + '-01', f.until);
   return all.length > 1 ? { k: all.filter(d => d <= TD()).length, n: all.length, ult: all[all.length - 1] } : null;
 };
-/* Texto bajo el nombre, corto: a plazos, «Plazo 2 de 3» destacado y el próximo (o el último) cobro; si no, la frecuencia y el fin.
+/* Texto bajo el nombre, corto: a plazos, «Pago 2 de 3» destacado y el próximo (o el último) cobro; si no, la frecuencia y el fin.
    «Llegó del banco» no se dice (ya lo dice «Pagado»); solo se avisa si se marcó a mano y el banco aún no lo ha cobrado. */
 const fxSub = (f, s) => {
   const pz = fxPz(f),
     man = s.paid && !fromBank(s.paid) ? ' · Sin cargo del banco aún' : '';
   if (pz)
-    return `<b class="fxpzb" style="--c:${col(f.cat)}">${pz.k ? `Plazo ${Math.min(pz.k, pz.n)} de ${pz.n}` : pz.n + ' plazos'}</b>${s.next ? (s.next === pz.ult ? ' · Último el ' : ' · Próximo ') + fdc(s.next) : ''}${man}`;
+    return `<b class="fxpzb" style="--c:${col(f.cat)}">${pz.k ? `Pago ${Math.min(pz.k, pz.n)} de ${pz.n}` : pz.n + ' plazos'}</b>${s.next ? (s.next === pz.ult ? ' · Último el ' : ' · Próximo ') + fdc(s.next) : ''}${man}`;
   return `${fxFreq(f)}${fxEnd(f, s.next)}${man}${s.paid && s.next && Math.abs(dd(s.paid.date, s.next)) > 10 ? ' · Próximo ' + fdc(s.next) : ''}`;
 };
 /* Fila de Facturas con la misma forma que un movimiento: a la izquierda nombre, nota y detalle (toca para ver la ficha,

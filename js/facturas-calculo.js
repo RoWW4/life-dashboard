@@ -88,6 +88,19 @@ const fxDue = n =>
     .map(f => ({ f, d: fxState(f).due }))
     .filter(o => o.d && dayDiff(o.d) <= n)
     .sort((a, b) => a.d.localeCompare(b.d));
+/* Nombre de un pago a plazos para el cobro del día d: «PayPal · Pago en 3 plazos» → «PayPal · Pago 2 de 3».
+   Sin plazos (sin inicio o sin fin), el nombre tal cual. */
+const fxPzName = (f, d) => {
+  if (!f.until || !f.from || f.once || f.var) return f.name;
+  const all = fxOcc(f, f.from + '-01', f.until),
+    i = all.indexOf(d);
+  if (all.length < 2) return f.name;
+  const k = i >= 0 ? i + 1 : all.filter(x => x <= d).length,
+    base = String(f.name)
+      .replace(/\s*[·\-–]?\s*pago\s+(en\s+)?\d+\s+plazos\s*$/i, '')
+      .trim();
+  return `${base || f.name} · Pago ${Math.max(1, k)} de ${all.length}`;
+};
 /* Palabras con las que un pago reconoce sus cargos: la principal (f.k) y, en los variables, las extra (f.kx). */
 const fxWords = f => [f.k, ...(f.kx || [])].filter(Boolean);
 /* Parte fija de un concepto del banco: las palabras antes del primer número (los recibos suelen llevar detrás números de

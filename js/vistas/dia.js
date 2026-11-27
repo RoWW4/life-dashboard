@@ -137,7 +137,7 @@ function vDia() {
     // Los cumpleaños, con dos semanas de antelación (para el regalo); los años que cumple van en su icono.
     ...open.filter(t => t.due && dayDiff(t.due) <= (t.area === 'Cumpleaños' ? 14 : 1)).map(t => [t.due, ico(t), t.title, AC[t.area], t.id]),
     // Lo que no es una tarea lleva a su sección al tocarlo (6.º dato).
-    ...fxDue(7).map(o => [o.d, 'receipt', o.f.name + ' · ' + eur(o.f.amt), col(o.f.cat), '', 'fact']),
+    ...fxDue(7).map(o => [o.d, 'receipt', fxPzName(o.f, o.d) + ' · ' + eur(o.f.amt), col(o.f.cat), '', 'fact']),
     ...fxPausedHit().map(o => [
       o.x.date,
       'receipt',
