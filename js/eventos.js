@@ -441,9 +441,9 @@ document.addEventListener(
     tsw = null;
     if (e.touches.length !== 1 || !TOUCH) return;
     const ck = e.target.closest && e.target.closest('#m .row');
-    const c = ck && ck.querySelector('input.ck[data-a=tt]');
+    const c = ck && ck.querySelector('input.ck[data-a=tt],button.imk[data-a=tt]');
     if (!c || e.target.closest('input,select,textarea,.hd')) return;
-    tsw = { row: ck, id: c.dataset.i, done: c.checked, x: e.touches[0].clientX, y: e.touches[0].clientY, on: false, dx: 0, hit: false };
+    tsw = { row: ck, id: c.dataset.i, done: !!c.checked, x: e.touches[0].clientX, y: e.touches[0].clientY, on: false, dx: 0, hit: false };
   },
   { passive: true }
 );

@@ -699,6 +699,14 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .dimp .row .link,.dimp .row>.g{flex-direction:column;align-items:flex-start;gap:1px;flex-wrap:nowrap}
 .dimp .row .tt{font-weight:600}
 .dimp .dsub{font-size:12.5px;color:var(--mu);font-variant-numeric:tabular-nums}
+/* Tarea en «Lo más importante»: el icono es el botón de completar; el cuadradito de la esquina lo indica */
+.imk{all:unset;position:relative;cursor:pointer;flex-shrink:0;border-radius:9px;display:grid}
+.imk:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.imq{position:absolute;right:-4px;bottom:-4px;width:13px;height:13px;box-sizing:border-box;border-radius:4px;background:var(--card);border:1.5px solid var(--dis);transition:border-color .15s,background .15s}
+.imk:has(.bdt) .imq{bottom:auto;top:-4px}
+.imk:hover .imq{border-color:var(--ok)}
+.imk:active{transform:scale(.92)}
+.dimp .row .tt{font-size:15px;line-height:1.3}
 .card.hl{border-color:color-mix(in srgb,var(--ac) 30%,var(--bd))}
 /* Documentos a mano en Mi día: pastillas más altas, con el icono arriba */
 /* Lista de la compra en Mi día: filas más compactas */

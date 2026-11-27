@@ -133,6 +133,7 @@ function vDia() {
     lastU = d;
     return hd + r;
   });
+  // Las tareas no llevan casilla: se completan tocando su icono (con un cuadradito en la esquina que lo indica).
   // Cada aviso: [fecha, icono, título, color, id de tarea, sección, detalle]. El título va en negrita y el detalle (importe, tipo…) debajo, en gris.
   const cut = (x, sep) => {
     const i = x.indexOf(sep);
@@ -174,7 +175,7 @@ function vDia() {
         ? imp
             .map(
               ([d, n, t, c, ti, go, sb], _, __, dt = `<span class="tt">${esc(t)}</span>${sb ? `<span class="dsub">${esc(sb)}</span>` : ''}`) =>
-                `<div class="row"${ti && NATIVE_DRAG ? ` draggable="true" data-tid="${ti}"` : ''}>${ti ? `<input type="checkbox" class="ck" data-a="tt" data-i="${ti}" aria-label="Completar «${esc(t)}»">` : ''}${(tk => (tk && tk.area === 'Cumpleaños' ? bdTile(tk) : tile(n, c)))(ti && S.tasks.find(x => x.id === ti))}${ti ? `<button class="link" data-a="et" data-i="${ti}">${dt}</button>` : go ? `<button class="link" data-a="go" data-i="${go}" title="Abrir su sección">${dt}</button>` : `<span class="g">${dt}</span>`}${when(d)}${ti ? tppBtn(S.tasks.find(x => x.id === ti)) : ''}</div>`
+                `<div class="row"${ti && NATIVE_DRAG ? ` draggable="true" data-tid="${ti}"` : ''}>${(tk => (ti ? `<button class="imk" data-a="tt" data-i="${ti}" aria-label="Completar «${esc(t)}»" title="Marcar como hecha">${tk && tk.area === 'Cumpleaños' ? bdTile(tk) : tile(n, c)}<span class="imq"></span></button>` : tile(n, c)))(ti && S.tasks.find(x => x.id === ti))}${ti ? `<button class="link" data-a="et" data-i="${ti}">${dt}</button>` : go ? `<button class="link" data-a="go" data-i="${go}" title="Abrir su sección">${dt}</button>` : `<span class="g">${dt}</span>`}${when(d)}${ti ? tppBtn(S.tasks.find(x => x.id === ti)) : ''}</div>`
             )
             .join('')
         : empty('Nada urgente para hoy ni mañana.'),
