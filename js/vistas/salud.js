@@ -500,9 +500,11 @@ function hlxHTML() {
   return (
     head +
     `<div class="hlxs${meta || m === 'rhr' ? '' : ' dos'}" style="--c:${c}">${tile(d > 90 ? 'Media diaria' : 'Media', hlxF(m, avg), R.length + (R.length === 1 ? ' día con datos' : ' días con datos'))}${tile(m === 'rhr' ? 'Más bajo' : 'Mejor día', hlxF(m, best[m]), fd(best.day))}${meta ? tile('Objetivo cumplido', ok + ' de ' + R.length, Math.round((ok / R.length) * 100) + ' % de los días') : m === 'rhr' ? tile('Más alto', hlxF(m, Math.max(...vals)), '') : ''}</div>
-    <div class="hlxi mu">${I('info', 'sm')} Toca una barra para ver su dato${meta ? '' : ' · línea: media'}</div>
+    <div class="hlxi mu">${I('info', 'sm')} Toca una barra para ver su dato</div>
     <div class="hlxc${d > 90 ? ' yr' : d > 30 ? ' dense' : ''}${hlx.s != null ? ' picked' : ''}" style="--c:${c};--g:${h(meta || avg).toFixed(1)}%" role="group" aria-label="${nom}: ${d === 365 ? 'media de cada mes del último año' : 'cada día de los últimos ' + d + ' días'}">${B.map((b, j) => `<div class="${hlx.s === j ? 'on' : ''}" data-a="hlxs" data-i="${j}" title="${b.t}: ${hlxF(m, b.v)}" role="button" tabindex="0" aria-label="${b.t}: ${hlxF(m, b.v)}"><div class="tr"><i style="height:${h(b.v).toFixed(1)}%"></i></div><em>${b.l}</em></div>`).join('')}<span class="hlgoal${meta ? '' : ' hlavg'}" aria-hidden="true"></span>${hlxBur(B, hlx.s, h, m, meta)}</div>` +
-    (meta ? `<div class="mu hlxl"><i></i>Objetivo: ${hlxF(m, meta)}</div>` : '') +
+    (meta
+      ? `<div class="mu hlxl"><i></i>Objetivo: ${hlxF(m, meta)}</div>`
+      : `<div class="mu hlxl med"><i></i>Media: ${hlxF(m, avg)}</div>`) +
     close
   );
 }

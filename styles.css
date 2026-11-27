@@ -325,7 +325,7 @@ input[type=checkbox].ck:focus-visible{outline:2px solid var(--ac);outline-offset
 .hlavg::after{border-top-color:color-mix(in srgb,var(--tx) 45%,transparent)!important}
 .hlgoal{position:absolute;left:0;right:0;top:var(--tt);height:var(--th);pointer-events:none}
 .hlgoal::after{content:'';position:absolute;left:0;right:0;bottom:var(--g);height:0;border-top:1.5px dashed color-mix(in srgb,#fbbf24 75%,transparent)}
-.hlxl{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12px}.hlxl i{width:14px;border-top:1.5px dashed #fbbf24}
+.hlxl{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12px}.hlxl i{width:14px;border-top:1.5px dashed #fbbf24}.hlxl.med i{border-top-color:color-mix(in srgb,var(--tx) 45%,transparent)}
 @media (max-width:420px){.hlxs{grid-template-columns:repeat(2,minmax(0,1fr))}.hlxs:not(.dos) .hlxk:last-child{grid-column:1/-1}.hlxc .tr{height:110px}.hlxc{--th:110px}}
 @media (max-width:760px){.hlg{grid-template-columns:repeat(2,minmax(0,1fr))}.hlleg{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:420px){.hlk b{font-size:23px}.hlz{padding:1px 4px;font-size:10.5px;white-space:nowrap}.hlwh b{flex:1 0 auto}.hlwh .hlxb{margin-left:0}.hlwh span,.hlwh .hlmeta{order:2}.hlwh::after{content:'';flex-basis:100%;order:1}.hlbars{gap:3px}}
