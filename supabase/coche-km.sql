@@ -97,3 +97,10 @@ begin
 end $$;
 revoke all on function public.ldb_car_refresh() from public, anon;
 grant execute on function public.ldb_car_refresh() to authenticated;
+
+-- Sesión de Kia Connect guardada por el robot (27/11/2026) para no iniciar sesión de cero cada vez (~7 s menos).
+-- Sin usuario ni contraseña; solo la clave de servicio llega a ella. Si se borra, el robot inicia sesión de cero.
+create table if not exists public.ldb_kia_token (id int primary key default 1 check (id = 1), token jsonb not null, at timestamptz not null default now());
+alter table public.ldb_kia_token enable row level security;
+revoke all on public.ldb_kia_token from public, anon, authenticated;
+grant select, insert, update, delete on public.ldb_kia_token to service_role;

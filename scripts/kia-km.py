@@ -16,6 +16,7 @@ import urllib.request
 from zoneinfo import ZoneInfo
 
 from hyundai_kia_connect_api import VehicleManager
+from hyundai_kia_connect_api.Token import Token
 
 JOB = "kia-km"
 URL = os.environ["SUPABASE_URL"].rstrip("/")
@@ -26,6 +27,49 @@ RUN_URL = (
     if RUN_ID and os.environ.get("GITHUB_REPOSITORY")
     else ""
 )
+
+
+def rest(method, path, body=None):
+    """Tabla ldb_kia_token (solo la clave de servicio llega a ella)."""
+    req = urllib.request.Request(
+        f"{URL}/rest/v1/{path}",
+        data=json.dumps(body).encode() if body is not None else None,
+        headers={"apikey": KEY, "Authorization": f"Bearer {KEY}", "Content-Type": "application/json",
+                 "Prefer": "resolution=merge-duplicates"},
+        method=method,
+    )
+    with urllib.request.urlopen(req, timeout=15) as r:
+        t = r.read().decode()
+        return json.loads(t) if t else None
+
+
+def sesion(vm):
+    """Reutiliza la sesión de Kia de la vez anterior (iniciarla de cero tarda ~7 s). Se guarda sin usuario ni contraseña.
+    Si falla algo, inicia sesión de cero como siempre."""
+    antes = None
+    try:
+        filas = rest("GET", "ldb_kia_token?id=eq.1&select=token") or []
+        if filas:
+            d = {**filas[0]["token"], "username": vm.username, "password": vm.password, "pin": vm.pin}
+            vm.token = Token.from_dict(d)
+            antes = vm.token.access_token
+            vm.check_and_refresh_token()  # la prueba y, si ha caducado, la renueva
+            if not vm.vehicles:
+                vm.initialize_vehicles()
+    except Exception as e:
+        print(f"(sesión guardada no válida: {type(e).__name__}; se inicia de cero)")
+        vm.token, vm.vehicles, antes = None, {}, None
+    if vm.token is None:
+        vm.check_and_refresh_token()
+    if vm.token.access_token != antes:
+        try:
+            d = vm.token.to_dict()
+            for k in ("username", "password", "pin"):
+                d.pop(k, None)
+            rest("POST", "ldb_kia_token", {"id": 1, "token": d, "at": dt.datetime.now(dt.UTC).isoformat()})
+        except Exception as e:
+            print(f"(no se pudo guardar la sesión: {type(e).__name__})")
+    print("Sesión: " + ("reutilizada" if antes and vm.token.access_token == antes else "nueva"))
 
 
 def rpc(name, body):
@@ -217,7 +261,7 @@ def main():
             password=os.environ["KIA_PASSWORD"],
             pin=os.environ.get("KIA_PIN", ""),
         )
-        vm.check_and_refresh_token()
+        sesion(vm)
         paso("sesión en Kia")
         vm.update_all_vehicles_with_cached_state()  # último estado guardado: no despierta el coche
         paso("estado del coche")
