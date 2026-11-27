@@ -3,7 +3,7 @@
 //   lleva otro ?v= y se descarga aparte).
 // - La página: red primero (para coger siempre la versión nueva) y copia guardada si la red no contesta en 4 s.
 // - El resto de archivos propios (config, imágenes, manifiesto): copia guardada al momento y se actualiza por detrás.
-const C = 'ldb-shell-v260';
+const C = 'ldb-shell-v261';
 const SHELL = [
   './',
   'index.html',

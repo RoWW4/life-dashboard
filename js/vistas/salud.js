@@ -439,6 +439,7 @@ function hlxHTML() {
       Object.entries(HLX_M).map(([k, [n]]) => [k, n])
     )}${seg('hlxd', d, [
       [7, '7 días'],
+      [14, '14 días'],
       [30, '30 días'],
       [90, '3 meses'],
       [365, '1 año']
@@ -465,9 +466,11 @@ function hlxHTML() {
         l:
           d === 7
             ? new Intl.DateTimeFormat('es-ES', { weekday: 'short' }).format(dt).replace('.', '') + ' ' + dt.getDate()
-            : (d === 30 ? i % 6 === 0 || i === d - 1 : dt.getDate() === 1)
-              ? dt.getDate() + ' ' + new Intl.DateTimeFormat('es-ES', { month: 'short' }).format(dt).replace('.', '')
-              : ''
+            : d === 14
+              ? String(dt.getDate())
+              : (d === 30 ? i % 6 === 0 || i === d - 1 : dt.getDate() === 1)
+                ? dt.getDate() + ' ' + new Intl.DateTimeFormat('es-ES', { month: 'short' }).format(dt).replace('.', '')
+                : ''
       };
     });
   } else {
