@@ -11,6 +11,7 @@ import datetime as dt
 import json
 import os
 import sys
+import time
 import urllib.request
 from zoneinfo import ZoneInfo
 
@@ -201,7 +202,13 @@ def trips(vm, vid, backfill):
 
 
 def main():
+    t0 = time.monotonic()
+
+    def paso(n):  # cuánto tarda cada paso (para ver dónde se va el tiempo)
+        print(f"[{time.monotonic() - t0:.1f} s] {n}")
+
     job("start")
+    paso("inicio")
     try:
         vm = VehicleManager(
             region=1,  # Europa
@@ -211,7 +218,9 @@ def main():
             pin=os.environ.get("KIA_PIN", ""),
         )
         vm.check_and_refresh_token()
+        paso("sesión en Kia")
         vm.update_all_vehicles_with_cached_state()  # último estado guardado: no despierta el coche
+        paso("estado del coche")
         if os.environ.get("KIA_DIAG") == "1":
             diag(vm)
         kms = [v.odometer for v in vm.vehicles.values() if v.odometer]
@@ -225,12 +234,14 @@ def main():
         print({"ok": "Km actualizados", "same": "Sin km nuevos"}.get(res, f"No se apuntó ({res})"))
         if res not in ("ok", "same"):
             raise RuntimeError(f"ldb_car_km: {res}")
+        paso("km guardados")
         vid = next(iter(vm.vehicles))
         days, months = trips(vm, vid, os.environ.get("KIA_BACKFILL") == "1")
         res = rpc("ldb_car_live", {"p_live": live(vm.get_vehicle(vid)), "p_days": days, "p_months": months})
         print(f"Estado guardado ({len(days)} días, {len(months)} meses)" if res == "ok" else f"Estado no guardado ({res})")
         if res != "ok":
             raise RuntimeError(f"ldb_car_live: {res}")
+        paso("viajes y estado guardados")
         job("ok")
     except Exception as e:
         msg = f"{type(e).__name__}: {str(e)[:300]}"
