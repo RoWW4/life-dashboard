@@ -77,6 +77,7 @@ function render() {
       ).join('')}</div>` + h.replace(/<h2>[^<]*<\/h2>/, '');
   }
   $('#m').innerHTML = h;
+  $('#m').dataset.view = view; // para estilos de una sección (p. ej. la fuente de prueba)
   // Al cambiar de sección, las tarjetas entran en cascada y las barras crecen desde cero (clase .enter, solo un momento).
   if (!same) {
     const m = $('#m');
