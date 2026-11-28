@@ -238,3 +238,5 @@ begin
 end $$;
 revoke all on function public.ldb_save(jsonb, numeric) from public, anon;
 grant execute on function public.ldb_save(jsonb, numeric) to authenticated;
+-- Distancia total del día en metros (28/11/2026): la escribe el script de Google Health; Salud la enseña junto a los pasos.
+alter table public.health_daily add column if not exists dist_m int;

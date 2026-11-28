@@ -70,7 +70,7 @@ async function hlLoad() {
   const [a, b, c] = await Promise.all([
     sb
       .from('health_daily')
-      .select('day,steps,kcal,sleep_min,rhr,awake_min,light_min,deep_min,rem_min,bed_at,wake_at,stages')
+      .select('day,steps,kcal,dist_m,sleep_min,rhr,awake_min,light_min,deep_min,rem_min,bed_at,wake_at,stages')
       .gte('day', addD(TD(), -13))
       .order('day'),
     sb.from('health_status').select('last_sync,last_error,sync_url').eq('user_id', user.id).maybeSingle(),
@@ -156,6 +156,7 @@ const HLF = [
   ['deep_min', 'Profundo', '#4f46e5']
 ];
 /* Tarjeta de un dato: icono de color, valor grande y, si hay objetivo, barra de progreso. */
+const hlKm = m => (m / 1000).toFixed(m < 10000 ? 2 : 1).replace('.', ',') + ' km';
 function hlKpi(c, ic, k, v, sub, pct, m) {
   return (
     `<div class="hlk${m ? ' hlkx' : ''}" style="--c:${c}"${m ? ` data-a="hlxo" data-i="${m}" role="button" tabindex="0" aria-label="${k}: ver el histórico"` : ''}><div class="hlkt"><span class="hico">${I(ic)}</span><span class="k">${k}</span>${m ? `<span class="hlkg">${I('chevron-right', 'sm')}</span>` : ''}</div><b>${v}</b>` +
@@ -244,11 +245,11 @@ function hlHTML() {
     rs = by[sel] || {};
   const info = !sel
     ? `<div class="hlxi mu">${I('info', 'sm')} Toca una barra para ver su dato</div>`
-    : `<div class="hlxi"><b>${rs.steps == null ? 'Sin datos' : hlN(rs.steps) + ' pasos'}</b><span>${cap(new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(sel + 'T12:00')))} · ${hlN(rs.kcal)} kcal · Sueño ${hlH(rs.sleep_min)}</span>${rs.steps == null ? '' : rs.steps >= HL_PASOS ? `<span class="chip ok">Objetivo cumplido</span>` : `<span class="chip">Faltaron ${hlN(HL_PASOS - rs.steps)}</span>`}</div>`;
+    : `<div class="hlxi"><b>${rs.steps == null ? 'Sin datos' : hlN(rs.steps) + ' pasos'}</b><span>${cap(new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(sel + 'T12:00')))}${rs.dist_m ? ' · ' + hlKm(rs.dist_m) : ''} · ${hlN(rs.kcal)} kcal · Sueño ${hlH(rs.sleep_min)}</span>${rs.steps == null ? '' : rs.steps >= HL_PASOS ? `<span class="chip ok">Objetivo cumplido</span>` : `<span class="chip">Faltaron ${hlN(HL_PASOS - rs.steps)}</span>`}</div>`;
   const st = HLS ? (hlSync.on ? 'Sincronizando…' : 'Actualizado ' + ago(HLS.last_sync)) : 'Aún no se ha sincronizado nunca';
   return (
     (HL.length
-      ? `<div class="hlg">${hlKpi(HLC.pasos, 'footprints', 'Pasos', hlN(hoy.steps), `<button class="hlmb" data-a="hlm" data-i="pasos" title="Cambiar el objetivo de pasos">${hoy.steps != null ? Math.round((hoy.steps / HL_PASOS) * 100) + ' % de ' : 'Objetivo '}${hlN(HL_PASOS)} ${I('pencil', 'sm')}</button>`, hoy.steps != null ? (hoy.steps / HL_PASOS) * 100 : null, 'steps')}` +
+      ? `<div class="hlg">${hlKpi(HLC.pasos, 'footprints', 'Pasos', hlN(hoy.steps) + (hoy.dist_m ? `<small>${hlKm(hoy.dist_m)}</small>` : ''), `<button class="hlmb" data-a="hlm" data-i="pasos" title="Cambiar el objetivo de pasos">${hoy.steps != null ? Math.round((hoy.steps / HL_PASOS) * 100) + ' % de ' : 'Objetivo '}${hlN(HL_PASOS)} ${I('pencil', 'sm')}</button>`, hoy.steps != null ? (hoy.steps / HL_PASOS) * 100 : null, 'steps')}` +
         `${hlKpi(HLC.kcal, 'flame', 'Calorías', `${hlN(hoy.kcal)}<small>kcal</small>`, 'Quemadas hoy', null, 'kcal')}` +
         `${hlKpi(HLC.sueno, 'moon', 'Sueño', hlD(sl), `<button class="hlmb" data-a="hlm" data-i="sueno" title="Cambiar el objetivo de sueño">${sleepDay === td ? 'Anoche' : 'Noche anterior'} · Meta ${hlHm(HL_SUENO)} ${I('pencil', 'sm')}</button>`, sl != null ? (sl / HL_SUENO) * 100 : null, 'sleep_min')}` +
         `${hlKpi(HLC.pulso, 'heart-pulse', 'Pulso', rhrRow ? `${rhrRow.rhr}<small>ppm</small>` : '—', 'En reposo' + (rhrRow && rhrRow.day !== td ? ' · ' + fd(rhrRow.day) : ''), null, 'rhr')}</div>

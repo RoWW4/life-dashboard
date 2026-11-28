@@ -2,7 +2,7 @@
  * Salud del panel (Google Apps Script, en la cuenta de Google de la dueña del panel).
  *
  * Cada hora (y cuando el panel pulsa «Sincronizar ahora») lee de Google Health los últimos días:
- *   pasos y kcal (dailyRollUp), sueño (sesiones, sin siestas: minutos, fases y horas), pulso en reposo y entrenos,
+ *   pasos, kcal y distancia (dailyRollUp), sueño (sesiones, sin siestas: minutos, fases y horas), pulso en reposo y entrenos,
  * y los deja en Supabase: tabla health_daily (un día por fila), health_exercise (un entreno por fila) y health_status (hora, error, batería del reloj
  * y la dirección de esta app web, que el panel usa para el botón «Sincronizar ahora»).
  *
@@ -95,6 +95,29 @@ function porDia(tipo, campo, desde, hasta) {
     if (tok) cuerpo.pageToken = tok;
     const j = gh(tipo + '/dataPoints:dailyRollUp', { method: 'post', payload: JSON.stringify(cuerpo) });
     (j.rollupDataPoints || []).forEach(p => { const d = deCivil(p.civilStartTime), v = valor(p, campo); if (d && v != null) out[d] = Math.round(v); });
+    tok = j.nextPageToken || '';
+  } while (tok);
+  return out;
+}
+/* Distancia total de cada día en metros (todo lo andado, no solo los entrenos). El nombre del campo puede venir en
+   milímetros o en metros (p. ej. millimetersSum / metersSum), así que se busca el primer «…Sum» y se pasa a metros. */
+function distancia(desde, hasta) {
+  const out = {}; let tok = '';
+  do {
+    const cuerpo = { range: { start: civil(desde), end: civil(hasta) }, windowSizeDays: 1 };
+    if (tok) cuerpo.pageToken = tok;
+    const j = gh('distance/dataPoints:dailyRollUp', { method: 'post', payload: JSON.stringify(cuerpo) });
+    (j.rollupDataPoints || []).forEach(p => {
+      const d = deCivil(p.civilStartTime);
+      for (const k in p) {
+        const o = p[k]; if (!o || typeof o !== 'object') continue;
+        const c = Object.keys(o).find(x => /sum$/i.test(x) && o[x] != null && !isNaN(Number(o[x])));
+        if (!c) continue;
+        const v = Number(o[c]), m = /milli/i.test(c) ? v / 1000 : /kilo/i.test(c) ? v * 1000 : v;
+        if (d) out[d] = Math.round(m);
+        break;
+      }
+    });
     tok = j.nextPageToken || '';
   } while (tok);
   return out;
@@ -237,6 +260,7 @@ function leerYGuardar(token, desde, hasta) {
   const tipos = { // cada lectura devuelve {columna: {día: valor}}
     pasos: () => ({ steps: porDia('steps', 'countSum', desde, hasta) }),
     kcal: () => ({ kcal: porDia('total-calories', 'kcalSum', desde, hasta) }),
+    distancia: () => ({ dist_m: distancia(desde, hasta) }),
     sueño: () => sueno(desde, hasta),
     pulso: () => ({ rhr: pulso(desde, hasta) }),
   };
