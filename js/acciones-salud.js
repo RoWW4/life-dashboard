@@ -80,6 +80,11 @@ Object.assign(A, {
     const e = document.getElementById('hlbox');
     if (e) e.innerHTML = hlHTML();
   },
+  fitmas: () => {
+    fitN += 5;
+    const e = document.getElementById('hlbox');
+    if (e) e.innerHTML = hlHTML();
+  },
   fitm: () => fitMOpen(),
   fitmm: k => {
     const [y, m] = fitM.m.split('-').map(Number),

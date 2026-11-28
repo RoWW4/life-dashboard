@@ -1458,6 +1458,7 @@ input.sw:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .fith{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.fith b{margin-right:auto}
 .fitnav{display:flex;align-items:center;gap:4px}.fitnav span{min-width:104px;text-align:center;font-size:13.5px;font-weight:600;color:var(--tx2)}
 .fitsub{margin:14px 0 0;font-size:13px}
+.fitmas{display:flex;margin:10px auto 0}
 .fitcnt{display:inline-flex;align-items:center;gap:5px;margin-right:8px}.fitcnt i{width:8px;height:8px;border-radius:50%;background:var(--c)}
 .fitmh{justify-content:space-between}.dlg .fitmh h3{flex:1;text-align:center}
 .fitcal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px 2px;margin-top:14px;padding:12px 6px;border-radius:18px;background:var(--card2)}

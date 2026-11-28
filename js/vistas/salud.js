@@ -314,7 +314,8 @@ function fitFila(e) {
   return `<li style="--c:${t.c}"><span class="fitic">${I(t.ic)}</span><div class="fitn"><small>${fitDia(e.day)}</small><b>${t.n}</b><span>${dat.join(' · ')}</span></div><div class="fitr">${der}</div></li>`;
 }
 const fitMes = new Intl.DateTimeFormat('es-ES', { month: 'short' });
-let fitW = 0; // semana que se ve: 0 = esta, -1 = la anterior…
+let fitW = 0, // semana que se ve: 0 = esta, -1 = la anterior…
+  fitN = 5; // cuántos de los últimos entrenos se ven (crece con «Ver más»)
 function fitHTML() {
   if (!HLE || !HLE.length) return '';
   const td = TD(),
@@ -328,8 +329,8 @@ function fitHTML() {
       return `<div class="fitday${d === td ? ' on' : ''}${d > td ? ' fut' : ''}" title="${tit}" aria-label="${tit}">${fitDot(d)}<em>${l}</em></div>`;
     })
     .join('');
-  // Esta semana: los últimos 5 entrenos; otra semana: los de esa semana.
-  const L = fitW ? HLE.filter(e => e.day >= lun && e.day <= dom) : HLE.slice(0, 5);
+  // Esta semana: los últimos entrenos (5, y «Ver más» enseña 5 más cada vez); otra semana: los de esa semana.
+  const L = fitW ? HLE.filter(e => e.day >= lun && e.day <= dom) : HLE.slice(0, fitN);
   const a = new Date(lun + 'T12:00'),
     b = new Date(dom + 'T12:00');
   const rango =
@@ -344,7 +345,7 @@ function fitHTML() {
   return `<div class="hlw fitw"><div class="hlwh fith"><b>Entrenos</b><div class="fitnav"><button class="btn ghost sm ico" data-a="fitw" data-i="-1" ${viejo ? 'disabled' : ''} aria-label="Semana anterior">${I('chevron-left', 'sm')}</button><span>${rango}</span><button class="btn ghost sm ico" data-a="fitw" data-i="1" ${fitW >= 0 ? 'disabled' : ''} aria-label="Semana siguiente">${I('chevron-right', 'sm')}</button></div><button class="btn ghost sm" data-a="fitm">${I('calendar-days', 'sm')} Mes</button></div>
     <div class="fitwk" role="group" aria-label="Entrenos de la semana">${semana}</div>
     ${fitW ? `<div class="mu fitsub">${L.length ? L.length + (L.length === 1 ? ' entreno esa semana' : ' entrenos esa semana') : 'Sin entrenos esa semana'}</div>` : `<div class="mu fitsub">Últimos entrenos</div>`}
-    <ul class="fitl">${L.map(fitFila).join('')}</ul></div>`;
+    <ul class="fitl">${L.map(fitFila).join('')}</ul>${!fitW && HLE.length > fitN ? `<button class="btn ghost sm fitmas" data-a="fitmas">${I('chevron-down', 'sm')} Ver más</button>` : ''}</div>`;
 }
 /* ---------- Mes de entrenos (ventana) ----------
    Calendario del mes (de lunes a domingo) con los días de entreno marcados; al tocar un día se ven sus entrenos. */
